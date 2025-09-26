@@ -37,53 +37,54 @@ void SidePanelUtil::PopulateGlobalEntries(Browser* browser,
                                           SidePanelRegistry* window_registry) {
   // Add reading list.
   browser->browser_window_features()
-      ->reading_list_side_panel_coordinator()
-      ->CreateAndRegisterEntry(window_registry);
+          ->reading_list_side_panel_coordinator()
+          ->CreateAndRegisterEntry(window_registry);
 
   // Add ai chat
-  ChatSidePanelCoordinator::GetOrCreateForBrowser(browser)
-      ->CreateAndRegisterEntry(window_registry);
+  browser->browser_window_features()
+          ->chat_side_panel_coordinator()
+          ->CreateAndRegisterEntry(window_registry);
 
   // Add bookmarks.
   browser->browser_window_features()
-      ->bookmarks_side_panel_coordinator()
-      ->CreateAndRegisterEntry(window_registry);
+          ->bookmarks_side_panel_coordinator()
+          ->CreateAndRegisterEntry(window_registry);
 
   // Add history clusters.
   if (HistoryClustersSidePanelCoordinator::IsSupported(browser->profile()) &&
       !HistorySidePanelCoordinator::IsSupported()) {
     browser->GetFeatures()
-        .history_clusters_side_panel_coordinator()
-        ->CreateAndRegisterEntry(window_registry);
+            .history_clusters_side_panel_coordinator()
+            ->CreateAndRegisterEntry(window_registry);
   }
 
   // Add history.
   if (HistorySidePanelCoordinator::IsSupported()) {
     browser->browser_window_features()
-        ->history_side_panel_coordinator()
-        ->CreateAndRegisterEntry(window_registry);
+            ->history_side_panel_coordinator()
+            ->CreateAndRegisterEntry(window_registry);
   }
 
   // Add comments.
   if (CommentsSidePanelCoordinator::IsSupported()) {
     browser->browser_window_features()
-        ->comments_side_panel_coordinator()
-        ->CreateAndRegisterEntry(window_registry);
+            ->comments_side_panel_coordinator()
+            ->CreateAndRegisterEntry(window_registry);
   }
 }
 
 SidePanelContentProxy* SidePanelUtil::GetSidePanelContentProxy(
-    views::View* content_view) {
+        views::View* content_view) {
   if (!content_view->GetProperty(kSidePanelContentProxyKey)) {
     content_view->SetProperty(
-        kSidePanelContentProxyKey,
-        std::make_unique<SidePanelContentProxy>(true).release());
+            kSidePanelContentProxyKey,
+            std::make_unique<SidePanelContentProxy>(true).release());
   }
   return content_view->GetProperty(kSidePanelContentProxyKey);
 }
 
 void SidePanelUtil::RecordSidePanelOpen(
-    std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
+        std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
   base::RecordAction(base::UserMetricsAction("SidePanel.Show"));
 
   if (trigger.has_value()) {
@@ -92,7 +93,7 @@ void SidePanelUtil::RecordSidePanelOpen(
 }
 
 void SidePanelUtil::RecordSidePanelShowOrChangeEntryTrigger(
-    std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
+        std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
   if (trigger.has_value()) {
     base::UmaHistogramEnumeration("SidePanel.OpenOrChangeEntryTrigger",
                                   trigger.value());
@@ -113,8 +114,8 @@ void SidePanelUtil::RecordSidePanelResizeMetrics(SidePanelEntry::Id id,
 
   // Metrics per-id and overall for side panel width after resize.
   base::UmaHistogramCounts10000(
-      base::StrCat({"SidePanel.", entry_name, ".ResizedWidth"}),
-      side_panel_contents_width);
+          base::StrCat({"SidePanel.", entry_name, ".ResizedWidth"}),
+          side_panel_contents_width);
   base::UmaHistogramCounts10000("SidePanel.ResizedWidth",
                                 side_panel_contents_width);
 
@@ -122,48 +123,48 @@ void SidePanelUtil::RecordSidePanelResizeMetrics(SidePanelEntry::Id id,
   // percentage of browser width.
   int width_percentage = side_panel_contents_width * 100 / browser_window_width;
   base::UmaHistogramPercentage(
-      base::StrCat({"SidePanel.", entry_name, ".ResizedWidthPercentage"}),
-      width_percentage);
+          base::StrCat({"SidePanel.", entry_name, ".ResizedWidthPercentage"}),
+          width_percentage);
   base::UmaHistogramPercentage("SidePanel.ResizedWidthPercentage",
                                width_percentage);
 }
 
 void SidePanelUtil::RecordNewTabButtonClicked(SidePanelEntry::Id id) {
   base::RecordComputedAction(
-      base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
-                    ".NewTabButtonClicked"}));
+          base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
+                        ".NewTabButtonClicked"}));
 }
 
 void SidePanelUtil::RecordEntryShownMetrics(
-    SidePanelEntry::Id id,
-    base::TimeTicks load_started_timestamp) {
+        SidePanelEntry::Id id,
+        base::TimeTicks load_started_timestamp) {
   base::RecordComputedAction(base::StrCat(
-      {"SidePanel.", SidePanelEntryIdToHistogramName(id), ".Shown"}));
+          {"SidePanel.", SidePanelEntryIdToHistogramName(id), ".Shown"}));
   if (load_started_timestamp != base::TimeTicks()) {
     base::UmaHistogramLongTimes(
-        base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
-                      ".TimeFromEntryTriggerToShown"}),
-        base::TimeTicks::Now() - load_started_timestamp);
+            base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
+                          ".TimeFromEntryTriggerToShown"}),
+            base::TimeTicks::Now() - load_started_timestamp);
   }
 }
 
 void SidePanelUtil::RecordEntryHiddenMetrics(SidePanelEntry::Id id,
                                              base::TimeTicks shown_timestamp) {
   base::UmaHistogramLongTimes(
-      base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
-                    ".ShownDuration"}),
-      base::TimeTicks::Now() - shown_timestamp);
+          base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
+                        ".ShownDuration"}),
+          base::TimeTicks::Now() - shown_timestamp);
 }
 
 void SidePanelUtil::RecordEntryShowTriggeredMetrics(
-    Browser* browser,
-    SidePanelEntry::Id id,
-    std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
+        Browser* browser,
+        SidePanelEntry::Id id,
+        std::optional<SidePanelUtil::SidePanelOpenTrigger> trigger) {
   if (trigger.has_value()) {
     base::UmaHistogramEnumeration(
-        base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
-                      ".ShowTriggered"}),
-        trigger.value());
+            base::StrCat({"SidePanel.", SidePanelEntryIdToHistogramName(id),
+                          ".ShowTriggered"}),
+            trigger.value());
   }
 }
 
@@ -174,12 +175,12 @@ void SidePanelUtil::RecordComboboxShown() {
 void SidePanelUtil::RecordPinnedButtonClicked(SidePanelEntry::Id id,
                                               bool is_pinned) {
   base::RecordComputedAction(base::StrCat(
-      {"SidePanel.", SidePanelEntryIdToHistogramName(id), ".",
-       is_pinned ? "Pinned" : "Unpinned", ".BySidePanelHeaderButton"}));
+          {"SidePanel.", SidePanelEntryIdToHistogramName(id), ".",
+           is_pinned ? "Pinned" : "Unpinned", ".BySidePanelHeaderButton"}));
 }
 
 void SidePanelUtil::RecordSidePanelAnimationMetrics(
-    base::TimeDelta largest_step_time) {
+        base::TimeDelta largest_step_time) {
   base::UmaHistogramTimes("SidePanel.TimeOfLongestAnimationStep",
                           largest_step_time);
 }

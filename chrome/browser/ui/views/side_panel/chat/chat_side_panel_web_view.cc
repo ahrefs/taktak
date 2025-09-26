@@ -37,29 +37,32 @@ using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
 BEGIN_TEMPLATE_METADATA(SidePanelWebUIViewT_ChatUI, SidePanelWebUIViewT)
 END_METADATA
 
-ChatSidePanelWebView::ChatSidePanelWebView(Browser* browser,
+ChatSidePanelWebView::ChatSidePanelWebView(Profile* profile,
+                                           TabStripModel* tab_strip_model,
                                            SidePanelEntryScope& scope,
                                            base::RepeatingClosure close_cb)
-    : SidePanelWebUIViewT(
-          scope,
-          base::BindRepeating(&ChatSidePanelWebView::UpdateActiveWebContents,
-                              base::Unretained(this)),
-          close_cb,
-          std::make_unique<WebUIContentsWrapperT<ChatUI>>(
-              GURL(chrome::kChromeUIChatURL),
-              browser->profile(),
-              IDS_AI_CHAT_TITLE,
-              /*esc_closes_ui=*/false)),
-      browser_(browser),
-      weak_ptr_factory_(this) {
+        : SidePanelWebUIViewT(
+        scope,
+        base::BindRepeating(&ChatSidePanelWebView::UpdateActiveWebContents,
+                            base::Unretained(this)),
+        close_cb,
+        std::make_unique<WebUIContentsWrapperT<ChatUI>>(
+GURL(chrome::kChromeUIChatURL),
+        profile,
+        IDS_AI_CHAT_TITLE,
+/*esc_closes_ui=*/false)),
+tab_strip_model_(tab_strip_model),
+weak_ptr_factory_(this) {
   SetProperty(views::kElementIdentifierKey, kChatSidePanelWebViewElementId);
-  browser_->tab_strip_model()->AddObserver(this);
+  tab_strip_model_->AddObserver(this);
 }
 
+ChatSidePanelWebView::~ChatSidePanelWebView() = default;
+
 void ChatSidePanelWebView::OnTabStripModelChanged(
-    TabStripModel* tab_strip_model,
-    const TabStripModelChange& change,
-    const TabStripSelectionChange& selection) {
+        TabStripModel* tab_strip_model,
+        const TabStripModelChange& change,
+        const TabStripSelectionChange& selection) {
   if (GetVisible() && selection.active_tab_changed()) {
     UpdateActiveSiteInfo(tab_strip_model->GetActiveWebContents());
   }
@@ -68,20 +71,20 @@ void ChatSidePanelWebView::OnTabStripModelChanged(
 void ChatSidePanelWebView::TabChangedAt(content::WebContents* contents,
                                         int index,
                                         TabChangeType change_type) {
-  if (GetVisible() && index == browser_->tab_strip_model()->active_index() &&
+  if (GetVisible() && index == tab_strip_model_->active_index() &&
       change_type == TabChangeType::kAll) {
     GURL url = contents->GetLastCommittedURL();
     if (last_visited_url_ != url) {
       last_visited_url_ = url;
       DVLOG(0) << __func__ << " |>> Tab changed to " << url.spec();
       UpdateActiveSiteInfo(
-          browser_->tab_strip_model()->GetWebContentsAt(index));
+              tab_strip_model_->GetWebContentsAt(index));
     }
   }
 }
 
 void ChatSidePanelWebView::UpdateActiveSiteInfo(
-    content::WebContents* contents) {
+        content::WebContents* contents) {
   auto* controller = contents_wrapper()->GetWebUIController();
   if (!controller || !contents) {
     return;
@@ -107,10 +110,9 @@ base::WeakPtr<ChatSidePanelWebView> ChatSidePanelWebView::GetWeakPtr() {
 }
 
 void ChatSidePanelWebView::UpdateActiveWebContents() {
-  UpdateActiveSiteInfo(browser_->tab_strip_model()->GetActiveWebContents());
+  UpdateActiveSiteInfo(tab_strip_model_->GetActiveWebContents());
 }
 
-ChatSidePanelWebView::~ChatSidePanelWebView() = default;
 
 BEGIN_METADATA(ChatSidePanelWebView)
 END_METADATA

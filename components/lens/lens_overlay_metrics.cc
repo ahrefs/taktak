@@ -439,9 +439,6 @@ void RecordTimeToFirstInteraction(
       // First interaction for Lens Overlay is already recorded and sliced by
       // invocation source.
       break;
-    case lens::LensOverlayInvocationSource::kHomeworkActionChip:
-      event.SetHomeworkActionChip(time_to_first_interaction.InMilliseconds());
-      break;
     case lens::LensOverlayInvocationSource::kContentAreaContextMenuText:
       event.SetContentAreaContextMenuText(
           time_to_first_interaction.InMilliseconds());

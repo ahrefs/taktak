@@ -36,7 +36,7 @@
 
 
 namespace {
-class SharedURLLoaderFactory;
+    class SharedURLLoaderFactory;
 }
 
 // static
@@ -46,7 +46,7 @@ UpdateNotifierPromptManager* UpdateNotifierPromptManager::GetInstance() {
 
 void UpdateNotifierPromptManager::InitTabStripTracker() {
   browser_tab_strip_tracker_ =
-      std::make_unique<BrowserTabStripTracker>(this, this);
+          std::make_unique<BrowserTabStripTracker>(this, this);
   // This will trigger a call to `OnTabStripModelChanged`, which will create
   // the info bar.
   browser_tab_strip_tracker_->Init();
@@ -58,15 +58,15 @@ void UpdateNotifierPromptManager::MaybeShowPrompt() {
 #else
 
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-      g_browser_process->system_network_context_manager()
-          ->GetSharedURLLoaderFactory();
+          g_browser_process->system_network_context_manager()
+                  ->GetSharedURLLoaderFactory();
   if (!api_client_) {
     api_client_ = std::make_unique<UpdateNotifierApiClient>(
-        std::move(url_loader_factory));
+            std::move(url_loader_factory));
   }
   api_client_->Post(
-      "", base::BindOnce(&UpdateNotifierPromptManager::OnCheckNewerVersion,
-                         base::Unretained(this)));
+          "", base::BindOnce(&UpdateNotifierPromptManager::OnCheckNewerVersion,
+                             base::Unretained(this)));
 
 #endif  // BUILDFLAG(IS_ANDROID)
 }
@@ -107,13 +107,13 @@ void UpdateNotifierPromptManager::OnCheckNewerVersion(WebRequestResult result) {
 }
 
 void UpdateNotifierPromptManager::CreateInfoBarForWebContents(
-    content::WebContents* web_contents,
-    Profile* profile) {
+        content::WebContents* web_contents,
+        Profile* profile) {
   // Ensure that an infobar hasn't already been created.
   CHECK(!infobars_.contains(web_contents));
 
   infobars::InfoBar* infobar = UpdateNotifierInfoBarDelegate::Create(
-      infobars::ContentInfoBarManager::FromWebContents(web_contents), profile);
+          infobars::ContentInfoBarManager::FromWebContents(web_contents), profile);
 
   if (infobar == nullptr) {
     // Infobar may be null if `InfoBarManager::ShouldShowInfoBar` returns false,
@@ -127,7 +127,7 @@ void UpdateNotifierPromptManager::CreateInfoBarForWebContents(
   static_cast<ConfirmInfoBarDelegate*>(infobar->delegate())->AddObserver(this);
 
   auto* infobar_manager =
-      infobars::ContentInfoBarManager::FromWebContents(web_contents);
+          infobars::ContentInfoBarManager::FromWebContents(web_contents);
   infobar_manager->AddObserver(this);
 }
 
@@ -142,16 +142,16 @@ void UpdateNotifierPromptManager::CloseAllInfoBars() {
   infobars_.clear();
 }
 
-bool UpdateNotifierPromptManager::ShouldTrackBrowser(Browser* browser) {
-  return browser->is_type_normal() &&
-         !browser->profile()->IsIncognitoProfile() &&
-         !browser->profile()->IsGuestSession();
+bool UpdateNotifierPromptManager::ShouldTrackBrowser(BrowserWindowInterface* browser) {
+  return browser->GetType() == BrowserWindowInterface::TYPE_NORMAL &&
+         !browser->GetProfile()->IsIncognitoProfile() &&
+         !browser->GetProfile()->IsGuestSession();
 }
 
 void UpdateNotifierPromptManager::OnTabStripModelChanged(
-    TabStripModel* tab_strip_model,
-    const TabStripModelChange& change,
-    const TabStripSelectionChange& selection) {
+        TabStripModel* tab_strip_model,
+        const TabStripModelChange& change,
+        const TabStripSelectionChange& selection) {
   if (change.type() == TabStripModelChange::kInserted) {
     for (const auto& contents : change.GetInsert()->contents) {
       if (!base::Contains(infobars_, contents.contents)) {
@@ -165,7 +165,7 @@ void UpdateNotifierPromptManager::OnTabStripModelChanged(
 void UpdateNotifierPromptManager::OnInfoBarRemoved(infobars::InfoBar* infobar,
                                                    bool animate) {
   auto infobars_entry = std::ranges::find(
-      infobars_, infobar, &decltype(infobars_)::value_type::second);
+  infobars_, infobar, &decltype(infobars_)::value_type::second);
   if (infobars_entry == infobars_.end()) {
     return;
   }
@@ -173,7 +173,7 @@ void UpdateNotifierPromptManager::OnInfoBarRemoved(infobars::InfoBar* infobar,
   infobar->owner()->RemoveObserver(this);
   infobars_.erase(infobars_entry);
   static_cast<ConfirmInfoBarDelegate*>(infobar->delegate())
-      ->RemoveObserver(this);
+          ->RemoveObserver(this);
 
   if (user_initiated_info_bar_close_pending_.has_value()) {
     CloseAllPrompts(user_initiated_info_bar_close_pending_.value());

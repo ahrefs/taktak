@@ -409,7 +409,6 @@ void WebRequestHelper::URLLoaderHandler::OnParseJsonResponse(
   if (!result_value.has_value()) {
     DVLOG(1) << "Response validation error:" << result_value.error();
     if (result_value.error().starts_with("trailing comma")) {
-      DEBUG_ALIAS_FOR_GURL(url_alias, result.final_url());
       DEBUG_ALIAS_FOR_CSTR(result_str, result_value.error().c_str(), 1024);
       base::debug::DumpWithoutCrashing();
     }

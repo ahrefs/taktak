@@ -6,10 +6,6 @@ import '//resources/cr_elements/icons.html.js';
 
 import {loadTimeData} from '//resources/js/load_time_data.js';
 import {CrLitElement} from '//resources/lit/v3_0/lit.rollup.js';
-import {loadTimeData} from 'chrome://resources/js/load_time_data.js';
-
-import {FileUploadStatus} from '../composebox_query.mojom-webui.js';
-
 import type {ComposeboxFile} from './common.js';
 import {FileUploadStatus} from './composebox_query.mojom-webui.js';
 import {getCss} from './file_thumbnail.css.js';

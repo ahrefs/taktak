@@ -25,36 +25,39 @@
 #include "ui/views/controls/webview/webview.h"
 #include "ui/views/view.h"
 
-class Browser;
+class Profile;
+class TabStripModel;
 
 class ChatSidePanelWebView : public SidePanelWebUIViewT<ChatUI>,
                              public TabStripModelObserver {
-  using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
-  METADATA_HEADER(ChatSidePanelWebView, SidePanelWebUIViewT_ChatUI)
- public:
-  ChatSidePanelWebView(Browser* browser,
-                       SidePanelEntryScope& scope,
-                       base::RepeatingClosure close_cb);
-  ChatSidePanelWebView(const ChatSidePanelWebView&) = delete;
-  ChatSidePanelWebView& operator=(const ChatSidePanelWebView&) = delete;
-  ~ChatSidePanelWebView() override;
+    using SidePanelWebUIViewT_ChatUI = SidePanelWebUIViewT<ChatUI>;
+    METADATA_HEADER(ChatSidePanelWebView, SidePanelWebUIViewT_ChatUI)
+public:
+    ChatSidePanelWebView(Profile* profile,
+                         TabStripModel* tab_strip_model,
+                         SidePanelEntryScope& scope,
+                         base::RepeatingClosure close_cb);
+    ChatSidePanelWebView(const ChatSidePanelWebView&) = delete;
+    ChatSidePanelWebView& operator=(const ChatSidePanelWebView&) = delete;
+    ~ChatSidePanelWebView() override;
 
-  void OnTabStripModelChanged(
-      TabStripModel* tab_strip_model,
-      const TabStripModelChange& change,
-      const TabStripSelectionChange& selection) override;
+    // TabStripModelObserver:
+    void OnTabStripModelChanged(
+            TabStripModel* tab_strip_model,
+            const TabStripModelChange& change,
+            const TabStripSelectionChange& selection) override;
 
-  void TabChangedAt(content::WebContents* contents,
-                    int index,
-                    TabChangeType change_type) override;
+    void TabChangedAt(content::WebContents* contents,
+                      int index,
+                      TabChangeType change_type) override;
 
-  void UpdateActiveSiteInfo(content::WebContents* contents);
-  void UpdateActiveWebContents();
-  base::WeakPtr<ChatSidePanelWebView> GetWeakPtr();
+    void UpdateActiveSiteInfo(content::WebContents* contents);
+    void UpdateActiveWebContents();
+    base::WeakPtr<ChatSidePanelWebView> GetWeakPtr();
 
- private:
-  const raw_ptr<Browser> browser_;
-  GURL last_visited_url_;
-  base::WeakPtrFactory<ChatSidePanelWebView> weak_ptr_factory_{this};
+private:
+    const raw_ptr<TabStripModel> tab_strip_model_;
+    GURL last_visited_url_;
+    base::WeakPtrFactory<ChatSidePanelWebView> weak_ptr_factory_{this};
 };
 #endif  // CHROMIUM_CHAT_SIDE_PANEL_WEB_VIEW_H

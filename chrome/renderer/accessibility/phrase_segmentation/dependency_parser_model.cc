@@ -12,6 +12,15 @@
 #include "build/build_config.h"
 #include "chrome/renderer/accessibility/phrase_segmentation/dependency_parser_op_resolver.h"
 #include "components/optimization_guide/core/optimization_guide_features.h"
+
+// Prevent macro redefinition errors from TensorFlow headers
+#undef VLOG_IS_ON
+#undef DVLOG
+#undef CHECK_OP
+#undef LOG
+#undef VLOG
+#undef CHECK
+
 #include "third_party/tensorflow-text/src/tensorflow_text/core/kernels/mst_solver.h"
 #include "third_party/tensorflow_models/src/research/seq_flow_lite/tflite_ops/quantization_util.h"
 #include "third_party/tflite/src/tensorflow/lite/string_util.h"

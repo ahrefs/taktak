@@ -146,10 +146,6 @@ BASE_FEATURE(kTrackingProtectionContentSettingIn3pcUx,
              "TrackingProtectionContentSettingIn3pcUx",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-BASE_FEATURE(kTrackingProtectionContentSettingIn3pcUx,
-             "TrackingProtectionContentSettingIn3pcUx",
-             base::FEATURE_DISABLED_BY_DEFAULT);
-
 BASE_FEATURE(kTrackingProtectionContentSettingFor3pcb,
              "TrackingProtectionContentSettingFor3pcb",
              base::FEATURE_DISABLED_BY_DEFAULT);
