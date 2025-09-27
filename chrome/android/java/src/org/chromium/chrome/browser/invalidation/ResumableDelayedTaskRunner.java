@@ -14,13 +14,10 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 
 /**
- * Runner which can be paused. When the runner is paused, the execution of its
- * scheduled task is delayed till the runner is resumed. This runner could be
- * used as follows:
+ * Runner which can be paused. When the runner is paused, the execution of its scheduled task is
+ * delayed till the runner is resumed. This runner could be used as follows:
  *
- * <pre>
- * {@code
- *
+ * <pre>{@code
  * ResumableDelayedTaskRunner runner = new ResumableDelayedTaskRunner();
  * runner.setRunnable(task, delayMs);
  * runner.resume();  // Starts the count down.
@@ -28,8 +25,7 @@ import org.chromium.build.annotations.Nullable;
  * runner.resume();  // Resumes the count down.
  * runner.cancel();  // Stops count down and clears the state.
  *
- * }
- * </pre>
+ * }</pre>
  */
 @NullMarked
 public class ResumableDelayedTaskRunner {

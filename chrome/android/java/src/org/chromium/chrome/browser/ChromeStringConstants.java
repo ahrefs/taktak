@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import org.chromium.build.annotations.NullMarked;
 
 /**

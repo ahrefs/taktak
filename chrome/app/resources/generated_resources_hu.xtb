@@ -1943,6 +1943,7 @@ Ha kezelni szeretné a fiók beállításait, telepítse eszközére a Family Li
 <translation id="2312219318583366810">Oldal URL-címe</translation>
 <translation id="2314165183524574721">Jelenlegi láthatósági beállítás: rejtett</translation>
 <translation id="2314774579020744484">Oldalak fordításánál használt nyelv</translation>
+<translation id="2316090909467242775">Próbálja ki ezt a helyreállítási jelszót</translation>
 <translation id="2316129865977710310">Köszönöm, nem</translation>
 <translation id="2316433409811863464">Alkalmazásstreamelés</translation>
 <translation id="2316709634732130529">Javasolt jelszó használata</translation>
@@ -4068,6 +4069,7 @@ A(z) <ph name="DOMAIN" /> megköveteli, hogy ne távolítsa el az intelligens k�
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> bővítmény</translation>
 <translation id="3794792524918736965">A Windows Hello bekapcsolása</translation>
 <translation id="379509625511193653">Ki</translation>
+<translation id="3795624560191557077">Nemrég módosított egy olyan jelszót, amely egy nyilvános adatvédelmi incidensben volt érintett. Probléma esetén a Google Jelszókezelő segíthet a bejelentkezésben.</translation>
 <translation id="3796215473395753611">alt + felfelé mutató nyíl</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, a jobbra nyíl billentyűvel meghallgathatja ezt a hangot</translation>
 <translation id="3796648294839530037">Kedvenc hálózatok:</translation>
@@ -5892,6 +5894,7 @@ kicsinyítéshez pedig a Ctrl + Alt + Fényerő csökkentése billentyűpara
 <translation id="5088534251099454936">PKCS #1 SHA-512 RSA titkosítással</translation>
 <translation id="5090637338841444533">Nem követhetik nyomon a kamera pozícióját</translation>
 <translation id="5091636240353511739">PIN-kód megjelenítése</translation>
+<translation id="5093417502834168387">Gond van a bejelentkezéssel? Próbálkozás máshogy</translation>
 <translation id="5093477827231450397">Azoknak az Ön által letiltott témaköröknek a listája, amelyeknél nem szeretne, hogy hirdetéseket javasoljanak más webhelyek számára.</translation>
 <translation id="5093569275467863761">Előre-vissza gyorsítótárazott inkognitó-alkeret: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Ezzel az alkalmazással támogatott fájlokat nyithat meg és szerkeszthet a Fájlok appban és más alkalmazásokban. Ha szabályozni szeretné, hogy mely fájlok nyíljanak meg alapértelmezés szerint ebben az alkalmazásban, <ph name="BEGIN_LINK" />itt tájékozódhat arról, hogy miként állíthat be alapértelmezett alkalmazásokat az eszközén<ph name="END_LINK" />.</translation>
@@ -7691,6 +7694,7 @@ A(z) <ph name="DOMAIN" /> megköveteli, hogy ne távolítsa el az intelligens k�
 <translation id="6388577073199278153">Nem lehet hozzáférni a mobilfiókhoz</translation>
 <translation id="6390020764191254941">Lap áthelyezése új ablakba</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Nincs}=1{A következőkhöz: <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> és további 1}other{A következőkhöz: <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> és további {COUNT}}}</translation>
+<translation id="6390533465682072118">Helyreállítás</translation>
 <translation id="6391131092053186625">Az eszköz IMEI-azonosítója: <ph name="IMEI_NUMBER" />. Ez a szám a szolgáltatás aktiválására használható.</translation>
 <translation id="6393156038355142111">Erős jelszó ajánlása</translation>
 <translation id="6393550101331051049">Megjeleníthetnek nem biztonságos tartalmakat</translation>

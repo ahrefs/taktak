@@ -50,14 +50,14 @@ MediaStreamAudioProcessor::MediaStreamAudioProcessor(
     const media::AudioParameters& capture_data_source_params,
     scoped_refptr<WebRtcAudioDeviceImpl> playout_data_source)
     : audio_processor_(media::AudioProcessor::Create(
-          std::move(deliver_processed_audio_callback),
-          /*log_callback=*/
-          WTF::BindRepeating(&WebRtcLogStringPiece),
-          settings,
-          capture_data_source_params,
-          media::AudioProcessor::GetDefaultOutputFormat(
-              capture_data_source_params,
-              settings))),
+    std::move(deliver_processed_audio_callback),
+    /*log_callback=*/
+    WTF::BindRepeating(&WebRtcLogStringPiece),
+    settings,
+    capture_data_source_params,
+    media::AudioProcessor::GetDefaultOutputFormat(
+        capture_data_source_params,
+        settings))),
       main_thread_runner_(base::SingleThreadTaskRunner::GetCurrentDefault()),
       aec_dump_agent_impl_(AecDumpAgentImpl::Create(this)),
       stopped_(false) {

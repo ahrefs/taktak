@@ -36,6 +36,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.DescriptorProtos.EnumDescriptorProto;
 import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
+
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
 import org.jruby.RubyModule;
@@ -138,31 +139,34 @@ public class RubyEnumDescriptor extends RubyObject {
         CodedInputStream.newInstance(
             descriptor.getOptions().toByteString().toByteArray()), /*freeze*/
         true);
-  }
+    }
 
-  /*
-   * call-seq:
-   *     EnumDescriptor.to_proto => EnumDescriptorProto
-   *
-   * Returns the `EnumDescriptorProto` of this `EnumDescriptor`.
-   */
-  @JRubyMethod(name = "to_proto")
-  public IRubyObject toProto(ThreadContext context) {
-    RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
-    RubyDescriptor enumDescriptorProto =
-        (RubyDescriptor)
-            pool.lookup(context, context.runtime.newString("google.protobuf.EnumDescriptorProto"));
-    RubyClass msgClass = (RubyClass) enumDescriptorProto.msgclass(context);
-    RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
-    return msg.decodeBytes(
-        context,
-        msg,
-        CodedInputStream.newInstance(descriptor.toProto().toByteString().toByteArray()), /*freeze*/
-        true);
-  }
+    /*
+     * call-seq:
+     *     EnumDescriptor.to_proto => EnumDescriptorProto
+     *
+     * Returns the `EnumDescriptorProto` of this `EnumDescriptor`.
+     */
+    @JRubyMethod(name = "to_proto")
+    public IRubyObject toProto(ThreadContext context) {
+        RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
+        RubyDescriptor enumDescriptorProto =
+                (RubyDescriptor)
+                        pool.lookup(
+                                context,
+                                context.runtime.newString("google.protobuf.EnumDescriptorProto"));
+        RubyClass msgClass = (RubyClass) enumDescriptorProto.msgclass(context);
+        RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
+        return msg.decodeBytes(
+                context,
+                msg,
+                CodedInputStream.newInstance(
+                        descriptor.toProto().toByteString().toByteArray()), /*freeze*/
+                true);
+    }
 
-  public boolean isValidValue(ThreadContext context, IRubyObject value) {
-    EnumValueDescriptor enumValue;
+    public boolean isValidValue(ThreadContext context, IRubyObject value) {
+        EnumValueDescriptor enumValue;
 
     if (Utils.isRubyNum(value)) {
       enumValue = descriptor.findValueByNumberCreatingIfUnknown(RubyNumeric.num2int(value));

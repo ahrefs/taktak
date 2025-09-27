@@ -744,10 +744,10 @@ public class OfflinePageUtils {
     }
 
     /**
-     * Tracks tab creation and closure for the Recent Tabs feature.  UI needs to stop showing
-     * recent offline pages as soon as the tab is closed.  The TabModel is used to get profile
-     * information because Tab's profile is tied to the native WebContents, which may not exist at
-     * tab adding or tab closing time.
+     * Tracks tab creation and closure for the Recent Tabs feature. UI needs to stop showing recent
+     * offline pages as soon as the tab is closed. The TabModel is used to get profile information
+     * because Tab's profile is tied to the native WebContents, which may not exist at tab adding or
+     * tab closing time.
      */
     private static class RecentTabTracker extends TabModelSelectorTabModelObserver {
         /** The single, stateless TabRestoreTracker instance to monitor all tab restores. */

@@ -11,6 +11,7 @@ import org.chromium.ui.modelutil.SimpleRecyclerViewMcp;
 /**
  * This ModelChangeProcessor is a specialization of the {@link SimpleRecyclerViewMcp} allows
  * defining a {@link ViewRecycler} that cleans up ViewHolders which are about to be recycled.
+ *
  * @see SimpleRecyclerViewMcp
  * @param <T> The type of items in the list.
  * @param <VH> The view holder type that shows items.
@@ -20,6 +21,7 @@ class KeyboardAccessoryRecyclerViewMcp<T, VH> extends SimpleRecyclerViewMcp<T, V
 
     /**
      * View recycling interface.
+     *
      * @param <VH> The view holder type that shows items.
      */
     public interface ViewRecycler<VH> {

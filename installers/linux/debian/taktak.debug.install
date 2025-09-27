@@ -1,0 +1,29 @@
+#!/usr/bin/dh-exec
+out/Debug/chrome_sandbox                                                     usr/lib/taktak
+out/Debug/taktak                                                             usr/lib/taktak
+out/Debug/chromedriver                                                       usr/lib/taktak
+out/Debug/libEGL.so                                                          usr/lib/taktak
+out/Debug/libGLESv2.so                                                       usr/lib/taktak
+out/Debug/libvk_swiftshader.so                                               usr/lib/taktak
+out/Debug/vk_swiftshader_icd.json                                            usr/lib/taktak
+out/Debug/chrome_*_percent.pak                                               usr/lib/taktak
+out/Debug/chrome_crashpad_handler                                            usr/lib/taktak
+out/Debug/v8_context_snapshot.bin                                            usr/lib/taktak
+out/Debug/icudtl.dat                                                         usr/lib/taktak
+out/Debug/resources.pak                                                      usr/lib/taktak
+out/Debug/locales/*.pak                                                      usr/lib/taktak/locales
+installers/linux/debian/chromium-flags.conf                                  etc
+installers/linux/debian/initial_preferences                                  usr/lib/taktak
+out/Debug/taktak                                                             usr/bin
+installers/linux/debian/taktak.desktop                                      => usr/share/applications/taktak.desktop
+chrome/app/resources/manpage.1.in                                           => usr/share/man/man1/taktak.1
+installers/linux/debian/taktak.appdata.xml                                  => usr/share/metainfo/taktak.appdata.xml
+chrome/app/theme/default_100_percent/chromium/product_logo_16.png           => usr/share/icons/hicolor/16x16/apps/taktak.png
+chrome/app/theme/chromium/product_logo_24.png                               => usr/share/icons/hicolor/24x24/apps/taktak.png
+chrome/app/theme/default_100_percent/chromium/product_logo_32.png           => usr/share/icons/hicolor/32x32/apps/taktak.png
+chrome/app/theme/chromium/product_logo_48.png                               => usr/share/icons/hicolor/48x48/apps/taktak.png
+chrome/app/theme/chromium/product_logo_64.png                               => usr/share/icons/hicolor/64x64/apps/taktak.png
+chrome/app/theme/chromium/product_logo_128.png                              => usr/share/icons/hicolor/128x128/apps/taktak.png
+chrome/app/theme/chromium/product_logo_256.png                              => usr/share/icons/hicolor/256x256/apps/taktak.png
+chrome/app/theme/chromium/linux/product_logo_32.xmp                         => usr/lib/taktak/taktak_logo_32.xmp
+installers/linux/debian/taktak.menu                                         => usr/share/menu/taktak.menu

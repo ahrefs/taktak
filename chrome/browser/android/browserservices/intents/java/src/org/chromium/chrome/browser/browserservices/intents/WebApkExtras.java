@@ -54,17 +54,14 @@ public class WebApkExtras {
     public final Map<String, String> iconUrlToMurmur2HashMap;
 
     /**
-     * ShareTarget data
-     * TODO(pkotwicz): Remove this property in favor of
-     * {@link BrowserServicesIntentDataProvider#shareTarget()}
+     * ShareTarget data TODO(pkotwicz): Remove this property in favor of {@link
+     * BrowserServicesIntentDataProvider#shareTarget()}
      */
     public final @Nullable WebApkShareTarget shareTarget;
 
     /**
-     * Whether the WebAPK
-     * (1) Launches an internal activity to display the splash screen
-     * AND
-     * (2) Has a content provider which provides a screenshot of the splash screen.
+     * Whether the WebAPK (1) Launches an internal activity to display the splash screen AND (2) Has
+     * a content provider which provides a screenshot of the splash screen.
      */
     public final boolean isSplashProvidedByWebApk;
 

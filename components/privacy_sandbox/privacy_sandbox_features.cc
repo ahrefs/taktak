@@ -219,7 +219,7 @@ const base::FeatureParam<std::string> kPrivacySandboxSentimentSurveyTriggerId{
 
 BASE_FEATURE(kPrivacySandboxAdsApiUxEnhancements,
              "PrivacySandboxAdsApiUxEnhancements",
-             base::FEATURE_ENABLED_BY_DEFAULT);
+             base::FEATURE_DISABLED_BY_DEFAULT);
 
 BASE_FEATURE(kPrivacySandboxAllowPromptForBlocked3PCookies,
              "PrivacySandboxAllowPromptForBlocked3PCookies",

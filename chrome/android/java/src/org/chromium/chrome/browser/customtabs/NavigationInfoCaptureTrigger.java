@@ -18,10 +18,10 @@ import java.util.concurrent.Callable;
 /**
  * This class contains logic for capturing navigation info at an appropriate time.
  *
- * We want to capture navigation information after both onload and first meaningful paint have
+ * <p>We want to capture navigation information after both onload and first meaningful paint have
  * triggered. We add a slight delay to avoid capturing during CPU intensive periods.
  *
- * If a capture has not been taken after a long amount of time or when the Tab is hidden, we also
+ * <p>If a capture has not been taken after a long amount of time or when the Tab is hidden, we also
  * capture.
  */
 @NullMarked

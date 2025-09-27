@@ -181,12 +181,11 @@ public class MapField<K, V> extends MapFieldReflectionAccessor implements Mutabi
     mode = StorageMode.MAP;
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(
-          Object object) {
-    if (!(object instanceof MapField)) {
-      return false;
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof MapField)) {
+            return false;
     }
     MapField<K, V> other = (MapField<K, V>) object;
     return MapFieldLite.<K, V>equals(getMap(), other.getMap());
@@ -338,11 +337,10 @@ public class MapField<K, V> extends MapFieldReflectionAccessor implements Mutabi
       return new MutabilityAwareSet<Entry<K, V>>(mutabilityOracle, delegate.entrySet());
     }
 
-    @Override
-    public boolean equals(
-            Object o) {
-      return delegate.equals(o);
-    }
+        @Override
+        public boolean equals(Object o) {
+            return delegate.equals(o);
+        }
 
     @Override
     public int hashCode() {
@@ -435,11 +433,10 @@ public class MapField<K, V> extends MapFieldReflectionAccessor implements Mutabi
         delegate.clear();
       }
 
-      @Override
-      public boolean equals(
-              Object o) {
-        return delegate.equals(o);
-      }
+            @Override
+            public boolean equals(Object o) {
+                return delegate.equals(o);
+            }
 
       @Override
       public int hashCode() {
@@ -533,11 +530,10 @@ public class MapField<K, V> extends MapFieldReflectionAccessor implements Mutabi
         delegate.clear();
       }
 
-      @Override
-      public boolean equals(
-              Object o) {
-        return delegate.equals(o);
-      }
+            @Override
+            public boolean equals(Object o) {
+                return delegate.equals(o);
+            }
 
       @Override
       public int hashCode() {
@@ -576,11 +572,10 @@ public class MapField<K, V> extends MapFieldReflectionAccessor implements Mutabi
         delegate.remove();
       }
 
-      @Override
-      public boolean equals(
-              Object obj) {
-        return delegate.equals(obj);
-      }
+            @Override
+            public boolean equals(Object obj) {
+                return delegate.equals(obj);
+            }
 
       @Override
       public int hashCode() {

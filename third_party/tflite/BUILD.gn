@@ -48,6 +48,7 @@ config("tflite_config") {
     "src/third_party/xla",
     "src/third_party/xla/third_party/tsl",
     "//third_party/pthreadpool/src/include",
+    "//third_party/ml_dtypes/src"
   ]
   defines = [
     "TFL_STATIC_LIBRARY_BUILD",

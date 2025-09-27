@@ -11,6 +11,9 @@
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "printing/buildflags/buildflags.h"
 
+//#define kStorageAccess  \
+//  kStorageAccess, kWidevine
+
 namespace gfx {
 struct VectorIcon;
 }
@@ -68,6 +71,7 @@ enum class RequestType {
 #if BUILDFLAG(IS_CHROMEOS) && BUILDFLAG(USE_CUPS)
   kWebPrinting,
 #endif
+  kWidevine,
   kWindowManagement,
   kMaxValue = kWindowManagement
 };

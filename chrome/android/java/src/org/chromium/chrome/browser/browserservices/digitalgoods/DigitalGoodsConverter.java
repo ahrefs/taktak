@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The *Converter classes take care of converting between the mojo types that
- * {@link DigitalGoodsImpl} deals with and the Android types that {@link TrustedWebActivityClient}
- * details with.
+ * The *Converter classes take care of converting between the mojo types that {@link
+ * DigitalGoodsImpl} deals with and the Android types that {@link TrustedWebActivityClient} details
+ * with.
  *
- * Ideally these classes would have no Chromium dependencies that are not from Mojo (in a *.mojom.*
- * package) to allow it to be more easily reused in ARC++.
+ * <p>Ideally these classes would have no Chromium dependencies that are not from Mojo (in a
+ * *.mojom.* package) to allow it to be more easily reused in ARC++.
  */
 @NullMarked
 public class DigitalGoodsConverter {

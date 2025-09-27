@@ -35,11 +35,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * PersistedTabData is Tab data persisted across restarts
- * A constructor of taking a Tab, a PersistedTabDataStorage and
- * PersistedTabDataID (identifier for {@link PersistedTabData}
- * in storage) is required as reflection is used to build
- * the object after acquiring the serialized object from storage.
+ * PersistedTabData is Tab data persisted across restarts A constructor of taking a Tab, a
+ * PersistedTabDataStorage and PersistedTabDataID (identifier for {@link PersistedTabData} in
+ * storage) is required as reflection is used to build the object after acquiring the serialized
+ * object from storage.
  */
 @NullMarked
 public abstract class PersistedTabData implements UserData {
@@ -73,6 +72,7 @@ public abstract class PersistedTabData implements UserData {
 
     /**
      * Build {@link PersistedTabData} from serialized form
+     *
      * @param tab associated with {@link PersistedTabData}
      * @param factory method for creating {@link PersistedTabData}
      * @param data serialized {@link PersistedTabData}
@@ -337,6 +337,7 @@ public abstract class PersistedTabData implements UserData {
 
     /**
      * Acquire {@link PersistedTabData} from a {@link Tab} using a {@link UserData} key
+     *
      * @param tab the {@link PersistedTabData} will be acquired from
      * @param userDataKey the {@link UserData} object to be acquired from the {@link Tab}
      */
@@ -354,6 +355,7 @@ public abstract class PersistedTabData implements UserData {
 
     /**
      * Acquire {@link PersistedTabData} stored in {@link UserData} on a {@link Tab}
+     *
      * @param tab the {@link Tab}
      * @param clazz {@link PersistedTabData} class
      */
@@ -386,6 +388,7 @@ public abstract class PersistedTabData implements UserData {
 
     /**
      * Save {@link PersistedTabData} to storage
+     *
      * @param callback called after save is completed
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
@@ -476,8 +479,8 @@ public abstract class PersistedTabData implements UserData {
     }
 
     /**
-     * Destroy the object. This will clean up any {@link PersistedTabData}
-     * in memory. It will not delete the stored data on a file or database.
+     * Destroy the object. This will clean up any {@link PersistedTabData} in memory. It will not
+     * delete the stored data on a file or database.
      */
     @Override
     public void destroy() {

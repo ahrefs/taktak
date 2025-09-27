@@ -9,15 +9,17 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 import proto2_unittest.Engine;
 import proto2_unittest.TimingBelt;
 import proto2_unittest.Vehicle;
 import proto2_unittest.Wheel;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Test cases that exercise end-to-end use cases involving {@link SingleFieldBuilder} and {@link

@@ -25,9 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Chromium's implementation of ExecutorService via the PostTask API.
- */
+/** Chromium's implementation of ExecutorService via the PostTask API. */
 @NullMarked
 public final class ChromiumExecutorServiceFactory {
     private ChromiumExecutorServiceFactory() {}
@@ -51,8 +49,8 @@ public final class ChromiumExecutorServiceFactory {
         private final long mNanoTaskPeriod;
 
         /**
-         * The delay in nanoseconds between the termination of one execution and
-         * the commencement of the next periodic task.
+         * The delay in nanoseconds between the termination of one execution and the commencement of
+         * the next periodic task.
          */
         private final long mNanoInterTaskDelay;
 

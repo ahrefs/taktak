@@ -84,7 +84,7 @@ void InstallerState::Initialize(const base::CommandLine& command_line,
 
   state_key_ = install_static::GetClientStateKeyPath();
 
-  VLOG(1) << (is_uninstall ? "Uninstall Chrome" : "Install Chrome");
+  VLOG(1) << (is_uninstall ? "Uninstall Taktak" : "Install Taktak");
 
   operation_ = is_uninstall ? UNINSTALL : SINGLE_INSTALL_OR_UPDATE;
 

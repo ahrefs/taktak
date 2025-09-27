@@ -23,11 +23,11 @@ import org.chromium.components.background_task_scheduler.TaskIds;
 import org.chromium.components.background_task_scheduler.TaskInfo;
 
 /**
- * The {@link BackgroundSyncBackgroundTaskScheduler} singleton is responsible
- * for scheduling and cancelling background tasks to wake Chrome up so that
- * Background Sync events ready to be fired can be fired.
+ * The {@link BackgroundSyncBackgroundTaskScheduler} singleton is responsible for scheduling and
+ * cancelling background tasks to wake Chrome up so that Background Sync events ready to be fired
+ * can be fired.
  *
- * Thread model: This class is to be run on the UI thread only.
+ * <p>Thread model: This class is to be run on the UI thread only.
  */
 @NullMarked
 public class BackgroundSyncBackgroundTaskScheduler {

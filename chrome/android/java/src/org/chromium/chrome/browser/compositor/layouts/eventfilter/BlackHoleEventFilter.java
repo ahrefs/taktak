@@ -15,6 +15,7 @@ import org.chromium.chrome.browser.layouts.EventFilter;
 public class BlackHoleEventFilter extends EventFilter {
     /**
      * Creates a {@link BlackHoleEventFilter}.
+     *
      * @param context A {@link Context} instance.
      */
     public BlackHoleEventFilter(Context context) {

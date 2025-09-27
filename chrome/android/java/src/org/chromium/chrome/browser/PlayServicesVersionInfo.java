@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.jni_zero.CalledByNative;

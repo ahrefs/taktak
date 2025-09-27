@@ -1933,6 +1933,7 @@
 <translation id="2312219318583366810">පිටු URL</translation>
 <translation id="2314165183524574721">වත්මන් දෘශ්‍යතා සැකසීම සඟවා ඇත</translation>
 <translation id="2314774579020744484">පිටු පරිවර්තනය කිරීමේදී භාවිත කරන භාෂාව</translation>
+<translation id="2316090909467242775">මෙම ප්‍රතිසාධන මුරපදය උත්සාහ කරන්න</translation>
 <translation id="2316129865977710310">එපා, ස්තූතියි</translation>
 <translation id="2316433409811863464">යෙදුම් ප්‍රවාහ කිරීම</translation>
 <translation id="2316709634732130529">යෝජිත මුරපදය භාවිත කරන්න</translation>
@@ -4056,6 +4057,7 @@
 <translation id="3792973596468118484">දිගු <ph name="NUM_EXTENSIONS" /></translation>
 <translation id="3794792524918736965">Windows Hello ක්‍රියාත්මක කරන්න</translation>
 <translation id="379509625511193653">අක්‍රිය</translation>
+<translation id="3795624560191557077">ඔබ මෑතක දී පොදු දත්ත කඩ කිරීමක දී හමු වූ මුරපදයක් වෙනස් කළා. ගැටලුවක් ඇති වුවහොත්, Google මුරපද කළමනාකරු හට ඔබට පුරනය වීමට උදවු කළ හැක.</translation>
 <translation id="3796215473395753611">alt + ඉහළට ඊතලය</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, හඬ පෙරදසුන් කිරීමට දකුණු ඊතල යතුර භාවිතා කරන්න</translation>
 <translation id="3796648294839530037">ප්‍රියතම ජාල:</translation>
@@ -5882,6 +5884,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="5088534251099454936">PKCS #1 SHA-512 With RSA සංකේතනය</translation>
 <translation id="5090637338841444533">ඔබගේ කැමරා පිහිටුම හඹා යාමට ඉඩ නොදේ</translation>
 <translation id="5091636240353511739">PIN පෙන්වන්න</translation>
+<translation id="5093417502834168387">පිරීමේ ගැටලුවක්ද? වෙනත් ආකාරයකින් උත්සාහ කරන්න</translation>
 <translation id="5093477827231450397">ඔබට වෙනත් අඩවිවලට දැන්වීම් යෝජනා කිරීමට අවශ්‍ය නැති ඔබ අවහිර කළ අඩවි ලැයිස්තුව</translation>
 <translation id="5093569275467863761">අප්‍රසිද්ධ පසුපසට/ඉදිරියට හැඹිලිගත කළ උපරාමුව: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">ඔබට Files යෙදුමෙන් හෝ වෙනත් යෙදුම්වලින් මෙම යෙදුම සමග සහාය දක්වන ගොනු විවෘත කිරීමට සහ සංස්කරණය කිරීමට හැකිය. පෙරනිමියෙන් මෙම යෙදුම විවෘත කරන්නේ කුමන ගොනුද යන්න පාලනය කිරීමට, <ph name="BEGIN_LINK" />ඔබගේ උපාංගයේ පෙරනිමි යෙදුම් සකසන ආකාරය දැන ගන්න<ph name="END_LINK" />.</translation>
@@ -7680,6 +7683,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="6388577073199278153">ඔබගේ ජංගම ගිණුමට ප්‍රවේශ විය නොහැකිය</translation>
 <translation id="6390020764191254941">පටිත්ත නව කවුළුවට ගෙන යන්න</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{කිසිවක් නැත}=1{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> සහ තව 1ක් සඳහා}one{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> සහ තව {COUNT}ක් සඳහා}other{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> සහ තව {COUNT}ක් සඳහා}}</translation>
+<translation id="6390533465682072118">ප්‍රතිසාධනය</translation>
 <translation id="6391131092053186625">ඔබේ උපාංගයේ IMEI <ph name="IMEI_NUMBER" /> වේ. සේවාව සක්‍රිය කිරීමට උදවු කිරීමට මෙම අංකය භාවිතා කළ හැක.</translation>
 <translation id="6393156038355142111">ප්‍රබල මුරපදයක් යෝජනා කරන්න</translation>
 <translation id="6393550101331051049">අනාරක්ෂිත අන්තර්ගතය පෙන්වීමට ඉඩ දේ</translation>

@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.ntp;
 
-
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 

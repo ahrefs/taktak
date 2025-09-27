@@ -18,9 +18,8 @@ import java.util.Map;
 /**
  * HttpClient that has a NetworkTrafficAnnotationTag preset for all requests.
  *
- * The main usecase of this class is passing an HttpClient into 3rd party code
- * that does not know about chrome's network stack.
- *
+ * <p>The main usecase of this class is passing an HttpClient into 3rd party code that does not know
+ * about chrome's network stack.
  */
 @NullMarked
 public class AnnotatedSimpleHttpClient implements ChromeHttpClient {

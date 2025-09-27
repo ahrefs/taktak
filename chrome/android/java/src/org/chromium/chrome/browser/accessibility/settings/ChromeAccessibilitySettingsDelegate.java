@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.accessibility.settings;
 
-
 import org.chromium.build.annotations.NullMarked;
 import org.chromium.chrome.browser.image_descriptions.ImageDescriptionsController;
 import org.chromium.chrome.browser.preferences.Pref;

@@ -22,9 +22,9 @@ import java.util.Set;
 /**
  * This class records WebView settings usage.
  *
- * It records histograms at navigationEntryCommitted to show what the settings were on navigation.
- * It also offers static helpers to record the settings as they are configured by the embedding
- * application.
+ * <p>It records histograms at navigationEntryCommitted to show what the settings were on
+ * navigation. It also offers static helpers to record the settings as they are configured by the
+ * embedding application.
  */
 @Lifetime.WebView
 public class AwWebContentsMetricsRecorder extends WebContentsObserver {

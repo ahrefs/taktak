@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * {@link LevelDBPersistedTabDataStorage} provides a level db backed implementation
- * of {@link PersistedTabDataStorage}.
+ * {@link LevelDBPersistedTabDataStorage} provides a level db backed implementation of {@link
+ * PersistedTabDataStorage}.
  */
 @NullMarked
 public class LevelDBPersistedTabDataStorage implements PersistedTabDataStorage, Destroyable {
@@ -90,8 +90,8 @@ public class LevelDBPersistedTabDataStorage implements PersistedTabDataStorage, 
     }
 
     /**
-     * Synchronous restore was an exception provided for an edge case in
-     * {@link CriticalPersistedTabData} and is not typically part of the public API.
+     * Synchronous restore was an exception provided for an edge case in {@link
+     * CriticalPersistedTabData} and is not typically part of the public API.
      */
     @Deprecated
     @MainThread

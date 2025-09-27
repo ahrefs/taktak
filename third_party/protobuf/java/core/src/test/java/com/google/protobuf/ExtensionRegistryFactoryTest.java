@@ -12,16 +12,20 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.ClassPath;
+
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import org.junit.Ignore;
+
 import proto2_unittest.NonNestedExtension;
 import proto2_unittest.NonNestedExtensionLite;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-import org.junit.Ignore;
 
 /**
  * Tests for {@link ExtensionRegistryFactory} and the {@link ExtensionRegistry} instances it
@@ -94,25 +98,34 @@ public class ExtensionRegistryFactoryTest extends TestCase {
       ExtensionRegistry fullRegistry1 = (ExtensionRegistry) registry1;
       ExtensionRegistry fullRegistry2 = (ExtensionRegistry) registry2;
 
-      assertWithMessage("Test is using a non-lite extension")
-          .that(NonNestedExtensionLite.nonNestedExtensionLite.getClass())
-          .isInstanceOf(GeneratedMessageLite.GeneratedExtension.class);
-      assertWithMessage("Extension is not registered in masqueraded full registry")
-          .that(fullRegistry1.findImmutableExtensionByName("proto2_unittest.nonNestedExtension"))
-          .isNull();
-      GeneratedMessageLite.GeneratedExtension<NonNestedExtensionLite.MessageLiteToBeExtended, ?>
-          extension =
-              registry1.findLiteExtensionByNumber(
-                  NonNestedExtensionLite.MessageLiteToBeExtended.getDefaultInstance(), 1);
+            assertWithMessage("Test is using a non-lite extension")
+                    .that(NonNestedExtensionLite.nonNestedExtensionLite.getClass())
+                    .isInstanceOf(GeneratedMessageLite.GeneratedExtension.class);
+            assertWithMessage("Extension is not registered in masqueraded full registry")
+                    .that(
+                            fullRegistry1.findImmutableExtensionByName(
+                                    "proto2_unittest.nonNestedExtension"))
+                    .isNull();
+            GeneratedMessageLite.GeneratedExtension<
+                            NonNestedExtensionLite.MessageLiteToBeExtended, ?>
+                    extension =
+                            registry1.findLiteExtensionByNumber(
+                                    NonNestedExtensionLite.MessageLiteToBeExtended
+                                            .getDefaultInstance(),
+                                    1);
       assertWithMessage("Extension registered in lite registry").that(extension).isNotNull();
 
-      assertWithMessage("Test is using a non-lite extension")
-          .that(Extension.class.isAssignableFrom(NonNestedExtension.nonNestedExtension.getClass()))
-          .isTrue();
-      assertWithMessage("Extension is registered in masqueraded full registry")
-          .that(fullRegistry2.findImmutableExtensionByName("proto2_unittest.nonNestedExtension"))
-          .isNotNull();
-    }
+            assertWithMessage("Test is using a non-lite extension")
+                    .that(
+                            Extension.class.isAssignableFrom(
+                                    NonNestedExtension.nonNestedExtension.getClass()))
+                    .isTrue();
+            assertWithMessage("Extension is registered in masqueraded full registry")
+                    .that(
+                            fullRegistry2.findImmutableExtensionByName(
+                                    "proto2_unittest.nonNestedExtension"))
+                    .isNotNull();
+        }
 
     @Override
     public void testAdd_immutable() {

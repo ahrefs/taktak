@@ -473,14 +473,13 @@ final class RopeByteString extends ByteString {
     }
   }
 
-  // =================================================================
-  // equals() and hashCode()
+    // =================================================================
+    // equals() and hashCode()
 
-  @Override
-  public boolean equals(
-          Object other) {
-    if (other == this) {
-      return true;
+    @Override
+    public boolean equals(Object other) {
+        if (other == this) {
+            return true;
     }
     if (!(other instanceof ByteString)) {
       return false;

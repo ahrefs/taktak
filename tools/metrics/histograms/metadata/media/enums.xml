@@ -1377,9 +1377,9 @@ chromium-metrics-reviews@google.com.
 
 <enum name="MediaPlaybackInterruptionType">
   <int value="0"
-      label="HTMLMediaElement tried to play audio in a hidden frame"/>
+       label="HTMLMediaElement tried to play audio in a hidden frame"/>
   <int value="1"
-      label="Frame got hidden while the HTMLMediaElement was playing"/>
+       label="Frame got hidden while the HTMLMediaElement was playing"/>
 </enum>
 
 <enum name="MediaPlayerExitStatus">

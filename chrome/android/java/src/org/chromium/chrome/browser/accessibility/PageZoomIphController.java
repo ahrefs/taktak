@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.accessibility;
 
-
 import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;

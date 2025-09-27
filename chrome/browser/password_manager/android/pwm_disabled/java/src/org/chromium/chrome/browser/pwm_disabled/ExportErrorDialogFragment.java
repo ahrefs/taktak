@@ -52,6 +52,7 @@ public class ExportErrorDialogFragment extends DialogFragment {
 
     /**
      * Sets the click handler for the dialog buttons.
+     *
      * @param mHandler The handler to use.
      */
     public void setExportErrorHandler(DialogInterface.OnClickListener handler) {

@@ -12,11 +12,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
-import proto2_unittest.UnittestProto.TestAllTypes;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.TestAllTypes;
 
 /** Test {@link TextFormatParseInfoTree}. */
 @RunWith(JUnit4.class)

@@ -954,6 +954,7 @@ URL パターンは、<ph name="DIRECT_SOCKETS_BLOCKED_FOR_URLS_POLICY_NAME" /> 
 ブロック ポリシーのパターンと許可ポリシーのパターンの両方に一致する場合、オリジンはブロックされます。
 ポリシーでもユーザー設定でも指定されていないオリジンの場合、この API を呼び出すには事前のユーザー操作が必要になります。</translation>
 <translation id="1645793986494086629">スキーマ:</translation>
+<translation id="1647420986475965896">アドレスバーと新しいタブページの検索ボックスでの AI モードの検索候補の設定</translation>
 <translation id="1647558381546345298">このポリシーを設定した場合、<ph name="PRODUCT_NAME" /> では、ユーザーが「--media-cache-size」フラグを指定しているかどうかにかかわらず、キャッシュされたメディア ファイルをディスクに保存する際のキャッシュ サイズが設定されます。このポリシーで指定される値は、絶対的な制限値ではなく、キャッシュ システムに対する推奨値になります。数メガバイト以下の値は四捨五入されます。
 
       このポリシーの値を 0 に設定した場合、デフォルトのキャッシュ サイズが使用され、ユーザーはこの値を変更できません。
@@ -2310,6 +2311,16 @@ Android アプリの場合はパッケージ名（「com.google.android.gm」な
 <translation id="2702682139813393777">Windows ネイティブ メッセージング ホストを cmd.exe で強制的に起動する</translation>
 <translation id="270582584528242502">ユーザーが終了しようとしたときに警告ダイアログを表示しない</translation>
 <translation id="2706708761587205154">PIN ありの印刷のみを許可します</translation>
+<translation id="2706972066112233185">このポリシーでは、アドレスバーと新しいタブページの検索ボックスの AI モードの候補セクションを制御します。
+
+この機能は、このポリシーで無効にしない限り、Google をデフォルトの検索エンジンに設定しているすべてのユーザーが使用できます。
+
+このポリシーを未設定のままにした場合、動作は <ph name="GEN_AI_DEFAULT_SETTINGS_POLICY_NAME" /> ポリシーによって決まります。
+
+このポリシーを 0（有効）に設定するか未設定のままにした場合、ユーザーはこの機能を使用できます。このポリシーを 1（無効）に設定した場合、この機能は使用できません。
+
+0 = この機能の使用を許可します。
+1 = この機能の使用を許可しません。</translation>
 <translation id="2707733461906745082">プロファイル分離</translation>
 <translation id="2707873794476722903">セーフ ブラウジングを標準モードで有効にする。</translation>
 <translation id="2709516037105925701">自動入力</translation>
@@ -3230,6 +3241,15 @@ Microsoft Outlook カードには、追加の管理者設定が必要です。Ch
 <translation id="3387999258705169775">setTimeout() 関数のネストのクランプ処理にデフォルトの動作を使用する。</translation>
 <translation id="3388628790024977864"><ph name="GOOGLE_DRIVE_NAME" />と <ph name="GOOGLE_WORKSPACE_NAME" /> の<ph name="CLOUD_UPLOAD_NAME" /> フローを許可しない</translation>
 <translation id="3389088527709746815">リモート アクセスホストの gnubby 認証を有効にする</translation>
+<translation id="3393332712712388726">URL パターンのリストを指定します。このリストのパターンと一致するオリジンのウェブサイトで発行されたリクエストに対しては、<ph name="LOCAL_NETWORK_ACCESS" /> のチェックを行いません。
+
+オリジンがこのポリシーと LocalNetworkAccessBlockedForUrls の両方に含まれている場合、LocalNetworkAccessBlockedForUrls が優先されます。
+
+ここで指定したパターンに含まれていないオリジンについては、ユーザーの個人設定が適用されます。
+
+有効な URL パターンについて詳しくは、https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns をご覧ください。
+
+<ph name="LOCAL_NETWORK_ACCESS" /> の制限については、https://github.com/explainers-by-googlers/local-network-access をご覧ください。</translation>
 <translation id="3395744872155955051"><ph name="GOOGLE_DRIVE_NAME" /> からファイルを直接選択できるようにする</translation>
 <translation id="3397883909301547525"><ph name="PRODUCT_OS_NAME" /> ランチャーにおすすめのアプリを表示しない</translation>
 <translation id="3398051852031115795">システムのデフォルトの挙動（画面サイズによって異なる）</translation>
@@ -3951,6 +3971,7 @@ HTTPS 用の RSA 証明書に両方を含める必要があります。</transla
 
 このポリシーを未設定のままにした場合や、空の値または無効な値が設定されている場合、<ph name="CLIENT_INFO_IPP_ATTRIBUTE" /> は印刷ジョブ リクエストに追加されません。
 </translation>
+<translation id="3895626555961466729">AI モードの候補を許可する。</translation>
 <translation id="3896591584655529057">パスワード マネージャーを使用したパスキーの保存を有効にする</translation>
 <translation id="3896751141670591496">このポリシーを有効に設定するか未設定のままにした場合、危険性のあるコマンドライン フラグを使用して Chrome を起動したときにセキュリティ警告が表示されます。
 
@@ -6735,6 +6756,17 @@ URL パターンは、<ph name="DIRECT_SOCKETS_PRIVATE_NETWORK_ACCESS_BLOCKED_FO
 <translation id="5860010874344790473">このポリシーを有効に設定すると、システムログが管理サーバーに送信され、管理者がシステムログをモニタリングできるようになります。
 
       このポリシーを無効にするか、未設定のままにすると、システムログは報告されません。</translation>
+<translation id="5860520143792505638">URL パターンのリストを指定します。このリストのパターンと一致するオリジンのウェブサイトに対して、<ph name="LOCAL_NETWORK_ACCESS" /> のリクエストの発行をブロックします。
+
+オリジンがこのポリシーと LocalNetworkAccessAllowedForUrls の両方に含まれている場合、このポリシーが優先されます。
+
+<ph name="LOCAL_NETWORK_ACCESS" /> のロールアウトの段階によっては、このポリシーで <ph name="LOCAL_NETWORK_ACCESS" /> のリクエストをブロックするには、LocalNetworkAccessRestrictionsEnabled も有効にする必要があります。
+
+ここで指定したパターンに含まれていないオリジンについては、ユーザーの個人設定が適用されます。
+
+有効な URL パターンについて詳しくは、https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns をご覧ください。
+
+<ph name="LOCAL_NETWORK_ACCESS" /> の制限については、https://github.com/explainers-by-googlers/local-network-access をご覧ください。</translation>
 <translation id="5861856285460256766">保護者のアクセスコードの設定</translation>
 <translation id="5864898931148094192">新しいタブページに拡張機能の帰属先を表示するかどうかを制御する</translation>
 <translation id="5868414965372171132">ユーザー レベルのネットワーク設定</translation>
@@ -10087,6 +10119,7 @@ false に設定した場合、管理対象のネットワークに接続され�
       <ph name="TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />、
       <ph name="SAME_ORIGIN_TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />
       </translation>
+<translation id="8309511882585098865">AI モードの候補を許可しない。</translation>
 <translation id="8310392396850884147">CORS 非ワイルドカード リクエスト ヘッダーをサポートする。</translation>
 <translation id="8312129124898414409">ウェブサイトがキー生成を使用できるかどうかを設定します。すべてのサイトを対象に、キー生成の使用を許可または禁止できます。
 

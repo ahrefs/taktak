@@ -67,8 +67,7 @@ public class SecureDnsSettings extends ChromeBaseSettingsFragment {
         SettingsUtils.addPreferencesFromResource(this, R.xml.secure_dns_settings);
 
         // Set up preferences inside the activity.
-        mSecureDnsSwitch =
-                (ChromeSwitchPreference) findPreference(PREF_SECURE_DNS_SWITCH);
+        mSecureDnsSwitch = (ChromeSwitchPreference) findPreference(PREF_SECURE_DNS_SWITCH);
         mSecureDnsSwitch.setManagedPreferenceDelegate(
                 new ChromeManagedPreferenceDelegate(getProfile()) {
                     @Override
@@ -102,8 +101,7 @@ public class SecureDnsSettings extends ChromeBaseSettingsFragment {
         }
 
         mSecureDnsProviderPreference =
-                (SecureDnsProviderPreference)
-                        findPreference(PREF_SECURE_DNS_PROVIDER);
+                (SecureDnsProviderPreference) findPreference(PREF_SECURE_DNS_PROVIDER);
         mSecureDnsProviderPreference.setOnPreferenceChangeListener(
                 (preference, value) -> {
                     State controlState = (State) value;

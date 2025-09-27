@@ -64,7 +64,7 @@ class MODULES_EXPORT MediaStreamAudioProcessor
 
   MediaStreamAudioProcessor(const MediaStreamAudioProcessor&) = delete;
   MediaStreamAudioProcessor& operator=(const MediaStreamAudioProcessor&) =
-      delete;
+  delete;
 
   // Processes and delivers capture audio,
   // See media::AudioProcessor::ProcessCapturedAudio for API details.

@@ -10,6 +10,7 @@ package com.google.protobuf;
 import static com.google.protobuf.Internal.checkNotNull;
 
 import com.google.protobuf.Internal.EnumLite;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -95,13 +96,11 @@ public final class MapFieldLite<K, V> extends LinkedHashMap<K, V> {
       checkNotNull(key);
       checkNotNull(m.get(key));
     }
-  }
+    }
 
-  private static boolean equals(
-          Object a,
-      Object b) {
-    if (a instanceof byte[] && b instanceof byte[]) {
-      return Arrays.equals((byte[]) a, (byte[]) b);
+    private static boolean equals(Object a, Object b) {
+        if (a instanceof byte[] && b instanceof byte[]) {
+            return Arrays.equals((byte[]) a, (byte[]) b);
     }
     return a.equals(b);
   }
@@ -128,13 +127,12 @@ public final class MapFieldLite<K, V> extends LinkedHashMap<K, V> {
     return true;
   }
 
-  /** Checks whether two map fields are equal. */
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(
-          Object object) {
-    return (object instanceof Map) && equals(this, (Map<K, V>) object);
-  }
+    /** Checks whether two map fields are equal. */
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean equals(Object object) {
+        return (object instanceof Map) && equals(this, (Map<K, V>) object);
+    }
 
   private static int calculateHashCodeForObject(Object a) {
     if (a instanceof byte[]) {

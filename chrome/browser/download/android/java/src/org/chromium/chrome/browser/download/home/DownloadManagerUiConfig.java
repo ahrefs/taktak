@@ -75,6 +75,12 @@ public class DownloadManagerUiConfig {
     /** Whether to auto-focus the search box. */
     public final boolean autoFocusSearchBox;
 
+    /**
+     * A generator for the {@link EdgeToEdgePadAdjuster} to be used to adjust the padding for the
+     * download manager.
+     */
+    public final @Nullable Function<View, EdgeToEdgePadAdjuster> edgeToEdgePadAdjusterGenerator;
+
     /** Constructor. */
     private DownloadManagerUiConfig(Builder builder) {
         otrProfileId = builder.mOtrProfileId;
@@ -111,6 +117,7 @@ public class DownloadManagerUiConfig {
         private @Nullable Function<View, EdgeToEdgePadAdjuster> mEdgeToEdgePadAdjusterGenerator;
         private boolean mInlineSearchBar;
         private boolean mAutoFocusSearchBox;
+        private @Nullable Function<View, EdgeToEdgePadAdjuster> mEdgeToEdgePadAdjusterGenerator;
 
         public Builder() {
             mSupportFullWidthImages =
@@ -182,6 +189,12 @@ public class DownloadManagerUiConfig {
 
         public Builder setAutoFocusSearchBox(boolean autoFocusSearchBox) {
             mAutoFocusSearchBox = autoFocusSearchBox;
+            return this;
+        }
+
+        public Builder setEdgeToEdgePadAdjusterGenerator(
+                Function<View, EdgeToEdgePadAdjuster> edgeToEdgePadAdjusterGenerator) {
+            mEdgeToEdgePadAdjusterGenerator = edgeToEdgePadAdjusterGenerator;
             return this;
         }
 

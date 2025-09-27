@@ -7,8 +7,7 @@ package org.chromium.chrome.browser.tab;
 import org.chromium.build.annotations.NullMarked;
 
 /**
- * An interface that handles displaying custom {@link View}s on top of {@link Tab}'s Content
- * view.
+ * An interface that handles displaying custom {@link View}s on top of {@link Tab}'s Content view.
  */
 @NullMarked
 public interface TabViewManager {

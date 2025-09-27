@@ -244,9 +244,7 @@ public class WebViewLayoutTest {
         }
     }
 
-    /**
-     * Checks if the device has the MIDI system feature.
-     */
+    /** Checks if the device has the MIDI system feature. */
     private static boolean hasSystemFeatureMidi() {
         return ContextUtils.getApplicationContext()
                 .getPackageManager()

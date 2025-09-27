@@ -9,11 +9,13 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import proto2_unittest.UnittestProto;
-import proto3_unittest.UnittestProto3;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto;
+
+import proto3_unittest.UnittestProto3;
 
 /** Unit tests for discard or preserve unknown fields. */
 @RunWith(JUnit4.class)

@@ -1946,6 +1946,7 @@
 <translation id="2312219318583366810">페이지 URL</translation>
 <translation id="2314165183524574721">현재 공개 범위가 숨김으로 설정되어 있음</translation>
 <translation id="2314774579020744484">페이지 번역 시 사용하는 언어</translation>
+<translation id="2316090909467242775">이 복구 비밀번호를 사용해 보세요.</translation>
 <translation id="2316129865977710310">아니요, 괜찮습니다.</translation>
 <translation id="2316433409811863464">앱 스트리밍</translation>
 <translation id="2316709634732130529">추천 비밀번호 사용</translation>
@@ -4071,6 +4072,7 @@
 <translation id="3792973596468118484">확장 프로그램 <ph name="NUM_EXTENSIONS" />개</translation>
 <translation id="3794792524918736965">Windows Hello 사용 설정</translation>
 <translation id="379509625511193653">사용 안함</translation>
+<translation id="3795624560191557077">최근에 공개 정보 유출로 인해 노출된 비밀번호를 변경했습니다. 문제가 발생하면 Google 비밀번호 관리자를 통해 로그인할 수 있습니다.</translation>
 <translation id="3796215473395753611">Alt + 위쪽 화살표</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, 오른쪽 화살표 키를 사용하여 음성 텍스트 미리보기</translation>
 <translation id="3796648294839530037">자주 이용하는 네트워크:</translation>
@@ -5895,6 +5897,7 @@ https://support.google.com/chromebook/?p=tpm</translation>
 <translation id="5088534251099454936">PKCS #1 SHA-512(RSA 암호화 사용)</translation>
 <translation id="5090637338841444533">카메라 위치 추적이 허용되지 않음</translation>
 <translation id="5091636240353511739">PIN 표시</translation>
+<translation id="5093417502834168387">로그인하는 데 문제가 있나요? 다른 방법 시도</translation>
 <translation id="5093477827231450397">다른 사이트 광고를 추천하지 않도록 차단한 사이트 목록</translation>
 <translation id="5093569275467863761">시크릿 모드 뒤로-앞으로 캐시 서브프레임: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">파일 앱 또는 다른 앱에서 이 앱이 지원하는 파일을 열고 수정할 수 있습니다. 기본적으로 이 앱에서 열 파일을 관리하려면 <ph name="BEGIN_LINK" />기기에서 기본 앱을 설정하는 방법을 알아보세요<ph name="END_LINK" />.</translation>
@@ -7693,6 +7696,7 @@ https://support.google.com/chromebook/?p=tpm</translation>
 <translation id="6388577073199278153">모바일 계정에 액세스할 수 없음</translation>
 <translation id="6390020764191254941">탭을 새 창으로 이동</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{없음}=1{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> 외 1개}other{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> 외 {COUNT}개}}</translation>
+<translation id="6390533465682072118">복구</translation>
 <translation id="6391131092053186625">기기 IMEI는 <ph name="IMEI_NUMBER" />입니다. 이 번호를 사용하여 서비스를 활성화할 수 있습니다.</translation>
 <translation id="6393156038355142111">안전한 비밀번호 추천</translation>
 <translation id="6393550101331051049">안전하지 않은 콘텐츠 표시가 허용됨</translation>

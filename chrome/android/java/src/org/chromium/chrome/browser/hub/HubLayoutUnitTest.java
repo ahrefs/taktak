@@ -353,6 +353,7 @@ public class HubLayoutUnitTest {
     public void tearDown() {
         mHubLayout.destroy();
         mActionTester.tearDown();
+        XrUtils.resetXrDeviceForTesting();
     }
 
     @Test

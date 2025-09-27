@@ -342,11 +342,11 @@ public abstract class AbstractMessageLite<
     private static <T> void addAllCheckingNulls(Iterable<T> values, List<? super T> list) {
       if (values instanceof Collection) {
         int growth = ((Collection<T>) values).size();
-        if (list instanceof ArrayList) {
-          ((ArrayList<T>) list).ensureCapacity(list.size() + growth);
-        } else if (list instanceof ProtobufArrayList) {
-          ((ProtobufArrayList<T>) list).ensureCapacity(list.size() + growth);
-        }
+                if (list instanceof ArrayList) {
+                    ((ArrayList<T>) list).ensureCapacity(list.size() + growth);
+                } else if (list instanceof ProtobufArrayList) {
+                    ((ProtobufArrayList<T>) list).ensureCapacity(list.size() + growth);
+                }
       }
       int begin = list.size();
       if (values instanceof List && values instanceof RandomAccess) {

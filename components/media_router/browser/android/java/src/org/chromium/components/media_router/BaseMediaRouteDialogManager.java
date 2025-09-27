@@ -23,10 +23,10 @@ import org.chromium.content_public.browser.WebContents;
 @NullMarked
 public abstract class BaseMediaRouteDialogManager {
     /**
-     * A helper class to handle the system visibility change caused by the dialog showing up.
-     * Call saveSystemVisibility() in onCreateDialog() of the DialogFragment and later
-     * restoreSystemVisibility() in onStop().
-     * TODO(avayvod): refactor this to avoid a redundant copy in ChromeMediaRouteDialogFactory.
+     * A helper class to handle the system visibility change caused by the dialog showing up. Call
+     * saveSystemVisibility() in onCreateDialog() of the DialogFragment and later
+     * restoreSystemVisibility() in onStop(). TODO(avayvod): refactor this to avoid a redundant copy
+     * in ChromeMediaRouteDialogFactory.
      */
     protected static class SystemVisibilitySaver {
         private int mSystemVisibilityToRestore;

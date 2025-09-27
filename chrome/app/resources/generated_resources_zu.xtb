@@ -1945,6 +1945,7 @@ Ungaphatha izilungiselelo zale akhawunti ngokufaka uhlelo lokusebenza lwe-Family
 <translation id="2312219318583366810">Ikhasi le-URL</translation>
 <translation id="2314165183524574721">Isethingi lamanje lokubonakala lifihliwe</translation>
 <translation id="2314774579020744484">Ulimi olusetshenziswe uma kuhunyushwa amakhasi</translation>
+<translation id="2316090909467242775">Zama leli phasiwedi lokuthola</translation>
 <translation id="2316129865977710310">Cha, ngiyabonga</translation>
 <translation id="2316433409811863464">Ukusakaza I-app</translation>
 <translation id="2316709634732130529">Sebenzisa iphasiwedi ephakanyisiwe</translation>
@@ -4070,6 +4071,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="3792973596468118484">Izandiso ezingu-<ph name="NUM_EXTENSIONS" /></translation>
 <translation id="3794792524918736965">Vula i-Windows Hello</translation>
 <translation id="379509625511193653">Valiwe</translation>
+<translation id="3795624560191557077">Muva nje ushintshe iphasiwedi etholakale esidlangalaleni sokuphulwa kwesivumelwano sedatha. Uma kunenkinga, Umphathi Wephasiwedi YeGoogle angakusiza ungene ngemvume.</translation>
 <translation id="3796215473395753611">alt + umcibisholo waphezulu</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, sebenzisa ukhiye womcibisho wangakwesokudla ukuze uhlole kuqala iphimbo.</translation>
 <translation id="3796648294839530037">Amanethiwekhi ayizintandokazi:</translation>
@@ -5894,6 +5896,7 @@ Sebenzisa u-Ctrl + Alt + Brightness down ukuze uhlehlise isithombe.</translation
 <translation id="5088534251099454936">I-PKCS #1 SHA-512 enokubethela kwe-RSA</translation>
 <translation id="5090637338841444533">Ayivumelekile ukulandelela indawo yekhamera yakho</translation>
 <translation id="5091636240353511739">Bonisa Iphinikhodi</translation>
+<translation id="5093417502834168387">Unenkinga yokungena ngemvume? Zama enye indlela</translation>
 <translation id="5093477827231450397">Uhlu lwamasayithi owavimbile ongafuni ukuphakamisa izikhangiso kwamanye amasayithi</translation>
 <translation id="5093569275467863761">I-Subframe Yenqolobane Yasemuva-Phambili ye-Incognito: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Ungavula futhi uhlele amafayela asekelwayo ngale-app kusukela ku-app Yamafayela noma amanye ama-app. Ukuze ulawule ukuthi yimaphi amafayela avula le-app ngokuzenzakalelayo, <ph name="BEGIN_LINK" />funda indlela yokusetha ama-app azenzakalelayo kudivayisi yakho<ph name="END_LINK" />.</translation>
@@ -7693,6 +7696,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="6388577073199278153">Ayikwazi ukufinyelela ku-akhawunti yakho</translation>
 <translation id="6390020764191254941">Hambisa ithebhu kuwindi elisha</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Lutho}=1{Okwe-<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" />, nokukodwa okwengeziwe}one{Okwe-<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" />, nokungu-{COUNT} okwengeziwe}other{Okwe-<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" />, nokungu-{COUNT} okwengeziwe}}</translation>
+<translation id="6390533465682072118">Ukuthola</translation>
 <translation id="6391131092053186625">I-IMEI yedivayisi yakho ngu-<ph name="IMEI_NUMBER" />. Le nombolo ingasetshenziswa ukusiza ukuvula isevisi.</translation>
 <translation id="6393156038355142111">Iphakamisa iphasiwedi eqinile</translation>
 <translation id="6393550101331051049">Ivumelekile ukubonisa okuqukethwe okuvikelekile</translation>

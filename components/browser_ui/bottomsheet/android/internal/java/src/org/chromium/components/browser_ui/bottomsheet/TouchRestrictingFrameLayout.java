@@ -13,8 +13,8 @@ import org.chromium.build.annotations.NullMarked;
 import org.chromium.build.annotations.Nullable;
 
 /**
- * A specialized FrameLayout that is capable of ignoring all user input based on the state of
- * the bottom sheet.
+ * A specialized FrameLayout that is capable of ignoring all user input based on the state of the
+ * bottom sheet.
  */
 @NullMarked
 class TouchRestrictingFrameLayout extends FrameLayout {

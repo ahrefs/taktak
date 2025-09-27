@@ -16,8 +16,8 @@ import java.util.Set;
 
 /**
  * Callback for discovering routes with one particular filter. Keeps a set of all source URIs that
- * media sinks were requested for. Once a route is added or removed, updates the
- * {@link BrowserMediaRouter} with the new routes.
+ * media sinks were requested for. Once a route is added or removed, updates the {@link
+ * BrowserMediaRouter} with the new routes.
  */
 @NullMarked
 public class DiscoveryCallback extends MediaRouter.Callback {

@@ -977,6 +977,7 @@ Jokertekens (<ph name="WILDCARD_VALUE" />) zijn toegestaan.
 Oorsprongen die overeenkomen met zowel geblokkeerde als toegestane beleidspatronen worden geblokkeerd.
 Voor oorsprongen waarvoor geen informatie is in beleid of gebruikersinstellingen is een eerder gebruikersgebaar vereist om deze API aan te roepen.</translation>
 <translation id="1645793986494086629">Schema:</translation>
+<translation id="1647420986475965896">Instellingen voor zoekaanbevelingen in de AI-modus in de adresbalk en het zoekvak op de pagina Nieuw tabblad</translation>
 <translation id="1647558381546345298">Als je het beleid instelt, wordt de cachegrootte ingesteld die <ph name="PRODUCT_NAME" /> gebruikt om gecachte mediabestanden op de schijf op te slaan, ongeacht of de gebruiker de markering --media-cache-size heeft opgegeven. De waarde die in dit beleid wordt opgegeven, is geen harde grens maar een suggestie voor het cachesysteem. Een waarde die lager is dan een paar megabytes wordt naar boven afgerond.
 
       Als je de waarde van dit beleid instelt op 0, wordt de standaard cachegrootte gebruikt, maar kunnen gebruikers deze niet wijzigen.
@@ -2394,6 +2395,16 @@ Het systeem vraagt AAAA-records alleen op indien bereikbaar voor een algemene IP
 <translation id="2702682139813393777">Afdwingen dat Windows-hosts voor native berichten worden gestart via cmd.exe</translation>
 <translation id="270582584528242502">Geen waarschuwingsdialoogvenster tonen als de gebruiker probeert de browser te sluiten</translation>
 <translation id="2706708761587205154">Afdrukken alleen toestaan met pincode</translation>
+<translation id="2706972066112233185">Met dit beleid bepaal je of het gedeelte Aanbevelingen in de AI-modus zichtbaar is in de adresbalk en het zoekvak op de pagina Nieuw tabblad.
+
+Deze functie is beschikbaar voor alle gebruikers die Google als standaard zoekmachine hebben, tenzij de functie is uitgezet op basis van dit beleid.
+
+Als je het beleid niet instelt, wordt het gedrag bepaald door het beleid <ph name="GEN_AI_DEFAULT_SETTINGS_POLICY_NAME" />.
+
+Als je het beleid instelt op 0 - Enabled of niet instelt, is de functie beschikbaar voor gebruikers. Als je het beleid instelt op 1 - Disabled, is de functie niet beschikbaar.
+
+0 = Sta toe dat de functie wordt gebruikt.
+1 = Sta de functie niet toe.</translation>
 <translation id="2707733461906745082">Profielscheiding</translation>
 <translation id="2707873794476722903">Safe Browsing is actief in de standaardmodus.</translation>
 <translation id="2709516037105925701">Automatisch invullen</translation>
@@ -3335,6 +3346,15 @@ Als je dit beleid niet toepast, is de functie voor voorspellend schrijven op het
 <translation id="3387999258705169775">Standaardgedrag voor genest vastzetten voor de functie setTimeout().</translation>
 <translation id="3388628790024977864">Het <ph name="CLOUD_UPLOAD_NAME" />-proces niet toestaan voor <ph name="GOOGLE_DRIVE_NAME" /> en <ph name="GOOGLE_WORKSPACE_NAME" /></translation>
 <translation id="3389088527709746815">Gnubby-verificatie aanzetten voor de host voor externe toegang</translation>
+<translation id="3393332712712388726">Lijst met URL-patronen. Verzoeken die worden gestart vanaf websites die worden geleverd via overeenkomende oorsprongen, worden niet onderworpen aan <ph name="LOCAL_NETWORK_ACCESS" />-checks.
+
+Als een oorsprong onder zowel dit beleid als LocalNetworkAccessBlockedForUrls valt, heeft LocalNetworkAccessBlockedForUrls voorrang.
+
+Voor oorsprongen die niet overeenkomen met de hier genoemde patronen, is de persoonlijke configuratie van de gebruiker van toepassing.
+
+Ga naar https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns voor gedetailleerde informatie over geldige URL-patronen.
+
+Zie https://github.com/explainers-by-googlers/local-network-access voor beperkingen voor <ph name="LOCAL_NETWORK_ACCESS" />.</translation>
 <translation id="3395744872155955051">Toestaan dat bestanden rechtstreeks worden gekozen uit <ph name="GOOGLE_DRIVE_NAME" /></translation>
 <translation id="3397883909301547525">Geen app-aanbevelingen laten zien in de <ph name="PRODUCT_OS_NAME" />-launcher</translation>
 <translation id="3398051852031115795">Standaard systeemgedrag (afhankelijk van schermgrootte)</translation>
@@ -4045,6 +4065,7 @@ Dit beleid heeft geen effect als het beleid <ph name="ENTERPRISE_PROFILE_BADGE_T
 
  Als je het beleid niet instelt of dit instelt op een lege of ongeldige waarde, wordt er geen extra <ph name="CLIENT_INFO_IPP_ATTRIBUTE" />-waarde toegevoegd aan verzoeken voor afdruktaken.
 </translation>
+<translation id="3895626555961466729">Aanbevelingen in de AI-modus toestaan.</translation>
 <translation id="3896591584655529057">Opslag van toegangssleutels met de wachtwoordmanager aanzetten</translation>
 <translation id="3896751141670591496">Als je dit beleid toepast of niet instelt, worden er beveiligingswaarschuwingen getoond als Chrome wordt gestart met bepaalde mogelijk schadelijke opdrachtregelmarkeringen.
 
@@ -6953,6 +6974,17 @@ Ga naar https://support.google.com/chrome/a?p=generative_ai_settings voor meer i
 <translation id="5860010874344790473">Als je het beleid toepast, worden er systeemlogboeken naar de beheerserver gestuurd, zodat beheerders de systeemlogboeken kunnen controleren.
 
       Als je het beleid niet toepast of niet instelt, worden er geen systeemlogboeken gerapporteerd.</translation>
+<translation id="5860520143792505638">Lijst met URL-patronen. Verzoeken die worden gestart vanaf websites die worden geleverd via overeenkomende oorsprongen, worden geblokkeerd voor het indienen van <ph name="LOCAL_NETWORK_ACCESS" />-verzoeken.
+
+Als een oorsprong zowel door dit beleid als door LocalNetworkAccessAllowedForUrls wordt gedekt, heeft dit beleid voorrang.
+
+Afhankelijk van de fase van de uitrol van <ph name="LOCAL_NETWORK_ACCESS" /> moet LocalNetworkAccessRestrictionsEnabled misschien ook worden aangezet om te voorkomen dat dit beleid <ph name="LOCAL_NETWORK_ACCESS" />-verzoeken blokkeert.
+
+Voor oorsprongen die niet overeenkomen met de hier genoemde patronen, is de persoonlijke configuratie van de gebruiker van toepassing.
+
+Ga naar https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns voor gedetailleerde informatie over geldige URL-patronen.
+
+Zie https://github.com/explainers-by-googlers/local-network-access voor beperkingen voor <ph name="LOCAL_NETWORK_ACCESS" />.</translation>
 <translation id="5861856285460256766">Configuratie van toegangscode voor ouders</translation>
 <translation id="5864898931148094192">Bepalen of de toeschrijving van de extensie zichtbaar is op de pagina Nieuw tabblad</translation>
 <translation id="5868414965372171132">Netwerkconfiguratie op gebruikersniveau</translation>
@@ -10440,6 +10472,7 @@ Meer informatie over verouderde technologieën vind je op https://chromestatus.c
 <ph name="TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />,
 <ph name="SAME_ORIGIN_TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />.
       </translation>
+<translation id="8309511882585098865">Aanbevelingen in de AI-modus niet toestaan.</translation>
 <translation id="8310392396850884147">CORS-verzoekheaders zonder jokertekens ondersteunen.</translation>
 <translation id="8312129124898414409">Hiermee kun je instellen of websites sleutels mogen genereren. Het genereren van sleutels kan ofwel worden toegestaan voor alle websites ofwel worden geweigerd voor alle websites.
 

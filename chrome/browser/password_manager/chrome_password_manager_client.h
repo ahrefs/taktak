@@ -131,12 +131,12 @@ class ChromePasswordManagerClient
   static void CreateForWebContents(content::WebContents* contents);
   static void BindPasswordGenerationDriver(
       mojo::PendingAssociatedReceiver<autofill::mojom::PasswordGenerationDriver>
-          receiver,
+      receiver,
       content::RenderFrameHost* rfh);
 
   ChromePasswordManagerClient(const ChromePasswordManagerClient&) = delete;
   ChromePasswordManagerClient& operator=(const ChromePasswordManagerClient&) =
-      delete;
+  delete;
 
   ~ChromePasswordManagerClient() override;
 
@@ -149,7 +149,7 @@ class ChromePasswordManagerClient
       bool is_update) override;
   void PromptUserToMovePasswordToAccount(
       std::unique_ptr<password_manager::PasswordFormManagerForUI> form_to_move)
-      override;
+  override;
   void ShowManualFallbackForSaving(
       std::unique_ptr<password_manager::PasswordFormManagerForUI> form_to_save,
       bool has_generated_password,
@@ -179,7 +179,7 @@ class ChromePasswordManagerClient
   // This is currently only implemented for Android, Mac and Windows. On all
   // other platforms this will always be null.
   std::unique_ptr<device_reauth::DeviceAuthenticator> GetDeviceAuthenticator()
-      override;
+  override;
   void GeneratePassword(
       autofill::password_generation::PasswordGenerationType type) override;
   void NotifyUserAutoSignin(
@@ -189,7 +189,7 @@ class ChromePasswordManagerClient
       std::unique_ptr<password_manager::PasswordForm> form) override;
   void NotifySuccessfulLoginWithExistingPassword(
       std::unique_ptr<password_manager::PasswordFormManagerForUI>
-          submitted_manager) override;
+      submitted_manager) override;
   bool IsPasswordChangeOngoing() override;
   void NotifyStorePasswordCalled() override;
   void NotifyOnSuccessfulLogin(
@@ -204,10 +204,10 @@ class ChromePasswordManagerClient
       base::span<const password_manager::PasswordForm> best_matches,
       bool is_blocklisted,
       std::optional<password_manager::PasswordStoreBackendError> backend_error)
-      override;
+  override;
   void AutomaticPasswordSave(
       std::unique_ptr<password_manager::PasswordFormManagerForUI>
-          saved_form_manager,
+      saved_form_manager,
       bool is_update_confirmation) override;
   void PasswordWasAutofilled(
       base::span<const password_manager::PasswordForm> best_matches,
@@ -225,13 +225,13 @@ class ChromePasswordManagerClient
   const syncer::SyncService* GetSyncService() const override;
   affiliations::AffiliationService* GetAffiliationService() override;
   password_manager::PasswordStoreInterface* GetProfilePasswordStore()
-      const override;
+  const override;
   password_manager::PasswordStoreInterface* GetAccountPasswordStore()
-      const override;
+  const override;
   password_manager::PasswordReuseManager* GetPasswordReuseManager()
-      const override;
+  const override;
   password_manager::PasswordChangeServiceInterface* GetPasswordChangeService()
-      const override;
+  const override;
   bool WasLastNavigationHTTPError() const override;
 
   net::CertStatus GetMainFrameCertStatus() const override;
@@ -239,19 +239,19 @@ class ChromePasswordManagerClient
   bool IsOffTheRecord() const override;
   profile_metrics::BrowserProfileType GetProfileType() const override;
   const password_manager::PasswordManagerInterface* GetPasswordManager()
-      const override;
+  const override;
   using password_manager::PasswordManagerClient::GetPasswordFeatureManager;
   const password_manager::PasswordFeatureManager* GetPasswordFeatureManager()
-      const override;
+  const override;
   password_manager::HttpAuthManager* GetHttpAuthManager() override;
   password_manager::OtpManager* GetOtpManager() override;
   autofill::AutofillCrowdsourcingManager* GetAutofillCrowdsourcingManager()
-      override;
+  override;
   bool IsCommittedMainFrameSecure() const override;
   const GURL& GetLastCommittedURL() const override;
   url::Origin GetLastCommittedOrigin() const override;
   const password_manager::CredentialsFilter* GetStoreResultFilter()
-      const override;
+  const override;
   autofill::LogManager* GetCurrentLogManager() override;
   void AnnotateNavigationEntry(bool has_password_field) override;
   autofill::LanguageCode GetPageLanguage() const override;
@@ -291,7 +291,7 @@ class ChromePasswordManagerClient
 
   ukm::SourceId GetUkmSourceId() override;
   password_manager::PasswordManagerMetricsRecorder* GetMetricsRecorder()
-      override;
+  override;
 #if BUILDFLAG(IS_ANDROID)
   password_manager::FirstCctPageLoadPasswordsUkmRecorder*
   GetFirstCctPageLoadUkmRecorder() override;
@@ -345,7 +345,7 @@ class ChromePasswordManagerClient
   // autofill::mojom::PasswordGenerationDriver overrides.
   void AutomaticGenerationAvailable(
       const autofill::password_generation::PasswordGenerationUIData& ui_data)
-      override;
+  override;
   void PresaveGeneratedPassword(const autofill::FormData& form_data,
                                 const std::u16string& password_value) override;
   void PasswordNoLongerGenerated(const autofill::FormData& form_data) override;
@@ -451,7 +451,7 @@ class ChromePasswordManagerClient
                               FieldTypeSource source) override;
 
   password_manager::ContentPasswordManagerDriverFactory* GetDriverFactory()
-      const;
+  const;
 
   // Given |bounds| in the renderers coordinate system, return the same bounds
   // in the screens coordinate system.
@@ -474,7 +474,7 @@ class ChromePasswordManagerClient
       autofill::password_generation::PasswordGenerationType type,
       base::WeakPtr<password_manager::ContentPasswordManagerDriver> driver,
       const std::optional<
-          autofill::password_generation::PasswordGenerationUIData>& ui_data);
+      autofill::password_generation::PasswordGenerationUIData>& ui_data);
 
 #if !BUILDFLAG(IS_ANDROID)
   void ShowPasswordGenerationPopup(

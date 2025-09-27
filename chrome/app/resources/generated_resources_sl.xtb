@@ -1947,6 +1947,7 @@ Nastavitve tega računa je mogoče upravljati z namestitvijo aplikacije Family L
 <translation id="2312219318583366810">URL strani</translation>
 <translation id="2314165183524574721">Trenutna nastavitev vidnosti je skrita</translation>
 <translation id="2314774579020744484">Jezik, ki se uporablja za prevajanje strani</translation>
+<translation id="2316090909467242775">Preizkusite to geslo za obnovitev</translation>
 <translation id="2316129865977710310">Ne, hvala</translation>
 <translation id="2316433409811863464">Pretočno izvajanje aplikacije</translation>
 <translation id="2316709634732130529">Uporabi predlagano geslo</translation>
@@ -4072,6 +4073,7 @@ Domena <ph name="DOMAIN" /> zahteva, da je pametna kartica vstavljena.</translat
 <translation id="3792973596468118484">Št. razširitev: <ph name="NUM_EXTENSIONS" /></translation>
 <translation id="3794792524918736965">Vklopite funkcijo Windows Hello</translation>
 <translation id="379509625511193653">Izklopljeno</translation>
+<translation id="3795624560191557077">Nedavno ste spremenili geslo, najdeno v javni podatkovni kršitvi. Če imate težave, vam lahko Googlov upravitelj gesel pomaga pri prijavi.</translation>
 <translation id="3796215473395753611">alt + puščica gor</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, uporabite puščico desno za predogled glasu</translation>
 <translation id="3796648294839530037">Priljubljena omrežja:</translation>
@@ -5897,6 +5899,7 @@ Za pomanjšavo pritisnite Ctrl + Alt + tipko za zmanjšanje svetlosti.</translat
 <translation id="5088534251099454936">PKCS #1 SHA-512 s šifriranjem RSA</translation>
 <translation id="5090637338841444533">Ni dovoljeno spremljanje položaja kamere</translation>
 <translation id="5091636240353511739">Prikaz kode PIN</translation>
+<translation id="5093417502834168387">Imate težave pri prijavi? Poskusite drugače.</translation>
 <translation id="5093477827231450397">Seznam blokiranih spletnih mest, za katera ne želite, da predlagajo oglase drugim spletnim mestom</translation>
 <translation id="5093569275467863761">Anonimni podokvir v predpomnilniku za hitro obnovitev strani: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Podprte datoteke lahko s to aplikacijo odpirate in urejate v aplikaciji Datoteke ali drugih aplikacijah. Če želite upravljati, katere datoteke to aplikacijo privzeto odprejo, <ph name="BEGIN_LINK" />preberite, kako nastavite privzete aplikacije v napravi<ph name="END_LINK" />.</translation>
@@ -7697,6 +7700,7 @@ Domena <ph name="DOMAIN" /> zahteva, da je pametna kartica vstavljena.</translat
 <translation id="6388577073199278153">Nimate dostopa do računa mobilne naprave</translation>
 <translation id="6390020764191254941">Premik zavihka v novo okno</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Nič}=1{Za <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> in še 1}one{Za <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> in še {COUNT}}two{Za <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> in še {COUNT}}few{Za <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> in še {COUNT}}other{Za <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> in še {COUNT}}}</translation>
+<translation id="6390533465682072118">Obnovitev</translation>
 <translation id="6391131092053186625">IMEI naprave je <ph name="IMEI_NUMBER" />. To številko je mogoče uporabiti pri aktiviranju storitve.</translation>
 <translation id="6393156038355142111">Predlagaj močno geslo</translation>
 <translation id="6393550101331051049">Dovoljeno je prikazovanje vsebine, ki ni varna</translation>

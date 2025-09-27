@@ -9,12 +9,14 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import proto2_unittest.UnittestProto.TestDeprecatedFields;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Method;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestProto.TestDeprecatedFields;
+
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Method;
 
 /** Test field deprecation. */
 @RunWith(JUnit4.class)

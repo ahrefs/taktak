@@ -147,9 +147,9 @@ public class ObserverList<E> implements Iterable<E> {
     }
 
     /**
-     * It's the same as {@link ObserverList#iterator()} but the return type is
-     * {@link RewindableIterator}. Use this iterator type if you need to use
-     * {@link RewindableIterator#rewind()}.
+     * It's the same as {@link ObserverList#iterator()} but the return type is {@link
+     * RewindableIterator}. Use this iterator type if you need to use {@link
+     * RewindableIterator#rewind()}.
      */
     public RewindableIterator<E> rewindableIterator() {
         assertSameThreadUsed();
@@ -157,8 +157,8 @@ public class ObserverList<E> implements Iterable<E> {
     }
 
     /**
-     * Returns the number of observers currently registered in the ObserverList.
-     * This is equivalent to the number of non-empty spaces in |mObservers|.
+     * Returns the number of observers currently registered in the ObserverList. This is equivalent
+     * to the number of non-empty spaces in |mObservers|.
      */
     public int size() {
         assertSameThreadUsed();
@@ -186,15 +186,15 @@ public class ObserverList<E> implements Iterable<E> {
         } catch (AssertionError e) {
             throw new AssertionError(
                     "ObserverList is not thread-safe; Observers MUST be added, removed and will be"
-                        + " notified on the thread that created the ObserverList.",
+                            + " notified on the thread that created the ObserverList.",
                     e);
         }
     }
 
     /**
      * Compact the underlying list be removing null elements.
-     * <p/>
-     * Should only be called when mIterationDepth is zero.
+     *
+     * <p>Should only be called when mIterationDepth is zero.
      */
     private void compact() {
         assert mIterationDepth == 0;

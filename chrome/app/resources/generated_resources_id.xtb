@@ -1944,6 +1944,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="2312219318583366810">URL Halaman</translation>
 <translation id="2314165183524574721">Visibilitas saat ini disetel ke tersembunyi</translation>
 <translation id="2314774579020744484">Bahasa yang digunakan saat menerjemahkan halaman</translation>
+<translation id="2316090909467242775">Coba sandi pemulihan ini</translation>
 <translation id="2316129865977710310">Lain kali</translation>
 <translation id="2316433409811863464">Streaming Aplikasi</translation>
 <translation id="2316709634732130529">Gunakan Sandi yang Disarankan</translation>
@@ -4069,6 +4070,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> ekstensi</translation>
 <translation id="3794792524918736965">Aktifkan Windows Hello</translation>
 <translation id="379509625511193653">Nonaktif</translation>
+<translation id="3795624560191557077">Anda baru-baru ini mengubah sandi yang ditemukan dalam pelanggaran data publik. Jika terjadi masalah, Pengelola Sandi Google dapat membantu Anda login.</translation>
 <translation id="3796215473395753611">alt + panah atas</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, gunakan tombol panah kanan untuk mendengarkan pratinjau suara</translation>
 <translation id="3796648294839530037">Jaringan Favorit:</translation>
@@ -5894,6 +5896,7 @@ Gunakan Ctrl + Alt + Kurangi kecerahan untuk memperkecil.</translation>
 <translation id="5088534251099454936">PKCS #1 SHA-512 Dengan Enkripsi RSA</translation>
 <translation id="5090637338841444533">Tidak diizinkan melacak posisi kamera Anda</translation>
 <translation id="5091636240353511739">Tampilkan PIN</translation>
+<translation id="5093417502834168387">Mengalami masalah saat login? Coba cara lain</translation>
 <translation id="5093477827231450397">Daftar situs yang Anda blokir dan tidak diizinkan untuk memberikan saran iklan ke situs lain</translation>
 <translation id="5093569275467863761">Subframe Samaran yang Disimpan di Back/Forward Cache: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Anda dapat membuka dan mengedit file yang didukung dengan aplikasi ini dari aplikasi File atau aplikasi lainnya. Untuk mengontrol file mana yang akan dibuka dengan aplikasi ini secara default, <ph name="BEGIN_LINK" />pelajari cara menyetel aplikasi default di perangkat Anda<ph name="END_LINK" />.</translation>
@@ -7692,6 +7695,7 @@ Anda dapat menetapkan beberapa tombol akses untuk tindakan ini.</translation>
 <translation id="6388577073199278153">Tidak dapat mengakses akun seluler Anda</translation>
 <translation id="6390020764191254941">Pindahkan Tab ke Jendela Baru</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Tidak ada}=1{Untuk <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" />, dan 1 lainnya}other{Untuk <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" />, dan {COUNT} lainnya}}</translation>
+<translation id="6390533465682072118">Pemulihan</translation>
 <translation id="6391131092053186625">IMEI perangkat Anda adalah <ph name="IMEI_NUMBER" />. Nomor ini dapat digunakan untuk membantu mengaktifkan layanan.</translation>
 <translation id="6393156038355142111">Sarankan sandi yang kuat</translation>
 <translation id="6393550101331051049">Diizinkan menampilkan konten yang tidak aman</translation>

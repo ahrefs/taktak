@@ -34,6 +34,7 @@ package com.google.protobuf.jruby;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Descriptors.MethodDescriptor;
+
 import org.jruby.*;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
@@ -41,8 +42,6 @@ import org.jruby.runtime.Block;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
-import org.jruby.anno.JRubyClass;
-import org.jruby.anno.JRubyMethod;
 
 @JRubyClass(name = "MethoDescriptor")
 public class RubyMethodDescriptor extends RubyObject {
@@ -146,32 +145,34 @@ public class RubyMethodDescriptor extends RubyObject {
     return this.descriptor.isServerStreaming()
         ? context.runtime.getTrue()
         : context.runtime.getFalse();
-  }
+    }
 
-  /*
-   * call-seq:
-   *     MethodDescriptor.to_proto => MethodDescriptorProto
-   *
-   * Returns the `MethodDescriptorProto` of this `MethodDescriptor`.
-   */
-  @JRubyMethod(name = "to_proto")
-  public IRubyObject toProto(ThreadContext context) {
-    RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
-    RubyDescriptor methodDescriptorProto =
-        (RubyDescriptor)
-            pool.lookup(
-                context, context.runtime.newString("google.protobuf.MethodDescriptorProto"));
-    RubyClass msgClass = (RubyClass) methodDescriptorProto.msgclass(context);
-    RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
-    return msg.decodeBytes(
-        context,
-        msg,
-        CodedInputStream.newInstance(descriptor.toProto().toByteString().toByteArray()), /*freeze*/
-        true);
-  }
+    /*
+     * call-seq:
+     *     MethodDescriptor.to_proto => MethodDescriptorProto
+     *
+     * Returns the `MethodDescriptorProto` of this `MethodDescriptor`.
+     */
+    @JRubyMethod(name = "to_proto")
+    public IRubyObject toProto(ThreadContext context) {
+        RubyDescriptorPool pool = (RubyDescriptorPool) RubyDescriptorPool.generatedPool(null, null);
+        RubyDescriptor methodDescriptorProto =
+                (RubyDescriptor)
+                        pool.lookup(
+                                context,
+                                context.runtime.newString("google.protobuf.MethodDescriptorProto"));
+        RubyClass msgClass = (RubyClass) methodDescriptorProto.msgclass(context);
+        RubyMessage msg = (RubyMessage) msgClass.newInstance(context, Block.NULL_BLOCK);
+        return msg.decodeBytes(
+                context,
+                msg,
+                CodedInputStream.newInstance(
+                        descriptor.toProto().toByteString().toByteArray()), /*freeze*/
+                true);
+    }
 
-  protected void setDescriptor(
-      ThreadContext context, MethodDescriptor descriptor, RubyDescriptorPool pool) {
+    protected void setDescriptor(
+            ThreadContext context, MethodDescriptor descriptor, RubyDescriptorPool pool) {
     this.descriptor = descriptor;
     this.pool = pool;
   }

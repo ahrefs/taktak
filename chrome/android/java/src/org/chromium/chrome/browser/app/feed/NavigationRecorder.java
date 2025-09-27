@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.app.feed;
 
-
 import android.os.SystemClock;
 
 import org.chromium.base.Callback;

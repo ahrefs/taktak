@@ -34,8 +34,9 @@ public class AutofillAddressEditorUiInfo {
     }
 
     @CalledByNative
-    public @JniType("std::vector<AutofillAddressUiComponentAndroid>")
-            List<AutofillAddressUiComponent> getComponents() {
+    public @JniType("std::vector<AutofillAddressUiComponentAndroid>") List<
+                    AutofillAddressUiComponent>
+            getComponents() {
         return mComponents;
     }
 }

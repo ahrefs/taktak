@@ -1932,6 +1932,7 @@ Poți gestiona setările contului dacă instalezi aplicația Family Link pe disp
 <translation id="2312219318583366810">Adresa URL a paginii</translation>
 <translation id="2314165183524574721">Setarea de vizibilitate actuală este ascunsă</translation>
 <translation id="2314774579020744484">Limbi folosite la traducerea paginilor</translation>
+<translation id="2316090909467242775">Încearcă această parolă de recuperare</translation>
 <translation id="2316129865977710310">Nu, mulțumesc</translation>
 <translation id="2316433409811863464">Streaming de aplicație</translation>
 <translation id="2316709634732130529">Folosește parola sugerată</translation>
@@ -4056,6 +4057,7 @@ Mesaj de la server: <ph name="SERVER_MSG" /></translation>
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> extensii</translation>
 <translation id="3794792524918736965">Activează Windows Hello</translation>
 <translation id="379509625511193653">Dezactivat</translation>
+<translation id="3795624560191557077">Ai schimbat recent o parolă găsită într-o încălcare a securității datelor publice. În caz de probleme, Managerul de parole Google te poate ajuta să te conectezi.</translation>
 <translation id="3796215473395753611">alt + săgeată în sus</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, folosește tasta săgeată spre dreapta pentru a asculta o mostră a vocii selectate</translation>
 <translation id="3796648294839530037">Rețele preferate:</translation>
@@ -5880,6 +5882,7 @@ Folosește Ctrl + Alt + tasta de reducere a luminozității pentru a micșora.</
 <translation id="5088534251099454936">PKCS #1 SHA-512 cu criptare RSA</translation>
 <translation id="5090637338841444533">Nu au permisiunea de a urmări poziția camerei</translation>
 <translation id="5091636240353511739">Afișează codul PIN</translation>
+<translation id="5093417502834168387">Probleme la conectare? Încearcă altă metodă</translation>
 <translation id="5093477827231450397">Lista site-urilor pe care le-ai blocat și care nu vrei să sugereze anunțuri pentru alte site-uri</translation>
 <translation id="5093569275467863761">Subcadru incognito din memoria cache înainte-înapoi: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Poți să deschizi și să editezi fișierele acceptate în această aplicație din aplicația Fișiere sau din alte aplicații. Pentru a alege fișierele care deschid aplicația în mod prestabilit, <ph name="BEGIN_LINK" />află cum să setezi aplicații prestabilite pe dispozitiv<ph name="END_LINK" />.</translation>
@@ -7677,6 +7680,7 @@ Poți atribui mai multe comutatoare acestei acțiuni.</translation>
 <translation id="6388577073199278153">Nu îți poți accesa contul</translation>
 <translation id="6390020764191254941">Mută fila în fereastră nouă</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Niciuna}=1{Pentru <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> și încă unul}few{Pentru <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> și încă {COUNT}}other{Pentru <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> și încă {COUNT}}}</translation>
+<translation id="6390533465682072118">Recuperare</translation>
 <translation id="6391131092053186625">Numărul IMEI al dispozitivului este <ph name="IMEI_NUMBER" />. Acest număr poate fi folosit pentru activarea serviciului.</translation>
 <translation id="6393156038355142111">Sugerează o parolă puternică</translation>
 <translation id="6393550101331051049">Au permisiunea de a afișa conținut nesigur</translation>

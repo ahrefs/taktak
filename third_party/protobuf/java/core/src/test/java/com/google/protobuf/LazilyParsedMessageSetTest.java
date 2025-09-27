@@ -9,15 +9,17 @@ package com.google.protobuf;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import proto2_unittest.UnittestMset.RawMessageSet;
-import proto2_unittest.UnittestMset.TestMessageSetExtension1;
-import proto2_unittest.UnittestMset.TestMessageSetExtension2;
-import proto2_unittest.UnittestMset.TestMessageSetExtension3;
-import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import proto2_unittest.UnittestMset.RawMessageSet;
+import proto2_unittest.UnittestMset.TestMessageSetExtension1;
+import proto2_unittest.UnittestMset.TestMessageSetExtension2;
+import proto2_unittest.UnittestMset.TestMessageSetExtension3;
+
+import proto2_wireformat_unittest.UnittestMsetWireFormat.TestMessageSet;
 
 /** Tests related to handling of MessageSets with lazily parsed extensions. */
 @RunWith(JUnit4.class)
@@ -157,44 +159,46 @@ public class LazilyParsedMessageSetTest {
                 RawMessageSet.Item.newBuilder().setTypeId(TYPE_ID_1).setMessage(ByteString.empty()))
             .build();
 
-    assertThat(actualRaw).isEqualTo(expectedRaw);
-  }
+        assertThat(actualRaw).isEqualTo(expectedRaw);
+    }
 
-  @Test
-  public void testLoadCorruptedLazyField_getSerializedSize() throws Exception {
-    ExtensionRegistry extensionRegistry = ExtensionRegistry.newInstance();
-    extensionRegistry.add(TestMessageSetExtension1.messageSetExtension);
-    RawMessageSet inputRaw =
-        RawMessageSet.newBuilder()
-            .addItem(
-                RawMessageSet.Item.newBuilder()
-                    .setTypeId(TYPE_ID_1)
-                    .setMessage(CORRUPTED_MESSAGE_PAYLOAD))
-            .build();
-    ByteString inputData = inputRaw.toByteString();
-    TestMessageSet messageSet = TestMessageSet.parseFrom(inputData, extensionRegistry);
+    @Test
+    public void testLoadCorruptedLazyField_getSerializedSize() throws Exception {
+        ExtensionRegistry extensionRegistry = ExtensionRegistry.newInstance();
+        extensionRegistry.add(TestMessageSetExtension1.messageSetExtension);
+        RawMessageSet inputRaw =
+                RawMessageSet.newBuilder()
+                        .addItem(
+                                RawMessageSet.Item.newBuilder()
+                                        .setTypeId(TYPE_ID_1)
+                                        .setMessage(CORRUPTED_MESSAGE_PAYLOAD))
+                        .build();
+        ByteString inputData = inputRaw.toByteString();
+        TestMessageSet messageSet = TestMessageSet.parseFrom(inputData, extensionRegistry);
 
-    // Effectively cache the serialized size of the message set.
-    assertThat(messageSet.getSerializedSize()).isEqualTo(9);
+        // Effectively cache the serialized size of the message set.
+        assertThat(messageSet.getSerializedSize()).isEqualTo(9);
 
-    // getExtension should mark the memoized size as "dirty" (i.e. -1).
-    assertThat(messageSet.getExtension(TestMessageSetExtension1.messageSetExtension))
-        .isEqualTo(TestMessageSetExtension1.getDefaultInstance());
+        // getExtension should mark the memoized size as "dirty" (i.e. -1).
+        assertThat(messageSet.getExtension(TestMessageSetExtension1.messageSetExtension))
+                .isEqualTo(TestMessageSetExtension1.getDefaultInstance());
 
-    // toByteString calls getSerializedSize() which should re-compute the serialized size as the
-    // message contains lazy fields.
-    ByteString outputData = messageSet.toByteString();
+        // toByteString calls getSerializedSize() which should re-compute the serialized size as the
+        // message contains lazy fields.
+        ByteString outputData = messageSet.toByteString();
 
-    // Re-parse as RawMessageSet
-    RawMessageSet actualRaw =
-        RawMessageSet.parseFrom(outputData, ExtensionRegistry.getEmptyRegistry());
+        // Re-parse as RawMessageSet
+        RawMessageSet actualRaw =
+                RawMessageSet.parseFrom(outputData, ExtensionRegistry.getEmptyRegistry());
 
-    RawMessageSet expectedRaw =
-        RawMessageSet.newBuilder()
-            .addItem(
-                RawMessageSet.Item.newBuilder().setTypeId(TYPE_ID_1).setMessage(ByteString.empty()))
-            .build();
+        RawMessageSet expectedRaw =
+                RawMessageSet.newBuilder()
+                        .addItem(
+                                RawMessageSet.Item.newBuilder()
+                                        .setTypeId(TYPE_ID_1)
+                                        .setMessage(ByteString.empty()))
+                        .build();
 
-    assertThat(actualRaw).isEqualTo(expectedRaw);
-  }
+        assertThat(actualRaw).isEqualTo(expectedRaw);
+    }
 }

@@ -14,10 +14,8 @@ import java.nio.ByteBuffer;
 public class WebContentsState {
     /**
      * Version number of the format used to save the WebContents navigation history, as returned by
-     * TabStateJni.get().getContentsStateAsByteBuffer(). Version labels:
-     *   0 - Chrome m18
-     *   1 - Chrome m25
-     *   2 - Chrome m26+
+     * TabStateJni.get().getContentsStateAsByteBuffer(). Version labels: 0 - Chrome m18 1 - Chrome
+     * m25 2 - Chrome m26+
      */
     public static final int CONTENTS_STATE_CURRENT_VERSION = 2;
 
@@ -50,12 +48,16 @@ public class WebContentsState {
         mVersion = version;
     }
 
-    /** @return Title currently being displayed in the saved state's current entry. */
+    /**
+     * @return Title currently being displayed in the saved state's current entry.
+     */
     public @Nullable String getDisplayTitleFromState() {
         return WebContentsStateBridge.getDisplayTitleFromState(this);
     }
 
-    /** @return URL currently being displayed in the saved state's current entry. */
+    /**
+     * @return URL currently being displayed in the saved state's current entry.
+     */
     public @Nullable String getVirtualUrlFromState() {
         return WebContentsStateBridge.getVirtualUrlFromState(this);
     }

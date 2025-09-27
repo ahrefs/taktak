@@ -60,8 +60,8 @@ public class OverlayPanelManager {
     private @Nullable OverlayPanel mActivePanel;
 
     /**
-     * If a panel was being shown and another panel with higher priority was requested to show,
-     * the lower priority one is stored here.
+     * If a panel was being shown and another panel with higher priority was requested to show, the
+     * lower priority one is stored here.
      */
     private final Queue<OverlayPanel> mSuppressedPanels;
 

@@ -1924,6 +1924,7 @@
 <translation id="2312219318583366810">网页网址</translation>
 <translation id="2314165183524574721">当前的公开范围设置是“已隐藏”</translation>
 <translation id="2314774579020744484">翻译页面时使用的语言</translation>
+<translation id="2316090909467242775">请尝试使用此恢复密码</translation>
 <translation id="2316129865977710310">不用了，谢谢</translation>
 <translation id="2316433409811863464">应用串流</translation>
 <translation id="2316709634732130529">使用建议的密码</translation>
@@ -4046,6 +4047,7 @@
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> 个扩展程序</translation>
 <translation id="3794792524918736965">开启 Windows Hello</translation>
 <translation id="379509625511193653">已关闭</translation>
+<translation id="3795624560191557077">您最近更改了遭遇公开数据泄露的密码。如果您遇到问题，Google 密码管理工具可以帮助您登录。</translation>
 <translation id="3796215473395753611">alt + 向上键</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />，点按播放按钮可试听语音</translation>
 <translation id="3796648294839530037">收藏的网络：</translation>
@@ -5869,6 +5871,7 @@
 <translation id="5088534251099454936">PKCS #1，带有 RSA 加密的 SHA-512</translation>
 <translation id="5090637338841444533">不允许跟踪您的摄像头位置</translation>
 <translation id="5091636240353511739">显示 PIN 码</translation>
+<translation id="5093417502834168387">无法登录？请试试其他方式</translation>
 <translation id="5093477827231450397">网站列表，这些网站已被您屏蔽，因为您不想让它们向其他网站建议广告</translation>
 <translation id="5093569275467863761">无痕式往返缓存版子框架：<ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">您可以在“文件”应用或其他应用中，使用此应用打开和编辑支持的文件。若要控制哪些文件默认打开此应用，请<ph name="BEGIN_LINK" />了解如何在设备上设置默认应用<ph name="END_LINK" />。</translation>
@@ -7663,6 +7666,7 @@
 <translation id="6388577073199278153">无法访问您的移动账号</translation>
 <translation id="6390020764191254941">将标签页移至新窗口</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{无}=1{适用于 <ph name="EXAMPLE_DOMAIN_1" />、<ph name="EXAMPLE_DOMAIN_2" /> 和另外 1 个网域}other{适用于 <ph name="EXAMPLE_DOMAIN_1" />、<ph name="EXAMPLE_DOMAIN_2" /> 和另外 {COUNT} 个网域}}</translation>
+<translation id="6390533465682072118">恢复</translation>
 <translation id="6391131092053186625">您的设备 IMEI 为 <ph name="IMEI_NUMBER" />。此号码可用于帮助激活服务。</translation>
 <translation id="6393156038355142111">建议一个安全系数高的密码</translation>
 <translation id="6393550101331051049">允许显示不安全内容</translation>
@@ -9159,7 +9163,7 @@
 <translation id="7453008956351770337">选择此打印机即表示您允许以下扩展程序访问您的打印机：</translation>
 <translation id="7453032093368223821">管理其他数据</translation>
 <translation id="7454548535253569100">门户网站：<ph name="SUBFRAME_SITE" /></translation>
-<translation id="7454744349230173024">贵组织已关闭密码保存功能</translation>
+<translation id="7454744349230173024">您的组织已关闭保存密码的功能</translation>
 <translation id="7455730275746867420">管理额外容器</translation>
 <translation id="7455988709578031708">根据您的浏览记录推测得出。此设置已开启。</translation>
 <translation id="7456142309650173560">开发者版本</translation>

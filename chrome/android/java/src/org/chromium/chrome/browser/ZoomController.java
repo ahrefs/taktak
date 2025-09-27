@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser;
 
-
 import android.os.SystemClock;
 
 import org.chromium.build.annotations.NullMarked;
@@ -16,8 +15,9 @@ import org.chromium.ui.base.GestureEventType;
 
 /**
  * Handles zoom in/out WebContents.
- * <p>The methods use the term 'zoom' for legacy reasons, but relates
- * to what chrome calls the 'page scale factor'.
+ *
+ * <p>The methods use the term 'zoom' for legacy reasons, but relates to what chrome calls the 'page
+ * scale factor'.
  */
 @NullMarked
 public class ZoomController {

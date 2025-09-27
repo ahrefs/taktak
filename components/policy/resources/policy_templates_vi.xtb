@@ -990,6 +990,7 @@ Cho phép sử dụng ký tự đại diện <ph name="WILDCARD_VALUE" />.
 Những nguồn gốc khớp với cả mẫu bị chính sách chặn và mẫu được chính sách cho phép sẽ bị chặn.
 Những nguồn gốc không được chính sách hay chế độ cài đặt của người dùng chỉ định sẽ cần có cử chỉ trước đó của người dùng để gọi API này.</translation>
 <translation id="1645793986494086629">Lược đồ:</translation>
+<translation id="1647420986475965896">Chế độ cài đặt cho đề xuất tìm kiếm của Chế độ AI trong thanh địa chỉ và hộp tìm kiếm trên trang thẻ mới</translation>
 <translation id="1647558381546345298">Việc đặt chính sách này sẽ định cấu hình kích thước bộ nhớ đệm mà <ph name="PRODUCT_NAME" /> dùng để lưu trữ tệp nội dung nghe nhìn được lưu vào bộ nhớ đệm trên ổ đĩa, cho dù người dùng có chỉ định cờ --media-cache-size hay không. Giá trị được chỉ định trong chính sách này không phải là một giới hạn bắt buộc mà là gợi ý dành cho hệ thống lưu vào bộ nhớ đệm. Mọi giá trị dưới vài megabyte sẽ được làm tròn lên.
 
       Khi bạn đặt giá trị của chính sách này thành 0, kích thước bộ nhớ đệm mặc định sẽ được sử dụng và người dùng không thay đổi được kích thước này.
@@ -2417,6 +2418,16 @@ Hệ thống chỉ truy vấn bản ghi AAAA khi thiết bị có thể kết n�
 <translation id="2702682139813393777">Buộc Máy chủ nhắn tin gốc của Windows khởi chạy thông qua cmd.exe</translation>
 <translation id="270582584528242502">Không hiện hộp thoại nhắc nhở khi người dùng định thoát</translation>
 <translation id="2706708761587205154">Chỉ cho phép in khi có mã PIN</translation>
+<translation id="2706972066112233185">Chính sách này kiểm soát đề xuất của Chế độ AI trong thanh địa chỉ và hộp tìm kiếm trên trang thẻ mới.
+
+Tất cả người dùng đặt Google làm công cụ tìm kiếm mặc định đều có thể sử dụng tính năng này, trừ phi tính năng này bị tắt theo chính sách này.
+
+Nếu bạn không đặt chính sách này thì hành vi của chính sách sẽ do chính sách <ph name="GEN_AI_DEFAULT_SETTINGS_POLICY_NAME" /> xác định.
+
+Khi bạn đặt chính sách thành 0 – Bật hoặc không đặt, người dùng sẽ có thể sử dụng tính năng này. Khi bạn đặt chính sách này thành 1 – Tắt, người dùng sẽ không thể sử dụng tính năng này.
+
+0 = Cho phép sử dụng tính năng này
+1 = Không cho phép sử dụng tính năng này.</translation>
 <translation id="2707733461906745082">Phân tách hồ sơ</translation>
 <translation id="2707873794476722903">Tính năng Duyệt web an toàn đang hoạt động ở chế độ chuẩn.</translation>
 <translation id="2709516037105925701">Tự động điền</translation>
@@ -3363,6 +3374,15 @@ Nếu bạn đặt chính sách này thành Tắt, tính năng gợi ý khi vi�
 <translation id="3387999258705169775">Hành vi mặc định cho hàm setTimeout() được lồng.</translation>
 <translation id="3388628790024977864">Không cho phép quy trình <ph name="CLOUD_UPLOAD_NAME" /> cho <ph name="GOOGLE_DRIVE_NAME" /> và <ph name="GOOGLE_WORKSPACE_NAME" /></translation>
 <translation id="3389088527709746815">Bật chế độ xác thực gnubby đối với máy chủ truy cập từ xa</translation>
+<translation id="3393332712712388726">Danh sách mẫu URL. Các yêu cầu bắt nguồn từ trang web do các nguồn gốc trùng khớp phân phát sẽ không phải trải qua bước kiểm tra <ph name="LOCAL_NETWORK_ACCESS" />.
+
+Nếu một nguồn gốc được áp dụng cả chính sách này và LocalNetworkAccessBlockedForUrls, thì LocalNetworkAccessBlockedForUrls sẽ được ưu tiên.
+
+Đối với những nguồn gốc không được áp dụng các mẫu nêu ở đây, cấu hình cá nhân của người dùng sẽ được áp dụng.
+
+Để biết thông tin chi tiết về mẫu URL hợp lệ, vui lòng truy cập https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns.
+
+Hãy truy cập https://github.com/explainers-by-googlers/local-network-access để biết các quy định hạn chế về <ph name="LOCAL_NETWORK_ACCESS" />.</translation>
 <translation id="3395744872155955051">Cho phép chọn tệp trực tiếp từ <ph name="GOOGLE_DRIVE_NAME" /></translation>
 <translation id="3397883909301547525">Không hiển thị ứng dụng đề xuất trong trình chạy <ph name="PRODUCT_OS_NAME" /></translation>
 <translation id="3398051852031115795">Hoạt động mặc định của hệ thống (phụ thuộc vào kích thước màn hình)</translation>
@@ -4101,6 +4121,7 @@ Xin lưu ý rằng chính sách này sẽ không có hiệu lực nếu bạn đ
 
  Nếu bạn không đặt chính sách này hay đặt thành một giá trị trống hoặc không hợp lệ, giá trị <ph name="CLIENT_INFO_IPP_ATTRIBUTE" /> bổ sung sẽ không được thêm vào yêu cầu lệnh in.
 </translation>
+<translation id="3895626555961466729">Cho phép Chế độ AI đưa ra đề xuất.</translation>
 <translation id="3896591584655529057">Bật tính năng lưu khoá truy cập bằng trình quản lý mật khẩu</translation>
 <translation id="3896751141670591496">Khi bạn đặt chính sách này thành Bật hoặc không đặt, cảnh báo bảo mật sẽ hiện ra khi cờ hiệu dòng lệnh có thể gây nguy hiểm được dùng để chạy Chrome.
 
@@ -7121,6 +7142,17 @@ Nếu bạn không đặt chính sách này thì hành vi của chính sách s�
 <translation id="5860010874344790473">Nếu bạn đặt chính sách thành Bật, thiết bị sẽ gửi nhật ký hệ thống đến máy chủ quản lý, để cho phép quản trị viên theo dõi nhật ký hệ thống.
 
       Nếu bạn không đặt hoặc đặt chính sách này thành Tắt, thì thiết bị sẽ không báo cáo nhật ký hệ thống.</translation>
+<translation id="5860520143792505638">Danh sách mẫu URL. Trang web do các nguồn gốc trùng khớp phân phát sẽ không thể gửi yêu cầu <ph name="LOCAL_NETWORK_ACCESS" />.
+
+Nếu một nguồn gốc được áp dụng cả chính sách này và LocalNetworkAccessAllowedForUrls, thì chính sách này sẽ được ưu tiên.
+
+Tuỳ thuộc vào giai đoạn triển khai <ph name="LOCAL_NETWORK_ACCESS" />, bạn cũng có thể cần bật LocalNetworkAccessRestrictionsEnabled để chính sách này chặn các yêu cầu <ph name="LOCAL_NETWORK_ACCESS" />.
+
+Đối với những nguồn gốc không được áp dụng các mẫu nêu ở đây, cấu hình cá nhân của người dùng sẽ được áp dụng.
+
+Để biết thông tin chi tiết về mẫu URL hợp lệ, vui lòng truy cập https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns.
+
+Hãy truy cập https://github.com/explainers-by-googlers/local-network-access để biết các quy định hạn chế về <ph name="LOCAL_NETWORK_ACCESS" />.</translation>
 <translation id="5861856285460256766">Cấu hình mã truy cập dành cho cha mẹ</translation>
 <translation id="5864898931148094192">Kiểm soát chế độ hiển thị của thông tin về nguồn gốc tiện ích trên trang Thẻ mới</translation>
 <translation id="5868414965372171132">Cấu hình mạng ở mức người dùng</translation>
@@ -10698,6 +10730,7 @@ Bạn có thể xem thêm thông tin về công nghệ cũ tại https://chromes
       <ph name="TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />,
       <ph name="SAME_ORIGIN_TAB_CAPTURE_ALLOWED_BY_ORIGINS_POLICY_NAME" />.
       </translation>
+<translation id="8309511882585098865">Không cho phép Chế độ AI đưa ra đề xuất.</translation>
 <translation id="8310392396850884147">Hỗ trợ các tiêu đề của yêu cầu không phải ký tự đại diện CORS.</translation>
 <translation id="8312129124898414409">Cho phép bạn đặt liệu các trang web có được phép sử dụng tạo khóa hay không. Bạn có thể cho phép hoặc từ chối sử dụng tạo khóa đối với tất cả các trang web.
 

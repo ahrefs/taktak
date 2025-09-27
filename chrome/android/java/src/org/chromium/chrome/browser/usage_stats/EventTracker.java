@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
- * In-memory store of {@link org.chromium.chrome.browser.usage_stats.WebsiteEvent} objects.
- * Allows for addition of events and querying for all events in a time interval.
+ * In-memory store of {@link org.chromium.chrome.browser.usage_stats.WebsiteEvent} objects. Allows
+ * for addition of events and querying for all events in a time interval.
  */
 public class EventTracker {
     private final UsageStatsBridge mBridge;

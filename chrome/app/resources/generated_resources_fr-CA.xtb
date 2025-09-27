@@ -1932,6 +1932,7 @@ Vous pouvez gérer les paramètres de ce compte en installant l'application Fami
 <translation id="2312219318583366810">URL de la page</translation>
 <translation id="2314165183524574721">Le paramètre de visibilité actuelle est réglé à caché</translation>
 <translation id="2314774579020744484">Langue utilisée pour la traduction des pages</translation>
+<translation id="2316090909467242775">Essayez ce mot de passe de récupération</translation>
 <translation id="2316129865977710310">Non merci</translation>
 <translation id="2316433409811863464">Diffusion d'application</translation>
 <translation id="2316709634732130529">Utiliser le mot de passe suggéré</translation>
@@ -4059,6 +4060,7 @@ l'<ph name="BEGIN_LINK" />
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> extensions</translation>
 <translation id="3794792524918736965">Activer Windows Hello</translation>
 <translation id="379509625511193653">Désactivé</translation>
+<translation id="3795624560191557077">Vous avez récemment modifié un mot de passe trouvé dans une violation de données publique. En cas de problème, le gestionnaire de mots de passe Google peut vous aider à vous connecter.</translation>
 <translation id="3796215473395753611">alt+flèche vers le haut</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, utilisez la flèche vers la droite pour entendre un aperçu de la voix</translation>
 <translation id="3796648294839530037">Réseaux favoris :</translation>
@@ -5883,6 +5885,7 @@ Appuyez sur Ctrl+Alt+diminuer la luminosité pour dézoomer.</translation>
 <translation id="5088534251099454936">PKCS #1 SHA-512 avec chiffrement RSA</translation>
 <translation id="5090637338841444533">Non autorisés à suivre la position de votre caméra</translation>
 <translation id="5091636240353511739">Afficher le NIP</translation>
+<translation id="5093417502834168387">Problème lors de la connexion? Essayer autrement</translation>
 <translation id="5093477827231450397">Liste des sites bloqués pour ne pas qu'ils suggèrent des annonces à d'autres sites</translation>
 <translation id="5093569275467863761">Sous-cadre de navigation privée de la mise en cache complète bidirectionnelle : <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Vous pouvez ouvrir et modifier les fichiers pris en charge avec cette application à partir de l'application Fichiers ou d'autres applications. Pour contrôler quels fichiers ouvrent cette application par défaut, <ph name="BEGIN_LINK" />découvrez comment définir des applications par défaut sur votre appareil<ph name="END_LINK" />.</translation>
@@ -7680,6 +7683,7 @@ Vous pouvez attribuer plusieurs commutateurs à cette action.</translation>
 <translation id="6388577073199278153">Impossible d'accéder au compte de votre appareil mobile</translation>
 <translation id="6390020764191254941">Déplacer l'onglet vers une nouvelle fenêtre</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Aucun}=1{Pour <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> et 1 autre}one{Pour <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> et {COUNT} autre}other{Pour <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> et {COUNT} autres}}</translation>
+<translation id="6390533465682072118">Récupération</translation>
 <translation id="6391131092053186625">L'IMEI de votre appareil est <ph name="IMEI_NUMBER" />. Ce numéro peut être utilisé pour aider à activer le service.</translation>
 <translation id="6393156038355142111">Suggérer un mot de passe fort</translation>
 <translation id="6393550101331051049">Autorisés à afficher le contenu non sécurisé</translation>

@@ -3346,6 +3346,15 @@ Si se inhabilita esta política, no se permitirá la función de escritura predi
 <translation id="3387999258705169775">Comportamiento predeterminado de la restricción anidada de la función setTimeout().</translation>
 <translation id="3388628790024977864">No permitir el flujo de <ph name="CLOUD_UPLOAD_NAME" /> para <ph name="GOOGLE_DRIVE_NAME" /> y <ph name="GOOGLE_WORKSPACE_NAME" /></translation>
 <translation id="3389088527709746815">Habilitar la autenticación gnubby para el host de acceso remoto</translation>
+<translation id="3393332712712388726">Lista de patrones de URL. Las solicitudes iniciadas desde sitios web servidos por orígenes coincidentes no están sujetas a comprobaciones de <ph name="LOCAL_NETWORK_ACCESS" />.
+
+Si un origen está cubierto tanto por esta política como por LocalNetworkAccessBlockedForUrls, prevalecerá LocalNetworkAccessBlockedForUrls.
+
+En el caso de los orígenes no incluidos en los patrones aquí indicados, se aplicará la configuración personal del usuario.
+
+Para consultar información detallada sobre los patrones de URL válidos, visita https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns.
+
+Consulta https://github.com/explainers-by-googlers/local-network-access para conocer las restricciones de <ph name="LOCAL_NETWORK_ACCESS" />.</translation>
 <translation id="3395744872155955051">Permitir que se puedan elegir archivos directamente desde <ph name="GOOGLE_DRIVE_NAME" /></translation>
 <translation id="3397883909301547525">No mostrar recomendaciones de aplicaciones en el menú de aplicaciones de <ph name="PRODUCT_OS_NAME" /></translation>
 <translation id="3398051852031115795">Comportamiento predeterminado del sistema (depende del tamaño de la pantalla)</translation>
@@ -7026,6 +7035,17 @@ Para obtener más información sobre el tratamiento de datos en las funciones de
 <translation id="5860010874344790473">Si se habilita la política, se enviarán registros del sistema al servidor de administración para permitir que los administradores monitoricen los registros del sistema.
 
       Si se inhabilita la política o no se establece, no se enviarán registros del sistema.</translation>
+<translation id="5860520143792505638">Lista de patrones de URL. Las solicitudes iniciadas desde sitios web servidos por orígenes coincidentes no pueden enviar solicitudes de <ph name="LOCAL_NETWORK_ACCESS" />.
+
+Si un origen está cubierto tanto por esta política como por LocalNetworkAccessAllowedForUrls, esta política tendrá prioridad.
+
+Según la fase de lanzamiento de <ph name="LOCAL_NETWORK_ACCESS" />, es posible que también deba habilitarse LocalNetworkAccessRestrictionsEnabled para que esta política bloquee las solicitudes de <ph name="LOCAL_NETWORK_ACCESS" />.
+
+En el caso de los orígenes no incluidos en los patrones aquí indicados, se aplicará la configuración personal del usuario.
+
+Para consultar información detallada sobre los patrones de URL válidos, visita https://cloud.google.com/docs/chrome-enterprise/policies/url-patterns.
+
+Consulta https://github.com/explainers-by-googlers/local-network-access para conocer las restricciones de <ph name="LOCAL_NETWORK_ACCESS" />.</translation>
 <translation id="5861856285460256766">Configuración del código de acceso parental</translation>
 <translation id="5864898931148094192">Controlar la visibilidad de la atribución de la extensión en la página Nueva pestaña</translation>
 <translation id="5868414965372171132">Configuración de red de usuarios</translation>

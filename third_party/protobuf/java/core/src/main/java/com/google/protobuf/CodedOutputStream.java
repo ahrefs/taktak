@@ -11,9 +11,11 @@ import static com.google.protobuf.WireFormat.FIXED32_SIZE;
 import static com.google.protobuf.WireFormat.FIXED64_SIZE;
 import static com.google.protobuf.WireFormat.MAX_VARINT32_SIZE;
 import static com.google.protobuf.WireFormat.MAX_VARINT_SIZE;
+
 import static java.lang.Math.max;
 
 import com.google.protobuf.Utf8.UnpairedSurrogateException;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
@@ -689,11 +691,11 @@ public abstract class CodedOutputStream extends ByteOutput {
     return computeUInt32SizeNoTag(WireFormat.makeTag(fieldNumber, 0));
   }
 
-  /**
-   * Compute the number of bytes that would be needed to encode an {@code int32} field, excluding
-   * tag.
-   */
-  public static int computeInt32SizeNoTag(final int value) {
+    /**
+     * Compute the number of bytes that would be needed to encode an {@code int32} field, excluding
+     * tag.
+     */
+    public static int computeInt32SizeNoTag(final int value) {
     return computeUInt64SizeNoTag((long) value);
   }
 
@@ -1345,99 +1347,99 @@ public abstract class CodedOutputStream extends ByteOutput {
       }
     }
 
-    @Override
-    public final void writeUInt32NoTag(int value) throws IOException {
-      int position = this.position; // Perf: hoist field to register to avoid load/stores.
-      try {
-        while (true) {
-          if ((value & ~0x7F) == 0) {
-            buffer[position++] = (byte) value;
-            break;
-          } else {
-            buffer[position++] = (byte) (value | 0x80);
-            value >>>= 7;
-          }
+        @Override
+        public final void writeUInt32NoTag(int value) throws IOException {
+            int position = this.position; // Perf: hoist field to register to avoid load/stores.
+            try {
+                while (true) {
+                    if ((value & ~0x7F) == 0) {
+                        buffer[position++] = (byte) value;
+                        break;
+                    } else {
+                        buffer[position++] = (byte) (value | 0x80);
+                        value >>>= 7;
+                    }
         }
       } catch (IndexOutOfBoundsException e) {
-        throw new OutOfSpaceException(position, limit, 1, e);
-      }
-      this.position = position; // Only update position if we stayed within the array bounds.
-    }
+                throw new OutOfSpaceException(position, limit, 1, e);
+            }
+            this.position = position; // Only update position if we stayed within the array bounds.
+        }
 
     @Override
     public final void writeFixed32NoTag(int value) throws IOException {
-      int position = this.position; // Perf: hoist field to register to avoid load/stores.
-      try {
-        buffer[position] = (byte) value;
-        buffer[position + 1] = (byte) (value >> 8);
-        buffer[position + 2] = (byte) (value >> 16);
-        buffer[position + 3] = (byte) (value >> 24);
-      } catch (IndexOutOfBoundsException e) {
-        throw new OutOfSpaceException(position, limit, FIXED32_SIZE, e);
+            int position = this.position; // Perf: hoist field to register to avoid load/stores.
+            try {
+                buffer[position] = (byte) value;
+                buffer[position + 1] = (byte) (value >> 8);
+                buffer[position + 2] = (byte) (value >> 16);
+                buffer[position + 3] = (byte) (value >> 24);
+            } catch (IndexOutOfBoundsException e) {
+                throw new OutOfSpaceException(position, limit, FIXED32_SIZE, e);
       }
       // Only update position if we stayed within the array bounds.
       this.position = position + FIXED32_SIZE;
     }
 
-    @Override
-    public final void writeUInt64NoTag(long value) throws IOException {
-      int position = this.position; // Perf: hoist field to register to avoid load/stores.
-      if (HAS_UNSAFE_ARRAY_OPERATIONS && spaceLeft() >= MAX_VARINT_SIZE) {
-        while (true) {
-          if ((value & ~0x7FL) == 0) {
-            UnsafeUtil.putByte(buffer, position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(buffer, position++, (byte) ((int) value | 0x80));
-            value >>>= 7;
-          }
+        @Override
+        public final void writeUInt64NoTag(long value) throws IOException {
+            int position = this.position; // Perf: hoist field to register to avoid load/stores.
+            if (HAS_UNSAFE_ARRAY_OPERATIONS && spaceLeft() >= MAX_VARINT_SIZE) {
+                while (true) {
+                    if ((value & ~0x7FL) == 0) {
+                        UnsafeUtil.putByte(buffer, position++, (byte) value);
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(buffer, position++, (byte) ((int) value | 0x80));
+                        value >>>= 7;
+                    }
         }
       } else {
         try {
           while (true) {
-            if ((value & ~0x7FL) == 0) {
-              buffer[position++] = (byte) value;
-              break;
-            } else {
-              buffer[position++] = (byte) ((int) value | 0x80);
-              value >>>= 7;
-            }
+                        if ((value & ~0x7FL) == 0) {
+                            buffer[position++] = (byte) value;
+                            break;
+                        } else {
+                            buffer[position++] = (byte) ((int) value | 0x80);
+                            value >>>= 7;
+                        }
           }
         } catch (IndexOutOfBoundsException e) {
           throw new OutOfSpaceException(position, limit, 1, e);
+                }
+            }
+            this.position = position; // Only update position if we stayed within the array bounds.
         }
-      }
-      this.position = position; // Only update position if we stayed within the array bounds.
-    }
 
     @Override
     public final void writeFixed64NoTag(long value) throws IOException {
-      int position = this.position; // Perf: hoist field to register to avoid load/stores.
-      try {
-        buffer[position] = (byte) value;
-        buffer[position + 1] = (byte) (value >> 8);
-        buffer[position + 2] = (byte) (value >> 16);
-        buffer[position + 3] = (byte) (value >> 24);
-        buffer[position + 4] = (byte) (value >> 32);
-        buffer[position + 5] = (byte) (value >> 40);
-        buffer[position + 6] = (byte) (value >> 48);
-        buffer[position + 7] = (byte) (value >> 56);
-      } catch (IndexOutOfBoundsException e) {
-        throw new OutOfSpaceException(position, limit, FIXED64_SIZE, e);
+            int position = this.position; // Perf: hoist field to register to avoid load/stores.
+            try {
+                buffer[position] = (byte) value;
+                buffer[position + 1] = (byte) (value >> 8);
+                buffer[position + 2] = (byte) (value >> 16);
+                buffer[position + 3] = (byte) (value >> 24);
+                buffer[position + 4] = (byte) (value >> 32);
+                buffer[position + 5] = (byte) (value >> 40);
+                buffer[position + 6] = (byte) (value >> 48);
+                buffer[position + 7] = (byte) (value >> 56);
+            } catch (IndexOutOfBoundsException e) {
+                throw new OutOfSpaceException(position, limit, FIXED64_SIZE, e);
       }
       // Only update position if we stayed within the array bounds.
       this.position = position + FIXED64_SIZE;
     }
 
-    @Override
-    public final void write(byte[] value, int offset, int length) throws IOException {
-      try {
-        System.arraycopy(value, offset, buffer, position, length);
-      } catch (IndexOutOfBoundsException e) {
-        throw new OutOfSpaceException(position, limit, length, e);
-      }
-      position += length;
-    }
+        @Override
+        public final void write(byte[] value, int offset, int length) throws IOException {
+            try {
+                System.arraycopy(value, offset, buffer, position, length);
+            } catch (IndexOutOfBoundsException e) {
+                throw new OutOfSpaceException(position, limit, length, e);
+            }
+            position += length;
+        }
 
     @Override
     public final void writeLazy(byte[] value, int offset, int length) throws IOException {
@@ -1668,11 +1670,11 @@ public abstract class CodedOutputStream extends ByteOutput {
     @Override
     public void write(byte value) throws IOException {
       try {
-        buffer.put(value);
-      } catch (BufferOverflowException e) {
-        throw new OutOfSpaceException(buffer.position(), buffer.limit(), 1, e);
-      }
-    }
+                buffer.put(value);
+            } catch (BufferOverflowException e) {
+                throw new OutOfSpaceException(buffer.position(), buffer.limit(), 1, e);
+            }
+        }
 
     @Override
     public void writeBytesNoTag(final ByteString value) throws IOException {
@@ -1713,11 +1715,11 @@ public abstract class CodedOutputStream extends ByteOutput {
         while (true) {
           if ((value & ~0x7F) == 0) {
             buffer.put((byte) value);
-            return;
-          } else {
-            buffer.put((byte) (value | 0x80));
-            value >>>= 7;
-          }
+                        return;
+                    } else {
+                        buffer.put((byte) (value | 0x80));
+                        value >>>= 7;
+                    }
         }
       } catch (BufferOverflowException e) {
         throw new OutOfSpaceException(e);
@@ -1727,11 +1729,11 @@ public abstract class CodedOutputStream extends ByteOutput {
     @Override
     public void writeFixed32NoTag(int value) throws IOException {
       try {
-        buffer.putInt(value);
-      } catch (BufferOverflowException e) {
-        throw new OutOfSpaceException(buffer.position(), buffer.limit(), FIXED32_SIZE, e);
-      }
-    }
+                buffer.putInt(value);
+            } catch (BufferOverflowException e) {
+                throw new OutOfSpaceException(buffer.position(), buffer.limit(), FIXED32_SIZE, e);
+            }
+        }
 
     @Override
     public void writeUInt64NoTag(long value) throws IOException {
@@ -1739,11 +1741,11 @@ public abstract class CodedOutputStream extends ByteOutput {
         while (true) {
           if ((value & ~0x7FL) == 0) {
             buffer.put((byte) value);
-            return;
-          } else {
-            buffer.put((byte) ((int) value | 0x80));
-            value >>>= 7;
-          }
+                        return;
+                    } else {
+                        buffer.put((byte) ((int) value | 0x80));
+                        value >>>= 7;
+                    }
         }
       } catch (BufferOverflowException e) {
         throw new OutOfSpaceException(e);
@@ -1753,11 +1755,11 @@ public abstract class CodedOutputStream extends ByteOutput {
     @Override
     public void writeFixed64NoTag(long value) throws IOException {
       try {
-        buffer.putLong(value);
-      } catch (BufferOverflowException e) {
-        throw new OutOfSpaceException(buffer.position(), buffer.limit(), FIXED64_SIZE, e);
-      }
-    }
+                buffer.putLong(value);
+            } catch (BufferOverflowException e) {
+                throw new OutOfSpaceException(buffer.position(), buffer.limit(), FIXED64_SIZE, e);
+            }
+        }
 
     @Override
     public void write(byte[] value, int offset, int length) throws IOException {
@@ -2036,37 +2038,37 @@ public abstract class CodedOutputStream extends ByteOutput {
       }
     }
 
-    @Override
-    public void writeUInt32NoTag(int value) throws IOException {
-      long position = this.position; // Perf: hoist field to register to avoid load/stores.
-      if (position <= oneVarintLimit) {
-        // Optimization to avoid bounds checks on each iteration.
-        while (true) {
-          if ((value & ~0x7F) == 0) {
-            UnsafeUtil.putByte(position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(position++, (byte) (value | 0x80));
-            value >>>= 7;
-          }
+        @Override
+        public void writeUInt32NoTag(int value) throws IOException {
+            long position = this.position; // Perf: hoist field to register to avoid load/stores.
+            if (position <= oneVarintLimit) {
+                // Optimization to avoid bounds checks on each iteration.
+                while (true) {
+                    if ((value & ~0x7F) == 0) {
+                        UnsafeUtil.putByte(position++, (byte) value);
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(position++, (byte) (value | 0x80));
+                        value >>>= 7;
+                    }
+                }
+            } else {
+                while (true) {
+                    if (position >= limit) {
+                        throw new OutOfSpaceException(
+                                String.format("Pos: %d, limit: %d, len: %d", position, limit, 1));
+                    }
+                    if ((value & ~0x7F) == 0) {
+                        UnsafeUtil.putByte(position++, (byte) value);
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(position++, (byte) (value | 0x80));
+                        value >>>= 7;
+                    }
+                }
+            }
+            this.position = position; // Only update position if we stayed within the array bounds.
         }
-      } else {
-        while (true) {
-          if (position >= limit) {
-            throw new OutOfSpaceException(
-                String.format("Pos: %d, limit: %d, len: %d", position, limit, 1));
-          }
-          if ((value & ~0x7F) == 0) {
-            UnsafeUtil.putByte(position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(position++, (byte) (value | 0x80));
-            value >>>= 7;
-          }
-        }
-      }
-      this.position = position; // Only update position if we stayed within the array bounds.
-    }
 
     @Override
     public void writeFixed32NoTag(int value) throws IOException {
@@ -2078,36 +2080,36 @@ public abstract class CodedOutputStream extends ByteOutput {
       position += FIXED32_SIZE;
     }
 
-    @Override
-    public void writeUInt64NoTag(long value) throws IOException {
-      long position = this.position; // Perf: hoist field to register to avoid load/stores.
-      if (position <= oneVarintLimit) {
-        // Optimization to avoid bounds checks on each iteration.
-        while (true) {
-          if ((value & ~0x7FL) == 0) {
-            UnsafeUtil.putByte(position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(position++, (byte) ((int) value | 0x80));
-            value >>>= 7;
-          }
+        @Override
+        public void writeUInt64NoTag(long value) throws IOException {
+            long position = this.position; // Perf: hoist field to register to avoid load/stores.
+            if (position <= oneVarintLimit) {
+                // Optimization to avoid bounds checks on each iteration.
+                while (true) {
+                    if ((value & ~0x7FL) == 0) {
+                        UnsafeUtil.putByte(position++, (byte) value);
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(position++, (byte) ((int) value | 0x80));
+                        value >>>= 7;
+                    }
+                }
+            } else {
+                while (true) {
+                    if (position >= limit) {
+                        throw new OutOfSpaceException(position, limit, 1);
+                    }
+                    if ((value & ~0x7FL) == 0) {
+                        UnsafeUtil.putByte(position++, (byte) value);
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(position++, (byte) ((int) value | 0x80));
+                        value >>>= 7;
+                    }
+                }
+            }
+            this.position = position; // Only update position if we stayed within the array bounds.
         }
-      } else {
-        while (true) {
-          if (position >= limit) {
-            throw new OutOfSpaceException(position, limit, 1);
-          }
-          if ((value & ~0x7FL) == 0) {
-            UnsafeUtil.putByte(position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(position++, (byte) ((int) value | 0x80));
-            value >>>= 7;
-          }
-        }
-      }
-      this.position = position; // Only update position if we stayed within the array bounds.
-    }
 
     @Override
     public void writeFixed64NoTag(long value) throws IOException {
@@ -2261,17 +2263,17 @@ public abstract class CodedOutputStream extends ByteOutput {
       return totalBytesWritten;
     }
 
-    /**
-     * This method does not perform bounds checking on the array. Checking array bounds is the
-     * responsibility of the caller.
-     */
-    final void buffer(byte value) {
-      int position = this.position;
-      buffer[position] = value;
-      // Android optimisation: 1 fewer instruction codegen vs buffer[position++].
-      this.position = position + 1;
-      totalBytesWritten++;
-    }
+        /**
+         * This method does not perform bounds checking on the array. Checking array bounds is the
+         * responsibility of the caller.
+         */
+        final void buffer(byte value) {
+            int position = this.position;
+            buffer[position] = value;
+            // Android optimisation: 1 fewer instruction codegen vs buffer[position++].
+            this.position = position + 1;
+            totalBytesWritten++;
+        }
 
     /**
      * This method does not perform bounds checking on the array. Checking array bounds is the
@@ -2304,11 +2306,11 @@ public abstract class CodedOutputStream extends ByteOutput {
         while (true) {
           if ((value & ~0x7F) == 0) {
             UnsafeUtil.putByte(buffer, position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(buffer, position++, (byte) (value | 0x80));
-            value >>>= 7;
-          }
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(buffer, position++, (byte) (value | 0x80));
+                        value >>>= 7;
+                    }
         }
         int delta = (int) (position - originalPos);
         totalBytesWritten += delta;
@@ -2317,11 +2319,11 @@ public abstract class CodedOutputStream extends ByteOutput {
           if ((value & ~0x7F) == 0) {
             buffer[position++] = (byte) value;
             totalBytesWritten++;
-            return;
-          } else {
-            buffer[position++] = (byte) (value | 0x80);
-            totalBytesWritten++;
-            value >>>= 7;
+                        return;
+                    } else {
+                        buffer[position++] = (byte) (value | 0x80);
+                        totalBytesWritten++;
+                        value >>>= 7;
           }
         }
       }
@@ -2337,11 +2339,11 @@ public abstract class CodedOutputStream extends ByteOutput {
         while (true) {
           if ((value & ~0x7FL) == 0) {
             UnsafeUtil.putByte(buffer, position++, (byte) value);
-            break;
-          } else {
-            UnsafeUtil.putByte(buffer, position++, (byte) ((int) value | 0x80));
-            value >>>= 7;
-          }
+                        break;
+                    } else {
+                        UnsafeUtil.putByte(buffer, position++, (byte) ((int) value | 0x80));
+                        value >>>= 7;
+                    }
         }
         int delta = (int) (position - originalPos);
         totalBytesWritten += delta;
@@ -2350,47 +2352,47 @@ public abstract class CodedOutputStream extends ByteOutput {
           if ((value & ~0x7FL) == 0) {
             buffer[position++] = (byte) value;
             totalBytesWritten++;
-            return;
-          } else {
-            buffer[position++] = (byte) ((int) value | 0x80);
-            totalBytesWritten++;
-            value >>>= 7;
+                        return;
+                    } else {
+                        buffer[position++] = (byte) ((int) value | 0x80);
+                        totalBytesWritten++;
+                        value >>>= 7;
           }
         }
       }
     }
 
-    /**
-     * This method does not perform bounds checking on the array. Checking array bounds is the
-     * responsibility of the caller.
-     */
-    final void bufferFixed32NoTag(int value) {
-      int position = this.position; // Perf: hoist field to register to avoid load/stores.
-      buffer[position++] = (byte) value;
-      buffer[position++] = (byte) (value >> 8);
-      buffer[position++] = (byte) (value >> 16);
-      buffer[position++] = (byte) (value >> 24);
-      this.position = position;
-      totalBytesWritten += FIXED32_SIZE;
-    }
+        /**
+         * This method does not perform bounds checking on the array. Checking array bounds is the
+         * responsibility of the caller.
+         */
+        final void bufferFixed32NoTag(int value) {
+            int position = this.position; // Perf: hoist field to register to avoid load/stores.
+            buffer[position++] = (byte) value;
+            buffer[position++] = (byte) (value >> 8);
+            buffer[position++] = (byte) (value >> 16);
+            buffer[position++] = (byte) (value >> 24);
+            this.position = position;
+            totalBytesWritten += FIXED32_SIZE;
+        }
 
-    /**
-     * This method does not perform bounds checking on the array. Checking array bounds is the
-     * responsibility of the caller.
-     */
-    final void bufferFixed64NoTag(long value) {
-      int position = this.position; // Perf: hoist field to register to avoid load/stores.
-      buffer[position++] = (byte) value;
-      buffer[position++] = (byte) (value >> 8);
-      buffer[position++] = (byte) (value >> 16);
-      buffer[position++] = (byte) (value >> 24);
-      buffer[position++] = (byte) (value >> 32);
-      buffer[position++] = (byte) (value >> 40);
-      buffer[position++] = (byte) (value >> 48);
-      buffer[position++] = (byte) (value >> 56);
-      this.position = position;
-      totalBytesWritten += FIXED64_SIZE;
-    }
+        /**
+         * This method does not perform bounds checking on the array. Checking array bounds is the
+         * responsibility of the caller.
+         */
+        final void bufferFixed64NoTag(long value) {
+            int position = this.position; // Perf: hoist field to register to avoid load/stores.
+            buffer[position++] = (byte) value;
+            buffer[position++] = (byte) (value >> 8);
+            buffer[position++] = (byte) (value >> 16);
+            buffer[position++] = (byte) (value >> 24);
+            buffer[position++] = (byte) (value >> 32);
+            buffer[position++] = (byte) (value >> 40);
+            buffer[position++] = (byte) (value >> 48);
+            buffer[position++] = (byte) (value >> 56);
+            this.position = position;
+            totalBytesWritten += FIXED64_SIZE;
+        }
   }
 
   /**

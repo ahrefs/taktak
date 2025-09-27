@@ -1947,6 +1947,7 @@ Mae Voice Match yn helpu Google Assistant i adnabod llais <ph name="SUPERVISED_U
 <translation id="2312219318583366810">URL tudalen</translation>
 <translation id="2314165183524574721">Y gosodiad gwelededd presennol yw wedi'i guddio</translation>
 <translation id="2314774579020744484">Yr iaith a ddefnyddir wrth gyfieithu tudalennau</translation>
+<translation id="2316090909467242775">Rhowch gynnig ar y cyfrinair adfer hwn</translation>
 <translation id="2316129865977710310">Dim diolch</translation>
 <translation id="2316433409811863464">Ffrydio Ap</translation>
 <translation id="2316709634732130529">Defnyddio'r cyfrinair a awgrymir</translation>
@@ -4072,6 +4073,7 @@ Mae <ph name="DOMAIN" /> yn gofyn i chi gadw'ch cerdyn smart wedi'i fewnosod.</t
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> estyniad</translation>
 <translation id="3794792524918736965">Troi Windows Hello ymlaen</translation>
 <translation id="379509625511193653">Diffodd</translation>
+<translation id="3795624560191557077">Yn ddiweddar, fe wnaethoch chi newid cyfrinair a ganfuwyd mewn achos o dor data cyhoeddus. Mewn achos o drafferth, gall Rheolwr Cyfrinair Google eich helpu i fewngofnodi.</translation>
 <translation id="3796215473395753611">alt + saeth i fyny</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, defnyddiwch y fysell saeth dde i gael rhagolwg o'r llais</translation>
 <translation id="3796648294839530037">Hoff Rwydweithiau:</translation>
@@ -5897,6 +5899,7 @@ Defnyddiwch Ctrl + Alt + Lleihau disgleirdeb i bellhau.</translation>
 <translation id="5088534251099454936">PKCS #1 SHA-512 Gydag Amgryptio RSA</translation>
 <translation id="5090637338841444533">Ni chaniateir i olrhain safle eich camera</translation>
 <translation id="5091636240353511739">Dangos y PIN</translation>
+<translation id="5093417502834168387">Cael trafferth wrth fewngofnodi? Rhowch gynnig ar ffordd arall</translation>
 <translation id="5093477827231450397">Rhestr o wefannau y gwnaethoch eu rhwystro nad ydych am iddynt awgrymu hysbysebion i wefannau eraill</translation>
 <translation id="5093569275467863761">Is-ffrâm Anhysbys yn y Storfa Yn ôl/Ymlaen: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">Gallwch agor a golygu ffeiliau a gefnogir gyda'r ap hwn o'r ap Files ac apiau eraill. I reoli pa ffeiliau sy'n agor ap hwn yn ddiofyn, <ph name="BEGIN_LINK" />dysgwch sut i osod apiau diofyn ar eich dyfais<ph name="END_LINK" />.</translation>
@@ -7695,6 +7698,7 @@ Mae <ph name="DOMAIN" /> yn gofyn i chi gadw'ch cerdyn smart wedi'i fewnosod.</t
 <translation id="6388577073199278153">Methu â chyrchu'ch cyfrif symudol</translation>
 <translation id="6390020764191254941">Symud y Tab i Ffenestr Newydd</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{Dim}=1{Ar gyfer <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> ac 1 arall}two{Ar gyfer <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> a {COUNT} arall}few{Ar gyfer <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> a {COUNT} arall}many{Ar gyfer <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> a {COUNT} arall}other{Ar gyfer <ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> a {COUNT} arall}}</translation>
+<translation id="6390533465682072118">Adferiad</translation>
 <translation id="6391131092053186625">IMEI eich dyfais yw <ph name="IMEI_NUMBER" />. Gellir defnyddio'r rhif hwn i helpu i weithredu gwasanaeth.</translation>
 <translation id="6393156038355142111">Awgrymu cyfrinair cryf</translation>
 <translation id="6393550101331051049">Caniateir dangos cynnwys anniogel</translation>

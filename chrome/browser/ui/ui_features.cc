@@ -562,7 +562,7 @@ BASE_FEATURE(kTabStripBrowserApi,
 
 BASE_FEATURE(kTabstripComboButton,
              "TabstripComboButton",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // This serves as a "kill-switch" for migrating the Tab Search feature to be a
 // toolbar button for non-ChromeOS users in the US.
@@ -571,7 +571,7 @@ BASE_FEATURE(kLaunchedTabSearchToolbarButton,
 #if BUILDFLAG(IS_CHROMEOS)
              base::FEATURE_DISABLED_BY_DEFAULT
 #else
-             base::FEATURE_ENABLED_BY_DEFAULT
+             base::FEATURE_DISABLED_BY_DEFAULT
 #endif
 );
 

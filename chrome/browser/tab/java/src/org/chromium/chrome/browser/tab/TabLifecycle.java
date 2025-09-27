@@ -7,14 +7,13 @@ package org.chromium.chrome.browser.tab;
 import org.chromium.build.annotations.MockedInTests;
 import org.chromium.build.annotations.NullMarked;
 
-/**
- */
+/** */
 @MockedInTests
 @NullMarked
 public interface TabLifecycle {
     /**
-     * @return Whether or not this Tab has a live native component.  This will be true prior to
-     *         {@link #initializeNative()} being called or after {@link #destroy()}.
+     * @return Whether or not this Tab has a live native component. This will be true prior to
+     *     {@link #initializeNative()} being called or after {@link #destroy()}.
      */
     boolean isInitialized();
 

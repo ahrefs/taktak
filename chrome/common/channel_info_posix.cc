@@ -152,7 +152,7 @@ std::string GetDesktopName(base::Environment* env) {
   if (name.has_value() && !name.value().empty()) {
     return name.value();
   }
-  return "chromium-browser.desktop";
+  return "taktak-browser.desktop";
 #endif
 }
 #endif  // BUILDFLAG(IS_LINUX)

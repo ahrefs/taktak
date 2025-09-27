@@ -68,7 +68,7 @@ public class ContextualSearchTabHelper extends EmptyTabObserver
     /** The pointer to our native C++ implementation. */
     private long mNativeHelper;
 
-    /** Whether the current default search engine is Google.  Is {@code null} if not inited. */
+    /** Whether the current default search engine is Google. Is {@code null} if not inited. */
     private Boolean mIsDefaultSearchEngineGoogle;
 
     private final Callback<ContextualSearchManager> mManagerCallback;

@@ -1467,6 +1467,10 @@ void AddAutofillStrings(content::WebUIDataSource* html_source,
        IDS_SETTINGS_HOME_AND_WORK_ADDRESS_REMOVE_CONFIRMATION_DIALOG_ACTION_OK},
       {"homeAndWorkAddressRemovedMessage",
        IDS_SETTINGS_HOME_AND_WORK_ADDRESS_REMOVED_MESSAGE}};
+      {"taktakTelLabel", IDS_SETTINGS_TELEMETRY_OPT_IN_TITLE},
+      {"taktakTelDesc", IDS_SETTINGS_TELEMETRY_OPT_IN_DESC},
+      {"taktakTelPolicy", IDS_SETTINGS_TELEMETRY_OPT_IN_POLICY},
+  };
 
   html_source->AddString("manageAddressesUrl",
                          autofill::payments::GetManageAddressesUrl().spec());

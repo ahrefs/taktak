@@ -203,6 +203,11 @@
 #include "pdf/buildflags.h"
 #include "printing/buildflags/buildflags.h"
 #include "rlz/buildflags/buildflags.h"
+#include "third_party/widevine/cdm/buildflags.h"
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+#include "chrome/common/widevine/widevine_utils.h"
+#endif
 
 #if BUILDFLAG(ENABLE_BACKGROUND_MODE)
 #include "chrome/browser/background/extensions/background_mode_manager.h"
@@ -1884,6 +1889,11 @@ void RegisterLocalState(PrefRegistrySimple* registry) {
 
   // This is intentionally last.
   RegisterLocalStatePrefsForMigration(registry);
+
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+  RegisterWidevineLocalstatePrefs(registry);
+#endif
 }
 
 // Register prefs applicable to all profiles.
@@ -2327,6 +2337,10 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
   registry->RegisterDictionaryPref(prefs::kReportingEndpoints);
 
   registry->RegisterBooleanPref(prefs::kViewSourceLineWrappingEnabled, false);
+
+#if BUILDFLAG(ENABLE_WIDEVINE)
+  RegisterWidevineProfilePrefs(registry);
+#endif
 }
 
 void RegisterUserProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {

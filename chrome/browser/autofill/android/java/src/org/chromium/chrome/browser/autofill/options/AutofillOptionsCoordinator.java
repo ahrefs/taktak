@@ -28,9 +28,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Coordinator for the autofill options settings screen. Connects the settings fragment with ...
- *   ... a model keeping track of the settings state, and
- *   ... a mediator to ensure the settings UI is consistent with prefs.
+ * Coordinator for the autofill options settings screen. Connects the settings fragment with ... ...
+ * a model keeping track of the settings state, and ... a mediator to ensure the settings UI is
+ * consistent with prefs.
  */
 @NullMarked
 public class AutofillOptionsCoordinator {

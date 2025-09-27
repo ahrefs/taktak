@@ -8,6 +8,7 @@
 package com.google.protobuf;
 
 import com.google.protobuf.AbstractMessageLite.Builder.LimitedInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -65,11 +66,10 @@ public final class UnknownFieldSet implements MessageLite {
   private static final UnknownFieldSet defaultInstance =
       new UnknownFieldSet(new TreeMap<Integer, Field>());
 
-  @Override
-  public boolean equals(
-          Object other) {
-    if (this == other) {
-      return true;
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
     }
     return (other instanceof UnknownFieldSet) && fields.equals(((UnknownFieldSet) other).fields);
   }
@@ -529,11 +529,11 @@ public final class UnknownFieldSet implements MessageLite {
           Builder subBuilder = newBuilder();
           input.readGroup(number, subBuilder, ExtensionRegistry.getEmptyRegistry());
           getFieldBuilder(number).addGroup(subBuilder.build());
-          return true;
-        case WireFormat.WIRETYPE_END_GROUP:
-          input.checkValidEndTag();
-          return false;
-        case WireFormat.WIRETYPE_FIXED32:
+                    return true;
+                case WireFormat.WIRETYPE_END_GROUP:
+                    input.checkValidEndTag();
+                    return false;
+                case WireFormat.WIRETYPE_FIXED32:
           getFieldBuilder(number).addFixed32(input.readFixed32());
           return true;
         default:
@@ -740,11 +740,10 @@ public final class UnknownFieldSet implements MessageLite {
       return group;
     }
 
-    @Override
-    public boolean equals(
-            Object other) {
-      if (this == other) {
-        return true;
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
       }
       if (!(other instanceof Field)) {
         return false;

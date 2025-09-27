@@ -180,7 +180,7 @@ export class SettingsSecurityPageElement extends
         type: Boolean,
         value() {
           return loadTimeData.getBoolean(
-                     'extendedReportingRemovePrefDependency') &&
+                  'extendedReportingRemovePrefDependency') &&
               loadTimeData.getBoolean('hashPrefixRealTimeLookupsSamplePing');
         },
       },
@@ -426,7 +426,7 @@ export class SettingsSecurityPageElement extends
   }
 
   private interactedWithPage_(securityPageInteraction:
-                                  SecurityPageInteraction) {
+                              SecurityPageInteraction) {
     this.lastInteraction_ = securityPageInteraction;
   }
 
@@ -580,7 +580,7 @@ export class SettingsSecurityPageElement extends
   // </if>
 
   private recordInteractionHistogramOnRadioChange_(safeBrowsingSetting:
-                                                       SafeBrowsingSetting) {
+                                                   SafeBrowsingSetting) {
     let action;
     if (safeBrowsingSetting === SafeBrowsingSetting.ENHANCED) {
       action =
@@ -606,12 +606,12 @@ export class SettingsSecurityPageElement extends
   }
 
   private recordInteractionHistogramOnSafeBrowsingDialogClose_(confirmed:
-                                                                   boolean) {
+                                                               boolean) {
     this.metricsBrowserProxy_.recordSafeBrowsingInteractionHistogram(
         confirmed ? SafeBrowsingInteractions
-                        .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_CONFIRMED :
-                    SafeBrowsingInteractions
-                        .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_DENIED);
+                .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_CONFIRMED :
+            SafeBrowsingInteractions
+                .SAFE_BROWSING_DISABLE_SAFE_BROWSING_DIALOG_DENIED);
   }
 
   private recordActionOnRadioChange_(safeBrowsingSetting: SafeBrowsingSetting) {
@@ -627,7 +627,7 @@ export class SettingsSecurityPageElement extends
   }
 
   private recordActionOnExpandButtonClicked_(safeBrowsingSetting:
-                                                 SafeBrowsingSetting) {
+                                             SafeBrowsingSetting) {
     this.metricsBrowserProxy_.recordAction(
         safeBrowsingSetting === SafeBrowsingSetting.ENHANCED ?
             'SafeBrowsing.Settings.EnhancedProtectionExpandArrowClicked' :
@@ -637,7 +637,7 @@ export class SettingsSecurityPageElement extends
   private recordActionOnSafeBrowsingDialogClose_(confirmed: boolean) {
     this.metricsBrowserProxy_.recordAction(
         confirmed ? 'SafeBrowsing.Settings.DisableSafeBrowsingDialogConfirmed' :
-                    'SafeBrowsing.Settings.DisableSafeBrowsingDialogDenied');
+            'SafeBrowsing.Settings.DisableSafeBrowsingDialogDenied');
   }
 }
 

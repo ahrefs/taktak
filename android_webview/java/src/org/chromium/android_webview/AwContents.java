@@ -2674,7 +2674,9 @@ public class AwContents implements SmartClipProvider {
         return mOverlayVerticalScrollbar;
     }
 
-    /** @see android.webkit.WebView#requestChildRectangleOnScreen(View, Rect, boolean) */
+    /**
+     * @see android.webkit.WebView#requestChildRectangleOnScreen(View, Rect, boolean)
+     */
     public boolean requestChildRectangleOnScreen(View child, Rect rect, boolean immediate) {
         if (isDestroyed(WARN)) return false;
         return mScrollOffsetManager.requestChildRectangleOnScreen(
@@ -2684,7 +2686,9 @@ public class AwContents implements SmartClipProvider {
                 immediate);
     }
 
-    /** @see android.webkit.WebView#stopLoading() */
+    /**
+     * @see android.webkit.WebView#stopLoading()
+     */
     public void stopLoading() {
         if (TRACE) Log.i(TAG, "%s stopLoading", this);
         if (!isDestroyed(WARN)) mWebContents.stop();

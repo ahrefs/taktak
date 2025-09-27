@@ -28,7 +28,9 @@ public class WebViewCrashLogParser extends CrashInfoLoader {
 
     private final File mLogDir;
 
-    /** @param logDir the directory where WebView store crash logs. */
+    /**
+     * @param logDir the directory where WebView store crash logs.
+     */
     public WebViewCrashLogParser(File logDir) {
         mLogDir = logDir;
     }

@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.infobar;
 
-
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.view.ViewGroup;

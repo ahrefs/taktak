@@ -1945,6 +1945,7 @@
 <translation id="2312219318583366810">URL ਪੰਨਾ</translation>
 <translation id="2314165183524574721">ਮੌਜੂਦਾ ਦਿਖਣਯੋਗਤਾ ਸੈਟਿੰਗ 'ਲੁਕੀ ਹੋਈ' 'ਤੇ ਸੈੱਟ ਹੈ</translation>
 <translation id="2314774579020744484">ਪੰਨਿਆਂ ਦਾ ਅਨੁਵਾਦ ਕਰਨ ਵੇਲੇ ਵਰਤੀ ਜਾਂਦੀ ਭਾਸ਼ਾ</translation>
+<translation id="2316090909467242775">ਇਸ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਨੂੰ ਅਜ਼ਮਾਓ</translation>
 <translation id="2316129865977710310">ਨਹੀਂ ਧੰਨਵਾਦ</translation>
 <translation id="2316433409811863464">ਐਪ ਸਟ੍ਰੀਮਿੰਗ</translation>
 <translation id="2316709634732130529">ਸੁਝਾਇਆ ਪਾਸਵਰਡ ਵਰਤੋ</translation>
@@ -4071,6 +4072,7 @@
 <translation id="3792973596468118484"><ph name="NUM_EXTENSIONS" /> ਐਕਸਟੈਂਸ਼ਨਾਂ</translation>
 <translation id="3794792524918736965">Windows Hello ਨੂੰ ਚਾਲੂ ਕਰੋ</translation>
 <translation id="379509625511193653">ਬੰਦ</translation>
+<translation id="3795624560191557077">ਜਨਤਕ ਡਾਟਾ ਉਲੰਘਣਾ ਵਿੱਚ ਮਿਲਿਆ ਪਾਸਵਰਡ ਤੁਸੀਂ ਹਾਲ ਹੀ ਵਿੱਚ ਬਦਲਿਆ ਹੈ। ਸਮੱਸਿਆ ਹੋਣ ਦੀ ਸਥਿਤੀ ਵਿੱਚ, Google Password Manager ਸਾਈਨ-ਇਨ ਕਰਨ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹੈ।</translation>
 <translation id="3796215473395753611">alt + ਉੱਪਰ ਤੀਰ</translation>
 <translation id="3796421550129770366"><ph name="LANGUAGE" />, ਅਵਾਜ਼ ਦੀ ਪੂਰਵ-ਝਲਕ ਦੇਖਣ ਲਈ ਸੱਜਾ ਤੀਰ ਕੁੰਜੀ ਦੀ ਵਰਤੋਂ ਕਰੋ</translation>
 <translation id="3796648294839530037">ਮਨਪਸੰਦ ਨੈਟਵਰਕ:</translation>
@@ -5895,6 +5897,7 @@
 <translation id="5088534251099454936">RSA ਐਨਕ੍ਰਿਪਸ਼ਨ ਨਾਲ PKCS #1 SHA-512</translation>
 <translation id="5090637338841444533">ਤੁਹਾਡੇ ਕੈਮਰੇ ਦੀ ਸਥਿਤੀ ਨੂੰ ਟਰੈਕ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਹੈ</translation>
 <translation id="5091636240353511739">ਪਿੰਨ ਦਿਖਾਓ</translation>
+<translation id="5093417502834168387">ਕੀ ਸਾਈਨ-ਇਨ ਕਰਨ ਵਿੱਚ ਸਮੱਸਿਆ ਆ ਰਹੀ ਹੈ? ਕੋਈ ਹੋਰ ਤਰੀਕਾ ਵਰਤ ਕੇ ਦੇਖੋ</translation>
 <translation id="5093477827231450397">ਤੁਹਾਡੇ ਵੱਲੋਂ ਬਲਾਕ ਕੀਤੀਆਂ ਗਈਆਂ ਉਨ੍ਹਾਂ ਸਾਈਟਾਂ ਦੀ ਸੂਚੀ ਜੋ ਤੁਸੀਂ ਨਹੀਂ ਚਾਹੁੰਦੇ ਕਿ ਦੂਜੀਆਂ ਸਾਈਟਾਂ ਨੂੰ ਵਿਗਿਆਪਨਾਂ ਸੰਬੰਧੀ ਸੁਝਾਅ ਦੇਣ</translation>
 <translation id="5093569275467863761">ਪੂਰੇ ਪੰਨੇ ਦੇ ਕੈਸ਼ੇ ਵਿੱਚ ਸਟੋਰ ਕੀਤਾ ਇਨਕੋਗਨਿਟੋ ਸਬਫ੍ਰੇਮ: <ph name="BACK_FORWARD_CACHE_INCOGNITO_PAGE_URL" /></translation>
 <translation id="5094176498302660097">ਤੁਸੀਂ ਆਪਣੇ ਫ਼ਾਈਲ ਐਪ ਜਾਂ ਹੋਰ ਐਪਾਂ ਤੋਂ ਇਸ ਐਪ ਨਾਲ ਸਮਰਥਿਤ ਫ਼ਾਈਲਾਂ ਨੂੰ ਖੋਲ੍ਹ ਸਕਦੇ ਹੋ ਅਤੇ ਉਨ੍ਹਾਂ ਦਾ ਸੰਪਾਦਨ ਕਰ ਸਕਦੇ ਹੋ। ਇਹ ਕੰਟਰੋਲ ਕਰਨ ਲਈ ਕਿ ਕਿਹੜੀਆਂ ਫ਼ਾਈਲਾਂ ਪੂਰਵ-ਨਿਰਧਾਰਿਤ ਤੌਰ 'ਤੇ ਇਸ ਐਪ ਨੂੰ ਖੋਲ੍ਹਣ, ਇਸ ਲਈ <ph name="BEGIN_LINK" />ਆਪਣੇ ਡੀਵਾਈਸ 'ਤੇ ਪੂਰਵ-ਨਿਰਧਾਰਿਤ ਐਪਾਂ ਨੂੰ ਸੈੱਟ ਕਰਨ ਦਾ ਤਰੀਕਾ ਜਾਣੋ<ph name="END_LINK" />।</translation>
@@ -7693,6 +7696,7 @@
 <translation id="6388577073199278153">ਤੁਹਾਡੇ ਖਾਤੇ ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕਦੀ</translation>
 <translation id="6390020764191254941">ਟੈਬ ਨੂੰ ਨਵੀਂ ਵਿੰਡੋ ਵਿੱਚ ਲਿਜਾਓ</translation>
 <translation id="6390046581187330789">{COUNT,plural, =0{ਕੋਈ ਨਹੀਂ}=1{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> ਅਤੇ 1 ਹੋਰ ਲਈ}other{<ph name="EXAMPLE_DOMAIN_1" />, <ph name="EXAMPLE_DOMAIN_2" /> ਅਤੇ {COUNT} ਹੋਰਾਂ ਲਈ}}</translation>
+<translation id="6390533465682072118">ਰਿਕਵਰੀ</translation>
 <translation id="6391131092053186625">ਤੁਹਾਡੇ ਡੀਵਾਈਸ ਦਾ IMEI ਨੰਬਰ <ph name="IMEI_NUMBER" /> ਹੈ। ਇਸ ਨੰਬਰ ਦੀ ਵਰਤੋਂ ਸੇਵਾ ਨੂੰ ਕਿਰਿਆਸ਼ੀਲ ਕਰਨ ਲਈ ਕੀਤੀ ਜਾ ਸਕਦੀ ਹੈ।</translation>
 <translation id="6393156038355142111">ਮਜ਼ਬੂਤ ਪਾਸਵਰਡ ਸੁਝਾਓ</translation>
 <translation id="6393550101331051049">ਅਸੁਰੱਖਿਅਤ ਸਮੱਗਰੀ ਦਿਖਾਉਣ ਦੀ ਇਜਾਜ਼ਤ ਹੈ</translation>

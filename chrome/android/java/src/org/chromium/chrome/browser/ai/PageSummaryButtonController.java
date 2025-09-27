@@ -4,7 +4,6 @@
 
 package org.chromium.chrome.browser.ai;
 
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.view.View;

@@ -209,6 +209,10 @@ void BrowserActions::InitializeBrowserActions() {
                               IDS_READ_LATER_TITLE, IDS_READ_LATER_TITLE,
                               kReadingListIcon, kActionSidePanelShowReadingList,
                               bwi, true),
+                              browser, true),
+              SidePanelAction(SidePanelEntryId::kAIChat, IDS_AI_CHAT_TITLE,
+                              IDS_AI_CHAT_TITLE, kChatIcon, kActionAIChat,
+                              bwi, false),
               SidePanelAction(SidePanelEntryId::kAboutThisSite,
                               IDS_PAGE_INFO_ABOUT_THIS_PAGE_TITLE,
                               IDS_PAGE_INFO_ABOUT_THIS_PAGE_TITLE,
@@ -257,6 +261,7 @@ void BrowserActions::InitializeBrowserActions() {
                       kActionSidePanelShowReadAnything, bwi, true)
           .Build());
 
+ /*
   if (lens::features::IsLensOverlayEnabled()) {
     actions::ActionItem::InvokeActionCallback callback = base::BindRepeating(
         [](base::WeakPtr<BrowserWindowInterface> bwi, actions::ActionItem* item,
@@ -290,6 +295,7 @@ void BrowserActions::InitializeBrowserActions() {
                              actions::ActionPinnableState::kPinnable))
             .Build());
   }
+*/
 
   root_action_item_->AddChild(
       actions::ActionItem::Builder(
