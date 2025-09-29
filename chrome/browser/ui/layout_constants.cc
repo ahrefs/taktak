@@ -52,7 +52,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case LOCATION_BAR_CHILD_INTERIOR_PADDING:
       return 3;
     case LOCATION_BAR_CHILD_CORNER_RADIUS:
-      return 12;
+      // return 12;
+      return 0;
     case LOCATION_BAR_CHIP_ICON_SIZE:
       return 16;
     case LOCATION_BAR_CHIP_PADDING:
@@ -60,7 +61,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case LOCATION_BAR_ELEMENT_PADDING:
       return touch_ui ? 3 : 2;
     case LOCATION_BAR_PAGE_INFO_ICON_VERTICAL_PADDING:
-      return touch_ui ? 3 : 5;
+      // return touch_ui ? 3 : 5;
+      return touch_ui ? 3 : 2;
     case LOCATION_BAR_LEADING_DECORATION_EDGE_PADDING:
       // TODO(manukh): See comment in `LocationBarView::Layout()`. We have too
       //   many feature permutations that would affect this and other layout
@@ -73,7 +75,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case LOCATION_BAR_TRAILING_DECORATION_INNER_PADDING:
       return touch_ui ? 3 : 8;
     case LOCATION_BAR_HEIGHT:
-      return touch_ui ? 36 : 34;
+      // return touch_ui ? 36 : 34;
+      return touch_ui ? 26 : 24;  // toolbar_button height is changed too
     case LOCATION_BAR_ICON_SIZE:
       return touch_ui ? 20 : 16;
     case LOCATION_BAR_LEADING_ICON_SIZE:
@@ -81,7 +84,7 @@ int GetLayoutConstant(LayoutConstant constant) {
     case LOCATION_BAR_TRAILING_ICON_SIZE:
       return 20;
     case NEW_TAB_BUTTON_LEADING_MARGIN:
-      return 0;
+      return 4;
     case STAR_RATING_ICON_SIZE:
       return 14;
     case TAB_AFTER_TITLE_PADDING:
@@ -113,11 +116,13 @@ int GetLayoutConstant(LayoutConstant constant) {
       }
       return 1;
     case TOOLBAR_BUTTON_HEIGHT:
-      return touch_ui ? 48 : 34;
+      // return touch_ui ? 48 : 34;
+      return touch_ui ? 48 : 28;
     case TOOLBAR_DIVIDER_CORNER_RADIUS:
       return 1;
     case TOOLBAR_DIVIDER_HEIGHT:
-      return touch_ui ? 20 : 16;
+      // return touch_ui ? 20 : 16;
+      return touch_ui ? 18 : 14;
     case TOOLBAR_DIVIDER_SPACING:
       return 9;
     case TOOLBAR_DIVIDER_WIDTH:
@@ -133,7 +138,8 @@ int GetLayoutConstant(LayoutConstant constant) {
     case DOWNLOAD_ICON_SIZE:
       return 20;
     case TOOLBAR_CORNER_RADIUS:
-      return 8;
+      // return 8;
+      return 0;
     default:
       break;
   }
@@ -185,7 +191,7 @@ gfx::Insets GetLayoutInsets(LayoutInset inset) {
       }
 
     case TOOLBAR_INTERIOR_MARGIN:
-      return touch_ui ? gfx::Insets::VH(4, 0) : gfx::Insets::VH(6, 5);
+      return touch_ui ? gfx::Insets() : gfx::Insets::VH(6, 5);
 
     case WEBUI_TAB_STRIP_TOOLBAR_INTERIOR_MARGIN:
       return gfx::Insets::VH(4, 0);

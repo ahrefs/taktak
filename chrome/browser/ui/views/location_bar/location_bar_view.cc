@@ -226,7 +226,9 @@ LocationBarView::LocationBarView(Browser* browser,
                  !v->GetOmniboxPopupView()->IsOpen();
         }));
     views::FocusRing::Get(this)->SetOutsetFocusRingDisabled(true);
-    views::InstallPillHighlightPathGenerator(this);
+    views::FocusRing::Get(this)->SetColorId(kColorLocationBarBackground);
+    views::FocusRing::Get(this)->SetHaloThickness(1.5);
+    // views::InstallPillHighlightPathGenerator(this);
 
 #if BUILDFLAG(OS_LEVEL_GEOLOCATION_PERMISSION_SUPPORTED)
     if (features::IsOsLevelGeolocationPermissionSupportEnabled()) {
@@ -432,31 +434,36 @@ void LocationBarView::Init() {
   params.types_enabled.push_back(PageActionIconType::kVirtualCardEnroll);
   params.types_enabled.push_back(PageActionIconType::kMandatoryReauth);
 
-  if (browser_ &&
-      base::FeatureList::IsEnabled(omnibox::kAiModeOmniboxEntryPoint)) {
-    // Position in the leading position, like the entrypoint for
-    // kLensOverlayHomework below. While both chips may be enabled, they will
-    // not appear at the same time due to different focus behavior. The
-    // visibility of this entrypoint is dependent on whether or not the user
-    // meets AIM eligibility criteria.
-    params.types_enabled.insert(params.types_enabled.begin(),
-                                PageActionIconType::kAiMode);
-  }
-
-  if (browser_ && lens::features::IsOmniboxEntryPointEnabled()) {
-    // The persistent compact entrypoint should be positioned directly before
-    // the star icon and the prominent expanding entrypoint should be
-    // positioned in the leading position. This entrypoint will be suppressed
-    // if the AIM page action is enabled and the user meets AIM eligibility
-    // criteria, since we want to avoid both showing up when the user focuses
-    // the Omnibox.
-    if (lens::features::IsOmniboxEntrypointAlwaysVisible()) {
-      params.types_enabled.push_back(PageActionIconType::kLensOverlay);
-    } else {
-      params.types_enabled.insert(params.types_enabled.begin(),
-                                  PageActionIconType::kLensOverlay);
-    }
-  }
+  // Remove AI Mode button in omnibox
+  //  if (browser_ &&
+  //      base::FeatureList::IsEnabled(omnibox::kAiModeOmniboxEntryPoint)) {
+  //    // Position in the leading position, like the entrypoint for
+  //    // kLensOverlayHomework below. While both chips may be enabled, they
+  //    will
+  //    // not appear at the same time due to different focus behavior. The
+  //    // visibility of this entrypoint is dependent on whether or not the user
+  //    // meets AIM eligibility criteria.
+  //    params.types_enabled.insert(params.types_enabled.begin(),
+  //                                PageActionIconType::kAiMode);
+  //  }
+  //
+  //  if (browser_ && lens::features::IsOmniboxEntryPointEnabled()) {
+  //    // The persistent compact entrypoint should be positioned directly
+  //    before
+  //    // the star icon and the prominent expanding entrypoint should be
+  //    // positioned in the leading position. This entrypoint will be
+  //    suppressed
+  //    // if the AIM page action is enabled and the user meets AIM eligibility
+  //    // criteria, since we want to avoid both showing up when the user
+  //    focuses
+  //    // the Omnibox.
+  //    if (lens::features::IsOmniboxEntrypointAlwaysVisible()) {
+  //      params.types_enabled.push_back(PageActionIconType::kLensOverlay);
+  //    } else {
+  //      params.types_enabled.insert(params.types_enabled.begin(),
+  //                                  PageActionIconType::kLensOverlay);
+  //    }
+  //  }
 
   if (browser_ && lens::features::IsLensOverlayEduActionChipEnabled()) {
     // Position in the leading position, like the expanding entrypoint for
@@ -508,8 +515,11 @@ bool LocationBarView::IsInitialized() const {
 }
 
 int LocationBarView::GetBorderRadius() const {
-  return ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
-      views::Emphasis::kMaximum, size());
+  //  return ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
+  //      views::Emphasis::kMaximum, size());
+
+  // Because we are pixel perfect
+  return 6;
 }
 
 std::unique_ptr<views::Background> LocationBarView::CreateRoundRectBackground(

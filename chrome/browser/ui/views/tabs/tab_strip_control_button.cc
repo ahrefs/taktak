@@ -238,7 +238,10 @@ void TabStripControlButton::UpdateBackground() {
 }
 
 int TabStripControlButton::GetCornerRadius() const {
-  return TabStripControlButton::kButtonSize.width() / 2;
+  // return TabStripControlButton::kButtonSize.width() / 2;
+
+  // show square with rounded corder highligh when mouse hover on new tab button
+  return 8;
 }
 
 int TabStripControlButton::GetFlatCornerRadius() const {

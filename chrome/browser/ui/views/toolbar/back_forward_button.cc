@@ -57,7 +57,10 @@ BackForwardButton::BackForwardButton(Direction direction,
     GetViewAccessibility().SetDescription(
         l10n_util::GetStringUTF8(IDS_ACCDESCRIPTION_FORWARD));
     SetID(VIEW_ID_FORWARD_BUTTON);
-    SetProperty(views::kElementIdentifierKey, kToolbarForwardButtonElementId);
+
+    // comment out the following line so that forward/back button doesn't
+    // disappear SetProperty(views::kElementIdentifierKey,
+    // kToolbarForwardButtonElementId);
     set_menu_identifier(kToolbarForwardButtonMenuElementId);
   }
 }

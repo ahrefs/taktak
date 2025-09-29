@@ -200,6 +200,70 @@ class TabstripLikeBackground : public views::Background {
   const raw_ptr<BrowserView> browser_view_;
 };
 
+constexpr int kLocationBarMaxWidth = 766;
+constexpr double kDefaultMargin = 0.1;
+constexpr double kSmallToolbarMargin = 0.035;
+constexpr double kMediumToolbarMargin = 0.07;
+constexpr double kLargeToolbarMargin = 0.1;
+constexpr int kToolbarWidthThreshold1 = 700;
+constexpr int kToolbarWidthThreshold2 = 850;
+constexpr int kToolbarWidthThreshold3 = 960;
+constexpr double kMaxRightShrinkFactor = 0.25;
+
+double GetMarginForWidth(int toolbar_width) {
+  if (toolbar_width < kToolbarWidthThreshold1) {
+    return kSmallToolbarMargin;
+  } else if (toolbar_width < kToolbarWidthThreshold2) {
+    return kMediumToolbarMargin;
+  } else if (toolbar_width < kToolbarWidthThreshold3) {
+    return kLargeToolbarMargin;
+  }
+  return kDefaultMargin;
+}
+
+int CalculateToolbarCenterPoint(int location_bar_x,
+                                int location_bar_margin_h,
+                                int location_bar_width) {
+  return location_bar_x + location_bar_margin_h + (location_bar_width / 2);
+}
+
+gfx::Insets CalculateLocationBarMargin(int toolbar_width,
+                                       int available_location_bar_width,
+                                       int location_bar_min_width,
+                                       int location_bar_x) {
+  int location_bar_max_margin_h =
+      (available_location_bar_width - location_bar_min_width) / 2;
+  int location_bar_margin_h = std::min(
+      static_cast<int>(toolbar_width * GetMarginForWidth(toolbar_width)),
+      location_bar_max_margin_h);
+  int location_bar_width =
+      available_location_bar_width - (location_bar_margin_h * 2);
+
+  if (location_bar_width > kLocationBarMaxWidth) {
+    location_bar_margin_h += (location_bar_width - kLocationBarMaxWidth) / 2;
+    location_bar_width = kLocationBarMaxWidth;
+  }
+
+  const int location_bar_toolbar_center_point = CalculateToolbarCenterPoint(
+      location_bar_x, location_bar_margin_h, location_bar_width);
+
+  int location_bar_center_offset =
+      location_bar_toolbar_center_point - (toolbar_width / 2);
+
+  location_bar_center_offset =
+      (location_bar_center_offset > 0)
+          ? std::min(location_bar_margin_h, location_bar_center_offset)
+          : std::max(static_cast<int>(-location_bar_margin_h *
+                                      kMaxRightShrinkFactor),
+                     location_bar_center_offset);
+
+  const int location_bar_margin_l =
+      location_bar_margin_h - location_bar_center_offset;
+  const int location_bar_margin_r =
+      location_bar_margin_h + location_bar_center_offset;
+
+  return gfx::Insets::TLBR(0, location_bar_margin_l, 0, location_bar_margin_r);
+}
 }  // namespace
 
 class ToolbarView::ContainerView : public views::View {
@@ -236,7 +300,7 @@ ToolbarView::ToolbarView(Browser* browser, BrowserView* browser_view)
   container_view_->SetProperty(views::kElementIdentifierKey,
                                kToolbarContainerElementId);
 
-  GetViewAccessibility().SetRole(ax::mojom::Role::kToolbar);
+  container_view_->GetViewAccessibility().SetRole(ax::mojom::Role::kToolbar);
 
   if (display_mode_ == DisplayMode::NORMAL) {
     container_view_->SetBackground(
@@ -322,7 +386,9 @@ void ToolbarView::Init() {
         views::kFlexBehaviorKey,
         views::FlexSpecification(views::LayoutOrientation::kHorizontal,
                                  views::MinimumFlexSizeRule::kScaleToZero,
-                                 views::MaximumFlexSizeRule::kUnbounded));
+                                 views::MaximumFlexSizeRule::kScaleToMaximum));
+    location_bar_->SetBorder(
+        views::CreateEmptyBorder(gfx::Insets::TLBR(0, 20, 0, 20)));
     initialized_ = true;
     return;
   }
@@ -805,6 +871,10 @@ void ToolbarView::Layout(PassKey) {
   // The container view should be the exact same size/position as ToolbarView.
   container_view_->SetSize(size());
 
+  // Make sure the container_view height is 28 based on the UI guideline
+  container_view_->SetBorder(
+      views::CreateEmptyBorder(gfx::Insets::TLBR(3, 0, 3, 0)));
+
   // The background views should be behind the top-left and top-right corners
   // of the container_view_.
   background_view_left_->SetBounds(0, 0, receding_corner_radius_,
@@ -845,6 +915,18 @@ void ToolbarView::Layout(PassKey) {
   // Call super implementation to ensure layout manager and child layouts
   // happen.
   LayoutSuperclass<AccessiblePaneView>(this);
+
+  if (display_mode_ == DisplayMode::NORMAL) {
+    // Calculate margin and set its bounds to shrink the width of the location
+    // bar
+    const gfx::Insets margin = CalculateLocationBarMargin(
+        width(), location_bar_->width(),
+        location_bar_->GetMinimumSize().width(), location_bar_->x());
+
+    location_bar_->SetBounds(
+        location_bar_->x() + margin.left(), location_bar_->y(),
+        location_bar_->width() - margin.width(), location_bar_->height());
+  }
 }
 
 void ToolbarView::OnThemeChanged() {

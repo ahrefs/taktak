@@ -898,7 +898,22 @@
   E_CPONLY(kColorWebUiTabStripTabWaitingSpinning) \
   /* Window control button background colors. */ \
   E_CPONLY(kColorWindowControlButtonBackgroundActive) \
-  E_CPONLY(kColorWindowControlButtonBackgroundInactive) \
+  E_CPONLY(kColorWindowControlButtonBackgroundInactive)           \
+ /* Yep Chat Colors. */ \
+  E_CPONLY(kColorYepChatPanelBackground) \
+  E_CPONLY(kColorYepChatPanelBorder) \
+  E_CPONLY(kColorYepChatPromptBackground) \
+  E_CPONLY(kColorYepChatSiteInfoVerticalBarBackground) \
+  E_CPONLY(kColorYepChatPrimaryText) \
+  E_CPONLY(kColorYepChatSecondaryText) \
+  E_CPONLY(kColorYepChatTertiaryText) \
+  E_CPONLY(kColorYepChatSendButtonBackground) \
+  E_CPONLY(kColorYepChatSendButtonForeground) \
+  E_CPONLY(kColorYepChatError) \
+  E_CPONLY(kColorYepChatThinkingEnabled) \
+  E_CPONLY(kColorYepChatThinkingHeadIcon) \
+  E_CPONLY(kColorYepChatToolbarIcon) \
+  E_CPONLY(kColorYepChatLink) \
 
 #if BUILDFLAG(IS_CHROMEOS)
 #define CHROME_PLATFORM_SPECIFIC_COLOR_IDS \

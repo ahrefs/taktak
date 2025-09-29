@@ -120,6 +120,7 @@ aggregate_vector_icons("chrome_vector_icons") {
     "media_toolbar_button_touch.icon",
     "menu_book_chrome_refresh.icon",
     "mixed_content.icon",
+    "more_horiz.icon",
     "more_tools_menu.icon",
     "move_group_to_new_window_refresh.icon",
     "my_location.icon",

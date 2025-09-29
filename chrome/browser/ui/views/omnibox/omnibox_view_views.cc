@@ -379,13 +379,17 @@ void OmniboxViewViews::InstallPlaceholderText() {
     // If `keyword_placeholder()` is set, then the user is in a keyword mode
     // that has placeholder text, so display that.
     SetPlaceholderText(model()->keyword_placeholder());
-  } else if (model()->is_caret_visible()) {
-    // If the Omnibox is visibly focused, display the AI Mode placeholder text
-    // to suggest tabbing into AI Mode. Note, even if the AI placeholder text is
-    // installed, it will only be visible if ShouldShowAimPlaceholderText() is
-    // also true.
-    SetPlaceholderText(
-        l10n_util::GetStringUTF16(IDS_OMNIBOX_AIM_PLACEHOLDER_TEXT));
+    //  }
+    //  else if (model()->is_caret_visible()) {
+    //    // If the Omnibox is visibly focused, display the AI Mode placeholder
+    //    text
+    //    // to suggest tabbing into AI Mode. Note, even if the AI placeholder
+    //    text is
+    //    // installed, it will only be visible if
+    //    ShouldShowAimPlaceholderText() is
+    //    // also true.
+    //    SetPlaceholderText(
+    //        l10n_util::GetStringUTF16(IDS_OMNIBOX_AIM_PLACEHOLDER_TEXT));
   } else if (const auto* default_provider = controller()
                                                 ->client()
                                                 ->GetTemplateURLService()
