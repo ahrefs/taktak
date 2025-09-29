@@ -20,6 +20,7 @@
 #include "chrome/browser/ui/startup/startup_browser_creator.h"
 #include "chrome/browser/ui/startup/startup_types.h"
 #include "chrome/browser/ui/startup/test_third_party_cookie_phaseout_infobar_delegate.h"
+#include "chrome/browser/ui/startup/update_notifier/update_notifier_prompt_manager.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pref_names.h"
 #include "components/infobars/content/content_infobar_manager.h"
@@ -226,4 +227,8 @@ void AddInfoBarsIfNecessary(Browser* browser,
                              std::move(default_browser_prompt_shown_callback));
   }
 #endif
+
+  if (!is_web_app) {
+    UpdateNotifierPromptManager::GetInstance()->MaybeShowPrompt();
+  }
 }

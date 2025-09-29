@@ -19208,6 +19208,14 @@ Please help our engineers fix this problem. Tell us what happened right before y
       Use a different account
     </message>
 
+    <!-- Update notifier -->
+    <message name="IDS_UPDATE_NOTIFIER_MESSAGE" desc="Display on update notifier info bar">
+      A new version of Taktak is available. Download the latest version to get the newest features and improvements.
+    </message>
+    <message name="IDS_UPDATE_NOTIFIER_BUTTON_TEXT" desc="The text of the button on update notifier info bar">
+      Download update
+    </message>
+
   </messages>
 </release>
 </grit>
