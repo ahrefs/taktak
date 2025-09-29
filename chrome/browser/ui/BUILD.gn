@@ -1640,6 +1640,7 @@ static_library("ui") {
       "//components/headless/policy",
       "//components/history_embeddings",
       "//components/keep_alive_registry",
+      "//components/machine_id",
       "//components/manta",
       "//components/manta/proto",
       "//components/media_effects",

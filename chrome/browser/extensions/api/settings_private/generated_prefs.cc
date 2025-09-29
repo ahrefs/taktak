@@ -10,6 +10,7 @@
 #include "build/chromeos_buildflags.h"
 #include "chrome/browser/content_settings/generated_cookie_prefs.h"
 #include "chrome/browser/content_settings/generated_permission_prompting_behavior_pref.h"
+#include "chrome/browser/content_settings/generated_tel_toggle_pref.h"
 #include "chrome/browser/extensions/api/settings_private/generated_pref.h"
 #include "chrome/browser/extensions/api/settings_private/prefs_util_enums.h"
 #include "chrome/browser/password_manager/generated_password_leak_detection_pref.h"
@@ -17,6 +18,7 @@
 #include "chrome/browser/safe_browsing/generated_security_settings_bundle_pref.h"
 #include "chrome/browser/ssl/generated_https_first_mode_pref.h"
 #include "chrome/common/extensions/api/settings_private.h"
+#include "components/browsing_data/core/pref_names.h"
 #include "components/content_settings/core/common/content_settings_types.h"
 #include "components/content_settings/core/common/pref_names.h"
 #include "components/permissions/features.h"
@@ -115,6 +117,8 @@ void GeneratedPrefs::CreatePrefs() {
       profile_, ContentSettingsType::GEOLOCATION);
   prefs_[kGeneratedHttpsFirstModePref] =
       std::make_unique<GeneratedHttpsFirstModePref>(profile_);
+  prefs_[browsing_data::prefs::kTaktakTelEnabled] =
+      std::make_unique<GeneratedTelTogglePref>(profile_);
 }
 
 }  // namespace settings_private
