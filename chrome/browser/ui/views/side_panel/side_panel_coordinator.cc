@@ -728,7 +728,7 @@ std::unique_ptr<views::View> SidePanelCoordinator::CreateHeader() {
   layout->SetCrossAxisAlignment(views::LayoutAlignment::kCenter);
 
   // The minimum cross axis size should the expected height of the header.
-  constexpr int kDefaultSidePanelHeaderHeight = 40;
+  constexpr int kDefaultSidePanelHeaderHeight = 0;
   layout->SetMinimumCrossAxisSize(kDefaultSidePanelHeaderHeight);
 
   //  panel_icon_ = header->AddChildView(CreateIcon());
@@ -791,7 +791,6 @@ std::unique_ptr<views::View> SidePanelCoordinator::CreateHeader() {
   //      ChromeLayoutProvider::Get()->GetDistanceMetric(
   //          ChromeDistanceMetric::DISTANCE_SIDE_PANEL_HEADER_VECTOR_ICON_SIZE)));
   //  header_close_button->SetFocusBehavior(views::View::FocusBehavior::ALWAYS);
-
   return header;
 }
 
