@@ -542,13 +542,14 @@
   E(kActionSidePanelShowHistory) \
   E(kActionSidePanelShowLens) \
   E(kActionSidePanelShowLensOverlayResults, IDC_CONTENT_CONTEXT_LENS_OVERLAY) \
-  E(kActionSidePanelShowReadAnything) \
-  E(kActionSidePanelShowReadingList, IDC_READING_LIST_MENU_SHOW_UI) \
-  E(kActionSidePanelShowSearchCompanion, IDC_SHOW_SEARCH_COMPANION) \
+  E(kActionSidePanelShowReadAnything)  \
+  E(kActionSidePanelShowReadingList, IDC_READING_LIST_MENU_SHOW_UI)           \
+  E(kActionSidePanelShowSearchCompanion, IDC_SHOW_SEARCH_COMPANION)           \
   E(kActionSidePanelShowShoppingInsights) \
   E(kActionSidePanelShowSideSearch) \
   E(kActionSidePanelShowUserNote) \
-  E(kActionSidePanelShowMerchantTrust)
+  E(kActionSidePanelShowMerchantTrust) \
+  E(kActionAIChat, IDC_SHOW_AI_CHAT) \
 
 #define TOOLBAR_PINNABLE_ACTION_IDS \
   E(kActionHome, IDC_HOME) \

@@ -144,41 +144,41 @@ std::unique_ptr<views::ImageButton> CreateControlButton(
   return button;
 }
 
-std::unique_ptr<views::ImageView> CreateIcon() {
-  std::unique_ptr<views::ImageView> icon = std::make_unique<views::ImageView>();
-  const int horizontal_margin =
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          ChromeDistanceMetric::
-              DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
-      2;
-  icon->SetProperty(views::kMarginsKey,
-                    gfx::Insets().set_left(horizontal_margin));
-  return icon;
-}
-
-std::unique_ptr<views::Label> CreateTitle() {
-  std::unique_ptr<views::Label> title = std::make_unique<views::Label>(
-      std::u16string(), views::style::CONTEXT_LABEL,
-      views::style::STYLE_HEADLINE_5);
-
-  title->SetEnabledColor(kColorSidePanelEntryTitle);
-  title->SetBackgroundColor(kColorToolbar);
-  title->SetSubpixelRenderingEnabled(false);
-  const int horizontal_margin =
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          ChromeDistanceMetric::
-              DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
-      2;
-  title->SetProperty(views::kMarginsKey,
-                     gfx::Insets().set_left(horizontal_margin));
-  title->SetProperty(
-      views::kFlexBehaviorKey,
-      views::FlexSpecification(views::LayoutOrientation::kHorizontal,
-                               views::MinimumFlexSizeRule::kScaleToZero,
-                               views::MaximumFlexSizeRule::kUnbounded)
-          .WithAlignment(views::LayoutAlignment::kStart));
-  return title;
-}
+// std::unique_ptr<views::ImageView> CreateIcon() {
+//   std::unique_ptr<views::ImageView> icon =
+//   std::make_unique<views::ImageView>(); const int horizontal_margin =
+//       ChromeLayoutProvider::Get()->GetDistanceMetric(
+//           ChromeDistanceMetric::
+//               DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
+//       2;
+//   icon->SetProperty(views::kMarginsKey,
+//                     gfx::Insets().set_left(horizontal_margin));
+//   return icon;
+// }
+//
+// std::unique_ptr<views::Label> CreateTitle() {
+//   std::unique_ptr<views::Label> title = std::make_unique<views::Label>(
+//       std::u16string(), views::style::CONTEXT_LABEL,
+//       views::style::STYLE_HEADLINE_5);
+//
+//   title->SetEnabledColor(kColorSidePanelEntryTitle);
+//   title->SetBackgroundColor(kColorToolbar);
+//   title->SetSubpixelRenderingEnabled(false);
+//   const int horizontal_margin =
+//       ChromeLayoutProvider::Get()->GetDistanceMetric(
+//           ChromeDistanceMetric::
+//               DISTANCE_SIDE_PANEL_HEADER_INTERIOR_MARGIN_HORIZONTAL) *
+//       2;
+//   title->SetProperty(views::kMarginsKey,
+//                      gfx::Insets().set_left(horizontal_margin));
+//   title->SetProperty(
+//       views::kFlexBehaviorKey,
+//       views::FlexSpecification(views::LayoutOrientation::kHorizontal,
+//                                views::MinimumFlexSizeRule::kScaleToZero,
+//                                views::MaximumFlexSizeRule::kUnbounded)
+//           .WithAlignment(views::LayoutAlignment::kStart));
+//   return title;
+// }
 
 using PopulateSidePanelCallback = base::OnceCallback<void(
     SidePanelEntry* entry,
@@ -389,8 +389,11 @@ void SidePanelCoordinator::UpdatePinState() {
   } else {
     PinnedToolbarActionsModel* const actions_model =
         PinnedToolbarActionsModel::Get(profile);
-
-    updated_pin_state = !actions_model->Contains(action_id.value());
+    if (current_entry_->key().id() == SidePanelEntryId::kAIChat) {
+      updated_pin_state = false;
+    } else {
+      updated_pin_state = !actions_model->Contains(action_id.value());
+    }
     actions_model->UpdatePinnedState(action_id.value(), updated_pin_state);
   }
 
@@ -528,6 +531,13 @@ void SidePanelCoordinator::Show(
       entry, base::BindOnce(&SidePanelCoordinator::PopulateSidePanel,
                             base::Unretained(this), suppress_animations, input,
                             open_trigger));
+
+  auto* toolbar = browser_view_->toolbar();
+  if (entry->key().id() != SidePanelEntry::Id::kAIChat) {
+    toolbar->ResetHighlightForAIChatButton();
+  } else {
+    toolbar->AddHighlightForAIChatButton();
+  }
 }
 
 base::CallbackListSubscription SidePanelCoordinator::RegisterSidePanelShown(
@@ -566,6 +576,10 @@ void SidePanelCoordinator::Close(bool suppress_animations) {
     }
     SidePanelEntry* entry = GetEntryForUniqueKey(*current_key_);
     if (entry) {
+      if (entry->key().id() == SidePanelEntry::Id::kAIChat) {
+        auto* toolbar = browser_view_->toolbar();
+        toolbar->ResetHighlightForAIChatButton();
+      }
       entry->OnEntryWillHide(SidePanelEntryHideReason::kSidePanelClosed);
     }
   }
@@ -717,8 +731,8 @@ std::unique_ptr<views::View> SidePanelCoordinator::CreateHeader() {
   constexpr int kDefaultSidePanelHeaderHeight = 40;
   layout->SetMinimumCrossAxisSize(kDefaultSidePanelHeaderHeight);
 
-  panel_icon_ = header->AddChildView(CreateIcon());
-  panel_title_ = header->AddChildView(CreateTitle());
+  //  panel_icon_ = header->AddChildView(CreateIcon());
+  //  panel_title_ = header->AddChildView(CreateTitle());
 
   header_pin_button_ =
       header->AddChildView(CreatePinToggleButton(base::BindRepeating(
@@ -768,15 +782,15 @@ std::unique_ptr<views::View> SidePanelCoordinator::CreateHeader() {
           std::make_unique<views::Button::DefaultButtonControllerDelegate>(
               header_more_info_button_)));
 
-  auto* header_close_button = header->AddChildView(CreateControlButton(
-      header.get(),
-      base::BindRepeating(&SidePanelUI::Close, base::Unretained(this)),
-      views::kIcCloseIcon,
-      l10n_util::GetStringUTF16(IDS_ACCNAME_SIDE_PANEL_CLOSE),
-      kSidePanelCloseButtonElementId,
-      ChromeLayoutProvider::Get()->GetDistanceMetric(
-          ChromeDistanceMetric::DISTANCE_SIDE_PANEL_HEADER_VECTOR_ICON_SIZE)));
-  header_close_button->SetFocusBehavior(views::View::FocusBehavior::ALWAYS);
+  //  auto* header_close_button = header->AddChildView(CreateControlButton(
+  //      header.get(),
+  //      base::BindRepeating(&SidePanelUI::Close, base::Unretained(this)),
+  //      views::kIcCloseIcon,
+  //      l10n_util::GetStringUTF16(IDS_ACCNAME_SIDE_PANEL_CLOSE),
+  //      kSidePanelCloseButtonElementId,
+  //      ChromeLayoutProvider::Get()->GetDistanceMetric(
+  //          ChromeDistanceMetric::DISTANCE_SIDE_PANEL_HEADER_VECTOR_ICON_SIZE)));
+  //  header_close_button->SetFocusBehavior(views::View::FocusBehavior::ALWAYS);
 
   return header;
 }
@@ -836,6 +850,9 @@ void SidePanelCoordinator::NotifyPinnedContainerOfActiveStateChange(
     std::optional<actions::ActionId> action_id =
         SidePanelEntryIdToActionId(key.id());
     CHECK(action_id.has_value());
+    if (key.id() == SidePanelEntryId::kAIChat) {
+      is_active = false;
+    }
     toolbar_container->UpdateActionState(*action_id, is_active);
   }
 }
@@ -1053,15 +1070,16 @@ void SidePanelCoordinator::UpdatePanelIconAndTitle(
           *icon.GetVectorIcon().vector_icon(), kColorSidePanelEntryIcon,
           icon.GetVectorIcon().icon_size());
     }
-    panel_icon_->SetImage(updated_icon);
+    if (panel_icon_) {
+      panel_icon_->SetImage(updated_icon);
+    }
   }
-  panel_icon_->SetVisible(is_extension);
-
-  std::u16string_view title_text =
-      should_show_title_text ? text : std::u16string_view();
-  // Update the title if it differs from the current title text.
-  if (title_text != panel_title_->GetText()) {
-    panel_title_->SetText(title_text);
+  if (panel_icon_) {
+    panel_icon_->SetVisible(is_extension);
+  }
+  if (panel_title_) {
+    panel_title_->SetText(should_show_title_text ? text
+                                                 : std::u16string_view());
   }
 }
 

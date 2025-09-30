@@ -53,6 +53,7 @@ class MemorySaverOptInIPHController;
 class PinnedToolbarActionsController;
 class ProfileMenuCoordinator;
 class ReadingListSidePanelCoordinator;
+class ChatSidePanelCoordinator;
 class SidePanelCoordinator;
 class SidePanelUI;
 class SigninViewController;
@@ -358,6 +359,10 @@ class BrowserWindowFeatures {
     return reading_list_side_panel_coordinator_.get();
   }
 
+  ChatSidePanelCoordinator* chat_side_panel_coordinator() {
+    return chat_side_panel_coordinator_.get();
+  }
+
   new_tab_footer::NewTabFooterController* new_tab_footer_controller() {
     return new_tab_footer_controller_.get();
   }
@@ -559,6 +564,8 @@ class BrowserWindowFeatures {
 
   std::unique_ptr<ReadingListSidePanelCoordinator>
       reading_list_side_panel_coordinator_;
+
+  std::unique_ptr<ChatSidePanelCoordinator> chat_side_panel_coordinator_;
 
   std::unique_ptr<ProfileMenuCoordinator> profile_menu_coordinator_;
 

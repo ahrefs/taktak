@@ -15,6 +15,7 @@
 #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
 #include "chrome/browser/ui/ui_features.h"
 #include "chrome/browser/ui/views/side_panel/bookmarks/bookmarks_side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/chat/chat_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/comments/comments_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/extensions/extension_side_panel_manager.h"
 #include "chrome/browser/ui/views/side_panel/history/history_side_panel_coordinator.h"
@@ -36,6 +37,11 @@ void SidePanelUtil::PopulateGlobalEntries(Browser* browser,
   // Add reading list.
   browser->browser_window_features()
       ->reading_list_side_panel_coordinator()
+      ->CreateAndRegisterEntry(window_registry);
+
+  // Add ai chat
+  browser->browser_window_features()
+      ->chat_side_panel_coordinator()
       ->CreateAndRegisterEntry(window_registry);
 
   // Add bookmarks.

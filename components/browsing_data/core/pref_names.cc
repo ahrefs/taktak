@@ -62,7 +62,7 @@ void RegisterBrowserUserPrefs(user_prefs::PrefRegistrySyncable* registry) {
   registry->RegisterBooleanPref(kDeleteFormData, false);
   registry->RegisterIntegerPref(
       kClearBrowsingDataHistoryNoticeShownTimes, 0);
-  // registry->RegisterBooleanPref(kChatThinkingEnabled, true);
+  registry->RegisterBooleanPref(kChatThinkingEnabled, true);
   registry->RegisterBooleanPref(kTaktakTelEnabled, true);
 
 #if !BUILDFLAG(IS_IOS)

@@ -41,7 +41,8 @@
   V(kMerchantTrust, kActionSidePanelShowMerchantTrust, "MerchantTrust")       \
   V(kComments, kActionSidePanelShowComments, "Comments")                      \
   /* Extensions (nothing more should be added below here) */                  \
-  V(kExtension, std::nullopt, "Extension")
+  V(kExtension, std::nullopt, "Extension")                                    \
+  V(kAIChat, kActionAIChat, "AIChat")
 
 #define SIDE_PANEL_ENTRY_ID_ENUM(entry_id, action_id, histogram_name) entry_id,
 enum class SidePanelEntryId { SIDE_PANEL_ENTRY_IDS(SIDE_PANEL_ENTRY_ID_ENUM) };

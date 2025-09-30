@@ -3012,6 +3012,14 @@ static_library("ui") {
       "webui/settings/settings_manage_profile_handler.h",
       "webui/settings/system_handler.cc",
       "webui/settings/system_handler.h",
+      "webui/side_panel/chat/api/completion_api_client.cc",
+      "webui/side_panel/chat/api/completion_api_client.h",
+      "webui/side_panel/chat/chat_page_handler.cc",
+      "webui/side_panel/chat/chat_page_handler.h",
+      "webui/side_panel/chat/chat_ui.cc",
+      "webui/side_panel/chat/chat_ui.h",
+      "webui/side_panel/chat/page_content_extractor_helper.cc",
+      "webui/side_panel/chat/page_content_extractor_helper.h",
     ]
 
     if (enable_video_effects) {
@@ -3033,10 +3041,13 @@ static_library("ui") {
       "//chrome/browser/ui/webui/app_home:impl",
       "//chrome/browser/ui/webui/app_settings",
       "//chrome/browser/ui/webui/app_settings:impl",
+      "//chrome/browser/ui/webui/side_panel/chat:mojo_bindings",
       "//chrome/browser/ui/webui/signin:profile",
       "//chrome/browser/ui/webui/signin:profile_impl",
+      "//chrome/common/page_content_extractor:mojo_bindings",
       "//components/capture_mode",
       "//components/country_codes",
+      "//components/html2md",
       "//services/audio/public/mojom",
       "//services/video_capture/public/mojom",
       "//services/video_effects/buildflags",

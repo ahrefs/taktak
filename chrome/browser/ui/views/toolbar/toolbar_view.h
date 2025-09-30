@@ -22,6 +22,7 @@
 #include "chrome/browser/ui/views/location_bar/custom_tab_bar_view.h"
 #include "chrome/browser/ui/views/location_bar/location_bar_view.h"
 #include "chrome/browser/ui/views/profiles/avatar_toolbar_button.h"
+#include "chrome/browser/ui/views/toolbar/ai_chat_toolbar_button.h"
 #include "chrome/browser/ui/views/toolbar/overflow_button.h"
 #include "chrome/browser/ui/views/toolbar/pinned_action_toolbar_button.h"
 #include "chrome/browser/ui/views/toolbar/split_tabs_button.h"
@@ -210,6 +211,9 @@ class ToolbarView : public views::AccessiblePaneView,
 
   friend class AvatarToolbarButtonBaseBrowserTest;
 
+  void ResetHighlightForAIChatButton();
+  void AddHighlightForAIChatButton();
+
  protected:
   // This controls Toolbar, LocationBar and CustomTabBar visibility.
   // If we don't set all three, tab navigation from the app menu breaks
@@ -283,6 +287,9 @@ class ToolbarView : public views::AccessiblePaneView,
 
   void NewTabButtonPressed(const ui::Event& event);
 
+  bool is_ai_chat_button_active_ = false;
+  void AIChatButtonPressed(const ui::Event& event);
+
   void UpdateRecedingCornerRadius();
 
   gfx::SlideAnimation size_animation_{this};
@@ -353,6 +360,8 @@ class ToolbarView : public views::AccessiblePaneView,
   // due to small toolbar view width. Visibility controlled by
   // `toolbar_controller_`.
   raw_ptr<OverflowButton> overflow_button_ = nullptr;
+
+  raw_ptr<AIChatToolbarButton> ai_chat_button_ = nullptr;
 
   // The toolbar's top corners recede lower into the toolbar bounds, and need to
   // have the frame's color painted into it. The receding_corner_radius_ is the

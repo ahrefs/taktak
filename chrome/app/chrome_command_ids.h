@@ -293,6 +293,7 @@
 #define IDC_FIND_EXTENSIONS  40295
 #define IDC_SHOW_SEARCH_TOOLS  40296
 #define IDC_SHOW_COMMENTS_SIDE_PANEL  40297
+#define IDC_SHOW_AI_CHAT 40999
 
 // Spell-check
 // Insert any additional suggestions before _LAST; these have to be consecutive.

@@ -75,6 +75,7 @@
 #include "chrome/browser/ui/views/profiles/profile_menu_coordinator.h"
 #include "chrome/browser/ui/views/send_tab_to_self/send_tab_to_self_toolbar_bubble_controller.h"
 #include "chrome/browser/ui/views/side_panel/bookmarks/bookmarks_side_panel_coordinator.h"
+#include "chrome/browser/ui/views/side_panel/chat/chat_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/comments/comments_side_panel_coordinator.h"
 #include "chrome/browser/ui/views/side_panel/extensions/extension_side_panel_manager.h"
 #include "chrome/browser/ui/views/side_panel/history/history_side_panel_coordinator.h"
@@ -262,6 +263,9 @@ void BrowserWindowFeatures::Init(BrowserWindowInterface* browser) {
   reading_list_side_panel_coordinator_ =
       std::make_unique<ReadingListSidePanelCoordinator>(
           browser->GetProfile(), browser->GetTabStripModel());
+
+  chat_side_panel_coordinator_ = std::make_unique<ChatSidePanelCoordinator>(
+      browser->GetProfile(), browser->GetTabStripModel());
 
   signin_view_controller_ = std::make_unique<SigninViewController>(
       browser, browser->GetProfile(), tab_strip_model_);
