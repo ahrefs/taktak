@@ -10,6 +10,7 @@
 #include "base/metrics/user_metrics.h"
 #include "build/build_config.h"
 #include "chrome/browser/bookmarks/bookmark_model_factory.h"
+#include "chrome/browser/buildflags.h"
 #include "chrome/browser/commerce/shopping_service_factory.h"
 #include "chrome/browser/favicon/favicon_utils.h"
 #include "chrome/browser/feature_engagement/tracker_factory.h"
@@ -464,7 +465,8 @@ void BookmarkBubbleView::ShowBubble(views::View* anchor_view,
              (signin::ShouldShowSyncPromo(*profile) &&
               !base::FeatureList::IsEnabled(
                   switches::kSyncEnableBookmarksInTransportMode))) {
-#if !BUILDFLAG(IS_CHROMEOS)
+#if !BUILDFLAG(IS_CHROMEOS) && \
+    BUILDFLAG(TAKTAK_ENABLE_BUBBLE_GOOGLE_SIGNIN_PROMO_VIEW)
     // TODO(pbos): Consider adding model support for footnotes so that this does
     // not need to be tied to views.
     // TODO(pbos): Consider updating ::SetFootnoteView so that it can resize the
