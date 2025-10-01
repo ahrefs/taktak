@@ -1069,6 +1069,7 @@ void RenderViewContextMenu::InitMenu() {
     AppendImageItems();
   }
 
+  /*
   if (content_type_->SupportsGroup(
           ContextMenuContentType::ITEM_GROUP_SEARCHWEBFORIMAGE)) {
     AppendSearchWebForImageItems();
@@ -1078,6 +1079,7 @@ void RenderViewContextMenu::InitMenu() {
           ContextMenuContentType::ITEM_GROUP_MEDIA_VIDEO)) {
     AppendVideoItems();
   }
+   */
 
   if (content_type_->SupportsGroup(
           ContextMenuContentType::ITEM_GROUP_MEDIA_AUDIO)) {
@@ -2166,11 +2168,11 @@ void RenderViewContextMenu::AppendPageItems() {
   // for sharing section.
   bool has_sharing_menu_items = false;
   // Send-Tab-To-Self (user's other devices), page level.
-  if (GetBrowser() &&
-      send_tab_to_self::ShouldDisplayEntryPoint(embedder_web_contents_)) {
-    AppendSendTabToSelfItem(/*add_separator=*/!has_sharing_menu_items);
-    has_sharing_menu_items = true;
-  }
+  //  if (GetBrowser() &&
+  //      send_tab_to_self::ShouldDisplayEntryPoint(embedder_web_contents_)) {
+  //    AppendSendTabToSelfItem(/*add_separator=*/!has_sharing_menu_items);
+  //    has_sharing_menu_items = true;
+  //  }
 
   // Context menu item for QR Code Generator.
   has_sharing_menu_items |=
