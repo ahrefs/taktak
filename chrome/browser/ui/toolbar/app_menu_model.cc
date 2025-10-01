@@ -1935,29 +1935,29 @@ void AppMenuModel::Build() {
             features::kGlicAppMenuNewBadge));
   }
 #endif
-
-  if (browser()
-          ->GetFeatures()
-          .lens_overlay_entry_point_controller()
-          ->IsEnabled()) {
-    const gfx::VectorIcon& icon =
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-        vector_icons::kGoogleLensMonochromeLogoIcon;
-#else
-        vector_icons::kSearchChromeRefreshIcon;
-#endif
-    AddItemWithStringIdAndVectorIcon(
-        this, IDC_CONTENT_CONTEXT_LENS_OVERLAY,
-        lens::GetLensOverlayEntrypointLabelAltIds(IDS_SHOW_LENS_OVERLAY), icon);
-    const int lens_command_index =
-        GetIndexOfCommandId(IDC_CONTENT_CONTEXT_LENS_OVERLAY).value();
-    SetElementIdentifierAt(lens_command_index, kShowLensOverlay);
-    SetIsNewFeatureAt(
-        lens_command_index,
-        BrowserUserEducationInterface::From(browser())->MaybeShowNewBadgeFor(
-            lens::features::kLensOverlay));
-  }
-
+  /*
+    if (browser()
+            ->GetFeatures()
+            .lens_overlay_entry_point_controller()
+            ->IsEnabled()) {
+      const gfx::VectorIcon& icon =
+  #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
+          vector_icons::kGoogleLensMonochromeLogoIcon;
+  #else
+          vector_icons::kSearchChromeRefreshIcon;
+  #endif
+      AddItemWithStringIdAndVectorIcon(
+          this, IDC_CONTENT_CONTEXT_LENS_OVERLAY,
+          lens::GetLensOverlayEntrypointLabelAltIds(IDS_SHOW_LENS_OVERLAY),
+  icon); const int lens_command_index =
+          GetIndexOfCommandId(IDC_CONTENT_CONTEXT_LENS_OVERLAY).value();
+      SetElementIdentifierAt(lens_command_index, kShowLensOverlay);
+      SetIsNewFeatureAt(
+          lens_command_index,
+          BrowserUserEducationInterface::From(browser())->MaybeShowNewBadgeFor(
+              lens::features::kLensOverlay));
+    }
+   */
   AddItemWithStringIdAndVectorIcon(this, IDC_SHOW_TRANSLATE, IDS_SHOW_TRANSLATE,
                                    kTranslateIcon);
 
