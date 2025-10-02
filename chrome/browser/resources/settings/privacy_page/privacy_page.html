@@ -39,7 +39,7 @@
         </settings-clear-browsing-data-dialog-v2>
       </template>
     </template>
-    <template is="dom-if" if="[[showPrivacyGuideDialog_]]" restamp>
+  <template is="dom-if" if="[[showPrivacyGuideDialog_]]" restamp>
       <settings-privacy-guide-dialog id="privacyGuideDialog" prefs="{{prefs}}"
           on-close="onPrivacyGuideDialogClosed_">
       </settings-privacy-guide-dialog>
@@ -52,7 +52,7 @@
             label="$i18n{clearBrowsingData}"
             sub-label="$i18n{clearBrowsingDataDescription}"
             on-click="onClearBrowsingDataClick_"></cr-link-row>
-        <template is="dom-if" if="[[isPrivacyGuideAvailable]]">
+       <template is="dom-if" if="[[isPrivacyGuideAvailable]]">
           <cr-link-row id="privacyGuideLinkRow" class="hr"
               start-icon="privacy20:signpost"
               label="$i18n{privacyGuideLabel}"
@@ -80,7 +80,7 @@
               role-description="$i18n{subpageArrowRoleDescription}">
           </cr-link-row>
         </template>
-        <template is="dom-if" if=
+       <template is="dom-if" if=
             "[[shouldShowAdPrivacy_(
                 isPrivacySandboxRestricted_,
                 isPrivacySandboxRestrictedNoticeEnabled_)]]">

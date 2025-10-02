@@ -161,7 +161,7 @@ bool IsChromeLabsEnabled() {
   }
 
   // The percentage of users that should see the feature.
-  const int kChromeLabsActivationPercentage = 99;
+  const int kChromeLabsActivationPercentage = 0;
 
   if (force_activation_for_testing ||
       g_browser_process->local_state()->GetInteger(

@@ -197,7 +197,8 @@ function createRoutes(): SettingsRoutes {
       r.GOOGLE_SERVICES = r.PEOPLE.createChild('/googleServices');
       r.GOOGLE_SERVICES.hasMigratedToPlugin = true;
     }
-    r.MANAGE_PROFILE = r.PEOPLE.createChild('/manageProfile');
+    // r.MANAGE_PROFILE = r.PEOPLE.createChild('/manageProfile');
+    r.MANAGE_PROFILE = r.PEOPLE.createChild('/');
     r.MANAGE_PROFILE.hasMigratedToPlugin = true;
     // </if>
 
@@ -207,6 +208,7 @@ function createRoutes(): SettingsRoutes {
     r.SYNC_ADVANCED.hasMigratedToPlugin = true;
   }
 
+  visibility.ai = false;
   if (visibility.ai !== false && loadTimeData.getBoolean('showAiPage')) {
     r.AI = r.BASIC.createSection(
         '/ai', 'ai', loadTimeData.getString('aiInnovationsPageTitle'));

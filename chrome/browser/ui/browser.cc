@@ -159,6 +159,7 @@
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/branded_strings.h"
 #include "chrome/grit/generated_resources.h"
+#include "chrome/renderer/process_state.h"
 #include "components/blocked_content/list_item_position.h"
 #include "components/blocked_content/popup_blocker.h"
 #include "components/blocked_content/popup_blocker_tab_helper.h"
@@ -2004,13 +2005,15 @@ void Browser::OnWindowDidShow() {
     return;
   }
 
-  BrowserView* browser_view = BrowserView::GetBrowserViewForBrowser(this);
-  if (browser_view) {
-    auto* browser = browser_view->browser();
-    if (browser) {
-      auto* coordinator = browser->GetFeatures().side_panel_coordinator();
-      if (coordinator) {
-        coordinator->Show(SidePanelEntry::Id::kAIChat);
+  if (!IsIncognitoProcess()) {
+    BrowserView* browser_view = BrowserView::GetBrowserViewForBrowser(this);
+    if (browser_view) {
+      auto* browser = browser_view->browser();
+      if (browser && !browser->profile()->IsIncognitoProfile()) {
+        auto* coordinator = browser->GetFeatures().side_panel_coordinator();
+        if (coordinator) {
+          coordinator->Show(SidePanelEntry::Id::kAIChat);
+        }
       }
     }
   }

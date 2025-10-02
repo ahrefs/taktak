@@ -25,8 +25,7 @@
   <template is="dom-if" if="[[showPage_(pageVisibility_.safetyHub)]]">
     <template is="dom-if" if="[[renderView_(
         routes_.PRIVACY, currentRoute, inSearchMode)]]">
-      <settings-section slot="view" id="safetyHubEntryPoint"
-          page-title="$i18n{safetyHub}">
+      <settings-section slot="view" id="safetyHubEntryPoint" page-title="$i18n{safetyHub}">
         <settings-safety-hub-entry-point></settings-safety-hub-entry-point>
       </settings-section>
     </template>
