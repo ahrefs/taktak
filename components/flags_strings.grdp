@@ -51,11 +51,11 @@
     </message>
   </if>
   <if expr="not is_chromeos">
-    <message name="IDS_FLAGS_UI_RELAUNCH" desc="Label for button that relaunches chrome.">
+    <message name="IDS_FLAGS_UI_RELAUNCH" desc="Label for button that relaunches Taktak.">
       Relaunch
     </message>
   </if>
-  <message name="IDS_FLAGS_UI_CLEAR_SEARCH" desc="Tooltip for icon button that clears the searchbar on the chrome://flags page.">
+  <message name="IDS_FLAGS_UI_CLEAR_SEARCH" desc="Tooltip for icon button that clears the searchbar on the Taktak://flags page.">
     Clear search
   </message>
   <message name="IDS_FLAGS_UI_RESET_ACKNOWLEDGED" desc="Screen reader text stating that the reset action was acknowledged.">

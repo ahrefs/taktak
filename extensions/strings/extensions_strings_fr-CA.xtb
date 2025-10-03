@@ -25,7 +25,7 @@
 <translation id="3984413272403535372">Une erreur s'est produite lors de la signature de l'extension.</translation>
 <translation id="4233778200880751280">Impossible de charger la page « <ph name="ABOUT_PAGE" /> ».</translation>
 <translation id="471800408830181311">Échec de création de la clé privée</translation>
-<translation id="4811956658694082538">Échec de l'installation du paquet causé par le plantage d'un processus de service. Veuillez redémarrer Chrome, puis réessayer.</translation>
+<translation id="4811956658694082538">Échec de l'installation du paquet causé par le plantage d'un processus de service. Veuillez redémarrer Taktak, puis réessayer.</translation>
 <translation id="4988792151665380515">Échec d'exportation de la clé publique</translation>
 <translation id="5026754133087629784">Affichage Web : <ph name="WEBVIEW_TAG_NAME" /></translation>
 <translation id="5098647635849512368">Impossible de trouver le chemin d'accès absolu du répertoire à empaqueter.</translation>

@@ -252,23 +252,23 @@
   <message name="IDS_BOOKMARK_DICE_PROMO_SYNC_MESSAGE" desc="Text of the sync promo displayed at the bottom of the bookmark bubble asking the user to enable sync.">
     To get your bookmarks on all your devices, turn on sync.
   </message>
-  <message name="IDS_BOOKMARK_VERIFY_PROMO_SUBTITLE" desc="This is the body text of a confirmation message and means that the bookmark is in an account-pending storage. In other words, it's waiting to be uploaded to the user's Google Account. It appears when the user was signed in to Chrome with account storage for bookmarks enabled but their sign-in credentials have expired; now, they need to sign back in to Chrome. The string is after the 'Bookmark added' string. If the user wants to save this data to their Google Account, they can click the 'Verify it's you' button at the bottom of this message. The tone should be motivating.">
+  <message name="IDS_BOOKMARK_VERIFY_PROMO_SUBTITLE" desc="This is the body text of a confirmation message and means that the bookmark is in an account-pending storage. In other words, it's waiting to be uploaded to the user's Taktak Account. It appears when the user was signed in to Taktak with account storage for bookmarks enabled but their sign-in credentials have expired; now, they need to sign back in to Taktak. The string is after the 'Bookmark added' string. If the user wants to save this data to their Taktak Account, they can click the 'Verify it's you' button at the bottom of this message. The tone should be motivating.">
     To get this bookmark on all your devices, verify it's you
   </message>
   <!-- End of Bookmarks Promo strings for Desktop Identity Consistency. -->
 
   <!-- Begin of Desktop to iOS Promo strings. -->
   <if expr="is_win">
-    <message name="IDS_BOOKMARK_BUBBLE_DESKTOP_TO_IOS_PROMO_TITLE" desc="Title for Chrome iOS promotion appearing in the bookmark bubble after a bookmark is saved.">
+    <message name="IDS_BOOKMARK_BUBBLE_DESKTOP_TO_IOS_PROMO_TITLE" desc="Title for Taktak iOS promotion appearing in the bookmark bubble after a bookmark is saved.">
       Sync this bookmark to your iPhone
     </message>
-    <message name="IDS_BOOKMARK_BUBBLE_DESKTOP_TO_IOS_PROMO_TITLE_V2" desc="Title for Chrome iOS promotion appearing in the bookmark bubble after a bookmark is saved.">
+    <message name="IDS_BOOKMARK_BUBBLE_DESKTOP_TO_IOS_PROMO_TITLE_V2" desc="Title for Taktak iOS promotion appearing in the bookmark bubble after a bookmark is saved.">
       Get this bookmark on your iPhone
     </message>
-    <message name="IDS_BOOKMARK_BUBBLE_DESKTOP_TO_IOS_PROMO_TITLE_V3" desc="Title for Chrome iOS promotion appearing in the bookmark bubble after a bookmark is saved.">
+    <message name="IDS_BOOKMARK_BUBBLE_DESKTOP_TO_IOS_PROMO_TITLE_V3" desc="Title for Taktak iOS promotion appearing in the bookmark bubble after a bookmark is saved.">
       Share this bookmark with your iPhone
     </message>
-    <message name="IDS_BOOKMARK_FOOTNOTE_DESKTOP_TO_IOS_PROMO_MESSAGE" desc="Text of the Chrome iOS promotion displayed at the bottom of the bookmark bubble.">
+    <message name="IDS_BOOKMARK_FOOTNOTE_DESKTOP_TO_IOS_PROMO_MESSAGE" desc="Text of the Taktak iOS promotion displayed at the bottom of the bookmark bubble.">
       To get your bookmarks on your mobile device, <ph name="GET_IOS_APP_LINK">$1<ex>get the application on your iPhone</ex></ph>.
     </message>
   </if>
@@ -580,16 +580,16 @@
 
   <!-- Begin of screen reader message strings. -->
   <message name="IDS_BOOKMARK_SCREEN_READER_CREATED" is_accessibility_with_no_ui="true" desc="Screen reader message that is read when a bookmark is created.">
-    '<ph name="BOOKMARK_TITLE">$1<ex>Google</ex></ph>' bookmark created.
+    '<ph name="BOOKMARK_TITLE">$1<ex>Taktak</ex></ph>' bookmark created.
   </message>
   <message name="IDS_BOOKMARK_SCREEN_READER_FOLDER_CREATED" is_accessibility_with_no_ui="true" desc="Screen reader message that is read when a bookmark folder is created.">
-    '<ph name="BOOKMARK_TITLE">$1<ex>Google</ex></ph>' bookmark folder created.
+    '<ph name="BOOKMARK_TITLE">$1<ex>Taktak</ex></ph>' bookmark folder created.
   </message>
   <message name="IDS_BOOKMARK_SCREEN_READER_REORDERED" desc="Screen reader message that is read when a bookmark is reordered.">
-    '<ph name="BOOKMARK_TITLE">$1<ex>Google</ex></ph>' moved.
+    '<ph name="BOOKMARK_TITLE">$1<ex>Taktak</ex></ph>' moved.
   </message>
   <message name="IDS_BOOKMARK_SCREEN_READER_MOVED" desc="Screen reader message that is read when a bookmark is moved into a different folder.">
-    '<ph name="BOOKMARK_TITLE">$1<ex>Google</ex></ph>' moved into '<ph name="NEW_FOLDER_TITLE">$2<ex>Search engines</ex></ph>'.
+    '<ph name="BOOKMARK_TITLE">$1<ex>Taktak</ex></ph>' moved into '<ph name="NEW_FOLDER_TITLE">$2<ex>Search engines</ex></ph>'.
   </message>
   <!-- End of screen reader message strings. -->
 

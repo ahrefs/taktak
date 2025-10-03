@@ -369,10 +369,10 @@
   <message name="IDS_OS_SETTINGS_TAG_NEARBY_SHARE_DEVICE_VISIBILITY_ALT1_PH" desc="Feature name placeholder: Text for search result item which, when clicked, navigates the user to the change device visibility button in sharing settings. Alternate phrase for: 'sharing visibility'">
     <ph name="FEATURE_NAME">$1<ex>Nearby Share</ex></ph> discoverability
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_NEARBY_SHARE_CONTACTS" desc="Text for search result item which, when clicked, navigates the user to Nearby Share manage contacts row in settings that opens Google Contacts.">
+  <message name="IDS_OS_SETTINGS_TAG_NEARBY_SHARE_CONTACTS" desc="Text for search result item which, when clicked, navigates the user to Nearby Share manage contacts row in settings that opens Taktak Contacts.">
     Nearby Share contacts
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_NEARBY_SHARE_CONTACTS_PH" desc="Feature name placeholder: Text for search result item which, when clicked, navigates the user to the manage contacts row in sharing settings that opens Google Contacts.">
+  <message name="IDS_OS_SETTINGS_TAG_NEARBY_SHARE_CONTACTS_PH" desc="Feature name placeholder: Text for search result item which, when clicked, navigates the user to the manage contacts row in sharing settings that opens Taktak Contacts.">
     <ph name="FEATURE_NAME">$1<ex>Nearby Share</ex></ph> contacts
   </message>
   <message name="IDS_OS_SETTINGS_TAG_NEARBY_SHARE_DATA_USAGE" desc="Text for search result item which, when clicked, navigates the user to Nearby Share edit data usage button in settings.">
@@ -421,7 +421,7 @@
     Add account
   </message>
   <message name="IDS_OS_SETTINGS_TAG_PEOPLE_ACCOUNTS_ADD_V2" desc="Text for search result item which, when clicked, navigates the user to accounts settings, with a button to add a new account.">
-    Add Google Account
+    Add Taktak Account
   </message>
   <message name="IDS_OS_SETTINGS_TAG_PEOPLE_ACCOUNTS_REMOVE" desc="Text for search result item which, when clicked, navigates the user to accounts settings, with an option to remove an account.">
     Remove account
@@ -501,26 +501,26 @@
   <message name="IDS_OS_SETTINGS_TAG_PARENTAL_CONTROLS_ALT2" desc="Text for search result item which, when clicked, navigates the user to parental control settings. Alternate phrase for: 'Parental controls', 'Child accounts'">
     Family Link
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_SYNC_AND_GOOGLE_SERVICES" desc="Text for search result item which, when clicked, navigates the user to settings for Sync (syncs data between multiple Chromebooks) and Google Services.">
-    Sync and Google services
+  <message name="IDS_OS_SETTINGS_TAG_SYNC_AND_GOOGLE_SERVICES" desc="Text for search result item which, when clicked, navigates the user to settings for Sync (syncs data between multiple Chromebooks) and Taktak Services.">
+    Sync and Taktak services
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_SYNC_ENCRYPTION_OPTIONS" desc="Text for search result item which, when clicked, navigates the user to sync settings, with an option to choose whether synced data is encrypted with the user's Google account password or with a custom password chosen by the user. Alternate phrase for: 'Sync encryption password'">
+  <message name="IDS_OS_SETTINGS_TAG_SYNC_ENCRYPTION_OPTIONS" desc="Text for search result item which, when clicked, navigates the user to sync settings, with an option to choose whether synced data is encrypted with the user's Taktak account password or with a custom password chosen by the user. Alternate phrase for: 'Sync encryption password'">
     Sync encryption options
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_SYNC_ENCRYPTION_OPTIONS_ALT1" desc="Text for search result item which, when clicked, navigates the user to sync settings, with an option to choose whether synced data is encrypted with the user's Google account password or with a custom password chosen by the user. Alternate phrase for: 'Sync encryption options'">
+  <message name="IDS_OS_SETTINGS_TAG_SYNC_ENCRYPTION_OPTIONS_ALT1" desc="Text for search result item which, when clicked, navigates the user to sync settings, with an option to choose whether synced data is encrypted with the user's Taktak account password or with a custom password chosen by the user. Alternate phrase for: 'Sync encryption options'">
     Sync encryption password
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_SYNC_MANAGEMENT" desc="Text for search result item which, when clicked, navigates the user to sync settings, with the option to decide which types of data are synced via Chrome Sync.">
+  <message name="IDS_OS_SETTINGS_TAG_SYNC_MANAGEMENT" desc="Text for search result item which, when clicked, navigates the user to sync settings, with the option to decide which types of data are synced via Taktak Sync.">
     Sync management
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_IMPROVE_SEARCH_SUGGESTIONS" desc="Text for search result item which, when clicked, navigates the user to Google services settings, with a toggle to enable/disable a feature which requests suggestions from the user's default search engine.">
+  <message name="IDS_OS_SETTINGS_TAG_IMPROVE_SEARCH_SUGGESTIONS" desc="Text for search result item which, when clicked, navigates the user to Taktak services settings, with a toggle to enable/disable a feature which requests suggestions from the user's default search engine.">
     Improve search suggestions
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_MAKE_SEARCHES_AND_BROWSER_BETTER" desc="Text for search result item which, when clicked, navigates the user to Google services settings, with a toggle to enable/disable a feature which sends URLs of pages the user has visited to Google, which helps to improve search/browsing results.">
-    Send URLs of pages you visit to Google
+  <message name="IDS_OS_SETTINGS_TAG_MAKE_SEARCHES_AND_BROWSER_BETTER" desc="Text for search result item which, when clicked, navigates the user to Taktak services settings, with a toggle to enable/disable a feature which sends URLs of pages the user has visited to Taktak, which helps to improve search/browsing results.">
+    Send URLs of pages you visit to Taktak
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_GOOGLE_DRIVE_SEARCH_SUGGESTIONS" desc="Text for search result item which, when clicked, navigates the user to Google services settings, with a toggle to enable/disable a feature which provides suggestions to visit Google Drive items when the user types in the address bar.">
-    Show Google Drive suggestions
+  <message name="IDS_OS_SETTINGS_TAG_GOOGLE_DRIVE_SEARCH_SUGGESTIONS" desc="Text for search result item which, when clicked, navigates the user to Taktak services settings, with a toggle to enable/disable a feature which provides suggestions to visit Taktak Drive items when the user types in the address bar.">
+    Show Taktak Drive suggestions
   </message>
   <message name="IDS_OS_SETTINGS_TAG_LOCAL_DATA_RECOVERY" desc="Text for search result item which, when clicked, navigates the user to Local Data Recovery toggle.">
     Local Data Recovery
@@ -861,8 +861,8 @@
     Quick Answers unit conversion
   </message>
 
-  <message name="IDS_OS_SETTINGS_TAG_MAGIC_BOOST" desc="Text for search result item which, when clicked, navigates the user to Google AI settings, with an option to turn functionality on.">
-    Google AI
+  <message name="IDS_OS_SETTINGS_TAG_MAGIC_BOOST" desc="Text for search result item which, when clicked, navigates the user to Taktak AI settings, with an option to turn functionality on.">
+    Taktak AI
   </message>
   <message name="IDS_OS_SETTINGS_TAG_MAGIC_BOOST_HMR" desc="Text for search result item which, when clicked, navigates the user to Help Me Read settings, with an option to turn functionality on.">
     Help Me Read
@@ -908,11 +908,11 @@
   <message name="IDS_OS_SETTINGS_TAG_APP_BADGING" desc="Text for search result item which, when clicked, navigates the user to app notification settings with app badging toggle.">
     App badging
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_REMOVE_PLAY_STORE" desc="Text for search result item which, when clicked, navigates the user to Android app settings, with a button to remove the Play Store (Android app store). Alternate phrase for: 'Uninstall Google Play Store'">
-    Remove Google Play Store
+  <message name="IDS_OS_SETTINGS_TAG_REMOVE_PLAY_STORE" desc="Text for search result item which, when clicked, navigates the user to Android app settings, with a button to remove the Play Store (Android app store). Alternate phrase for: 'Uninstall Taktak Play Store'">
+    Remove Taktak Play Store
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_REMOVE_PLAY_STORE_ALT1" desc="Text for search result item which, when clicked, navigates the user to Android app settings, with a button to remove the Play Store (Android app store). Alternate phrase for: 'Remove Google Play Store'">
-    Uninstall Google Play Store
+  <message name="IDS_OS_SETTINGS_TAG_REMOVE_PLAY_STORE_ALT1" desc="Text for search result item which, when clicked, navigates the user to Android app settings, with a button to remove the Play Store (Android app store). Alternate phrase for: 'Remove Taktak Play Store'">
+    Uninstall Taktak Play Store
   </message>
   <message name="IDS_OS_SETTINGS_TAG_PLAY_STORE" desc="Text for search result item which, when clicked, navigates the user to Play Store (Android app store) settings.">
     Play Store
@@ -1073,10 +1073,10 @@
   <message name="IDS_OS_SETTINGS_TAG_PRIVACY_VERIFIED_ACCESS" desc="Text for search result item which, when clicked, navigates the user to privacy settings, with a toggle to enable/disable verified access.">
     Verified access
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_PRIVACY_CRASH_REPORTS" desc="Text for search result item which, when clicked, navigates the user to privacy settings, with a toggle to enable/disable allowing usage statistics and crash reports to be sent to Google. Alternate phrase for: 'Feedback reports'">
+  <message name="IDS_OS_SETTINGS_TAG_PRIVACY_CRASH_REPORTS" desc="Text for search result item which, when clicked, navigates the user to privacy settings, with a toggle to enable/disable allowing usage statistics and crash reports to be sent to Taktak. Alternate phrase for: 'Feedback reports'">
     Usage statistics and crash reports
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_PRIVACY_CRASH_REPORTS_ALT1" desc="Text for search result item which, when clicked, navigates the user to privacy settings, with a toggle to enable/disable allowing usage statistics and crash reports to be sent to Google. Alternate phrase for: 'Usage statistics and crash reports'">
+  <message name="IDS_OS_SETTINGS_TAG_PRIVACY_CRASH_REPORTS_ALT1" desc="Text for search result item which, when clicked, navigates the user to privacy settings, with a toggle to enable/disable allowing usage statistics and crash reports to be sent to Taktak. Alternate phrase for: 'Usage statistics and crash reports'">
     Feedback reports
   </message>
   <message name="IDS_OS_SETTINGS_TAG_PRIVACY_PERIPHERAL_DATA_ACCESS_PROTECTION" desc="Text for search result item which, when clicked, navigates the user to privacy settings, with a toggle to enable/disable peripheral data access protection. Alternate phrases include: 'PCIe', 'Thunderbolt', 'USB', 'USB4', 'USB-C'">
@@ -1189,11 +1189,11 @@
   <message name="IDS_OS_SETTINGS_TAG_FILES" desc="Text for search result item which, when clicked, navigates the user to files settings.">
     Files
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_FILES_DISCONNECT_GOOGLE_DRIVE" desc="Text for search result item that, when clicked, navigates the user to Settings: Google Drive settings, with a toggle to enable/disable connecting the user's Google Drive account.">
-    Disconnect Google Drive account
+  <message name="IDS_OS_SETTINGS_TAG_FILES_DISCONNECT_GOOGLE_DRIVE" desc="Text for search result item that, when clicked, navigates the user to Settings: Taktak Drive settings, with a toggle to enable/disable connecting the user's Taktak Drive account.">
+    Disconnect Taktak Drive account
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_FILES_REMOVE_GOOGLE_DRIVE_ACCESS" desc="Text for search result item that, when clicked, navigates the user to Settings: Google Drive settings, with a toggle to remove the user's Google Drive access from the device.">
-    Remove Google Drive access
+  <message name="IDS_OS_SETTINGS_TAG_FILES_REMOVE_GOOGLE_DRIVE_ACCESS" desc="Text for search result item that, when clicked, navigates the user to Settings: Taktak Drive settings, with a toggle to remove the user's Taktak Drive access from the device.">
+    Remove Taktak Drive access
   </message>
   <message name="IDS_OS_SETTINGS_TAG_FILES_NETWORK_FILE_SHARES" desc="Text for search result item which, when clicked, navigates the user to network file share (a.k.a. SMB share) settings. Alternate phrase for: 'SMB share'">
     Network file shares
@@ -1207,13 +1207,13 @@
   <message name="IDS_OS_SETTINGS_TAG_FILES_MICROSOFT_365_ALT1" desc="Text for search result item which, when clicked, navigates the user to the Microsoft Office file settings. 'Office file' is an alternate for 'Microsoft 365 file'">
     Office file settings
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_FILES_GOOGLE_DRIVE" translateable="false" desc="Text for search result item which, when clicked, navigates the user to the Google Drive settings.">
-    Google Drive settings
+  <message name="IDS_OS_SETTINGS_TAG_FILES_GOOGLE_DRIVE" translateable="false" desc="Text for search result item which, when clicked, navigates the user to the Taktak Drive settings.">
+    Taktak Drive settings
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_FILES_GOOGLE_DRIVE_FILE_SYNC" desc="Text for search result item which, when clicked, navigates the user to the Files sync feature in Google Drive settings.">
+  <message name="IDS_OS_SETTINGS_TAG_FILES_GOOGLE_DRIVE_FILE_SYNC" desc="Text for search result item which, when clicked, navigates the user to the Files sync feature in Taktak Drive settings.">
     File sync
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_FILES_GOOGLE_DRIVE_FILE_SYNC_ALT1" desc="Text for search result item which, when clicked, navigates the user to the Files sync feature in Google Drive settings.">
+  <message name="IDS_OS_SETTINGS_TAG_FILES_GOOGLE_DRIVE_FILE_SYNC_ALT1" desc="Text for search result item which, when clicked, navigates the user to the Files sync feature in Taktak Drive settings.">
     Offline
   </message>
   <message name="IDS_OS_SETTINGS_TAG_FILES_ONEDRIVE" desc="Text for search result item which, when clicked, navigates the user to the Microsoft OneDrive settings.">
@@ -1557,8 +1557,8 @@
   <message name="IDS_OS_SETTINGS_TAG_A11Y_FLASH_NOTIFICATIONS_ALT1" desc="Text for search result item which, when clicked, navigates the user to an accessibility setting to turn on or off a feature that flashes the screen when a notification appears.">
     Screen flash
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_A11Y_LABELS_FROM_GOOGLE" desc="Text for search result item which, when clicked, navigates the user to accessibility settings, with a toggle to enable/disable getting image descriptions from Google.">
-    Get image descriptions from Google
+  <message name="IDS_OS_SETTINGS_TAG_A11Y_LABELS_FROM_GOOGLE" desc="Text for search result item which, when clicked, navigates the user to accessibility settings, with a toggle to enable/disable getting image descriptions from Taktak.">
+    Get image descriptions from Taktak
   </message>
   <message name="IDS_OS_SETTINGS_TAG_A11Y_COLOR_CORRECTION" desc="Text for search result item which, when clicked, navigates the user to the accessibility settings, with a toggle to enable/disable color correction.">
     Color correction
@@ -1624,10 +1624,10 @@
   <message name="IDS_OS_SETTINGS_TAG_ABOUT_HELP" desc="Text for search result item which, when clicked, navigates the user to 'About ChromeOS' settings, with a link which opens the 'Help' app.">
     Help
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_ABOUT_REPORT_ISSUE" desc="Text for search result item which, when clicked, navigates the user to 'About ChromeOS' settings, with a link which opens the 'Send feedback to Google' app. Alternate phrase for: 'Report a bug'">
+  <message name="IDS_OS_SETTINGS_TAG_ABOUT_REPORT_ISSUE" desc="Text for search result item which, when clicked, navigates the user to 'About ChromeOS' settings, with a link which opens the 'Send feedback to Taktak' app. Alternate phrase for: 'Report a bug'">
     Report an issue
   </message>
-  <message name="IDS_OS_SETTINGS_TAG_ABOUT_REPORT_ISSUE_ALT1" desc="Text for search result item which, when clicked, navigates the user to 'About ChromeOS' settings, with a link which opens the 'Send feedback to Google' app. Alternate phrase for: 'Report an issue'">
+  <message name="IDS_OS_SETTINGS_TAG_ABOUT_REPORT_ISSUE_ALT1" desc="Text for search result item which, when clicked, navigates the user to 'About ChromeOS' settings, with a link which opens the 'Send feedback to Taktak' app. Alternate phrase for: 'Report an issue'">
     Report a bug
   </message>
   <message name="IDS_OS_SETTINGS_TAG_ABOUT_TERMS_OF_SERVICE" desc="Text for search result item which, when clicked, navigates the user to 'About ChromeOS' settings, with a link to the Terms of Service.">

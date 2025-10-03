@@ -17,21 +17,21 @@
       $1<ex>Wikipedia</ex>
     </ph> - You're sharing this tab with Gemini for the duration of this conversation
   </message>
-  <message name="IDS_GLIC_PROMO_BODY" desc="Text for a promo pointing to the Gemini icon in Chrome.">
+  <message name="IDS_GLIC_PROMO_BODY" desc="Text for a promo pointing to the Gemini icon in Taktak.">
     Chat with voice or text to get answers, key takeaways, and more as you browse
   </message>
   <if expr="is_win or is_linux">
-    <message name="IDS_GLIC_STATUS_ICON_MENU_CUSTOMIZE_KEYBOARD_SHORTCUT" desc="Menu text for the Gemini icon on the system try to open Chrome settings and change the keyboard shortcut for opening Gemini in Chrome.">
+    <message name="IDS_GLIC_STATUS_ICON_MENU_CUSTOMIZE_KEYBOARD_SHORTCUT" desc="Menu text for the Gemini icon on the system try to open Taktak settings and change the keyboard shortcut for opening Gemini in Taktak.">
       Customize keyboard shortcut
     </message>
   </if>
   <if expr="is_macosx">
-    <message name="IDS_GLIC_STATUS_ICON_MENU_CUSTOMIZE_KEYBOARD_SHORTCUT" desc="Menu text for the Gemini icon on the system try to open Chrome settings and change the keyboard shortcut for opening Gemini in Chrome. [With ellipsis]">
+    <message name="IDS_GLIC_STATUS_ICON_MENU_CUSTOMIZE_KEYBOARD_SHORTCUT" desc="Menu text for the Gemini icon on the system try to open Taktak settings and change the keyboard shortcut for opening Gemini in Taktak. [With ellipsis]">
       Customize Keyboard Shortcut...
     </message>
   </if>
   <if expr="is_win or is_linux">
-    <message name="IDS_GLIC_STATUS_ICON_MENU_EXIT" desc="This is the menu item for exiting Chrome.">
+    <message name="IDS_GLIC_STATUS_ICON_MENU_EXIT" desc="This is the menu item for exiting Taktak.">
       Exit
     </message>
   </if>
@@ -130,7 +130,7 @@
     </message>
   </if>
   <message name="IDS_SETTINGS_GLIC_OS_WIDGET_TOGGLE_SUBLABEL" desc="Sublabel of the toggle that controls whether the Gemini icon is shown in the menu bar (on Mac) / system tray (on Windows and Linux).">
-    Easy access to use Gemini across your device, even if Chrome is minimized.
+    Easy access to use Gemini across your device, even if Taktak is minimized.
   </message>
   <message name="IDS_SETTINGS_GLIC_KEYBOARD_SHORTCUT" desc="Name of the keyboard shortcut setting.">
     Keyboard shortcut
@@ -138,13 +138,13 @@
   <message name="IDS_SETTINGS_GLIC_KEYBOARD_SHORTCUT_SUBLABEL" desc="Sublabel describing the keyboard shortcut that's used to globally invoke Gemini.">
     Open Gemini with a keyboard shortcut.
   </message>
-  <message name="IDS_SETTINGS_GLIC_KEYBOARD_SHORTCUT_LEARN_MORE_LABEL" desc="Label for the 'Learn more' link in the sublabel for Gemini in Chrome settings.">
+  <message name="IDS_SETTINGS_GLIC_KEYBOARD_SHORTCUT_LEARN_MORE_LABEL" desc="Label for the 'Learn more' link in the sublabel for Gemini in Taktak settings.">
     Learn more
   </message>
-  <message name="IDS_SETTINGS_GLIC_NAVIGATION_SHORTCUT" desc="Title for the navigation shortcut setting to leave and return to Gemini in Chrome.">
+  <message name="IDS_SETTINGS_GLIC_NAVIGATION_SHORTCUT" desc="Title for the navigation shortcut setting to leave and return to Gemini in Taktak.">
     Navigation shortcut
   </message>
-  <message name="IDS_SETTINGS_GLIC_NAVIGATION_SHORTCUT_SUBLABEL" desc="Sublabel describing the keyboard shortcut navigate between Chrome and Gemini.">
+  <message name="IDS_SETTINGS_GLIC_NAVIGATION_SHORTCUT_SUBLABEL" desc="Sublabel describing the keyboard shortcut navigate between Taktak and Gemini.">
     To leave or return to Gemini, use keyboard shortcut.
   </message>
   <message name="IDS_SETTINGS_GLIC_CLOSED_CAPTIONING" desc="Name of the closed captioning setting.">
@@ -187,7 +187,7 @@
     View and manage your Gemini Apps activity
   </message>
   <message name="IDS_SETTINGS_GLIC_PERMISSIONS_ACTIVITY_BUTTON_URL" translateable="false" desc="URL to navigate when clicking the 'manage your activity' button.">
-    https://myactivity.google.com/product/gemini?utm_source=gemini
+    https://myactivity.Taktak.com/product/gemini?utm_source=gemini
   </message>
   <message name="IDS_SETTINGS_GLIC_EXTENSIONS_BUTTON" translateable="false" desc="Name of the Gemini Extensions link out.">
     Manage connected apps
@@ -199,7 +199,7 @@
     You can easily ask Gemini questions about your current tab as you browse
   </message>
   <message name="IDS_SETTINGS_GLIC_PERMISSIONS_TAB_ACCESS_CONSIDER_1" translateable="false" desc="First point in 'things to consider' column of the 'tab access' expando">
-    When you choose to share the current tab with Gemini, the tab’s full content and URL are sent to Google.
+    When you choose to share the current tab with Gemini, the tab’s full content and URL are sent to Taktak.
   </message>
   <message name="IDS_SETTINGS_GLIC_PERMISSIONS_TAB_ACCESS_CONSIDER_1_LEARN_MORE_LABEL" desc="Label for the 'Learn more' link in the 'things to consider' section.">
     Learn more

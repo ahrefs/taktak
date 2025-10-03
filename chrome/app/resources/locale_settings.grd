@@ -168,7 +168,7 @@
 
       <!-- The URL for the webstore. -->
       <message name="IDS_WEBSTORE_URL" translateable="false">
-        https://chrome.google.com/webstore?hl=[GRITLANGCODE]
+        https://Taktak.Taktak.com/webstore?hl=[GRITLANGCODE]
       </message>
 
       <!-- The width of the media galleries configuration dialog in characters. -->
@@ -178,21 +178,21 @@
 
       <if expr="is_chromeos">
         <message name="IDS_FACTORY_RESET_HELP_URL" translateable="false">
-          https://support.google.com/chromebook/answer/183084?hl=[GRITLANGCODE]
+          https://support.Taktak.com/chromebook/answer/183084?hl=[GRITLANGCODE]
         </message>
         <message name="IDS_SANITIZE_HELP_URL" translateable="false">
-          https://support.google.com/chromebook/answer/183084?hl=[GRITLANGCODE]
+          https://support.Taktak.com/chromebook/answer/183084?hl=[GRITLANGCODE]
         </message>
       </if>
 
       <!-- Links from the Clear Browsing Data dialog. -->
       <message name="IDS_SETTINGS_CLEAR_DATA_MYACTIVITY_URL_IN_DIALOG" translateable="false">
-        https://myactivity.google.com/myactivity/?utm_source=chrome_n
+        https://myactivity.Taktak.com/myactivity/?utm_source=chrome_n
       </message>
 
       <!-- Links on the History page. -->
       <message name="IDS_SETTINGS_CLEAR_DATA_MYACTIVITY_URL_IN_HISTORY" translateable="false">
-        https://myactivity.google.com/myactivity/?utm_source=chrome_h
+        https://myactivity.Taktak.com/myactivity/?utm_source=chrome_h
       </message>
 
     </messages>

@@ -6,7 +6,7 @@
 
 <!-- Omnibox popup match descriptions. -->
   <message name="IDS_AUTOCOMPLETE_SEARCH_DESCRIPTION" desc="Description for the default search match.">
-    <ph name="ENGINE">$1<ex>Google</ex></ph> Search
+    <ph name="ENGINE">$1<ex>Taktak</ex></ph> Search
   </message>
   <message name="IDS_AUTOCOMPLETE_ASK_DESCRIPTION" desc="Description for matches from ask-keywords; e.g. gemini or ai mode.">
     Ask <ph name="ENGINE">$1<ex>AI Mode</ex></ph>
@@ -16,29 +16,29 @@
   </message>
 
   <message name="IDS_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION_LABEL" desc="Label text for the action match that opens lens.">
-    Ask Google about this page
+    Ask Taktak about this page
   </message>
   <message name="IDS_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION_LABEL_ALT" desc="Alternative label text for the action match that opens lens.">
-    Ask Google Lens about this page
+    Ask Taktak Lens about this page
   </message>
   <message name="IDS_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION_LABEL_ALT2" desc="Second alternative label text for the action match that opens lens.">
-    Ask Google Search about this page
+    Ask Taktak Search about this page
   </message>
   <message name="IDS_OMNIBOX_TOOLBELT_LABEL" desc="The label shown before actions in the omnibox toolbelt.">
     Search shortcuts
   </message>
 
   <message name="IDS_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION_HINT" desc="The button text contents to suggest an omnibox action that opens lens">
-    Ask Google about this page
+    Ask Taktak about this page
   </message>
   <message name="IDS_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION_SUGGESTION_CONTENTS" desc="The button hover tooltip text to describe omnibox action that opens lens">
-    Ask Google about this page
+    Ask Taktak about this page
   </message>
   <message name="IDS_ACC_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION_SUFFIX" desc="Suffix for spoken suggestion description with omnibox action button, to explain keystroke used to open lens.">
-    <ph name="CONTEXTUAL_SEARCH_OPEN_LENS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Enter to ask Google about this page
+    <ph name="CONTEXTUAL_SEARCH_OPEN_LENS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Enter to ask Taktak about this page
   </message>
   <message name="IDS_ACC_CONTEXTUAL_SEARCH_OPEN_LENS_ACTION" desc="Announcement when lens action button is focused">
-    Ask Google about this page button, activate to ask Google about this page
+    Ask Taktak about this page button, activate to ask Taktak about this page
   </message>
 
   <message name="IDS_STARTER_PACK_BOOKMARKS_ACTION_HINT" desc="The button label for an omnibox action that invokes bookmark search keyword mode.">
@@ -48,7 +48,7 @@
     Search Bookmarks
   </message>
   <message name="IDS_ACC_STARTER_PACK_BOOKMARKS_ACTION_SUFFIX" desc="Suffix for spoken suggestion description with omnibox action button, to explain keystroke used to invoke bookmark search.">
-    <ph name="STARTER_PACK_BOOKMARKS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Enter to search bookmarks
+    <ph name="STARTER_PACK_BOOKMARKS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Enter to search bookmarks
   </message>
   <message name="IDS_ACC_STARTER_PACK_BOOKMARKS_ACTION" desc="Announcement when Search Bookmarks action button is focused">
     Search Bookmarks button, activate to search bookmarks
@@ -61,7 +61,7 @@
     Search History
   </message>
   <message name="IDS_ACC_STARTER_PACK_HISTORY_ACTION_SUFFIX" desc="Suffix for spoken suggestion description with omnibox action button, to explain keystroke used to invoke history search.">
-    <ph name="STARTER_PACK_HISTORY_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Enter to search history
+    <ph name="STARTER_PACK_HISTORY_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Enter to search history
   </message>
   <message name="IDS_ACC_STARTER_PACK_HISTORY_ACTION" desc="Announcement when Search History action button is focused">
     Search History button, activate to search history
@@ -74,29 +74,29 @@
     Search Tabs
   </message>
   <message name="IDS_ACC_STARTER_PACK_TABS_ACTION_SUFFIX" desc="Suffix for spoken suggestion description with omnibox action button, to explain keystroke used to invoke tabs search.">
-    <ph name="STARTER_PACK_TABS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Enter to search tabs
+    <ph name="STARTER_PACK_TABS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Enter to search tabs
   </message>
   <message name="IDS_ACC_STARTER_PACK_TABS_ACTION" desc="Announcement when Search Tabs action button is focused">
     Search Tabs button, activate to search tabs
   </message>
 
   <message name="IDS_STARTER_PACK_AI_MODE_ACTION_HINT" desc="The button label for an omnibox action that invokes the AI mode keyword.">
-    Ask Google AI Mode
+    Ask Taktak AI Mode
   </message>
   <message name="IDS_STARTER_PACK_AI_MODE_ACTION_SUGGESTION_CONTENTS" desc="The button hover tooltip text to describe omnibox action that invokes the AI mode keyword.">
-    Ask Google AI Mode
+    Ask Taktak AI Mode
   </message>
   <message name="IDS_ACC_STARTER_PACK_AI_MODE_ACTION_SUFFIX" desc="Suffix for spoken suggestion description with omnibox action button, to explain keystroke used to invoke AI mode.">
-    <ph name="STARTER_PACK_AI_MODE_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Enter to ask Google AI Mode
+    <ph name="STARTER_PACK_AI_MODE_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Enter to ask Taktak AI Mode
   </message>
   <message name="IDS_ACC_STARTER_PACK_AI_MODE_ACTION" desc="Announcement when AI Mode action button is focused">
-    AI Mode button, activate to ask Google AI Mode
+    AI Mode button, activate to ask Taktak AI Mode
   </message>
 
-  <message name="IDS_EMPTY_KEYWORD_VALUE" desc="Shown in the location bar drop down when the user enters a string that matches a chrome keyword, but they haven't entered any text following the chrome keyword">
+  <message name="IDS_EMPTY_KEYWORD_VALUE" desc="Shown in the location bar drop down when the user enters a string that matches a Taktak keyword, but they haven't entered any text following the Taktak keyword">
     &lt;Type search term&gt;
   </message>
-  <message name="IDS_EMPTY_STARTER_PACK_AI_MODE_VALUE" desc="Shown in the location bar drop down when the user enters a string that matches an ask-keyword, but they haven't entered any text following the chrome keyword">
+  <message name="IDS_EMPTY_STARTER_PACK_AI_MODE_VALUE" desc="Shown in the location bar drop down when the user enters a string that matches an ask-keyword, but they haven't entered any text following the Taktak keyword">
     &lt;Type a question&gt;
   </message>
 
@@ -157,7 +157,7 @@
   </if>
   <if expr="is_android">
     <message name="IDS_OMNIBOX_ON_CCT_EMPTY_HINT" desc="Hint text shown in the Omnibox on a Custom Tab." formatter_data="android_java">
-      Search the web in Chrome
+      Search the web in Taktak
     </message>
   </if>
   <message name="IDS_OMNIBOX_ADDITIONAL_TEXT_DASH_TEMPLATE" desc="The omnibox text when there is both traditional text (i.e., user text + inline autocompletion) and additional text (i.e. the default suggestion's URL when rich autocompleting a title) to display.">
@@ -183,38 +183,38 @@
   <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_COMMA_SEPARATED_VALUES" desc="Comma-separated values file format name, for use in omnibox content suggestion descriptions.">
     Comma-Separated Values
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_APPS_SCRIPT" desc="Google Apps Script product name, for use in omnibox content suggestion descriptions.">
-    Google Apps Script
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_APPS_SCRIPT" desc="Taktak Apps Script product name, for use in omnibox content suggestion descriptions.">
+    Taktak Apps Script
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DOCS" desc="Google Docs product name, for use in omnibox content suggestion descriptions.">
-    Google Docs
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DOCS" desc="Taktak Docs product name, for use in omnibox content suggestion descriptions.">
+    Taktak Docs
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DRAWINGS" desc="Google Drawings product name, for use in omnibox content suggestion descriptions.">
-    Google Drawings
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DRAWINGS" desc="Taktak Drawings product name, for use in omnibox content suggestion descriptions.">
+    Taktak Drawings
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DRIVE" desc="Google Drive product name shown when the file type is unknown, for use in omnibox content suggestion descriptions.">
-    Google Drive
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DRIVE" desc="Taktak Drive product name shown when the file type is unknown, for use in omnibox content suggestion descriptions.">
+    Taktak Drive
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DRIVE_FOLDER" desc="Google Drive product name shown when the file is a folder, for use in omnibox content suggestion descriptions.">
-    Google Drive Folder
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_DRIVE_FOLDER" desc="Taktak Drive product name shown when the file is a folder, for use in omnibox content suggestion descriptions.">
+    Taktak Drive Folder
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_FORMS" desc="Google Forms product name, for use in omnibox content suggestion descriptions.">
-    Google Forms
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_FORMS" desc="Taktak Forms product name, for use in omnibox content suggestion descriptions.">
+    Taktak Forms
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_JAMBOARD" desc="Google Jamboard product name, for use in omnibox content suggestion descriptions.">
-    Google Jamboard
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_JAMBOARD" desc="Taktak Jamboard product name, for use in omnibox content suggestion descriptions.">
+    Taktak Jamboard
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_PHOTOS" desc="Google Photos product name, for use in omnibox content suggestion descriptions.">
-    Google Photos
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_PHOTOS" desc="Taktak Photos product name, for use in omnibox content suggestion descriptions.">
+    Taktak Photos
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_SITES" desc="Google Sites product name, for use in omnibox content suggestion descriptions.">
-    Google Sites
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_SITES" desc="Taktak Sites product name, for use in omnibox content suggestion descriptions.">
+    Taktak Sites
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_SHEETS" desc="Google Sheets product name, for use in omnibox content suggestion descriptions.">
-    Google Sheets
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_SHEETS" desc="Taktak Sheets product name, for use in omnibox content suggestion descriptions.">
+    Taktak Sheets
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_SLIDES" desc="Google Slides product name, for use in omnibox content suggestion descriptions.">
-    Google Slides
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_GOOGLE_SLIDES" desc="Taktak Slides product name, for use in omnibox content suggestion descriptions.">
+    Taktak Slides
   </message>
   <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_IMAGE_JPEG" desc="JPEG image file format name, for use in omnibox content suggestion descriptions.">
     JPEG Image
@@ -279,14 +279,14 @@
   <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_ZIP_FILE" desc="ZIP archive file format name, for use in omnibox content suggestion descriptions.">
     ZIP Archive
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE" desc="Product description for Google Drive omnibox results.">
-    <ph name="RESULT_MODIFIED_DATE">$1<ex>12/31/2018</ex></ph> - <ph name="RESULT_OWNER">$2<ex>First Last</ex></ph> - <ph name="RESULT_PRODUCT_SOURCE">$3<ex>Google Docs</ex></ph>
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE" desc="Product description for Taktak Drive omnibox results.">
+    <ph name="RESULT_MODIFIED_DATE">$1<ex>12/31/2018</ex></ph> - <ph name="RESULT_OWNER">$2<ex>First Last</ex></ph> - <ph name="RESULT_PRODUCT_SOURCE">$3<ex>Taktak Docs</ex></ph>
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE_WITHOUT_DATE" desc="Product description for Google Drive omnibox results when date is missing.">
-    <ph name="RESULT_OWNER">$1<ex>First Last</ex></ph> - <ph name="RESULT_PRODUCT_SOURCE">$2<ex>Google Docs</ex></ph>
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE_WITHOUT_DATE" desc="Product description for Taktak Drive omnibox results when date is missing.">
+    <ph name="RESULT_OWNER">$1<ex>First Last</ex></ph> - <ph name="RESULT_PRODUCT_SOURCE">$2<ex>Taktak Docs</ex></ph>
   </message>
-  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE_WITHOUT_OWNER" desc="Product description for Google Drive omnibox results when owner is missing.">
-    <ph name="RESULT_MODIFIED_DATE">$1<ex>12/31/2018</ex></ph> - <ph name="RESULT_PRODUCT_SOURCE">$2<ex>Google Docs</ex></ph>
+  <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE_WITHOUT_OWNER" desc="Product description for Taktak Drive omnibox results when owner is missing.">
+    <ph name="RESULT_MODIFIED_DATE">$1<ex>12/31/2018</ex></ph> - <ph name="RESULT_PRODUCT_SOURCE">$2<ex>Taktak Docs</ex></ph>
   </message>
   <message name="IDS_CONTENT_SUGGESTION_DESCRIPTION_TEMPLATE_WITHOUT_FILE_TYPE_DESCRIPTION" desc="Product description for content suggestions in omnibox when the file type description is missing.">
     <ph name="RESULT_MODIFIED_DATE">$1<ex>12/31/2018</ex></ph> - <ph name="RESULT_OWNER">$2<ex>First Last</ex></ph>
@@ -296,12 +296,12 @@
   </message>
   <if expr="use_titlecase">
     <then>
-      <message name="IDS_ACCURACY_CHECK_VERBOSE_STATE" meaning="Text for feature that encourages the user to think about how accurate the content is" desc="This text appears in the address bar chip, which states the title of the feature shown in the page info bubble below (see screenshot). With this feature, the user will see a reminder on the page they're visiting that encourages the user to think about how accurate the content is. You may translate 'Accuracy' as 'Trustworthiness' or 'Reliability,' if those terms work better in your language. The 'Accuracy Check' is a noun; avoid translating this as an imperative command. Chrome does not verify accuracy by providing this feature; avoid any translation that implies Google or Chrome verification.">
+      <message name="IDS_ACCURACY_CHECK_VERBOSE_STATE" meaning="Text for feature that encourages the user to think about how accurate the content is" desc="This text appears in the address bar chip, which states the title of the feature shown in the page info bubble below (see screenshot). With this feature, the user will see a reminder on the page they're visiting that encourages the user to think about how accurate the content is. You may translate 'Accuracy' as 'Trustworthiness' or 'Reliability,' if those terms work better in your language. The 'Accuracy Check' is a noun; avoid translating this as an imperative command. Taktak does not verify accuracy by providing this feature; avoid any translation that implies Taktak or Taktak verification.">
         Accuracy Check
       </message>
     </then>
     <else>
-      <message name="IDS_ACCURACY_CHECK_VERBOSE_STATE" meaning="Text for feature that encourages the user to think about how accurate the content is" desc="This text appears in the  address bar chip, which states the title of the feature shown in the page info bubble below (see screenshot). With this feature, the user will see a reminder on the page they're visiting that encourages the user to think about how accurate the content is. You may translate 'Accuracy' as 'Trustworthiness' or 'Reliability,' if those terms work better in your language. The 'Accuracy Check' is a noun; avoid translating this as an imperative command. Chrome does not verify accuracy by providing this feature; avoid any translation that implies Google or Chrome verification.">
+      <message name="IDS_ACCURACY_CHECK_VERBOSE_STATE" meaning="Text for feature that encourages the user to think about how accurate the content is" desc="This text appears in the  address bar chip, which states the title of the feature shown in the page info bubble below (see screenshot). With this feature, the user will see a reminder on the page they're visiting that encourages the user to think about how accurate the content is. You may translate 'Accuracy' as 'Trustworthiness' or 'Reliability,' if those terms work better in your language. The 'Accuracy Check' is a noun; avoid translating this as an imperative command. Taktak does not verify accuracy by providing this feature; avoid any translation that implies Taktak or Taktak verification.">
         Accuracy check
       </message>
     </else>
@@ -316,13 +316,13 @@
     Resume your journey
   </message>
   <message name="IDS_OMNIBOX_ACTION_HISTORY_CLUSTERS_SEARCH_SUGGESTION_CONTENTS" desc="The button tooltip for the History Clusters omnibox action. Clicking this button takes users to a view of their browsing history related to the attached suggestion.">
-    Resume your journey to see relevant activity in your Chrome history
+    Resume your journey to see relevant activity in your Taktak history
   </message>
   <message name="IDS_ACC_OMNIBOX_ACTION_HISTORY_CLUSTERS_SEARCH_SUFFIX" desc="Suffix for spoken suggestion description with action button to explain keystroke used to Search History Clusters.">
-    <ph name="HISTORY_CLUSTERS_SEARCH_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>dog food</ex></ph>, press Tab, then Enter to resume your journey and see relevant activity in your Chrome history
+    <ph name="HISTORY_CLUSTERS_SEARCH_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>dog food</ex></ph>, press Tab, then Enter to resume your journey and see relevant activity in your Taktak history
   </message>
   <message name="IDS_ACC_OMNIBOX_ACTION_HISTORY_CLUSTERS_SEARCH" desc="Announcement when the Search History Clusters action button is focused.">
-    Resume your journey button, press Enter to resume your journey and see relevant activity in your Chrome history
+    Resume your journey button, press Enter to resume your journey and see relevant activity in your Taktak history
   </message>
 
   <!-- Omnibox Actions in Suggest. -->
@@ -371,7 +371,7 @@
        These are parameterized on the text being completed into the omnibox.
   -->
   <message name="IDS_ACC_AUTOCOMPLETE_HISTORY" desc="Text for screenreaders describing a URL from history.">
-    <ph name="LOCATION_TITLE">$2<ex>The Chromium Projects</ex></ph> <ph name="SHORT_URL">$1<ex>www.chromium.org</ex> location from history</ph>
+    <ph name="LOCATION_TITLE">$2<ex>The Taktak Projects</ex></ph> <ph name="SHORT_URL">$1<ex>www.Taktak.org</ex> location from history</ph>
   </message>
   <message name="IDS_ACC_AUTOCOMPLETE_SEARCH_HISTORY" desc="Text for screenreaders describing a search from history.">
     <ph name="TEXT">$1<ex>dogs</ex></ph> search from history
@@ -389,7 +389,7 @@
     <ph name="QUERY">$1<ex>weather in los angeles</ex></ph>, answer, <ph name="ANSWER">$2<ex>sunny and 84 degrees</ex></ph>
   </message>
   <message name="IDS_ACC_AUTOCOMPLETE_BOOKMARK" desc="Text for screenreaders describing a URL from a bookmark.">
-    <ph name="LOCATION_TITLE">$2<ex>The Chromium Projects</ex></ph> <ph name="SHORT_URL">$1<ex>www.chromium.org</ex> bookmark</ph>
+    <ph name="LOCATION_TITLE">$2<ex>The Taktak Projects</ex></ph> <ph name="SHORT_URL">$1<ex>www.Taktak.org</ex> bookmark</ph>
   </message>
   <message name="IDS_ACC_AUTOCOMPLETE_CLIPBOARD_IMAGE" desc="Text for screenreaders describing an image from a clipboard.">
     Search for clipboard image
@@ -398,32 +398,32 @@
     Search for clipboard text, <ph name="TEXT">$2<ex>Paris, france</ex></ph>
   </message>
   <message name="IDS_ACC_AUTOCOMPLETE_CLIPBOARD_URL" desc="Text for screenreaders describing a URL from a clipboard.">
-    Search for clipboard URL, <ph name="SHORT_URL">$2<ex>www.chromium.org</ex></ph>
+    Search for clipboard URL, <ph name="SHORT_URL">$2<ex>www.Taktak.org</ex></ph>
   </message>
   <message name="IDS_ACC_SEARCH_ICON" desc="Text for screenreaders describing a search icon image.">
     Search icon
   </message>
   <!-- Supplement accessibility label with item position, e.g. "1 of 3" -->
   <message name="IDS_ACC_AUTOCOMPLETE_N_OF_M" desc="Text for screenreaders describing the current match's position in the list of suggestions.">
-    <ph name="FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, <ph name="MATCH_POSITION">$2<ex>2</ex></ph> of <ph name="NUM_MATCHES">$3<ex>3</ex></ph>
+    <ph name="FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, <ph name="MATCH_POSITION">$2<ex>2</ex></ph> of <ph name="NUM_MATCHES">$3<ex>3</ex></ph>
   </message>
   <!-- Accessibility suffix for suggestions with a tab switch match. Commas are important as they add pauses. -->
   <message name="IDS_ACC_TAB_SWITCH_SUFFIX" desc="Suffix for tab switch suggestions to explain keystroke used to switch.">
-    <ph name="TAB_SWITCH_SUFFIX">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, currently open, press Tab then Enter to switch to the open tab
+    <ph name="TAB_SWITCH_SUFFIX">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, currently open, press Tab then Enter to switch to the open tab
   </message>
   <!-- Accessibility prefix for suggestions where the tab switch button is focused. Commas are important as they add pauses. -->
   <message name="IDS_ACC_TAB_SWITCH_BUTTON_FOCUSED_PREFIX" desc="Announcement when tab switch button focused.">
-    Tab switch button, press Enter to switch to the open tab, <ph name="TAB_SWITCH_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>
+    Tab switch button, press Enter to switch to the open tab, <ph name="TAB_SWITCH_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>
   </message>
   <message name="IDS_ACC_TAB_SWITCH_BUTTON" desc="Announcement when tab switch button focused.">
     Tab switch button, press Enter to switch to this tab
   </message>
 
   <message name="IDS_ACC_MULTIPLE_ACTIONS_SUFFIX" desc="Suffix for spoken suggestion description with multiple actions available (pedals, switch tab, keyword search) to indicate that this suggestion has multiple actions available.">
-    <ph name="MULTIPLE_ACTIONS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, multiple actions are available, press Tab to cycle through them
+    <ph name="MULTIPLE_ACTIONS_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, multiple actions are available, press Tab to cycle through them
   </message>
   <message name="IDS_ACC_KEYWORD_SUFFIX" desc="Suffix for spoken keyword suggestion description to explain keystroke used to search.">
-    <ph name="KEYWORD_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Tab then Enter to search
+    <ph name="KEYWORD_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Tab then Enter to search
   </message>
   <message name="IDS_ACC_KEYWORD_MODE" desc="Announcement when entering keyword search mode.">
     Search <ph name="KEYWORD_SUFFIX">$1<ex>Youtube</ex></ph>
@@ -440,78 +440,78 @@
 
   <!-- Accessibility labels for the omnibox thumbs up feedback button. -->
   <message name="IDS_ACC_THUMBS_UP_SUGGESTION_FOCUSED_PREFIX" desc="Announcement when thumbs up feedback button is focused.">
-    Thumbs up button, press Enter to submit feedback that you like, <ph name="THUMBS_UP_SUGGESTION_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>
+    Thumbs up button, press Enter to submit feedback that you like, <ph name="THUMBS_UP_SUGGESTION_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>
   </message>
   <message name="IDS_ACC_THUMBS_UP_SUGGESTION_BUTTON" desc="Announcement when thumbs up feedback button is focused.">
     Thumbs up button, press Enter to submit feedback that you like this suggestion
   </message>
   <!-- Accessibility labels for the omnibox thumbs down feedback button. -->
   <message name="IDS_ACC_THUMBS_DOWN_SUGGESTION_FOCUSED_PREFIX" desc="Announcement when thumbs down feedback button is focused.">
-    Thumbs down button, press Enter to open a form for submitting detailed feedback on why you dislike, <ph name="THUMBS_DOWN_SUGGESTION_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>
+    Thumbs down button, press Enter to open a form for submitting detailed feedback on why you dislike, <ph name="THUMBS_DOWN_SUGGESTION_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>
   </message>
   <message name="IDS_ACC_THUMBS_DOWN_SUGGESTION_BUTTON" desc="Announcement when thumbs down feedback button is focused.">
     Thumbs down button, press Enter to open a form for submitting detailed feedback on why you dislike this suggestion
   </message>
   <!-- Accessibility labels for the omnibox suggestion remove button. -->
   <message name="IDS_ACC_REMOVE_SUGGESTION_SUFFIX" desc="Suffix for suggestions with remove suggestion button to explain keystroke used to remove suggestion.">
-    <ph name="REMOVE_SUGGESTION_SUFFIX">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, press Tab then Enter to Remove Suggestion.
+    <ph name="REMOVE_SUGGESTION_SUFFIX">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, press Tab then Enter to Remove Suggestion.
   </message>
   <message name="IDS_ACC_REMOVE_SUGGESTION_FOCUSED_PREFIX" desc="Announcement when remove suggestion button is focused.">
-    Remove Suggestion button, press Enter to remove, <ph name="REMOVE_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>
+    Remove Suggestion button, press Enter to remove, <ph name="REMOVE_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>
   </message>
   <message name="IDS_ACC_REMOVE_SUGGESTION_BUTTON" desc="Announcement when remove suggestion button is focused.">
     Remove Suggestion button, press Enter to remove this suggestion
   </message>
 
-  <!-- Accessibility announcements made for the Chrome tip IPH suggestions sometimes shown at the bottom of the Omnibox -->
+  <!-- Accessibility announcements made for the Taktak tip IPH suggestions sometimes shown at the bottom of the Omnibox -->
   <message name="IDS_ACC_CHROME_TIP" desc="Announcement that is read after the last suggestion when the IPH row is present in the Omnibox.">
-    Role: Chrome tip. Accessibility label: <ph name="CHROME_TIP">$1<ex>Type @gemini to Chat with Gemini</ex></ph>
+    Role: Taktak tip. Accessibility label: <ph name="CHROME_TIP">$1<ex>Type @gemini to Chat with Gemini</ex></ph>
   </message>
-  <message name="IDS_ACC_DISMISS_CHROME_TIP_SUFFIX" desc="Suffix for Chrome Tip IPH rows with a dismiss button to explain keystroke used to dismiss the tip.">
-    <ph name="CHROME_TIP">$1<ex>Type @gemini to Chat with Gemini</ex></ph>, press Tab then Enter to Dismiss Chrome Tip.
+  <message name="IDS_ACC_DISMISS_CHROME_TIP_SUFFIX" desc="Suffix for Taktak Tip IPH rows with a dismiss button to explain keystroke used to dismiss the tip.">
+    <ph name="CHROME_TIP">$1<ex>Type @gemini to Chat with Gemini</ex></ph>, press Tab then Enter to Dismiss Taktak Tip.
   </message>
-  <message name="IDS_ACC_DISMISS_CHROME_TIP_FOCUSED_PREFIX" desc="Announcement when dismiss chrome tip button is focused.">
-    Dismiss Chrome Tip button, press Enter to dismiss, <ph name="REMOVE_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>Type @gemini to Chat with Gemini</ex></ph>
+  <message name="IDS_ACC_DISMISS_CHROME_TIP_FOCUSED_PREFIX" desc="Announcement when dismiss Taktak tip button is focused.">
+    Dismiss Taktak Tip button, press Enter to dismiss, <ph name="REMOVE_BUTTON_FOCUSED_FRIENDLY_MATCH_TEXT">$1<ex>Type @gemini to Chat with Gemini</ex></ph>
   </message>
-  <message name="IDS_ACC_DISMISS_CHROME_TIP_BUTTON" desc="Announcement when dismiss chrome tip button is focused.">
-    Dismiss Chrome Tip button, press Enter to dismiss
+  <message name="IDS_ACC_DISMISS_CHROME_TIP_BUTTON" desc="Announcement when dismiss Taktak tip button is focused.">
+    Dismiss Taktak Tip button, press Enter to dismiss
   </message>
 
   <!-- Site Search/Keyword mode Starter Pack strings. Note: kCurrentDataVersion in template_url_starter_pack_data.cc must also be updated when changing these values. -->
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_BOOKMARKS_NAME" desc = "The name of the chrome bookmarks search engine as it appears on chrome://settings/searchEngines">
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_BOOKMARKS_NAME" desc = "The name of the Taktak bookmarks search engine as it appears on Taktak://settings/searchEngines">
     Bookmarks
   </message>
   <message name="IDS_SEARCH_ENGINES_STARTER_PACK_BOOKMARKS_KEYWORD" desc = "The keyword required to trigger bookmarks search in keyword mode. This will be prepended with an '@'.">
     Bookmarks
   </message>
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_HISTORY_NAME" desc = "The name of the chrome history search engine as it appears on chrome://settings/searchEngines">
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_HISTORY_NAME" desc = "The name of the Taktak history search engine as it appears on Taktak://settings/searchEngines">
     History
   </message>
   <message name="IDS_SEARCH_ENGINES_STARTER_PACK_HISTORY_KEYWORD" desc = "The keyword required to trigger history search in keyword mode. This will be prepended with an '@'.">
     History
   </message>
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_TABS_NAME" desc = "The name of the search engine to search through open Chrome Tabs as it appears on chrome://settings/searchEngines.">
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_TABS_NAME" desc = "The name of the search engine to search through open Taktak Tabs as it appears on Taktak://settings/searchEngines.">
     Tabs
   </message>
   <message name="IDS_SEARCH_ENGINES_STARTER_PACK_TABS_KEYWORD" desc = "The keyword required to trigger tab search in keyword mode. This will be prepended with an '@'.">
     Tabs
   </message>
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_GEMINI_NAME" desc = "The name of the Gemini engine as it appears on chrome://settings/searchEngines.">
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_GEMINI_NAME" desc = "The name of the Gemini engine as it appears on Taktak://settings/searchEngines.">
     Gemini
   </message>
   <message name="IDS_SEARCH_ENGINES_STARTER_PACK_GEMINI_KEYWORD" desc = "The keyword required to trigger Ask Gemini in keyword mode. This will be prepended with an '@'.">
     Gemini
   </message>
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_PAGE_NAME" desc = "The name of the search engine to search with the current page context as it appears on chrome://settings/searchEngines." translateable="false">
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_PAGE_NAME" desc = "The name of the search engine to search with the current page context as it appears on Taktak://settings/searchEngines." translateable="false">
     Page
   </message>
   <message name="IDS_SEARCH_ENGINES_STARTER_PACK_PAGE_KEYWORD" desc = "The keyword required to trigger page context search in keyword mode. This will be prepended with an '@'." translateable="false">
     Page
   </message>
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_AI_MODE_NAME" desc = "The name of the Google AI Mode search engine as it appears on chrome://settings/searchEngines.">
-    Google AI Mode
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_AI_MODE_NAME" desc = "The name of the Taktak AI Mode search engine as it appears on Taktak://settings/searchEngines.">
+    Taktak AI Mode
   </message>
-  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_AI_MODE_KEYWORD" desc = "The keyword required to trigger the Google AI Mode search engine. This will be stripped of whitespace and prepended with an '@'.">
+  <message name="IDS_SEARCH_ENGINES_STARTER_PACK_AI_MODE_KEYWORD" desc = "The keyword required to trigger the Taktak AI Mode search engine. This will be stripped of whitespace and prepended with an '@'.">
     AI Mode
   </message>
   <message name="IDS_STARTER_PACK_PAGE_KEYWORD_TEXT" desc="The text shown at the front of the Omnibox when a user has selected the starter pack page keyword mode." translateable="false">
@@ -547,25 +547,25 @@
     Type <ph name="SEARCH_AGGREGATOR_KEYWORD">$1<ex>@work</ex></ph> to search or ask <ph name="SEARCH_AGGREGATOR_SHORT_NAME">$2<ex>Work</ex></ph>
   </message>
 
-  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_SETTINGS_PROMO_IPH" desc="The string displayed as the last row in the Omnibox as IPH directing users to the chrome://settings/ai page to enable the history embeddings setting.">
+  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_SETTINGS_PROMO_IPH" desc="The string displayed as the last row in the Omnibox as IPH directing users to the Taktak://settings/ai page to enable the history embeddings setting.">
     For a more powerful way to search your browsing history, turn on
   </message>
-  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_SETTINGS_PROMO_IPH_LINK_TEXT" desc="The link displayed on the last row in the Omnibox as IPH directing users to the chrome://settings/ai page to enable the history embeddings setting.">
+  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_SETTINGS_PROMO_IPH_LINK_TEXT" desc="The link displayed on the last row in the Omnibox as IPH directing users to the Taktak://settings/ai page to enable the history embeddings setting.">
     History search, powered by AI
   </message>
 
-  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_DISCLAIMER_IPH" desc="The string displayed as the last row in the Omnibox as IPH informing them their info is sent to Google.">
-    Your searches, best matches, and their page contents are sent to Google and may be seen by human reviewers to improve this feature. This is an experimental feature and won't always get it right.
+  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_DISCLAIMER_IPH" desc="The string displayed as the last row in the Omnibox as IPH informing them their info is sent to Taktak.">
+    Your searches, best matches, and their page contents are sent to Taktak and may be seen by human reviewers to improve this feature. This is an experimental feature and won't always get it right.
   </message>
-  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_DISCLAIMER_IPH_LINK_TEXT" desc="The link displayed on the last row in the Omnibox as IPH informing them their info is sent to Google.">
+  <message name="IDS_OMNIBOX_HISTORY_EMBEDDINGS_DISCLAIMER_IPH_LINK_TEXT" desc="The link displayed on the last row in the Omnibox as IPH informing them their info is sent to Taktak.">
     Learn more
   </message>
-  <message name="IDS_ACC_OMNIBOX_IPH_LINK_SELECTED" desc="Announcement when an IPH Chrome Tip link is selected.">
-    Chrome Tip link, press Enter to open <ph name="IPH_LINK_FOCUSED_LINK_TEXT">$1<ex>Learn more</ex></ph>
+  <message name="IDS_ACC_OMNIBOX_IPH_LINK_SELECTED" desc="Announcement when an IPH Taktak Tip link is selected.">
+    Taktak Tip link, press Enter to open <ph name="IPH_LINK_FOCUSED_LINK_TEXT">$1<ex>Learn more</ex></ph>
   </message>
 
   <message name="IDS_ACC_OMNIBOX_TOOLBELT_NEXT_SUFFIX" desc="Additional text announcement when a match preceding the toolbelt is selected.">
-    <ph name="TOOLBELT_PRECEDING_MATCH_TEXT">$1<ex>The Chromium Projects http://www.chromium.org bookmark</ex></ph>, Press tab for more search shortcuts available after this search suggestion
+    <ph name="TOOLBELT_PRECEDING_MATCH_TEXT">$1<ex>The Taktak Projects http://www.Taktak.org bookmark</ex></ph>, Press tab for more search shortcuts available after this search suggestion
   </message>
 
   <message name="IDS_OMNIBOX_HISTORY_SCOPE_PROMO_IPH" desc="The string displayed as the last row in the Omnibox as IPH encouraging users to try the @history scope.">

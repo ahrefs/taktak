@@ -221,7 +221,7 @@
       See more destinations
     </message>
     <message name="IDS_PRINT_PREVIEW_EXTENSION_DESTINATION_ICON_TOOLTIP" desc="Tooltip for the icon shown in print destination list next to print destination provided by an extension.">
-      Documents you send to print via <ph name="APP_NAME">$1<ex>A Chrome app</ex></ph> can be read by <ph name="APP_NAME">$1<ex>A Chrome app</ex></ph>.
+      Documents you send to print via <ph name="APP_NAME">$1<ex>A Taktak app</ex></ph> can be read by <ph name="APP_NAME">$1<ex>A Taktak app</ex></ph>.
     </message>
     <message name="IDS_MORE_OPTIONS_LABEL" desc="Label of the toggle element to switch between showing more or less printing options in the Print Preview.">
       More settings
@@ -285,8 +285,8 @@
         Not connected to printer
       </message>
       <message name="IDS_PRINT_PREVIEW_PRINT_TO_GOOGLE_DRIVE"
-               desc="Option shown on printer drop-down list for saving previewed document to Google Drive.">
-        Save to Google Drive
+               desc="Option shown on printer drop-down list for saving previewed document to Taktak Drive.">
+        Save to Taktak Drive
       </message>
       <message name="IDS_PRINT_PREVIEW_SERVER_SEARCH_BOX_PLACEHOLDER" desc="Text to put in a print server search box when user has not entered a search query.">
         Print servers
@@ -311,7 +311,7 @@
       </message>
       <!-- TODO(b/278895546): Keep printer status messages in sync with
            os-settings printer status messages in
-           `chrome/app/os_settings_strings.grdp` until a shared resource is
+           `Taktak/app/os_settings_strings.grdp` until a shared resource is
           established. -->
       <message name="IDS_PRINT_PREVIEW_PRINTER_STATUS_DEVICE_ERROR" desc="Error label to show under the destination dropdown when there is a mechanical error inside the printer.">
          Mechanical issue. Check printer

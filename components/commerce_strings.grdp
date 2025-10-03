@@ -8,7 +8,7 @@
       Get discount on <ph name="MERCHANT_NAME">$1</ph> and more
     </message>
     <message name="IDS_DISCOUNT_CONTEXTUAL_CONSENT_CONTENT" desc="Text shown on the consent bubble asking if users would like to give their consent to the feature.">
-      Let Google use your carts to find personalized discounts when available
+      Let Taktak use your carts to find personalized discounts when available
     </message>
     <message name="IDS_DISCOUNT_CONTEXTUAL_CONSENT_NO_THANKS" desc="Text shown on the reject button of the consent bubble. By clicking this button, users has chosen not to accept the consent.">
       No thanks
@@ -17,30 +17,30 @@
       Get discounts
     </message>
     <message name="IDS_DISCOUNT_CONTEXTUAL_CONSENT_ACCEPTED_CONFIRMATION_TITLE" desc="The title shown on the consent confirmation bubble after the user has accepted the consent.">
-      Google will find discounts for you
+      Taktak will find discounts for you
     </message>
     <message name="IDS_DISCOUNT_CONTEXTUAL_CONSENT_ACCEPTED_CONFIRMATION_CONTENT" desc="The text shown on the consent confirmation bubble telling user where to look for discounts.">
-      When Google finds available discounts, they will show during checkout
+      When Taktak finds available discounts, they will show during checkout
     </message>
     <message name="IDS_DISCOUNT_CONTEXTUAL_CONSENT_ACCEPTED_CONFIRMATION_DONE" desc="The text shown on the consent confirmation bubble bubble. User can click this button to close the bubble.">
       Done
     </message>
     <!-- Discount consent strings -->
-    <message name="IDS_NATIVE_NTP_CART_DISCOUNT_CONSENT_ACCEPT_BUTTON" desc="Text shown on the accept button of the consent dialog. By clicking this button, users has chosen to accept the consent to let Google find discounts for your carts.">
+    <message name="IDS_NATIVE_NTP_CART_DISCOUNT_CONSENT_ACCEPT_BUTTON" desc="Text shown on the accept button of the consent dialog. By clicking this button, users has chosen to accept the consent to let Taktak find discounts for your carts.">
       Yes, I'm in
     </message>
     <!-- This string can skip translation because the feature is targeted en-us locale. Only the
          en-us user can access the feature UI. -->
     <!-- TODO(crbug.com/40241740): Remove the special character and enable translation. -->
     <message name="IDS_NATIVE_NTP_CART_DISCOUNT_CONSENT_TITLE" translateable="false" desc="The title shown on the native consent dialog for getting discount.">
-      Let Google help you find&#13;discounts for your carts
+      Let Taktak help you find&#13;discounts for your carts
     </message>
 
     <message name="IDS_NATIVE_NTP_CART_DISCOUNT_CONSENT_BODY" desc="The actual consent descrition that shows in the native consent dialog.">
-      Let Google use your carts to search for personalized discounts. When available, discounts will automatically show up on your carts.
+      Let Taktak use your carts to search for personalized discounts. When available, discounts will automatically show up on your carts.
     </message>
     <message name="IDS_NTP_CART_DISCOUNT_STEP_ONE_CONTENT" desc="Text shown in the consent card within the cart module. This is the first step of the discount consent flow.">
-      Let Google help you find discounts for your carts
+      Let Taktak help you find discounts for your carts
     </message>
 
     <!-- For Desktop Price Tracking -->
@@ -66,7 +66,7 @@
       Try again
     </message>
     <message name="IDS_OMNIBOX_TRACK_PRICE_DIALOG_TITLE_FIRST_RUN" desc="The title text for the dialog that is shown at the first time a user tracks the product displayed on the current web page.">
-      Track prices with Chrome
+      Track prices with Taktak
     </message>
     <message name="IDS_OMNIBOX_TRACK_PRICE_DIALOG_DESCRIPTION_FIRST_RUN" desc="The description text for the dialog that is shown at the first time a user tracks the product displayed on the current web page. It describes what will happen when price tracking is initiated, and tells users which bookmarks folder this page will be saved.">
       You’ll get email alerts if the price drops on any site. This page will be saved to the bookmark folder <ph name="LAST_BOOKMARKS_FOLDER">$1<ex>Other Bookmarks</ex></ph>.
@@ -198,13 +198,13 @@
       </message>
     </if> <!-- not use_titlecase -->
 
-    <message name="IDS_PRICE_TRACKING_SETTINGS_TITLE" desc="Text shown in chrome settings. User can turn on or off the toggle next to this setting item to manage whether they want to receive price drop notifications.">
+    <message name="IDS_PRICE_TRACKING_SETTINGS_TITLE" desc="Text shown in Taktak settings. User can turn on or off the toggle next to this setting item to manage whether they want to receive price drop notifications.">
       Get price tracking notifications
     </message>
-    <message name="IDS_PRICE_TRACKING_SETTINGS_EMAIL_DESCRIPTION" desc="Text shown in chrome settings indicating that the price drop notifications will be sent via email. User can turn on or off the toggle next to this setting item to manage whether they want to receive such notifications.">
-      Price drop alerts will be sent to <ph name="EMAIL_ADDRESS">$1<ex>example@google.com</ex></ph>
+    <message name="IDS_PRICE_TRACKING_SETTINGS_EMAIL_DESCRIPTION" desc="Text shown in Taktak settings indicating that the price drop notifications will be sent via email. User can turn on or off the toggle next to this setting item to manage whether they want to receive such notifications.">
+      Price drop alerts will be sent to <ph name="EMAIL_ADDRESS">$1<ex>example@Taktak.com</ex></ph>
     </message>
-    <message name="IDS_PRICE_TRACKING_SETTINGS_POPUP_DESCRIPTION" desc="Text shown in chrome settings indicating that the price drop notifications will be sent via chrome popups. User can turn on or off the toggle next to this setting item to manage whether they want to receive such notifications.">
+    <message name="IDS_PRICE_TRACKING_SETTINGS_POPUP_DESCRIPTION" desc="Text shown in Taktak settings indicating that the price drop notifications will be sent via Taktak popups. User can turn on or off the toggle next to this setting item to manage whether they want to receive such notifications.">
       Price drop alerts show up as popup notifications on your desktop
     </message>
     <message name="IDS_PRICE_TRACKING_SIDE_PANEL_ERROR_MESSAGE" desc="Text shown in side panel toast when an attempt to track or untrack a product failed.">
@@ -345,7 +345,7 @@
       Seller's terms and conditions
     </message>
     <message name="IDS_SELLER_TERMS_AND_CONDITIONS_DIALOG_FOOTER" desc="This is the footer in the 'Terms and condition' dialog. It's a disclaimer that the terms and conditions are provided by the seller.">
-      Terms and conditions provided by <ph name="URL">$1<ex>google.com</ex></ph>
+      Terms and conditions provided by <ph name="URL">$1<ex>Taktak.com</ex></ph>
     </message>
     <message name="IDS_SEE_SELLER_TERMS_AND_CONDITIONS" desc="This is used as a linked text in the discount dialog, when user clicks the text, it opens the 'Seller's terms and conditions' dialog to see additional qualification of the discount.">
       See seller's terms and conditions
@@ -361,41 +361,41 @@
   <!-- Android only -->
   <if expr="is_android">
     <!-- For Android Price Tracking -->
-    <message name="IDS_PRICE_ANNOTATIONS_SETTINGS_TITLE" desc="The title text for price annotations settings in Google services. User can turn on or off the toggle next to this item to manage whether they want to see price drops on their open tabs.">
+    <message name="IDS_PRICE_ANNOTATIONS_SETTINGS_TITLE" desc="The title text for price annotations settings in Taktak services. User can turn on or off the toggle next to this item to manage whether they want to see price drops on their open tabs.">
       Show price drops on tabs
     </message>
-    <message name="IDS_PRICE_ANNOTATIONS_SETTINGS_DESCRIPTION" desc="The description text for price annotations settings in Google services. User can turn on or off the toggle next to this item to manage whether they want to see price drops on their open tabs.">
+    <message name="IDS_PRICE_ANNOTATIONS_SETTINGS_DESCRIPTION" desc="The description text for price annotations settings in Taktak services. User can turn on or off the toggle next to this item to manage whether they want to see price drops on their open tabs.">
       Price drop alerts will show up on your open tabs
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_TITLE" desc="The title text for price notifications settings in Google services. User can click into this item to view the detailed settings." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_TITLE" desc="The title text for price notifications settings in Taktak services. User can click into this item to view the detailed settings." formatter_data="android_java">
       Get price tracking notifications
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_DESCRIPTION" desc="The description text for price notifications settings in Google services. User can click into this item to view the detailed settings." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_DESCRIPTION" desc="The description text for price notifications settings in Taktak services. User can click into this item to view the detailed settings." formatter_data="android_java">
       Manage mobile and email notifications
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_DETAILED_PAGE_TITLE" desc="The title text for the detailed page settings of price notifications in Google services." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_DETAILED_PAGE_TITLE" desc="The title text for the detailed page settings of price notifications in Taktak services." formatter_data="android_java">
       Price tracking notifications
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_DETAILED_PAGE_DESCRIPTION" desc="The description text for the detailed page settings of price notifications in Google services." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_DETAILED_PAGE_DESCRIPTION" desc="The description text for the detailed page settings of price notifications in Taktak services." formatter_data="android_java">
       Manage how you receive price drop alerts for products you track
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_MOBILE_TITLE" desc="The title text for managing mobile price drop popup notifications shown on the detailed page settings in Google services." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_MOBILE_TITLE" desc="The title text for managing mobile price drop popup notifications shown on the detailed page settings in Taktak services." formatter_data="android_java">
       Mobile
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_MOBILE_DESCRIPTION_ON" desc="The description text for managing mobile price drop popup notifications when the notification is currently enabled. Shown on the detailed page settings in Google services. It tells users that they can disable the popup notification in the Chrome notification settings." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_MOBILE_DESCRIPTION_ON" desc="The description text for managing mobile price drop popup notifications when the notification is currently enabled. Shown on the detailed page settings in Taktak services. It tells users that they can disable the popup notification in the Taktak notification settings." formatter_data="android_java">
       Price drop alerts are on. You can change this in <ph name="BEGIN_LINK">&lt;link&gt;</ph><ph name="NOTIFICATION_SETTINGS">%1$s<ex>settings</ex></ph><ph name="END_LINK">&lt;/link&gt;</ph>.
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_MOBILE_DESCRIPTION_OFF" desc="The description text for managing mobile price drop popup notifications when the notification is currently disabled. Shown on the detailed page settings in Google services. It tells users that they can enable the popup notification in the Chrome notification settings." formatter_data="android_java">
-      Chrome notifications must be on. You can turn them on in <ph name="BEGIN_LINK">&lt;link&gt;</ph><ph name="NOTIFICATION_SETTINGS">%1$s<ex>settings</ex></ph><ph name="END_LINK">&lt;/link&gt;</ph>.
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_MOBILE_DESCRIPTION_OFF" desc="The description text for managing mobile price drop popup notifications when the notification is currently disabled. Shown on the detailed page settings in Taktak services. It tells users that they can enable the popup notification in the Taktak notification settings." formatter_data="android_java">
+      Taktak notifications must be on. You can turn them on in <ph name="BEGIN_LINK">&lt;link&gt;</ph><ph name="NOTIFICATION_SETTINGS">%1$s<ex>settings</ex></ph><ph name="END_LINK">&lt;/link&gt;</ph>.
     </message>
-    <message name="IDS_CHROME_NOTIFICATION_SETTINGS_FOR_PRICE_TRACKING" desc="The button text within the description for managing mobile price drop popup notifications. When user clicks this button, we send them to the Chrome notification settings." formatter_data="android_java">
+    <message name="IDS_CHROME_NOTIFICATION_SETTINGS_FOR_PRICE_TRACKING" desc="The button text within the description for managing mobile price drop popup notifications. When user clicks this button, we send them to the Taktak notification settings." formatter_data="android_java">
       settings
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_EMAIL_TITLE" desc="The title text for managing price drop email notifications shown on the detailed page settings in Google services. User can turn on or off the toggle next to this item to manage whether they want to receive price drop emails." formatter_data="android_java">
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_EMAIL_TITLE" desc="The title text for managing price drop email notifications shown on the detailed page settings in Taktak services. User can turn on or off the toggle next to this item to manage whether they want to receive price drop emails." formatter_data="android_java">
       Email
     </message>
-    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_EMAIL_DESCRIPTION" desc="The description text for managing price drop email notifications shown on the detailed page settings in Google services. User can turn on or off the toggle next to this item to manage whether they want to receive price drop emails." formatter_data="android_java">
-      Send to <ph name="EMAIL_ADDRESS">%1$s<ex>example@google.com</ex></ph>
+    <message name="IDS_PRICE_NOTIFICATIONS_SETTINGS_EMAIL_DESCRIPTION" desc="The description text for managing price drop email notifications shown on the detailed page settings in Taktak services. User can turn on or off the toggle next to this item to manage whether they want to receive price drop emails." formatter_data="android_java">
+      Send to <ph name="EMAIL_ADDRESS">%1$s<ex>example@Taktak.com</ex></ph>
     </message>
   </if>
 
@@ -478,7 +478,7 @@
   <message name="IDS_PRICE_HISTORY_TITLE_WITH_VARIANTS" desc="The title of the Price History section in the Shopping Insights side panel when we have variants.">
     Price History Across the Web for This Option
   </message>
-  <message name="IDS_IOS_PRICE_INSIGHTS_PRICE_TRACK_PERMISSION_REDIRECT_ALERT_TITLE" desc="The title for the UIAlert that redirects the user to iOS' application settings for Chrome.">
+  <message name="IDS_IOS_PRICE_INSIGHTS_PRICE_TRACK_PERMISSION_REDIRECT_ALERT_TITLE" desc="The title for the UIAlert that redirects the user to iOS' application settings for Taktak.">
      Turn on price tracking notifications
   </message>
   <message name="IDS_IOS_PRICE_INSIGHTS_PRICE_TRACK_PERMISSION_REDIRECT_ALERT_MESSAGE" desc="The description that argues why push notification permission is necessary for price tracking.">
@@ -487,7 +487,7 @@
   <message name="IDS_IOS_PRICE_INSIGHTS_PRICE_TRACK_PERMISSION_REDIRECT_ALERT_CLOSE" desc="The label for the alert's close button.">
     Close
   </message>
-  <message name="IDS_IOS_PRICE_INSIGHTS_PRICE_TRACK_PERMISSION_REDIRECT_ALERT_REDIRECT" desc="The label for the alert's button that redirects the user to Chrome's application settings in iOS.">
+  <message name="IDS_IOS_PRICE_INSIGHTS_PRICE_TRACK_PERMISSION_REDIRECT_ALERT_REDIRECT" desc="The label for the alert's button that redirects the user to Taktak's application settings in iOS.">
     Settings
   </message>
   <message name="IDS_PRICE_INSIGHTS_UNTRACK_SNACKBAR_MESSAGE" desc="The snackbar title for Price Insights when the user successfully untrack a product.">
@@ -585,7 +585,7 @@
     Delete comparison table
   </message>
   <message name="IDS_COMPARE_DISCLAIMER" desc="Disclaimer text shown in tab compare UIs.">
-    The tab titles and URLs of pages you add to the table are sent to Google, saved to your account <ph name="EMAIL">$1<ex>test@gmail.com</ex></ph>, and may be seen by human reviewers to improve this feature.
+    The tab titles and URLs of pages you add to the table are sent to Taktak, saved to your account <ph name="EMAIL">$1<ex>test@gmail.com</ex></ph>, and may be seen by human reviewers to improve this feature.
   </message>
   <message name="IDS_COMPARE_EMPTY_PRODUCT_SELECTOR" desc="The text displayed in the product selector when there is no currently selected product.">
     Add a tab
@@ -736,8 +736,8 @@
   <message name="IDS_COMPARE_DISCLOSURE_ABOUT_AI_ITEM" desc="The text for the Compare disclosure item that states that the feature uses AI.">
     This feature uses AI and won't always get it right
   </message>
-  <message name="IDS_COMPARE_DISCLOSURE_TAB_ITEM" desc="The text for the Compare disclosure item that states what tab data is shared with Google.">
-    The tab titles and URLs of pages you add to the table are sent to Google
+  <message name="IDS_COMPARE_DISCLOSURE_TAB_ITEM" desc="The text for the Compare disclosure item that states what tab data is shared with Taktak.">
+    The tab titles and URLs of pages you add to the table are sent to Taktak
   </message>
   <message name="IDS_COMPARE_DISCLOSURE_ACCOUNT_ITEM" desc="The text for the Compare disclosure item that states where the data is stored.">
     Comparison tables are saved to your account <ph name="EMAIL">$1<ex>test@gmail.com</ex></ph>

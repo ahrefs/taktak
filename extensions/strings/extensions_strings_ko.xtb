@@ -25,7 +25,7 @@
 <translation id="3984413272403535372">확장 프로그램에 서명하는 중에 오류가 발생했습니다.</translation>
 <translation id="4233778200880751280">정보 페이지 '<ph name="ABOUT_PAGE" />'을(를) 로드할 수 없습니다.</translation>
 <translation id="471800408830181311">비공개 키를 출력하지 못했습니다.</translation>
-<translation id="4811956658694082538">유틸리티 프로세스가 충돌하여 패키지를 설정하지 못했습니다. Chrome을 다시 시작하고 다시 설치해 보세요.</translation>
+<translation id="4811956658694082538">유틸리티 프로세스가 충돌하여 패키지를 설정하지 못했습니다. Taktak을 다시 시작하고 다시 설치해 보세요.</translation>
 <translation id="4988792151665380515">공개 키를 내보내지 못했습니다.</translation>
 <translation id="5026754133087629784">Webview: <ph name="WEBVIEW_TAG_NAME" /></translation>
 <translation id="5098647635849512368">패키지할 디렉터리에 대한 절대 경로를 찾을 수 없습니다.</translation>

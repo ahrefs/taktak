@@ -15,10 +15,10 @@
     </message>
   </if>
   <message name="IDS_LOGIN_DIALOG_AUTHORITY" desc="String to be displayed in the login prompt dialog to explain that the user needs to log in, and the name of the web site">
-    <ph name="DOMAIN">$1<ex>google.com</ex></ph> requires a username and password.
+    <ph name="DOMAIN">$1<ex>Taktak.com</ex></ph> requires a username and password.
   </message>
   <message name="IDS_LOGIN_DIALOG_PROXY_AUTHORITY" desc="String to be displayed in the proxy login prompt dialog to explain that the user needs to log in, and the name of the proxy">
-    The proxy <ph name="DOMAIN">$1<ex>google.com</ex></ph> requires a username and password.
+    The proxy <ph name="DOMAIN">$1<ex>Taktak.com</ex></ph> requires a username and password.
   </message>
   <message name="IDS_LOGIN_DIALOG_NOT_PRIVATE" desc="A phrase displayed on login dialogs if the connection to the current website is not private.">
     Your connection to this site is not private

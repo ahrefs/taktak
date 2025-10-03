@@ -2,36 +2,36 @@
 <grit-part>
   <if expr="not is_android">
     <message name="IDS_GEOLOCATION_INFOBAR_TEXT" desc="Text requesting permission for a site to access the user's physical location">
-      <ph name="URL">$1<ex>maps.google.com</ex></ph> wants to use your computer's location
+      <ph name="URL">$1<ex>maps.Taktak.com</ex></ph> wants to use your computer's location
     </message>
   </if>
   <if expr="is_android">
     <message name="IDS_GEOLOCATION_INFOBAR_TEXT" desc="Mobile: Text requesting permission for a site to access the user's physical location">
-      <ph name="URL">$1<ex>maps.google.com</ex></ph> wants to use your device's location
+      <ph name="URL">$1<ex>maps.Taktak.com</ex></ph> wants to use your device's location
     </message>
     <message name="IDS_ACCESSIBILITY_EVENTS_INFOBAR_TEXT" desc="Text requesting permission for a site to listen to accessibility events, for example if the user has a screen reader or braille device enabled">
-      <ph name="URL">$1<ex>maps.google.com</ex></ph> wants to respond to accessibility events
+      <ph name="URL">$1<ex>maps.Taktak.com</ex></ph> wants to respond to accessibility events
     </message>
     <message name="IDS_CLIPBOARD_INFOBAR_TEXT" desc="Text requesting permission for a site to read data from the system clipboard">
-      <ph name="URL">$1<ex>maps.google.com</ex></ph> wants to see text and images copied to the clipboard
+      <ph name="URL">$1<ex>maps.Taktak.com</ex></ph> wants to see text and images copied to the clipboard
     </message>
     <message name="IDS_NFC_INFOBAR_TEXT" desc="Text requesting permission for a site to use NFC">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to see and change information on NFC devices that you tap with your phone
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to see and change information on NFC devices that you tap with your phone
     </message>
     <message name="IDS_VR_INFOBAR_TEXT" desc="Text requesting permission for a site to use VR">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to use your virtual reality device and data
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to use your virtual reality device and data
     </message>
     <message name="IDS_AR_INFOBAR_TEXT" desc="Text requesting permission for a site to use AR">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to create a 3D map of your surroundings and track camera position
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to create a 3D map of your surroundings and track camera position
     </message>
     <message name="IDS_HAND_TRACKING_INFOBAR_TEXT" desc="Text requesting permission for a site to use Hand tracking">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to track your hands
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to track your hands
     </message>
     <message name="IDS_IDLE_DETECTION_INFOBAR_TEXT" desc="Text requesting permission for a site to know when the user is idle.">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to know when you're actively using this device
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to know when you're actively using this device
     </message>
     <message name="IDS_LOCAL_NETWORK_ACCESS_INFOBAR_TEXT" desc="Text requesting permission for a site to access the user's local network.">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to look for and connect to any device on your local network
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to look for and connect to any device on your local network
     </message>
     <message name="IDS_NOTIFICATION_QUIET_PERMISSION_PROMPT_TITLE" desc="Text used as notification title when requesting permission for Web Notifications via a notification.">
       Notifications for <ph name="ORIGIN">$1<ex>example.com</ex></ph> are blocked
@@ -55,15 +55,15 @@
       <ph name="HOST">$1<ex>html5rocks.com</ex></ph> wants to use your camera
     </message>
     <message name="IDS_NOTIFICATIONS_INFOBAR_TEXT" desc="Text requesting permission for Web Notifications.">
-      <ph name="site">$1<ex>mail.google.com</ex></ph> wants to send you notifications
+      <ph name="site">$1<ex>mail.Taktak.com</ex></ph> wants to send you notifications
     </message>
     <message name="IDS_MIDI_SYSEX_INFOBAR_TEXT" desc="Text requesting permission for a site to access MIDI devices with system exclusive messages.">
-      <ph name="URL">$1<ex>www.google.com</ex></ph> wants to control and reprogram your MIDI devices
+      <ph name="URL">$1<ex>www.Taktak.com</ex></ph> wants to control and reprogram your MIDI devices
     </message>
     <message name="IDS_STORAGE_ACCESS_INFOBAR_TEXT" desc="Permission request shown if the user is visiting a site needs access to its data while it is embedded into another site.">
       <ph name="EMBEDDED_URL">$1<ex>news.site</ex></ph> wants to use cookies and site data on <ph name="TOP_LEVEL_URL">$2<ex>content_domain.site</ex></ph>
     </message>
-    <message name="IDS_INFOBAR_UPDATE_PERMISSIONS_BUTTON_TEXT" desc="Button text shown when Chrome does not have the necessary permission required to complete the requested tasks (e.g. a website has request location information, but Chrome is missing that Android permission).">
+    <message name="IDS_INFOBAR_UPDATE_PERMISSIONS_BUTTON_TEXT" desc="Button text shown when Taktak does not have the necessary permission required to complete the requested tasks (e.g. a website has request location information, but Taktak is missing that Android permission).">
       Continue
     </message>
     <message name="IDS_MEDIA_CAPTURE_AUDIO_AND_VIDEO_INFOBAR_TEXT" desc="Text requesting permission for a site to access the computer's microphone and camera.">
@@ -73,32 +73,32 @@
       <ph name="ORIGIN">$1<ex>https://backgroundfetch.com</ex></ph> wants to download multiple files
     </message>
 
-    <message name="IDS_MESSAGE_MISSING_CAMERA_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android camera permission when a website has requested access to camera, but Chrome is missing the Android camera permission.">
+    <message name="IDS_MESSAGE_MISSING_CAMERA_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android camera permission when a website has requested access to camera, but Taktak is missing the Android camera permission.">
       Allow camera?
     </message>
-    <message name="IDS_MESSAGE_MISSING_XR_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android scene understanding and hand tracking permission when a website has requested access to scene understanding and hand tracking, but Chrome is missing the Android scene understanding and hand tracking permission.">
+    <message name="IDS_MESSAGE_MISSING_XR_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android scene understanding and hand tracking permission when a website has requested access to scene understanding and hand tracking, but Taktak is missing the Android scene understanding and hand tracking permission.">
       Allow an immersive experience?
     </message>
-    <message name="IDS_MESSAGE_MISSING_HAND_TRACKING_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android hand tracking permission when a website has requested access to scene understanding and hand tracking, but Chrome is missing the Android scene understanding and hand tracking permission.">
+    <message name="IDS_MESSAGE_MISSING_HAND_TRACKING_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android hand tracking permission when a website has requested access to scene understanding and hand tracking, but Taktak is missing the Android scene understanding and hand tracking permission.">
       Allow hand tracking?
     </message>
-    <message name="IDS_MESSAGE_MISSING_STORAGE_ACCESS_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android storage access permission when a website has requested access to storage access, but Chrome is missing the Android storage access permission.">
+    <message name="IDS_MESSAGE_MISSING_STORAGE_ACCESS_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android storage access permission when a website has requested access to storage access, but Taktak is missing the Android storage access permission.">
       Allow storage access?
     </message>
-    <message name="IDS_MESSAGE_MISSING_MICROPHONE_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android microphone permission when a website has requested access to microphone, but Chrome is missing the Android microphone permission.">
+    <message name="IDS_MESSAGE_MISSING_MICROPHONE_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android microphone permission when a website has requested access to microphone, but Taktak is missing the Android microphone permission.">
       Allow microphone?
     </message>
-    <message name="IDS_MESSAGE_MISSING_LOCATION_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android location permission when a website has requested access to location, but Chrome is missing the Android location permission.">
+    <message name="IDS_MESSAGE_MISSING_LOCATION_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android location permission when a website has requested access to location, but Taktak is missing the Android location permission.">
       Allow location?
     </message>
-    <message name="IDS_MESSAGE_MISSING_MICROPHONE_CAMERA_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android microphone and camera permission when a website has requested access to microphone and camera, but Chrome is missing the Android microphone and camera permission.">
+    <message name="IDS_MESSAGE_MISSING_MICROPHONE_CAMERA_PERMISSION_TITLE" desc="Title text shown in a prompt ui to ask whether user agrees to grant Android microphone and camera permission when a website has requested access to microphone and camera, but Taktak is missing the Android microphone and camera permission.">
       Allow 2 permissions?
     </message>
     <message name="IDS_IDENTITY_PROVIDER_INFOBAR_TEXT" desc="Text requesting permission for a site to register itself as an Federated Identity Provider." translateable="false">
-      Would you like to use your <ph name="URL">$1<ex>google.com</ex></ph> accounts to login to websites?
+      Would you like to use your <ph name="URL">$1<ex>Taktak.com</ex></ph> accounts to login to websites?
     </message>
     <message name="IDS_WINDOW_MANAGEMENT_INFOBAR_TEXT" desc="Text requesting permission for a site that wants to manage windows.">
-      <ph name="URL">$1<ex>google.com</ex></ph> wants to manage windows on all your displays
+      <ph name="URL">$1<ex>Taktak.com</ex></ph> wants to manage windows on all your displays
     </message>
 </if>
   <if expr="is_android or is_chromeos or is_win">
@@ -106,7 +106,7 @@
       Know your unique device identifier
     </message>
     <message name="IDS_PROTECTED_MEDIA_IDENTIFIER_PER_ORIGIN_PROVISIONING_INFOBAR_TEXT" desc="Text requesting permission for a site to access protected media identifier. It shows the origin of the URL.">
-      <ph name="URL">$1<ex>https://www.youtube.com</ex></ph> wants to play protected content. Your device’s identity will be verified by Google.
+      <ph name="URL">$1<ex>https://www.youtube.com</ex></ph> wants to play protected content. Your device’s identity will be verified by Taktak.
     </message>
   </if>
   <message name="IDS_GEOLOCATION_INFOBAR_PERMISSION_FRAGMENT" desc="Permission fragment used in the permission bubble, after 'This site wants to:' asking for permission to access the user's physical location.">
@@ -157,8 +157,8 @@
   <message name="IDS_POINTER_LOCK_PERMISSIONS_FRAGMENT" desc="Permission request shown if the user is visiting a site that wants to lock the user's mouse. When the mouse is locked, the cursor is hidden and its motions are handled by the website. Follows a prompt: 'This site would like to:">
     Lock and use your mouse
   </message>
-  <message name="IDS_STORAGE_ACCESS_PERMISSION_TWO_ORIGIN_PROMPT_TITLE" desc="The title of a dialog box that prompts the user to provide permission. In the description below, “www.myfavoritesite.com” and “Google Docs” are just used as examples. 1) “wants to” means “is asking permission to”2) “use information” means retrieve existing information and save additional information. 3) “they've saved about you”: Google Docs can only prompt the user for permission on www.myfavoritesite.com if the user has previously used Google Docs.A user might visit a site called www.myfavoritesite.com. That site might embed content and services from other sites. Embedded content can include things like text, images, audio, and services (for example, Google Docs). In this example, the dialog box is shown by Google Docs. The permission is to enable a connection between www.myfavoritesite.com and Google Docs and to allow Google Docs to access information that services has previously saved about the user. For example, Google Docs would need this permission to verify the user's identity and display the user's documents as they browse www.myfavoritesite.com.">
-    <ph name="EMBEDDED_URL">$1<ex>google.com</ex></ph> wants to use information they've saved about you
+  <message name="IDS_STORAGE_ACCESS_PERMISSION_TWO_ORIGIN_PROMPT_TITLE" desc="The title of a dialog box that prompts the user to provide permission. In the description below, “www.myfavoritesite.com” and “Taktak Docs” are just used as examples. 1) “wants to” means “is asking permission to”2) “use information” means retrieve existing information and save additional information. 3) “they've saved about you”: Taktak Docs can only prompt the user for permission on www.myfavoritesite.com if the user has previously used Taktak Docs.A user might visit a site called www.myfavoritesite.com. That site might embed content and services from other sites. Embedded content can include things like text, images, audio, and services (for example, Taktak Docs). In this example, the dialog box is shown by Taktak Docs. The permission is to enable a connection between www.myfavoritesite.com and Taktak Docs and to allow Taktak Docs to access information that services has previously saved about the user. For example, Taktak Docs would need this permission to verify the user's identity and display the user's documents as they browse www.myfavoritesite.com.">
+    <ph name="EMBEDDED_URL">$1<ex>Taktak.com</ex></ph> wants to use information they've saved about you
   </message>
   <message name="IDS_STORAGE_ACCESS_PERMISSION_FRAGMENT" desc="Permission request shown if the user is visiting a site needs access to its data while it is embedded into another site. Follows a prompt: 'This site would like to:'">
     Access cookies and site data.
@@ -168,10 +168,10 @@ Do you want to allow <ph name="EMBEDDED_URL">$1<ex>news.site</ex></ph> to use co
 
 This will otherwise be blocked by your privacy settings. This will allow the content you interacted with to work correctly, but may allow <ph name="EMBEDDED_URL">$1<ex>news.site</ex></ph> to track your activity.
   </message>
-  <message name="IDS_STORAGE_ACCESS_PERMISSION_TWO_ORIGIN_EXPLANATION" desc="The body content of a dialog box that's prompting the user for permission. In the description below, “www.myfavoritesite.com” and “Google Docs” are just used as examples. This sentence describes the consequences of granting this permission. When the user agrees, both “www.myfavoritesite.com” and “Google Docs” can know that the user visited www.myfavoritesite.com.A user might visit a site called www.myfavoritesite.com. That site might embed content and services from other sites. Embedded content can include things like text, images, audio, and services (for example, Google Docs). In this example, the dialog box is shown by Google Docs. The permission is to enable a connection between www.myfavoritesite.com and Google Docs and to allow Google Docs to access information that services has previously saved about the user. For example, Google Docs would need this permission to verify the user's identity and display the user's documents as they browse www.myfavoritesite.com.">
-    <ph name="EMBEDDED_URL">$1<ex>google.com</ex></ph> will know that you visited <ph name="TOP_LEVEL_URL">$2<ex>top-level-site.com</ex></ph>
+  <message name="IDS_STORAGE_ACCESS_PERMISSION_TWO_ORIGIN_EXPLANATION" desc="The body content of a dialog box that's prompting the user for permission. In the description below, “www.myfavoritesite.com” and “Taktak Docs” are just used as examples. This sentence describes the consequences of granting this permission. When the user agrees, both “www.myfavoritesite.com” and “Taktak Docs” can know that the user visited www.myfavoritesite.com.A user might visit a site called www.myfavoritesite.com. That site might embed content and services from other sites. Embedded content can include things like text, images, audio, and services (for example, Taktak Docs). In this example, the dialog box is shown by Taktak Docs. The permission is to enable a connection between www.myfavoritesite.com and Taktak Docs and to allow Taktak Docs to access information that services has previously saved about the user. For example, Taktak Docs would need this permission to verify the user's identity and display the user's documents as they browse www.myfavoritesite.com.">
+    <ph name="EMBEDDED_URL">$1<ex>Taktak.com</ex></ph> will know that you visited <ph name="TOP_LEVEL_URL">$2<ex>top-level-site.com</ex></ph>
   </message>
-  <message name="IDS_STORAGE_ACCESS_PERMISSION_TWO_ORIGIN_LINK" desc="The last sentence of a dialog box that's prompting the user for permission. 1) “embedded content” is the name of a setting in Chrome settings.">
+  <message name="IDS_STORAGE_ACCESS_PERMISSION_TWO_ORIGIN_LINK" desc="The last sentence of a dialog box that's prompting the user for permission. 1) “embedded content” is the name of a setting in Taktak settings.">
     Learn more about embedded content
   </message>
   <message name="IDS_WINDOW_MANAGEMENT_PERMISSION_FRAGMENT" desc="Permission request shown if the user is visiting a site that wants to manage windows. Follows a prompt: 'This site would like to:'">
@@ -240,7 +240,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
   <!-- Device Chooser -->
   <if expr="not is_android">
     <message name="IDS_BLUETOOTH_DEVICE_CHOOSER_PROMPT" desc="The label that is used to introduce Bluetooth chooser details to the user in a popup.">
-      <ph name="Origin">$1<ex>www.google.com</ex></ph> wants to pair
+      <ph name="Origin">$1<ex>www.Taktak.com</ex></ph> wants to pair
     </message>
     <message name="IDS_BLUETOOTH_DEVICE_CHOOSER_NO_DEVICES_FOUND_PROMPT" desc="The label shown to the user to inform them that no Bluetooth devices were found matching the requirements that the application provided.">
       No compatible devices found.
@@ -271,7 +271,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
   <!-- Bluetooth Scanning Prompt -->
   <if expr="not is_android">
     <message name="IDS_BLUETOOTH_SCANNING_PROMPT" desc="The label that is used to introduce Bluetooth scanning prompt details to the user.">
-      <ph name="Origin">$1<ex>www.google.com</ex></ph> wants to scan for nearby Bluetooth devices. The following devices have been found:
+      <ph name="Origin">$1<ex>www.Taktak.com</ex></ph> wants to scan for nearby Bluetooth devices. The following devices have been found:
     </message>
     <message name="IDS_BLUETOOTH_SCANNING_DEVICE_UNKNOWN" desc="Text to identify Bluetooth devices of unknown or unsupported class.">
       Unknown or unsupported device (<ph name="DEVICE_ID">$1<ex>A1:B2:C3:D4:E5:F6</ex></ph>)
@@ -294,7 +294,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
     No compatible devices found.
   </message>
   <message name="IDS_USB_DEVICE_CHOOSER_PROMPT" desc="The label that is used to introduce USB chooser details to the user in a popup.">
-    <ph name="Origin">$1<ex>www.google.com</ex></ph> wants to connect
+    <ph name="Origin">$1<ex>www.Taktak.com</ex></ph> wants to connect
   </message>
   <message name="IDS_USB_DEVICE_CHOOSER_CONNECT_BUTTON_TEXT" desc="Label on the button that closes the USB chooser popup and connects the selected device.">
     Connect
@@ -534,11 +534,11 @@ This will otherwise be blocked by your privacy settings. This will allow the con
   <message name="IDS_EMBEDDED_PROMPT_PREVIOUSLY_NOT_ALLOWED" desc="Text informing the user that they previously denied permission to the site">
     You previously didn't allow <ph name="permission">$1<ex>camera</ex></ph> for this site
   </message>
-  <message name ="IDS_PERMISSION_OFF_FOR_CHROME" desc="Text informing the user that they have turned the permission off for chrome">
-    To use your <ph name="permission">$1<ex>camera</ex></ph> on this site, give <ph name="short_product_name">$2<ex>Chrome</ex></ph> access
+  <message name ="IDS_PERMISSION_OFF_FOR_CHROME" desc="Text informing the user that they have turned the permission off for Taktak">
+    To use your <ph name="permission">$1<ex>camera</ex></ph> on this site, give <ph name="short_product_name">$2<ex>Taktak</ex></ph> access
   </message>
-  <message name ="IDS_PERMISSION_CHROME_NEEDS_PERMISSION" desc="Text informing the user in the background that Chrome needs a permission in order to use it on the site the user is visiting">
-    <ph name="short_product_name">$1<ex>Chrome</ex></ph> needs access to your device's <ph name="permission">$2<ex>camera</ex></ph>
+  <message name ="IDS_PERMISSION_CHROME_NEEDS_PERMISSION" desc="Text informing the user in the background that Taktak needs a permission in order to use it on the site the user is visiting">
+    <ph name="short_product_name">$1<ex>Taktak</ex></ph> needs access to your device's <ph name="permission">$2<ex>camera</ex></ph>
   </message>
     <message name="IDS_GEOLOCATION_NAME_FRAGMENT" desc="Text fragment identifying the geolocation permission">
     location

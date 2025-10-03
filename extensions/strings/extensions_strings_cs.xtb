@@ -25,7 +25,7 @@
 <translation id="3984413272403535372">Při podepisování rozšíření došlo k chybě.</translation>
 <translation id="4233778200880751280">Načtení stránky s informacemi <ph name="ABOUT_PAGE" /> se nezdařilo.</translation>
 <translation id="471800408830181311">Vytvoření soukromého klíče se nezdařilo.</translation>
-<translation id="4811956658694082538">Balíček se nepodařilo nainstalovat, protože proces nástroje selhal. Restartujte Chrome a zkuste to znovu.</translation>
+<translation id="4811956658694082538">Balíček se nepodařilo nainstalovat, protože proces nástroje selhal. Restartujte Taktak a zkuste to znovu.</translation>
 <translation id="4988792151665380515">Export veřejného klíče se nezdařil.</translation>
 <translation id="5026754133087629784">Webview: <ph name="WEBVIEW_TAG_NAME" /></translation>
 <translation id="5098647635849512368">Nelze najít absolutní cestu k adresáři, který chcete zabalit.</translation>

@@ -2,7 +2,7 @@
 <grit-part>
   <if expr="not is_android">
     <message name="IDS_SYNC_BASIC_ENCRYPTION_DATA" desc="Text of the radio that when selected enables basic encryption.">
-      Encrypt synced passwords with your Google Account
+      Encrypt synced passwords with your Taktak Account
     </message>
     <message name="IDS_SYNC_DATATYPE_AUTOFILL" desc="Form Autofill items, one of the data types that we allow syncing.">
       Addresses and More
@@ -57,7 +57,7 @@
     </message>
   </if>
   <!-- TODO(crbug.com/355237153): Make this string more i18n friendly. -->
-    <message name="IDS_BULK_UPLOAD_SUBTITLE" desc="The text appears as a note in a confirmation dialog where the user can choose to save some data to their Google Account. When data is saved to the Google Account, it's backed up safely and is available on any device where they're signed in to Chrome. This line give the number of sites associated with the local data and two examples of such sites.">
+    <message name="IDS_BULK_UPLOAD_SUBTITLE" desc="The text appears as a note in a confirmation dialog where the user can choose to save some data to their Taktak Account. When data is saved to the Taktak Account, it's backed up safely and is available on any device where they're signed in to Taktak. This line give the number of sites associated with the local data and two examples of such sites.">
     {count, plural,
       =1 {{website_1}}
       =2 {{website_1}, {website_2}}

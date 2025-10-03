@@ -25,7 +25,7 @@
 <translation id="3984413272403535372">簽署擴充功能時出現錯誤。</translation>
 <translation id="4233778200880751280">無法載入簡介網頁「<ph name="ABOUT_PAGE" />」。</translation>
 <translation id="471800408830181311">匯出私密金鑰失敗。</translation>
-<translation id="4811956658694082538">公用程式處理程序當機，因此無法安裝套件。請重新啟動 Chrome，然後再試一次。</translation>
+<translation id="4811956658694082538">公用程式處理程序當機，因此無法安裝套件。請重新啟動 Taktak，然後再試一次。</translation>
 <translation id="4988792151665380515">匯出公開金鑰失敗。</translation>
 <translation id="5026754133087629784">Webview：<ph name="WEBVIEW_TAG_NAME" /></translation>
 <translation id="5098647635849512368">找不到封裝使用的目錄絕對路徑。</translation>

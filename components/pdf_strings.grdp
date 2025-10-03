@@ -496,8 +496,8 @@
       Note
     </message>
     <if expr="enable_pdf_save_to_drive">
-      <message name="IDS_PDF_TOOLTIP_SAVE_TO_DRIVE" desc="Button tooltip for saving a PDF document to Google Drive">
-        Save to Google Drive
+      <message name="IDS_PDF_TOOLTIP_SAVE_TO_DRIVE" desc="Button tooltip for saving a PDF document to Taktak Drive">
+        Save to Taktak Drive
       </message>
       <message name="IDS_SAVE_TO_DRIVE_DIALOG_CANCEL_UPLOAD_BUTTON_LABEL" desc="Label for the button that will cancel the upload.">
         Cancel upload
@@ -505,7 +505,7 @@
       <message name="IDS_SAVE_TO_DRIVE_DIALOG_CONNECTION_ERROR_MESSAGE" desc="A message telling the user that the upload failed due to a connection error.">
         Check your internet connection
       </message>
-      <message name="IDS_SAVE_TO_DRIVE_DIALOG_ERROR_TITLE" desc="Title of the dialog that appears when a file fails to upload to Google Drive due to a connection error.">
+      <message name="IDS_SAVE_TO_DRIVE_DIALOG_ERROR_TITLE" desc="Title of the dialog that appears when a file fails to upload to Taktak Drive due to a connection error.">
         Upload unsuccessful
       </message>
       <message name="IDS_SAVE_TO_DRIVE_DIALOG_MANAGE_STORAGE_BUTTON_LABEL" desc="Label for the manage storage button in the Save to Drive dialog.">
@@ -517,16 +517,16 @@
       <message name="IDS_SAVE_TO_DRIVE_DIALOG_RETRY_BUTTON_LABEL" desc="Label for the retry button in the Save to Drive dialog.">
         Retry
       </message>
-      <message name="IDS_SAVE_TO_DRIVE_DIALOG_SESSION_TIMEOUT_ERROR_MESSAGE" desc="A message telling the user that the upload failed due to their Google Drive session timing out.">
+      <message name="IDS_SAVE_TO_DRIVE_DIALOG_SESSION_TIMEOUT_ERROR_MESSAGE" desc="A message telling the user that the upload failed due to their Taktak Drive session timing out.">
         Session timed out
       </message>
-      <message name="IDS_SAVE_TO_DRIVE_DIALOG_STORAGE_FULL_ERROR_MESSAGE" desc="A message telling the user that the upload failed due to their Google Drive storage being full.">
-        Your Google Drive storage is full
+      <message name="IDS_SAVE_TO_DRIVE_DIALOG_STORAGE_FULL_ERROR_MESSAGE" desc="A message telling the user that the upload failed due to their Taktak Drive storage being full.">
+        Your Taktak Drive storage is full
       </message>
-      <message name="IDS_SAVE_TO_DRIVE_DIALOG_SUCCESS_MESSAGE" desc="A message telling the user can find their newly uploaded file in the bolded folder name in Google Drive. 'Save from Chrome' is a folder name example.">
-        Saved to your <ph name="FOLDER_NAME">&lt;b&gt;$1<ex>Save from Chrome</ex>&lt;/b&gt;</ph> folder
+      <message name="IDS_SAVE_TO_DRIVE_DIALOG_SUCCESS_MESSAGE" desc="A message telling the user can find their newly uploaded file in the bolded folder name in Taktak Drive. 'Save from Taktak' is a folder name example.">
+        Saved to your <ph name="FOLDER_NAME">&lt;b&gt;$1<ex>Save from Taktak</ex>&lt;/b&gt;</ph> folder
       </message>
-      <message name="IDS_SAVE_TO_DRIVE_DIALOG_SUCCESS_TITLE" desc="Title of the dialog that appears when a file is successfully uploaded to Google Drive.">
+      <message name="IDS_SAVE_TO_DRIVE_DIALOG_SUCCESS_TITLE" desc="Title of the dialog that appears when a file is successfully uploaded to Taktak Drive.">
         Upload successful
       </message>
       <message name="IDS_SAVE_TO_DRIVE_DIALOG_UNKNOWN_ERROR_MESSAGE" desc="A message telling the user that the upload failed due to an unknown error.">
@@ -538,8 +538,8 @@
       <message name="IDS_SAVE_TO_DRIVE_DIALOG_UPLOAD_STATUS_WITH_SEPARATOR" desc="The upload status and message are separated by a symbol, in this case bullet •, with a white space before it and a white space after it. If the bullet • resembles another symbol in the language, please translate the bullet • as a symbol (A) that is not easily mistaken for a number or letter in the language and (B) that is typically used to separate elements.">
         <ph name="STATUS">$1<ex>100/120 MB</ex></ph> • <ph name="MESSAGE">$2<ex>4 seconds left</ex></ph>
       </message>
-      <message name="IDS_SAVE_TO_DRIVE_DIALOG_UPLOADING_TITLE" desc="Title of the dialog that appears when a file is being uploaded to Google Drive.">
-        Uploading to Google Drive...
+      <message name="IDS_SAVE_TO_DRIVE_DIALOG_UPLOADING_TITLE" desc="Title of the dialog that appears when a file is being uploaded to Taktak Drive.">
+        Uploading to Taktak Drive...
       </message>
     </if>
   </if>
@@ -548,10 +548,10 @@
       This PDF is inaccessible. Couldn't download text extraction files. Please try again later.
     </message>
     <message name="IDS_PDF_OCR_IN_PROGRESS" is_accessibility_with_no_ui="true" desc="Notification to inform the user that OCR is in progress.">
-      This PDF is inaccessible. Extracting text, powered by Google AI
+      This PDF is inaccessible. Extracting text, powered by Taktak AI
     </message>
     <message name="IDS_PDF_OCR_COMPLETED" is_accessibility_with_no_ui="true" desc="Notification to inform the user that OCR is completed.">
-      This PDF is inaccessible. Text extracted, powered by Google AI
+      This PDF is inaccessible. Text extracted, powered by Taktak AI
     </message>
     <message name="IDS_PDF_OCR_NO_RESULT" is_accessibility_with_no_ui="true" desc="Notification to inform the user that no text was converted by OCR from images.">
       This PDF is inaccessible. No text extracted

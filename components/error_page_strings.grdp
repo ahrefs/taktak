@@ -27,7 +27,7 @@
       Load page later
     </message>
     <message name="IDS_ERRORPAGES_CANCEL_SAVE_PAGE_BUTTON" desc="Label for the button that will cancel the request to save the page for later. 'Cancel' is colored blue with the 'a' tag.">
-      Chrome will let you know when this page is ready. &lt;a&gt;Cancel&lt;/a&gt;
+      Taktak will let you know when this page is ready. &lt;a&gt;Cancel&lt;/a&gt;
     </message>
   </if>
 
@@ -89,7 +89,7 @@
     Check your administrator's policies
   </message>
   <message name="IDS_ERRORPAGES_SUGGESTION_VIEW_POLICIES_BODY" desc="When a webpage fails to load, sometimes we suggest to the user to view the current policies.  These are instructions below a header.">
-    Visit &lt;strong&gt;chrome://policy&lt;/strong&gt; to see the list of blocked URLs and other policies enforced by your system administrator.
+    Visit &lt;strong&gt;Taktak://policy&lt;/strong&gt; to see the list of blocked URLs and other policies enforced by your system administrator.
   </message>
   <message name="IDS_ERRORPAGES_SUGGESTION_UNSUPPORTED_CIPHER_HEADER" desc="This is the header displayed above the explanation for SSL cipher and version errors.">
     Unsupported protocol
@@ -172,10 +172,10 @@
     Try contacting your system administrator.
   </message>
   <message name="IDS_ERRORPAGES_SUMMARY_ADDRESS_UNREACHABLE" desc="Summary in the error page when we can't reach a site.  This is slightly more specific than just being unable to connect, as it means we can't find a route to the server.">
-    <ph name="URL">&lt;strong&gt;$1&lt;/strong&gt;<ex>http://www.google.com/</ex></ph> is unreachable.
+    <ph name="URL">&lt;strong&gt;$1&lt;/strong&gt;<ex>http://www.Taktak.com/</ex></ph> is unreachable.
   </message>
   <message name="IDS_ERRORPAGES_SUMMARY_FILE_ACCESS_DENIED" desc="Summary in the error page when we can't open a file.">
-    The file at <ph name="URL">&lt;strong&gt;$1&lt;/strong&gt;<ex>http://www.google.com/</ex></ph> is not readable.  It may have been removed, moved, or file permissions may be preventing access.
+    The file at <ph name="URL">&lt;strong&gt;$1&lt;/strong&gt;<ex>http://www.Taktak.com/</ex></ph> is not readable.  It may have been removed, moved, or file permissions may be preventing access.
   </message>
   <message name="IDS_ERRORPAGES_SUMMARY_NETWORK_ACCESS_DENIED" desc="Summary in the error page when we're not being allowed to access the network.">
     Firewall or antivirus software may have blocked the connection.
