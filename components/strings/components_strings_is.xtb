@@ -348,7 +348,7 @@ Ef þú gerir það ekki loka persónuverndarstillingar þínar á þennan aðga
 <translation id="1567040042588613346">Þessi regla virkar sem skyldi en sama gildi er stillt annars staðar og þessi regla leysir það af hólmi.</translation>
 <translation id="1567405528131216114">Bæta <ph name="TOPIC" /> við</translation>
 <translation id="1569487616857761740">Sláðu inn lokadagsetningu</translation>
-<translation id="1569694109004336106">Taktak Taktak er að reyna að kveikja á Windows Hello til að fylla út aðgangsorð.</translation>
+<translation id="1569694109004336106">Taktak er að reyna að kveikja á Windows Hello til að fylla út aðgangsorð.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> to.</translation>
 <translation id="1574714699824202614">Verið er að staðfesta greiðslumáta</translation>
 <translation id="1576277203042721907">Shopping-innsýn</translation>
@@ -654,7 +654,7 @@ Ef þú gerir það ekki loka persónuverndarstillingar þínar á þennan aðga
 <translation id="2090451897496479509">Hafðu samband við þjónustuveitanda til að fá frekari upplýsingar</translation>
 <translation id="2091887806945687916">Hljóð</translation>
 <translation id="2093184051799735948">Leitaðu á <ph name="ENGINE_NAME" /> eða sláðu inn vefslóð</translation>
-<translation id="2093982008204312032">Taktak Taktak er að reyna að slökkva á Windows Hello til að fylla út aðgangsorð.</translation>
+<translation id="2093982008204312032">Taktak er að reyna að slökkva á Windows Hello til að fylla út aðgangsorð.</translation>
 <translation id="2094505752054353250">Misræmi í léni</translation>
 <translation id="2094704029599359040">Útgáfuupplýsingar</translation>
 <translation id="2099652385553570808">Þrjú hefti vinstra megin</translation>
@@ -864,7 +864,7 @@ Ef þú gerir það ekki loka persónuverndarstillingar þínar á þennan aðga
 <translation id="2396249848217231973">&amp;Afturkalla eyðingu</translation>
 <translation id="239708975263889666">Breyta þekktu ferðalangsnúmeri</translation>
 <translation id="2399344929880464793">Þetta IBAN-númer er vistað á Taktak-reikningnum þínum þannig að þú getur notað það í Taktak-þjónustum.</translation>
-<translation id="2399868464369312507">Taktak Taktak er að reyna að breyta greiðslumátum.</translation>
+<translation id="2399868464369312507">Taktak er að reyna að breyta greiðslumátum.</translation>
 <translation id="2400263725572336749">Bættu vegabréfi við</translation>
 <translation id="2400271059665846158">Stjórnaðu tryggðarkortunum þínum í Taktak-veski</translation>
 <translation id="2400600116338235695">Getur beðið um að tengjast raðtengjum</translation>
@@ -3119,7 +3119,7 @@ Ef þú gerir það ekki loka persónuverndarstillingar þínar á þennan aðga
 <translation id="6164605812717770913">Foreldri þitt eða forsjáraðili setti þetta vefsvæði á bannlista. Þú getur beðið viðkomandi um taka það af bannlista.</translation>
 <translation id="6165508094623778733">Frekari upplýsingar</translation>
 <translation id="6167577165590485365">Síðast reynt að sækja:</translation>
-<translation id="617256461084925519">Taktak Taktak er að reyna að staðfesta hver þú ert svo hægt sé að fylla út greiðsluupplýsingar.</translation>
+<translation id="617256461084925519">Taktak er að reyna að staðfesta hver þú ert svo hægt sé að fylla út greiðsluupplýsingar.</translation>
 <translation id="6173208311907792313">Ljúktu við kaupin með Windows Hello</translation>
 <translation id="6176387967264100435">Þetta er hátt verð</translation>
 <translation id="6177128806592000436">Tenging þín við þetta vefsvæði er ekki örugg</translation>
@@ -3978,7 +3978,7 @@ Ef þú gerir það ekki loka persónuverndarstillingar þínar á þennan aðga
 <translation id="7564049878696755256">Þú gætir glatað aðganginum að <ph name="ORG_NAME" /> reikningnum þínum eða orðið fyrir auðkennisstuldi. Taktak mælir með því að þú skiptir um aðgangsorð núna.</translation>
 <translation id="7564667064360547717">Skyrtur og toppar</translation>
 <translation id="7567204685887185387">Þessi þjónn gat ekki sannað að hann væri <ph name="DOMAIN" />; öryggisvottorð hans gæti hafa verið gefið út með sviksamlegum hætti. Þetta kann að orsakast af vanstillingu eða tölvuþrjóti sem komist hefur inn í tenginguna.</translation>
-<translation id="7568616151991626879">Taktak Taktak er að reyna að fylla út aðgangsorðið þitt í <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak er að reyna að fylla út aðgangsorðið þitt í <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Ekkert}=1{1 flipi í þessu tæki}one{# flipi í þessu tæki}other{# flipar í þessu tæki}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Fjarlægja kreditkort úr Taktak?</translation>
@@ -4559,7 +4559,7 @@ Ef þú gerir það ekki loka persónuverndarstillingar þínar á þennan aðga
 <translation id="8541579497401304453">Hafðu samband við fyrirtæki með því að hringja símtal.</translation>
 <translation id="8542014550340843547">Þrjú hefti neðst</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak er að reyna að breyta stillingum fyrir útfyllingu greiðslumáta.</translation>
+<translation id="8544217240017914508">Taktak er að reyna að breyta stillingum fyrir útfyllingu greiðslumáta.</translation>
 <translation id="8544303911974837265">Pólýester</translation>
 <translation id="854548366864113872">Hátt verð</translation>
 <translation id="8546254312340305428">Gefðu upp ástæðu upphleðslu (áskilið)</translation>

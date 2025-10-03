@@ -228,7 +228,7 @@
 <translation id="395904275706073188">सुरक्षित गरिएका पेजहरू पढ्न सकिँदैन। अर्को पेज प्रयोग गरी हेर्नुहोस्।</translation>
 <translation id="3962647064319009959">Taktak ले तपाईंलाई कसरी सुरक्षित राख्छ भन्ने कुरा जान्नुहोस्</translation>
 <translation id="3971865010372729242">तपाईंले एड्रेस बार वा खोज बाकसमा टाइप गर्दा तपाईंलाई सुझावहरू देखाउन सकियोस् भन्नाका लागि Taktak ले तपाईंले टाइप गर्ने कुरा तपाईंको सङ्गठनको खोज, AI र एजेन्टसम्बन्धी टुलहरूमा पठाउँछ।</translation>
-<translation id="3975724895399328945">Taktak Taktak for Testing का बारेमा</translation>
+<translation id="3975724895399328945">Taktak for Testing का बारेमा</translation>
 <translation id="3997429360543082038">ChromiumOS का बारेमा</translation>
 <translation id="4019629340646866719">ChromiumOS पनि <ph name="BEGIN_LINK_LINUX_OSS" />Linux डेभलपमेन्ट इनभारमेन्ट<ph name="END_LINK_LINUX_OSS" /> जस्तै अतिरिक्त <ph name="BEGIN_LINK_CROS_OSS" />खुला स्रोत सफ्टवेयर<ph name="END_LINK_CROS_OSS" /> प्रयोग गरी निर्माण गरिएको हो।</translation>
 <translation id="4022972681110646219">स्क्रिनमा भएको सामग्री अनुवाद गर्नुहोस्</translation>
@@ -548,7 +548,7 @@ Taktak ले तपाइँका सेटिङहरू पुनर्प�
 <translation id="8077498902115777962">एपहरू चलिरहेका बेला Taktak लाई ब्याकग्राउन्डमा चल्न नदिनुहोस्</translation>
 <translation id="80790299200510644">फोटो प्रयोग गरी खोज्ने सुविधा</translation>
 <translation id="8086881907087796310">तपाईंको कम्प्युटरले हार्डवेयरसम्बन्धी न्यूनतम मापदण्डहरू पूरा नगर्ने भएकाले इन्स्टल गर्ने प्रक्रिया पूरा हुन सकेन।</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">यो साइट चलाउन Taktak लाई लोकेसन प्रयोग गर्ने अनुमति दिनु पर्ने हुन्छ</translation>
 <translation id="8118331347066725040">लेन्समार्फत खोज्ने सुविधासम्बन्धी प्रतिक्रिया पठाउनुहोस्</translation>
 <translation id="8133124826068723441">तपाईंको डोमेनका हकमा सिंक गर्ने सुविधा उपलब्ध नभएको हुनाले ChromiumOS ले तपाईंको डेटा सिंक गर्न सकेन।</translation>
@@ -594,7 +594,7 @@ Taktak ले तपाइँका सेटिङहरू पुनर्प�
 <translation id="8601359445272098721">नयाँ सुविधा! तपाईं "स्क्रिनमा भएको कुरा अनुवाद गर्नुहोस्" बटन चयन गरेर आफ्नो स्क्रिनमा देखाइने टेक्स्ट र फोटो दुवै अनुवाद गर्न सक्नुहुन्छ</translation>
 <translation id="8619360774459241877">Taktak सुरु गर्दै…</translation>
 <translation id="8621669128220841554">अनिश्</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing लाई तपाईंको डिफल्ट ब्राउजर बनाउन मिल्दैन।</translation>
+<translation id="8648201657708811153">Taktak for Testing लाई तपाईंको डिफल्ट ब्राउजर बनाउन मिल्दैन।</translation>
 <translation id="8697124171261953979">तपाइँले Taktak सुरु गर्दा वा ओम्निबाकसबाट खोज्दा कुन पृष्ठ देखाउँछ भनेर पनि यसले नियन्त्रण गर्छ।</translation>
 <translation id="8704119203788522458">यो तपाइँको Taktak हो</translation>
 <translation id="8712637175834984815">भयो</translation>

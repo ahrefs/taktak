@@ -1123,7 +1123,7 @@
 <translation id="1757301747492736405">ການຖອນການຕິດຕັ້ງທີ່ຄ້າງຢູ່</translation>
 <translation id="175772926354468439">ເປີດໃຊ້ງານເທມ</translation>
 <translation id="1757786065507923842">ຄຳຮ້ອງຂໍການອະນຸຍາດພໍ່ແມ່ບໍ່ສຳເລັດ.</translation>
-<translation id="17584710573359123">ເບິ່ງໃນ Taktak Web Store</translation>
+<translation id="17584710573359123">ເບິ່ງໃນ Chrome Web Store</translation>
 <translation id="1761402971842586829">ແມັບ <ph name="BUTTON_NAME" /> ໃໝ່ເປັນ <ph name="REMAPPING_OPTION" /> ແລ້ວ.</translation>
 <translation id="1761845175367251960">ບັນຊີຂອງ <ph name="NAME" /></translation>
 <translation id="176272781006230109">ການແນະນຳການຊື້ເຄື່ອງ</translation>
@@ -1328,7 +1328,7 @@
 <translation id="1901760057081700494">ປັດຈຸບັນເຂດເວລາຖືກຕັ້ງຄ່າໄວ້ເປັນ <ph name="TIME_ZONE_ENTRY" />. ເພື່ອອັບເດດເຂດເວລາໂດຍອັດຕະໂນມັດ, ໃຫ້ <ph name="BEGIN_LINK" />ເປີດສິດເຂົ້າເຖິງສະຖານທີ່ຂອງລະບົບ<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">URL ທີ່ທ່ານເຂົ້ານັ້ນຖືກບັນທຶກໄປໃສ່ບັນຊີ Taktak ທ່ານແລ້ວ</translation>
 <translation id="1906181697255754968">ໂດຍປົກກະຕິແລ້ວ ເວັບໄຊຈະເຂົ້າເຖິງໄຟລ໌ ແລະ ໂຟນເດີໃນອຸປະກອນຂອງທ່ານສຳລັບຄຸນສົມບັດ ເຊັ່ນ: ການບັນທຶກວຽກຂອງທ່ານໄວ້ໂດຍອັດຕະໂນມັດ</translation>
-<translation id="1906488504371069394">ຄົ້ນພົບສ່ວນຂະຫຍາຍ ແລະ ຮູບແບບສີສັນເພີ່ມເຕີມຢູ່ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">ຄົ້ນພົບສ່ວນຂະຫຍາຍ ແລະ ຮູບແບບສີສັນເພີ່ມເຕີມຢູ່ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">ພິມດ້ວຍສຽງຂອງທ່ານ. ໃຊ້ຊອກຫາ + D, ຈາກນັ້ນເລີ່ມເວົ້າ.</translation>
 <translation id="1907659324308286326">ອຸປະກອນເສີມ Thunderbolt ຫຼື USB4 ບາງຢ່າງຕ້ອງມີສິດເຂົ້າເຖິງໜ່ວຍຄວາມຈຳຈຶ່ງຈະເຮັດວຽກໄດ້ຢ່າງຖືກຕ້ອງ.</translation>
 <translation id="1908591798274282246">ເປີດກຸ່ມທີ່ປິດໄປແລ້ວຄືນໃໝ່</translation>
@@ -2076,7 +2076,7 @@
 <translation id="2412015533711271895">ພໍ່ແມ່ ຫຼື ຜູ້ປົກຄອງຂອງທ່ານຕ້ອງຕອບຕົກລົງກ່ອນ ທ່ານຈຶ່ງຈະສາມາດໃຊ້ສ່ວນຂະຫຍາຍນີ້ໄດ້</translation>
 <translation id="2412593942846481727">ມີການອັບເດດໃໝ່</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">ປັບແຕ່ງໂປຣແກຣມທ່ອງເວັບຂອງທ່ານໄດ້ຫຼາຍຍິ່ງຂຶ້ນດ້ວຍສ່ວນຂະຫຍາຍຈາກ <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /></translation>
+<translation id="2413009156320833859">ປັບແຕ່ງໂປຣແກຣມທ່ອງເວັບຂອງທ່ານໄດ້ຫຼາຍຍິ່ງຂຶ້ນດ້ວຍສ່ວນຂະຫຍາຍຈາກ <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /></translation>
 <translation id="2414159296888870200">ສືບຕໍ່ເລືອກເບິ່ງສຳລັບ <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">ມືດ</translation>
 <translation id="2415117815770324983">ພາທ່ານອອກຈາກລະບົບຢູ່ເວັບໄຊສ່ວນໃຫຍ່. ທ່ານຈະເຂົ້າສູ່ລະບົບບັນຊີ Taktak ຂອງທ່ານຕໍ່ໄປ.</translation>
@@ -2111,7 +2111,7 @@
 <translation id="2434449159125086437">ບໍ່ສາມາດຕັ້ງຄ່າເຄື່ອງພິມໄດ້. ກະລຸນາກວດເບິ່ງການກຳນົດຄ່າ ແລ້ວລອງອີກຄັ້ງ.</translation>
 <translation id="2434758125294431199">ເລືອກວ່າໃຜສາມາດແບ່ງປັນກັບທ່ານໄດ້</translation>
 <translation id="2434915728183570229">ຕອນນີ້ທ່ານສາມາດເບິ່ງແອັບຫຼ້າສຸດຂອງໂທລະສັບທ່ານໄດ້ແລ້ວ</translation>
-<translation id="2435137177546457207">ຂໍ້ກຳນົດເພີ່ມເຕີມຂອງ Taktak Taktak ແລະ ChromeOS Flex</translation>
+<translation id="2435137177546457207">ຂໍ້ກຳນົດເພີ່ມເຕີມຂອງ Taktak ແລະ ChromeOS Flex</translation>
 <translation id="2435248616906486374">ຕັດເຊື່ອມຕໍ່ເຄືອຂ່າຍແລ້ວ</translation>
 <translation id="2435457462613246316">ສະ​ແດງ​ລະ​ຫັດ​ຜ່ານ</translation>
 <translation id="2436385001956947090">ສຳເນົາລິ້ງ</translation>
@@ -2448,7 +2448,7 @@
 <translation id="266079277508604648">ບໍ່ສາມາດເຊື່ອມຕໍ່ກັບເຄື່ອງພິມໄດ້. ກະລຸນາກວດເບິ່ງວ່າເຄື່ອງພິມເປີດຢູ່ ແລະ ເຊື່ອມຕໍ່ກັບ Chromebook ຂອງທ່ານຜ່ານ Wi-Fi ຫຼື USB ຫຼືບໍ່.</translation>
 <translation id="2661315027005813059">ໜ້າແຄສຍ້ອນຫຼັງ: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">ທ່ອງເວັບໄວຂຶ້ນ ແລະ ປະຢັດອິນເຕີເນັດດ້ວຍໂໝດ Lite. ຄລິກເພື່ອສຶກສາເພີ່ມເຕີມ.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">ກຳລັງເພີ່ມໂປຣໄຟລ໌ eSIM. ຂັ້ນຕອນນີ້ອາດໃຊ້ເວລາສອງສາມນາທີ.</translation>
 <translation id="2663302507110284145">ພາ​ສາ</translation>
 <translation id="2665394472441560184">ເພີ່ມຄໍາ​ສັບ​ໃຫມ່</translation>
@@ -2457,7 +2457,7 @@
 <translation id="2666247341166669829">ລະດັບແບັດເຕີຣີຂ້າງຊ້າຍ <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">ແອັບອື່ນໆຖືກຕັ້ງໃຫ້ເປີດລິ້ງດຽວກັນເປັນ <ph name="APP_NAME" />. ນີ້ຈະປິດການນຳໃຊ້ <ph name="APP_NAME_2" /> ແລະ <ph name="APP_NAME_3" /> ບໍ່ໃຫ້ເປີດລິ້ງທີ່ຮອງຮັບ.</translation>
 <translation id="2667463864537187133">ຈດການການກວດການສະກົດຄຳ</translation>
-<translation id="2668604389652548400">ລຶບອອກ ຫຼື ປ່ຽນແທນດ້ວຍສ່ວນຂະຫຍາຍທີ່ຄ້າຍກັນຈາກ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">ລຶບອອກ ຫຼື ປ່ຽນແທນດ້ວຍສ່ວນຂະຫຍາຍທີ່ຄ້າຍກັນຈາກ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785">ບໍ່ສາມາດເປີດ <ph name="APP_NAME" /> ໄດ້</translation>
 <translation id="2669454659051515572">ໃຜກໍຕາມທີ່ໃຊ້ອຸປະກອນນີ້ຈະສາມາດເບິ່ງເຫັນໄຟລ໌ທີ່ດາວໂຫຼດແລ້ວໄດ້</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> ກຳລັງແບ່ງປັນແຖບ Taktak.</translation>
@@ -2473,7 +2473,7 @@
 <translation id="267442004702508783">ຣີເຟຣັຊ</translation>
 <translation id="2674764818721168631">ປິດ</translation>
 <translation id="2675716371350192683">ເນື້ອຫາຂອງທ່ານຈະບໍ່ຖືກໃຊ້ເພື່ອປັບປຸງ AI. ອົງກອນຂອງທ່ານອາດປ່ຽນການຕັ້ງຄ່າເຫຼົ່ານີ້ໄດ້ທຸກເວລາ.</translation>
-<translation id="2676084251379299915">ສ່ວນຂະຫຍາຍນີ້ຖືກປິດການນຳໃຊ້ໂດຍນະໂຍບາຍວິສາຫະກິດ ເພາະວ່າມັນບໍ່ມີໃຫ້ອີກຕໍ່ໄປຢູ່ Taktak Web Store.</translation>
+<translation id="2676084251379299915">ສ່ວນຂະຫຍາຍນີ້ຖືກປິດການນຳໃຊ້ໂດຍນະໂຍບາຍວິສາຫະກິດ ເພາະວ່າມັນບໍ່ມີໃຫ້ອີກຕໍ່ໄປຢູ່ Chrome Web Store.</translation>
 <translation id="2677748264148917807">ອອກ​ໄປ</translation>
 <translation id="2678063897982469759">ເປີດໃຊ້ງານຄືນໃໝ່​</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{ເກັບກຸ່ມແຖບໄວ້ບໍ?}other{ເກັບກຸ່ມແຖບໄວ້ບໍ?}}</translation>
@@ -2872,7 +2872,7 @@
 <translation id="2953210795988451570">ການອັບເດດຄວາມປອດໄພໄດ້ສິ້ນສຸດລົງແລ້ວ. ອັບເກຣດເປັນ Chromebook ເວີຊັນໃໝ່.</translation>
 <translation id="2953218713108551165">ບໍ່ອະນຸຍາດການແຈ້ງເຕືອນສຳລັບ <ph name="SITE" />. ທ່ານຈະຖືກຖາມອີກເທື່ອໜຶ່ງໃນການເຂົ້າເບິ່ງເທື່ອຕໍ່ໄປຂອງທ່ານ.</translation>
 <translation id="2956070239128776395">ສ່ວນທີ່ຝັງຢູ່ໃນກຸ່ມ: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">ເປີດໂໝດຜູ້​ພັດ​ທະ​ນາ​ເພື່ອໃຊ້ສ່ວນຂະຫຍາຍນີ້, ເຊິ່ງບໍ່ສາມາດກວດສອບໄດ້ໂດຍ Taktak Web Store.</translation>
+<translation id="2957124229512318478">ເປີດໂໝດຜູ້​ພັດ​ທະ​ນາ​ເພື່ອໃຊ້ສ່ວນຂະຫຍາຍນີ້, ເຊິ່ງບໍ່ສາມາດກວດສອບໄດ້ໂດຍ Chrome Web Store.</translation>
 <translation id="2958721676848865875">ຄຳເຕືອນກ່ຽວກັບສ່ວນຂະຫຍາຍແພັກ</translation>
 <translation id="2959127025785722291">ມີບາງຢ່າງຜິດພາດ. ບໍ່ສາມາດສຳເລັດການສະແກນໄດ້. ກະລຸນາລອງໃໝ່.</translation>
 <translation id="2959474507964749987">ໄຟລ໌ທີ່ໄດ້ຖືກເຂົ້າລະຫັດນີ້ອາດເປັນໄວຣັສ ຫຼື ເມົາແວ.<ph name="LINE_BREAK" />ເພື່ອກວດສອບວ່າປອດໄພຫຼືບໍ່, ທ່ານສາມາດສົ່ງໄຟລ໌ ແລະ ລະຫັດຜ່ານໄປຫາ Taktak Safe Browsing ໄດ້. ໂດຍປົກກະຕິແລ້ວ, ການສະແກນຈະໃຊ້ເວລາສອງສາມວິນາທີ.<ph name="LINE_BREAK" />ເພື່ອສະແກນ, ໃຫ້ໃສ່ລະຫັດຜ່ານຂອງໄຟລ໌.</translation>
@@ -2932,7 +2932,7 @@
 <translation id="2996108796702395498">ໝາຍເລກຊີຣຽວຂອງອຸປະກອນຂອງທ່ານແມ່ນ <ph name="SERIAL_NUMBER" />. ໝາຍເລກນີ້ສາມາດຖືກນຳໃຊ້ເພື່ອຊ່ວຍເປີດການນຳໃຊ້ບໍລິການໄດ້.</translation>
 <translation id="2996286169319737844">ເຂົ້າລະຫັດຂໍ້ມູນໂດຍໃຊ້ລະຫັດຜ່ານການຊິ້ງຂໍ້ມູນຂອງທ່ານ. ນີ້ບໍ່ຮວມເອົາວິທີການຈ່າຍເງິນ ແລະ ທີ່ຢູ່ຈາກ Taktak Pay.</translation>
 <translation id="2996722619877761919">ກັບດ້ານຕາມແນວຍາວ</translation>
-<translation id="2998097899774209901">ເປີດຢູ່ • ສ່ວນຂະຫຍາຍນີ້ລະເມີດນະໂຍບາຍ Taktak Web Store</translation>
+<translation id="2998097899774209901">ເປີດຢູ່ • ສ່ວນຂະຫຍາຍນີ້ລະເມີດນະໂຍບາຍ Chrome Web Store</translation>
 <translation id="2998267783395280091">ພົບເຄືອຂ່າຍ</translation>
 <translation id="3000378525979847272">ອະນຸຍາດ <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /> ແລ້ວ</translation>
 <translation id="3000461861112256445">ສຽງໂມໂນ</translation>
@@ -2963,7 +2963,7 @@
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">ການເຊື່ອມຕໍ່ເວັບໄຊດຽວກັນທີ່ປອດໄພເທົ່ານັ້ນ</translation>
 <translation id="3012917896646559015">ກະ​ລຸ​ນາ​ຕິດ​ຕໍ່​ຫາ​ຜູ້​ຜະ​ລິດ​ຮາດ​ແວ​ຂອງ​ທ່ານ​ທັນ​ທີ​ ເພື່ອ​ສົ່ງ​ຄອມ​ພິວ​ເຕີ​ຂອງ​ທ່ານໄປຫາຮ້ານ​ສ້ອມ​ແປງ​.</translation>
-<translation id="3013652227108802944">ປິດຢູ່ • ສ່ວນຂະຫຍາຍນີ້ລະເມີດນະໂຍບາຍ Taktak Web Store</translation>
+<translation id="3013652227108802944">ປິດຢູ່ • ສ່ວນຂະຫຍາຍນີ້ລະເມີດນະໂຍບາຍ Chrome Web Store</translation>
 <translation id="301525898020410885">ອົງການຂອງທ່ານຕັ້ງພາສາໄວ້ແລ້ວ</translation>
 <translation id="3015639418649705390">ເລີ່ມເປີດໃຊ້ໃໝ່ຕອນນີ້ເລີຍ</translation>
 <translation id="3015651504578568463">ເພີ່ມແຖບໃສ່ຕາຕະລາງການປຽບທຽບໃໝ່</translation>
@@ -3235,7 +3235,7 @@
 <translation id="3226487301970807183">ສະຫຼັບແຜງຄວບຄຸມດ້ານຂ້າງຈັດຕຳແໜ່ງໄວ້ຊ້າຍ</translation>
 <translation id="322708765617468434">ທ່ານສາມາດເພີ່ມຄົນອື່ນໄປໃສ່ອຸປະກອນຫຼັງຈາກຕັ້ງຄ່າແລ້ວໄດ້ຕະຫຼອດເວລາ. ແຕ່ລະຄົນສາມາດປັບແຕ່ງປະສົບການຂອງເຂົາເຈົ້າ ແລະ ຮັກສາຂໍ້ມູນໄວ້ເປັນສ່ວນຕົວໄດ້.</translation>
 <translation id="3227137524299004712">ໄມໂຄຣໂຟນ</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{ລຶບອອກ ຫຼື ປ່ຽນແທນດ້ວຍສ່ວນຂະຫຍາຍທີ່ຄ້າຍກັນຈາກ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{ລຶບອອກ ຫຼື ປ່ຽນແທນດ້ວຍສ່ວນຂະຫຍາຍທີ່ຄ້າຍກັນຈາກ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{ລຶບອອກ ຫຼື ປ່ຽນແທນດ້ວຍສ່ວນຂະຫຍາຍທີ່ຄ້າຍກັນຈາກ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{ລຶບອອກ ຫຼື ປ່ຽນແທນດ້ວຍສ່ວນຂະຫຍາຍທີ່ຄ້າຍກັນຈາກ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">ກວດສອບວັນທີ</translation>
 <translation id="3230539834943294477">ເບິ່ງບົດຄວາມຊ່ວຍເຫຼືອ ຫຼື ຊອກຫາການຊ່ວຍເຫຼືອອຸປະກອນ</translation>
 <translation id="3232168089952388105">ແບ່ງປັນຂໍ້ມູນກ່ຽວກັບອຸປະກອນຂອງທ່ານບໍ?</translation>
@@ -4041,7 +4041,7 @@
 <translation id="3775432569830822555">ໃບຢັ້ງຢືນເຊີບເວີ SSL</translation>
 <translation id="3775705724665058594">ສົ່ງຫາອຸປະກອນຂອງທ່ານ</translation>
 <translation id="3776508619697147021">ເວັບໄຊສາມາດຂໍດາວໂຫຼດຫຼາຍໄຟລ໌ໂດຍອັດຕະໂນມັດໄດ້</translation>
-<translation id="3776796446459804932">ສ່ວນຂະຫຍາຍນີ້ລະເມີດນະໂຍບາຍ Taktak Web Store.</translation>
+<translation id="3776796446459804932">ສ່ວນຂະຫຍາຍນີ້ລະເມີດນະໂຍບາຍ Chrome Web Store.</translation>
 <translation id="3777483481409781352">ບໍ່ສາມາດເປີດນຳໃຊ້ອຸປະກອນມືຖືໄດ້</translation>
 <translation id="3777796259512476958">ພາທ່ານອອກຈາກລະບົບຂອງເວັບໄຊສ່ວນໃຫຍ່</translation>
 <translation id="3778208826288864398">ກະແຈຄວາມປອດໄພຖືກລັອກໄວ້ ເພາະວ່າມີການປ້ອນ PIN ບໍ່ຖືກຕ້ອງຫຼາຍຄັ້ງເກີນໄປ. ທ່ານຈະຈຳເປັນຕ້ອງຣີເຊັດກະແຈຄວາມປອດໄພຂອງທ່ານ.</translation>
@@ -4079,7 +4079,7 @@
 <translation id="3798670284305777884">ລໍາໂພງ (ພາຍໃນ)</translation>
 <translation id="3799128412641261490">ການຕັ້ງຄ່າການເຂົ້າເຖິງດ້ວຍປຸ່ມກົດ</translation>
 <translation id="3800764353337460026">ຮູບແບບ​ສັນ​ຍາ​ລັກ</translation>
-<translation id="3800828618615365228">ຂໍ້ກຳນົດເພີ່ມເຕີມຂອງ Taktak Taktak ແລະ ChromeOS</translation>
+<translation id="3800828618615365228">ຂໍ້ກຳນົດເພີ່ມເຕີມຂອງ Taktak ແລະ ChromeOS</translation>
 <translation id="3800898876950197674">ເພື່ອອະນຸຍາດສ່ວນຂະຫຍາຍນີ້, ໃຫ້ໃສ່ລະຫັດຜ່ານຂອງທ່ານ.</translation>
 <translation id="3801449494961771207">ສຽງໃນການປ່ຽນຂໍ້ຄວາມເປັນສຽງເວົ້າຂອງລະບົບ</translation>
 <translation id="3802486193901166966">ສ່ວນຂະຫຍາຍນີ້ບໍ່ຈຳເປັນຕ້ອງໃຊ້ການອະນຸຍາດພິເສດ ແລະ ບໍ່ມີສິດເຂົ້າເຖິງເວັບໄຊເພີ່ມເຕີມ</translation>
@@ -4102,7 +4102,7 @@
 <translation id="3810973564298564668">ຈັດການ</translation>
 <translation id="381202950560906753">ເພີ່ມອັນອື່ນ</translation>
 <translation id="3812525830114410218">ໃບ​ຢັ້ງ​ຢືນ​​ບໍ່​ດີ</translation>
-<translation id="3813296892522778813">ໄປຫາ <ph name="BEGIN_LINK_CHROMIUM" />ຄວາມຊ່ວຍເຫຼືອ Taktak Taktak<ph name="END_LINK_CHROMIUM" /> ຖ້າທ່ານບໍ່ສາມາດຊອກເຫັນສິ່ງທີ່ທ່ານກຳລັງຊອກຫາ</translation>
+<translation id="3813296892522778813">ໄປຫາ <ph name="BEGIN_LINK_CHROMIUM" />ຄວາມຊ່ວຍເຫຼືອ Taktak<ph name="END_LINK_CHROMIUM" /> ຖ້າທ່ານບໍ່ສາມາດຊອກເຫັນສິ່ງທີ່ທ່ານກຳລັງຊອກຫາ</translation>
 <translation id="3813358687923336574">ພາສາທີ່ໃຊ້ສຳລັບການແປພາສາໜ້າ ແລະ ຄຳຕອບດ່ວນ</translation>
 <translation id="3813458570141926987">ລາຍຊື່ຂອງຫົວຂໍ້ທີ່ຄາດຄະແນໂດຍ Taktak ໂດຍອ້າງອີງໃສ່ປະຫວັດການທ່ອງເວັບຫຼ້າສຸດຂອງທ່ານ</translation>
 <translation id="3814529970604306954">ບັນຊີໂຮງຮຽນ</translation>
@@ -4579,7 +4579,7 @@
 <translation id="4133076602192971179">ເປີດແອັບເພື່ອປ່ຽນລະຫັດຜ່ານຂອງທ່ານ</translation>
 <translation id="4134838386867070505">ຂັ້ນຕອນທີ 1 ຈາກທັງໝົດ 4 ຂັ້ນຕອນ: ອະທິບາຍບັນຫາ</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” ຈະບັນທຶກໄວ້ໃນອຸປະກອນນີ້ເທົ່ານັ້ນ. ຫາກທ່ານຍ້າຍບຸກມາກນີ້ໄປໃສ່ “<ph name="LOCAL_FOLDER" />”, ທ່ານຈະບໍ່ເຫັນບຸກມາກນີ້ຢູ່ອຸປະກອນອື່ນໆຂອງທ່ານອີກຕໍ່ໄປ.</translation>
-<translation id="4135746311382563554">ຂໍ້ກຳນົດບໍລິການ Taktak Taktak ແລະ ChromeOS ເພີ່ມເຕີມ</translation>
+<translation id="4135746311382563554">ຂໍ້ກຳນົດບໍລິການ Taktak ແລະ ChromeOS ເພີ່ມເຕີມ</translation>
 <translation id="4136203100490971508">ແສງກາງຄືນຈະປິດໂດຍອັດຕະໂນມັດເມື່ອຕາເວັນຂຶ້ນ</translation>
 <translation id="41365691917097717">ການສືບຕໍ່ຈະເປີດນຳໃຊ້ການດີບັກ ADB ສຳລັບການສ້າງ ແລະ ທົດສອບແອັບ Android. ກະລຸນາຮັບຊາບວ່າການດຳເນີນການນີ້ອະນຸຍາດການຕິດຕັ້ງແອັບ Android ທີ່ບໍ່ໄດ້ຜ່ານການກວດຢັ້ງຢືນຈາກ Taktak ແລະ ຈຳເປັນຕ້ອງຣີເຊັດເປັນຄ່າໂຮງງານເພື່ອປິດນຳໃຊ້.</translation>
 <translation id="4137923333452716643">ໄຮໄລ້ຂໍ້ຄວາມທີ່ທ່ານຕ້ອງການເປີດໃນໂໝດການອ່ານ</translation>
@@ -5594,7 +5594,7 @@
 <translation id="4869170227080975044">ອ່ານຂໍ້ມູນເຄືອຂ່າຍ ChromeOS</translation>
 <translation id="4870724079713069532">ທ່ານສາມາດເປີດ ແລະ ແກ້ໄຂໄຟລ໌ທີ່ຮອງຮັບໄດ້ດ້ວຍແອັບນີ້ຈາກ File Explorer ຫຼື ແອັບອື່ນ. ເພື່ອຄວບຄຸມວ່າໄຟລ໌ໃດຈະເປີດໃນແອັບນີ້ແບບເລີ່ມຕົ້ນ, ໃຫ້ເຂົ້າໄປ <ph name="BEGIN_LINK" />ການຕັ້ງຄ່າໜ້າຈໍ<ph name="END_LINK" />.</translation>
 <translation id="4870995365819149457">ລິ້ງທີ່ຮອງຮັບບາງຢ່າງຈະຍັງຄົງເປີດໃນ <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> ແລະ ອີກ 1 ແອັບ.</translation>
-<translation id="4871308555310586478">ບໍ່ໄດ້ມາຈາກ Taktak Web Store.</translation>
+<translation id="4871308555310586478">ບໍ່ໄດ້ມາຈາກ Chrome Web Store.</translation>
 <translation id="4871322859485617074">PIN ປະກອບມີຕົວອັກສອນທີ່ບໍ່ຖືກຕ້ອງ</translation>
 <translation id="4871370605780490696">ເພີ່ມບຸກມາກຄ໌</translation>
 <translation id="4871568871368204250">ປິດການຊິ້ງຂໍ້ມູນ</translation>
@@ -6429,7 +6429,7 @@
 <translation id="5470741195701938302">ຕົວເລກ</translation>
 <translation id="5471768120198416576">ສະບາຍດີ! ຂ້ອຍແມ່ນສຽງການປ່ຽນຂໍ້ຄວາມເປັນສຽງເວົ້າຂອງເຈົ້າ.</translation>
 <translation id="5472627187093107397">ບັນທຶກລະຫັດຜ່ານໄວ້ສຳລັບເວັບໄຊນີ້</translation>
-<translation id="5473062644742711742">ຊອກຫາເຄື່ອງມືການຊ່ວຍເຂົ້າເຖິງເພີ່ມເຕີມໃນ Taktak Web Store</translation>
+<translation id="5473062644742711742">ຊອກຫາເຄື່ອງມືການຊ່ວຍເຂົ້າເຖິງເພີ່ມເຕີມໃນ Chrome Web Store</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">ໂດຍການສືບຕໍ່, ແມ່ນຖືວ່າທ່ານຍອມຮັບວ່າອຸປະກອນນີ້ອາດດາວໂຫຼດ ແລະ ຕິດຕັ້ງອັບເດດ ແລະ ແອັບຈາກ Taktak, ຜູ້ໃຫ້ບໍລິການຂອງລູກທ່ານ ແລະ ຜູ້ຜະລິດອຸປະກອນນີ້, ເຊິ່ງເປັນໄປໄດ້ວ່າອາດຈະໃຊ້ອິນເຕີເນັດມືຖື. ແອັບບາງຢ່າງເຫຼົ່ານີ້ອາດມີການສະເໜີການຊື້ໃນແອັບ.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN ຕ້ອງມີຢ່າງໜ້ອຍໜຶ່ງຕົວອັກສອນ}other{PIN ຕ້ອງມີຢ່າງໜ້ອຍ # ຕົວອັກສອນ}}</translation>
@@ -6665,7 +6665,7 @@
 <translation id="5637476008227280525">ເປີດນຳໃຊ້ຂໍ້ມູນມືຖື</translation>
 <translation id="5638170200695981015">ເລືອກ "ເປີດໃນຕົວແກ້ໄຂພື້ນຖານ" ເພື່ອໃຊ້ຕົວເລືອກການເບິ່ງ ແລະ ການແກ້ໄຂແບບຈຳກັດ.</translation>
 <translation id="563821631542362636">ອະນຸຍາດໃຫ້ເວັບໄຊບັນທຶກຂໍ້ມູນ</translation>
-<translation id="5638309510554459422">ຊອກຫາສ່ວນຂະຫຍາຍ ແລະ ສີສັນໜ້າຕາໃນ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="5638309510554459422">ຊອກຫາສ່ວນຂະຫຍາຍ ແລະ ສີສັນໜ້າຕາໃນ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="5639549361331209298">ໂຫຼດໜ້ານີ້ຄືນໃໝ່, ກົດຄ້າງໄວ້ ເພື່ອເບິ່ງທາງເລືອກເພີ່ມເຕີມ</translation>
 <translation id="5640133431808313291">ຈັດການກະແຈຄວາມປອດໄພ</translation>
 <translation id="5640159004008030285">ລະຫັດຜ່ານນີ້ຖືກບັນທຶກໄວ້ໃນອຸປະກອນນີ້ເທົ່ານັ້ນ. ເພື່ອໃຊ້ມັນຢູ່ອຸປະກອນອື່ນຂອງທ່ານ, ໃຫ້ <ph name="BEGIN_LINK" />ບັນທຶກມັນໄວ້ໃນບັນຊີ Taktak ຂອງທ່ານ<ph name="END_LINK" />.</translation>
@@ -7057,7 +7057,7 @@
 <translation id="5932224571077948991">ເວັບໄຊສະແດງໂຄສະນາທີ່ລົບກວນ ຫຼື ຫຼອກລວງ</translation>
 <translation id="59324397759951282">ອຸປະກອນ USB ຈາກ <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">ທ່ານບໍ່ມີໃບອະນຸຍາດທີ່ສາມາດໃຊ້ໄດ້ພຽງພໍໃນການລົງທະບຽນອຸປະກອນຮາດແວ Taktak Meet ນີ້. ກະລຸນາຕິດຕໍ່ຫາຝ່າຍຂາຍເພື່ອຊື້ເພີ່ມ. ຫາກທ່ານເຊື່ອວ່າທ່ານເຫັນຂໍ້ຄວາມນີ້ເນື່ອງຈາກມີຂໍ້ຜິດພາດ, ກະລຸນາຕິດຕໍ່ທີມງານຊ່ວຍເຫຼືອ.</translation>
-<translation id="593271375210025655">ເປີດໂໝດຜູ້​ພັດ​ທະ​ນາ​ເພື່ອນໍາໃຊ້ສ່ວນຂະຫຍາຍນີ້, ຖ້າຫາກທ່ານເຊື່ອຖືສ່ວນຂະຫຍາຍເທົ່ານັ້ນ. ມັນອາດມີຄຸນສົມບັດການທົດລອງ ແລະ ບໍ່ໄດ້ຖືກກວດສອບໂດຍ Taktak Web Store.</translation>
+<translation id="593271375210025655">ເປີດໂໝດຜູ້​ພັດ​ທະ​ນາ​ເພື່ອນໍາໃຊ້ສ່ວນຂະຫຍາຍນີ້, ຖ້າຫາກທ່ານເຊື່ອຖືສ່ວນຂະຫຍາຍເທົ່ານັ້ນ. ມັນອາດມີຄຸນສົມບັດການທົດລອງ ແລະ ບໍ່ໄດ້ຖືກກວດສອບໂດຍ Chrome Web Store.</translation>
 <translation id="5932881020239635062">ເລກລຳດັບ</translation>
 <translation id="5933376509899483611">ເຂດເວລາ</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> ກຳລັງໃຊ້ກ້ອງ ແລະ ໄມໂຄຣໂຟນຂອງທ່ານ</translation>
@@ -7808,7 +7808,7 @@
 <translation id="6476671549211161535">ກົດປຸ່ມທີ່ບໍ່ແມ່ນປຸ່ມເມົ້າຊ້າຍ ຫຼື ຂວາຢູ່ <ph name="DEVICE_NAME" /> ຂອງທ່ານ.</translation>
 <translation id="6477822444490674459">ບໍ່ຮອງຮັບການຊິ້ງຂໍ້ມູນການແຈ້ງເຕືອນສຳລັບໂທລະສັບໃນໂປຣໄຟລ໌ບ່ອນເຮັດວຽກ. <ph name="LINK_BEGIN" />ສຶກສາເພີ່ມເຕີມ<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">ປຸ່ມແຊກດ່ວນຈະຢູ່ລຸ່ມປຸ່ມ Tab</translation>
-<translation id="6479881432656947268">ເຂົ້າເບິ່ງ Taktak Web Store</translation>
+<translation id="6479881432656947268">ເຂົ້າເບິ່ງ Chrome Web Store</translation>
 <translation id="6480327114083866287">ຈັດການໂດຍ <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">ແບ່ງປັນໄຟລ໌ ແລະ ອື່ນໆກັບອຸປະກອນທີ່ຢູ່ໃກ້ຄຽງ. <ph name="LINK_BEGIN" />ສຶກສາເພີ່ມເຕີມ<ph name="LINK_END" /></translation>
 <translation id="648204537326351595">ອະນຸຍາດໃຫ້ <ph name="SPECIFIC_NAME" /> ເຂົ້າເຖິງໄມໂຄຣໂຟນຂອງທ່ານ</translation>
@@ -7845,7 +7845,7 @@
 <translation id="6511607461419653612">ກະລຸນາຣີສະຕາດ Chromebook ຂອງທ່ານແລ້ວລອງໃໝ່</translation>
 <translation id="6511827214781912955">ພິຈາລະນາລຶບ <ph name="FILENAME" />, ເພື່ອບໍ່ໃຫ້ຜູ້ອື່ນທີ່ໃຊ້ອຸປະກອນນີ້ເຫັນລະຫັດຜ່ານຂອງທ່ານ</translation>
 <translation id="6512759338201777379">ສ້າງຮູບ <ph name="INDEX" /> ຂອງ <ph name="SUBJECT" />, ດ້ວຍອາລົມ <ph name="MOOD" /> ແລ້ວ.</translation>
-<translation id="6513247462497316522">Taktak Taktak ຈະໃຊ້ຂໍ້ມູນມືຖື ຖ້າທ່ານບໍ່ເຊື່ອມຕໍ່ກັບເຄືອຂ່າຍອື່ນ.</translation>
+<translation id="6513247462497316522">Taktak ຈະໃຊ້ຂໍ້ມູນມືຖື ຖ້າທ່ານບໍ່ເຊື່ອມຕໍ່ກັບເຄືອຂ່າຍອື່ນ.</translation>
 <translation id="6514010653036109809">ອຸປະກອນທີ່ພ້ອມນຳໃຊ້:</translation>
 <translation id="6516990372629061585">ເບິ່ງໃບຮັບຮອງທີ່ນຳເຂົ້າຈາກ Linux</translation>
 <translation id="6517382055541687102">ອຸປະກອນທີ່ເລືອກປ່ຽນເປັນ <ph name="DEVICE_NAME" /> ແລ້ວ</translation>
@@ -8794,7 +8794,7 @@
 <translation id="7180611975245234373">ຣີເຟຣຊ</translation>
 <translation id="7180865173735832675">ກໍານົດເອງ</translation>
 <translation id="7181117767881540376">&amp;ເຊື່ອງແຖບບຸກມາກ</translation>
-<translation id="7181329571386134105">ເພື່ອອະນຸຍາດໃຫ້ <ph name="CHILD_NAME" /> ຕິດຕັ້ງສ່ວນຂະຫຍາຍໃນອະນາຄົດໂດຍບໍ່ມີການອະນຸມັດຈາກທ່ານ, ໃຫ້ເປີດແອັບ Family Link ຢູ່ອຸປະກອນຂອງທ່ານ ແລະ ອັບເດດການຕັ້ງຄ່າ Taktak Taktak ຂອງ <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">ເພື່ອອະນຸຍາດໃຫ້ <ph name="CHILD_NAME" /> ຕິດຕັ້ງສ່ວນຂະຫຍາຍໃນອະນາຄົດໂດຍບໍ່ມີການອະນຸມັດຈາກທ່ານ, ໃຫ້ເປີດແອັບ Family Link ຢູ່ອຸປະກອນຂອງທ່ານ ແລະ ອັບເດດການຕັ້ງຄ່າ Taktak ຂອງ <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">ເຂົ້າຮ່ວມກຸ່ມແຖບກັບ <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{ເຂົ້າຮ່ວມກຸ່ມແຖບກັບ <ph name="OWNER_FIRST_NAME" />}=1{ເຂົ້າຮ່ວມກຸ່ມແຖບກັບ <ph name="OWNER_FIRST_NAME" /> ແລະ ອີກ # ຄົນ}other{ເຂົ້າຮ່ວມກຸ່ມແຖບກັບ <ph name="OWNER_FIRST_NAME" /> ແລະ ອີກ # ຄົນ}}</translation>
 <translation id="7181976109296206547">ກວດສອບການອັບເດດໂລໂກ້, ຊື່ ແລະ URL</translation>
@@ -9068,7 +9068,7 @@
 <translation id="737728204345822099">ບັນທຶກການເຂົ້າເບິ່ງເວັບໄຊນີ້ຂອງທ່ານອາດຈະຖືກຮັກສາໄວ້ໃນກະແຈຄວາມປອດໄພຂອງທ່ານ.</translation>
 <translation id="7377451353532943397">ສືບຕໍ່ບລັອກການເຂົ້າເຖິງເຊັນເຊີ</translation>
 <translation id="7377481913241237033">ເຊື່ອມຕໍ່ດ້ວຍລະຫັດ</translation>
-<translation id="73786666777299047">ເປີດ Taktak Web Store</translation>
+<translation id="73786666777299047">ເປີດ Chrome Web Store</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. ໜ້າວຽກອື່ນໃນກຸ່ມໜ້າວຽກດຽວກັນ: <ph name="OTHER_TASKS" />}other{<ph name="TASK_ROW" />. ໜ້າວຽກອື່ນໆ # ລາຍການໃນກຸ່ມໜ້າວຽກດຽວກັນ: <ph name="OTHER_TASKS" />}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> ຈະສາມາດເບິ່ງ ແລະ ເຮັດສຳເນົາ <ph name="FILENAME" /> ຂອງຕົນເອງໄດ້</translation>
 <translation id="7380272457268061606">ປິດໃຊ້ການກູ້ຄືນຂໍ້ມູນໃນເຄື່ອງບໍ?</translation>
@@ -11029,7 +11029,7 @@
 <translation id="8708000541097332489">ລຶບຕເມື່ອອອກ</translation>
 <translation id="870805141700401153">ການເຊັນລະຫັດບຸກຄົນຂອງ Microsoft</translation>
 <translation id="8708671767545720562">ຂໍ້ມູນເພີ່ມເຕີມ</translation>
-<translation id="8709368517685334931">ທ່ານສາມາດຊອກຫາສີເກົ່າໄດ້ໃນ Taktak Web Store</translation>
+<translation id="8709368517685334931">ທ່ານສາມາດຊອກຫາສີເກົ່າໄດ້ໃນ Chrome Web Store</translation>
 <translation id="8710414664106871428">ແຟນຕາຊີ</translation>
 <translation id="8710550057342691420">ຈັດລະບຽບແຖບທີ່ຄ້າຍກັນ</translation>
 <translation id="8711402221661888347">Pickles</translation>

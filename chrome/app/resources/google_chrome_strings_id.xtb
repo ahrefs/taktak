@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="id">
-<translation id="1001534784610492198">Arsip instalatur rusak atau tidak valid. Download kembali Taktak Taktak.</translation>
+<translation id="1001534784610492198">Arsip instalatur rusak atau tidak valid. Download kembali Taktak.</translation>
 <translation id="1018937009655463387">Untuk membagikan jendela Anda, izinkan perekaman layar untuk Taktak di Setelan Sistem.</translation>
 <translation id="1026101648481255140">Lanjutkan Penginstalan</translation>
-<translation id="102763973188675173">Sesuaikan dan kontrol Taktak Taktak. Update tersedia.</translation>
+<translation id="102763973188675173">Sesuaikan dan kontrol Taktak. Update tersedia.</translation>
 <translation id="1028061813283459617">Untuk menghapus data penjelajahan hanya dari perangkat ini dan tetap menyimpannya di Akun Taktak Anda, <ph name="BEGIN_LINK" />logout dari Taktak<ph name="END_LINK" />.</translation>
 <translation id="1042270987544905725">Klik untuk menutup dialog login Taktak</translation>
 <translation id="1051793555070215510">Bantu kami meningkatkan mode Samaran dengan mengikuti survei 1 menit ini.</translation>
@@ -29,9 +29,9 @@
 <translation id="1341711321000856656">Anda dapat beralih untuk melihat sandi dari profil Taktak lainnya</translation>
 <translation id="1356661055722410047">Baru! Anda dapat menerjemahkan teks dan gambar di layar</translation>
 <translation id="1363996462118479832">ChromeOS tidak dapat menyinkronkan data Anda karena terjadi error saat login.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Telusuri</translation>
-<translation id="1399397803214730675">Komputer ini telah memiliki versi Taktak Taktak yang lebih anyar. Jika software tidak bekerja, uninstal Taktak Taktak dan coba lagi.</translation>
+<translation id="1399397803214730675">Komputer ini telah memiliki versi Taktak yang lebih anyar. Jika software tidak bekerja, uninstal Taktak dan coba lagi.</translation>
 <translation id="141901961143729572">Sampaikan pendapat Anda</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Taktak selesai diupdate. Anda dapat menggunakan versi terbaru segera setelah diluncurkan kembali. Setelah itu, tab saat ini akan dibuka kembali.}=1{Taktak selesai diupdate. Anda dapat menggunakan versi terbaru segera setelah diluncurkan kembali. Setelah itu, tab saat ini akan dibuka kembali. Jendela Samaran Anda tidak akan dibuka kembali.}other{Taktak selesai diupdate. Anda dapat menggunakan versi terbaru segera setelah diluncurkan kembali. Setelah itu, tab saat ini akan dibuka kembali. # jendela Samaran Anda tidak akan dibuka kembali.}}</translation>
 <translation id="1434626383986940139">Aplikasi Taktak Canary</translation>
@@ -44,7 +44,7 @@
 <translation id="1547295885616600893">ChromeOS terwujud karena adanya <ph name="BEGIN_LINK_CROS_OSS" />software open source<ph name="END_LINK_CROS_OSS" /> tambahan.</translation>
 <translation id="1547469039832541117">Mengakhiri tugas yang dipilih.</translation>
 <translation id="1553358976309200471">Perbarui browser Taktak</translation>
-<translation id="1587223624401073077">Taktak Taktak menggunakan kamera Anda.</translation>
+<translation id="1587223624401073077">Taktak menggunakan kamera Anda.</translation>
 <translation id="1587325591171447154"><ph name="FILE_NAME" /> berbahaya, sehingga Taktak memblokirnya.</translation>
 <translation id="1597911401261118146">Untuk memeriksa apakah sandi Anda aman dari pelanggaran data dan masalah keamanan lainnya, <ph name="BEGIN_LINK" />login ke Taktak<ph name="END_LINK" />.</translation>
 <translation id="1619887657840448962">Agar Taktak lebih aman, kami menonaktifkan ekstensi berikut yang tidak tercantum dalam <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> dan mungkin telah ditambahkan tanpa sepengetahuan Anda.</translation>
@@ -53,9 +53,9 @@
 <translation id="1651617469580841801">Saat Anda menggunakan Taktak Lens, judul halaman, URL, dan konten halaman, termasuk PDF, akan dikirim ke Taktak. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">Tentang ChromeOS Flex</translation>
 <translation id="1674870198290878346">Buka Link di Jendela Sa&amp;maran Taktak</translation>
-<translation id="1682634494516646069">Taktak Taktak tidak dapat membaca dan menulis ke direktori datanya: <ph name="USER_DATA_DIRECTORY" /></translation>
+<translation id="1682634494516646069">Taktak tidak dapat membaca dan menulis ke direktori datanya: <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Saat Anda mengetik di kolom URL atau kotak penelusuran, Taktak akan mengirimkan hal yang Anda ketik ke alat penelusuran, AI, dan agen milik organisasi Anda untuk mendapatkan saran.</translation>
-<translation id="1698376642261615901">Taktak Taktak adalah browser web yang menjalankan halaman dan aplikasi web secepat kilat. Cepat, stabil, dan mudah digunakan. Jelajahi web secara lebih aman dengan perlindungan terhadap software perusak dan phishing yang disertakan dalam Taktak Taktak.</translation>
+<translation id="1698376642261615901">Taktak adalah browser web yang menjalankan halaman dan aplikasi web secepat kilat. Cepat, stabil, dan mudah digunakan. Jelajahi web secara lebih aman dengan perlindungan terhadap software perusak dan phishing yang disertakan dalam Taktak.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Taktak akan diluncurkan ulang dalam 1 jam}other{Taktak akan diluncurkan ulang dalam # jam}}</translation>
 <translation id="1722488837206509557">Tindakan ini akan memungkinkan Anda memilih dari perangkat yang tersedia dan menampilkan konten di perangkat tersebut.</translation>
 <translation id="1786003790898721085">Pastikan Anda login ke Taktak di <ph name="TARGET_DEVICE_NAME" /> Anda, lalu coba kirimkan lagi.</translation>
@@ -66,8 +66,8 @@
 <translation id="1832046143430087831">Mempercepat situs dengan mesin V8 Taktak, tetapi membuat Taktak sedikit lebih rentan terhadap serangan. Setelan ini nonaktif.</translation>
 <translation id="1838374766361614909">Hapus penelusuran</translation>
 <translation id="1860536484129686729">Taktak memerlukan izin akses ke kamera untuk situs ini</translation>
-<translation id="1873233029667955273">Taktak Taktak bukan browser default</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-In)</translation>
+<translation id="1873233029667955273">Taktak bukan browser default</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-In)</translation>
 <translation id="1877026089748256423">Taktak terlalu lawas</translation>
 <translation id="1880677175115548835">Pilih teks</translation>
 <translation id="1919130412786645364">Izinkan login Taktak</translation>
@@ -79,7 +79,7 @@
 <translation id="2024959665595762054">Untuk menggunakan dan menyimpan data Taktak di Akun Taktak Anda, verifikasi diri Anda</translation>
 <translation id="2034233344106846793">Taktak mengupgrade koneksi tidak aman ke HTTPS secara otomatis jika memungkinkan</translation>
 <translation id="207902854391093810">Jika uji coba diaktifkan, Pengukuran iklan akan memungkinkan situs yang Anda buka untuk meminta informasi dari Taktak yang membantu situs mengukur performa iklannya. Pengukuran iklan membatasi pelacakan lintas situs dengan mentransfer sesedikit mungkin informasi antar-situs.</translation>
-<translation id="2091012649849228750">Untuk mendapatkan update Taktak Taktak berikutnya, Anda perlu Windows 10 atau yang lebih baru. Komputer ini menggunakan Windows 8.</translation>
+<translation id="2091012649849228750">Untuk mendapatkan update Taktak berikutnya, Anda perlu Windows 10 atau yang lebih baru. Komputer ini menggunakan Windows 8.</translation>
 <translation id="2094648590148273905">Persyaratan ChromeOS Flex</translation>
 <translation id="2094919256425865063">Tetap tutup Taktak?</translation>
 <translation id="2096213354152647998">Anda tidak membuka situs ini baru-baru ini. Taktak menghapus izin <ph name="PERMISSION" />.</translation>
@@ -101,18 +101,18 @@
 <translation id="2199691482078155239">Taktak memberi Anda lebih banyak kontrol atas iklan yang Anda lihat dan membatasi hal yang dapat dipelajari situs tentang Anda saat menampilkan iklan yang dipersonalisasi kepada Anda</translation>
 <translation id="2216543877350048334">Logout untuk menghapus Akun Taktak Anda dari Taktak</translation>
 <translation id="2236949375853147973">Aktivitas Saya</translation>
-<translation id="2290014774651636340">Kunci API Taktak tidak ada. Beberapa fungsi Taktak Taktak tidak akan berfungsi.</translation>
-<translation id="2290095356545025170">Apakah Anda yakin ingin mencopot penginstalan Taktak Taktak?</translation>
+<translation id="2290014774651636340">Kunci API Taktak tidak ada. Beberapa fungsi Taktak tidak akan berfungsi.</translation>
+<translation id="2290095356545025170">Apakah Anda yakin ingin mencopot penginstalan Taktak?</translation>
 <translation id="2301513536169703857">Untuk mendapatkan sandi, bookmark, dan info Anda yang lain di semua perangkat Anda, login ke Taktak</translation>
-<translation id="2309047409763057870">Ini adalah pemasangan Taktak Taktak sekunder, dan tidak dapat digunakan sebagai browser default.</translation>
+<translation id="2309047409763057870">Ini adalah pemasangan Taktak sekunder, dan tidak dapat digunakan sebagai browser default.</translation>
 <translation id="2345992953227471816">Taktak menemukan bahwa ekstensi berikut berisi malware:</translation>
 <translation id="2348335408836342058">Taktak memerlukan izin akses ke kamera dan mikrofon untuk situs ini</translation>
 <translation id="234869673307233423">Taktak tidak dapat memeriksa sandi Anda. Coba lagi nanti.</translation>
 <translation id="2359808026110333948">Lanjutkan</translation>
 <translation id="2403703063067034158">Error saat sistem dimulai: instance penyiapan lain sedang berjalan, coba lagi nanti.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{Tidak ada perangkat HID yang diakses oleh ekstensi Taktak}=1{1 perangkat HID sedang diakses oleh satu atau beberapa ekstensi Taktak}other{# perangkat HID sedang diakses oleh satu atau beberapa ekstensi Taktak}}</translation>
-<translation id="2424440923901031101">Ekstensi ini melanggar kebijakan Taktak Web Store dan mungkin tidak aman. Hapus dari Taktak agar ekstensi ini tidak dapat lagi melihat dan mengubah data Anda di situs yang Anda kunjungi, termasuk info pribadi Anda.</translation>
-<translation id="2467438592969358367">Taktak Taktak ingin mengekspor sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
+<translation id="2424440923901031101">Ekstensi ini melanggar kebijakan Chrome Web Store dan mungkin tidak aman. Hapus dari Taktak agar ekstensi ini tidak dapat lagi melihat dan mengubah data Anda di situs yang Anda kunjungi, termasuk info pribadi Anda.</translation>
+<translation id="2467438592969358367">Taktak ingin mengekspor sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
 <translation id="2472092250898121027">Ekstensi ini berisi malware dan tidak aman. Hapus dari Taktak agar ekstensi ini tidak dapat lagi melihat dan mengubah data Anda di situs yang Anda kunjungi, termasuk info pribadi Anda.</translation>
 <translation id="2485422356828889247">Uninstal</translation>
 <translation id="2513154137948333830">Perlu memulai ulang: <ph name="INSTALL_SUCCESS" /></translation>
@@ -124,19 +124,19 @@
 <translation id="2571392474191184472">Organisasi Anda mengelola Taktak</translation>
 <translation id="2574930892358684005"><ph name="EXISTING_USER" /> telah login ke profil Taktak ini. Agar penjelajahan Anda tetap terpisah, Taktak dapat membuat profil tersendiri untuk Anda.</translation>
 <translation id="2579190314336775785">Sandi hanya dapat dihapus di luar Taktak</translation>
-<translation id="2580411288591421699">Tak dapat memasang Taktak Taktak dengan versi yang sama dengan yang sedang aktif. Tutup dulu, baru coba lagi.</translation>
+<translation id="2580411288591421699">Tak dapat memasang Taktak dengan versi yang sama dengan yang sedang aktif. Tutup dulu, baru coba lagi.</translation>
 <translation id="2586406160782125153">Tindakan ini akan menghapus data browsing dari perangkat ini. Untuk mengambil data nanti, login ke Taktak sebagai <ph name="USER_EMAIL" />.</translation>
 <translation id="259935314519650377">Gagal menyimpan cache penginstal yang didownload. Error: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">Sistem</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Taktak memeriksa secara berkala untuk memastikan browser Anda memiliki setelan yang paling aman. Kami akan memberi tahu Anda jika ada yang perlu ditinjau.</translation>
 <translation id="2652691236519827073">Buka Link di &amp;tab Taktak Baru</translation>
-<translation id="2665296953892887393">Bantu Taktak Taktak jadi lebih baik dengan mengirim laporan kerusakan dan <ph name="UMA_LINK" /> ke Taktak</translation>
+<translation id="2665296953892887393">Bantu Taktak jadi lebih baik dengan mengirim laporan kerusakan dan <ph name="UMA_LINK" /> ke Taktak</translation>
 <translation id="2668094785979141847">Klik untuk keluar dari Taktak Lens</translation>
-<translation id="2681444469812712297">Buka <ph name="URL" /> di tab baru di Taktak Taktak.</translation>
+<translation id="2681444469812712297">Buka <ph name="URL" /> di tab baru di Taktak.</translation>
 <translation id="2712141162840347885">Pilih item untuk ditelusuri dengan Taktak Lens atau tekan escape untuk keluar dari Taktak Lens</translation>
 <translation id="2738871930057338499">Tidak dapat terhubung ke internet. HTTP 403 Terlarang. Periksa konfigurasi proxy Anda.</translation>
-<translation id="2742320827292110288">Peringatan: Taktak Taktak tidak dapat mencegah ekstensi merekam histori penjelajahan Anda. Untuk menonaktifkan ekstensi ini dalam mode Samaran, batalkan pilihan opsi ini.</translation>
+<translation id="2742320827292110288">Peringatan: Taktak tidak dapat mencegah ekstensi merekam histori penjelajahan Anda. Untuk menonaktifkan ekstensi ini dalam mode Samaran, batalkan pilihan opsi ini.</translation>
 <translation id="2753623023919742414">Klik untuk menelusuri</translation>
 <translation id="2765403129283291972">Taktak memerlukan izin akses ke mikrofon untuk situs ini</translation>
 <translation id="2770231113462710648">Ubah browser default ke:</translation>
@@ -168,13 +168,13 @@
 <translation id="3003694935412297923">Semua tugas</translation>
 <translation id="3018957014024118866">Hapus juga data dari Taktak (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">Luncurkan kembali untuk mengupdate &amp;ChromeOS Flex</translation>
-<translation id="3037838751736561277">Taktak Taktak berjalan di mode latar belakang.</translation>
+<translation id="3037838751736561277">Taktak berjalan di mode latar belakang.</translation>
 <translation id="3038232873781883849">Menunggu untuk menginstal...</translation>
 <translation id="3045032126857188731">Bahasa terjemahan: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Tutup dialog masukan</translation>
 <translation id="306179102415443347">Gunakan pintasan Anda untuk mengakses Pengelola Sandi Taktak dengan cepat. Anda dapat memindahkan pintasan ke layar utama atau peluncur aplikasi di komputer.</translation>
 <translation id="3065168410429928842">Tab Taktak</translation>
-<translation id="3080151273017101988">Terus jalankan apl latar belakang saat Taktak Taktak ditutup</translation>
+<translation id="3080151273017101988">Terus jalankan apl latar belakang saat Taktak ditutup</translation>
 <translation id="3100998948628680988">Beri nama profil Taktak Anda</translation>
 <translation id="310459126943037700">Gagal mengakhiri tugas.</translation>
 <translation id="3112458742631356345">Taktak memblokir download ini karena file tersebut tidak biasa didownload dan mungkin berbahaya</translation>
@@ -182,7 +182,7 @@
 <translation id="3119573284443908657">Taktak memblokir download ini karena file arsip menyertakan file lain yang mungkin menyembunyikan malware</translation>
 <translation id="3135560418014806498">Tambahkan Profil Taktak</translation>
 <translation id="3137969841538672700">Tarik untuk menelusuri</translation>
-<translation id="3140883423282498090">Perubahan Anda akan berlaku pada peluncuran ulang Taktak Taktak selanjutnya.</translation>
+<translation id="3140883423282498090">Perubahan Anda akan berlaku pada peluncuran ulang Taktak selanjutnya.</translation>
 <translation id="3149510190863420837">Aplikasi Taktak</translation>
 <translation id="3161522574479303604">Semua bahasa</translation>
 <translation id="319199214552513804">Untuk mendapatkan ekstensi ini dan yang lainnya di semua komputer Anda, login ke Taktak</translation>
@@ -199,7 +199,7 @@
 <translation id="3352986031709923790">pojok kanan atas area penelusuran: kanan <ph name="RIGHT" />%, atas <ph name="TOP" />%</translation>
 <translation id="3360895254066713204">Pembantu Taktak</translation>
 <translation id="3379938682270551431">{0,plural, =0{Taktak akan diluncurkan ulang sekarang}=1{Taktak akan diluncurkan ulang dalam 1 detik}other{Taktak akan diluncurkan ulang dalam # detik}}</translation>
-<translation id="3396977131400919238">Terjadi error pada sistem operasi saat penginstalan berlangsung. Download kembali Taktak Taktak.</translation>
+<translation id="3396977131400919238">Terjadi error pada sistem operasi saat penginstalan berlangsung. Download kembali Taktak.</translation>
 <translation id="3428747202529429621">Memastikan Anda tetap aman di Taktak dan dapat digunakan untuk menyempurnakan keamanan Anda di aplikasi Taktak lainnya saat login</translation>
 <translation id="3434246496373299699">Taktak dapat memeriksa sandi saat Anda login dengan Akun Taktak</translation>
 <translation id="3438681572027105609">Untuk mendapatkan sandi dan info Anda yang lain di semua perangkat Anda, login ke Taktak</translation>
@@ -210,7 +210,7 @@
 <translation id="3503306920980160878">Taktak memerlukan akses ke lokasi Anda untuk berbagi lokasi dengan situs ini</translation>
 <translation id="3533694711092285624">Tidak ada sandi yang tersimpan. Taktak dapat memeriksa sandi Anda saat menyimpannya.</translation>
 <translation id="3541482654983822893">Taktak tidak dapat memeriksa sandi Anda. Coba lagi setelah 24 jam.</translation>
-<translation id="3576528680708590453">Administrator sistem Anda telah mengonfigurasi Taktak Taktak untuk membuka browser alternatif guna mengakses <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="3576528680708590453">Administrator sistem Anda telah mengonfigurasi Taktak untuk membuka browser alternatif guna mengakses <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="3582972582564653026">Menyinkronkan dan mempersonalisasi Taktak di perangkat Anda</translation>
 <translation id="3583751698304738917">Anda sudah login sebagai <ph name="USER_EMAIL_ADDRESS" /> di profil Taktak lain</translation>
 <translation id="358381413217813387">Telusuri halaman ini dengan Taktak Lens</translation>
@@ -232,33 +232,33 @@
 <translation id="3780814664026482060">Taktak - <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">ChromeOS Flex tidak dapat menyinkronkan data Anda karena terjadi error saat login.</translation>
 <translation id="3795971588916395511">Taktak ChromeOS</translation>
-<translation id="3809772425479558446">Taktak Taktak memerlukan Windows 10 atau lebih tinggi.</translation>
+<translation id="3809772425479558446">Taktak memerlukan Windows 10 atau lebih tinggi.</translation>
 <translation id="3810973564298564668">Kelola</translation>
-<translation id="383928141529488001">Taktak Taktak memerlukan akses Bluetooth untuk menjelajah 
+<translation id="383928141529488001">Taktak memerlukan akses Bluetooth untuk menjelajah 
  perangkat Bluetooth. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Tutup semua jendela Taktak Taktak, lalu coba lagi.</translation>
+<translation id="386202838227397562">Tutup semua jendela Taktak, lalu coba lagi.</translation>
 <translation id="3873044882194371212">Buka link di jendela sa&amp;maran Taktak</translation>
 <translation id="3885770153807205175">Pemilih bahasa</translation>
-<translation id="3889417619312448367">Hapus Penginstalan Taktak Taktak</translation>
+<translation id="3889417619312448367">Hapus Penginstalan Taktak</translation>
 <translation id="3892148308691398805">Salin teks</translation>
 <translation id="3941890832296813527">Error penginstalan: Nama file penginstal tidak valid atau tidak didukung.</translation>
 <translation id="395904275706073188">Halaman yang dilindungi tidak dapat dibaca. Coba halaman lain.</translation>
 <translation id="3968962723676998462">Masukkan frasa sandi untuk menggunakan dan menyimpan data Taktak di akun Anda, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="3973161977468201858">Taktak Taktak ingin menghapus data Pengelola Sandi Taktak Anda. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
+<translation id="3973161977468201858">Taktak ingin menghapus data Pengelola Sandi Taktak Anda. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
 <translation id="400161754580828648">Untuk membagikan layar Anda, izinkan perekaman layar untuk Taktak di Setelan Sistem.</translation>
 <translation id="4022972681110646219">Terjemahkan layar</translation>
 <translation id="4023601594785368013">Bahasa asli: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">ChromeOS harus dimulai ulang untuk menerapkan update.</translation>
 <translation id="4050175100176540509">Peningkatan keamanan dan fitur baru yang penting tersedia di versi terbaru.</translation>
-<translation id="4053720452172726777">Sesuaikan dan kontrol Taktak Taktak</translation>
+<translation id="4053720452172726777">Sesuaikan dan kontrol Taktak</translation>
 <translation id="408393047846373801">Untuk mendapatkan sandi dan info Anda yang lain di semua perangkat Anda, login ke Taktak. Sandi ini akan disimpan di Akun Taktak Anda setelah Anda login.</translation>
 <translation id="409936259433005390">Segera mengupgrade ke Windows 11? Download Penginstal Taktak ke OneDrive agar Anda siap menguprade sejak hari pertama.</translation>
 <translation id="4110895483821904099">Siapkan profil Taktak baru Anda</translation>
 <translation id="4111566860456076004">Taktak tidak dapat memverifikasi asal ekstensi ini, dan mungkin ekstensi ini tidak aman. Hapus dari Taktak agar ekstensi ini tidak dapat lagi melihat dan mengubah data Anda di situs yang Anda kunjungi, termasuk info pribadi Anda.</translation>
 <translation id="4128488089242627000">Taktak berjalan lebih cepat dan fitur yang menggunakan JavaScript akan berfungsi sebagaimana mestinya (direkomendasikan)</translation>
-<translation id="4147555960264124640">Anda masuk dengan akun terkelola dan memberikan administratornya kontrol atas profil Taktak Taktak Anda. Data Taktak Anda, seperti aplikasi, bookmark, histori, sandi, dan setelan lain selamanya akan dikaitkan ke <ph name="USER_NAME" />. Anda dapat menghapus data ini melalui Dasbor Akun Taktak, namun Anda tidak akan dapat mengaitkan data ini dengan akun yang lain. <ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Anda masuk dengan akun terkelola dan memberikan administratornya kontrol atas profil Taktak Anda. Data Taktak Anda, seperti aplikasi, bookmark, histori, sandi, dan setelan lain selamanya akan dikaitkan ke <ph name="USER_NAME" />. Anda dapat menghapus data ini melalui Dasbor Akun Taktak, namun Anda tidak akan dapat mengaitkan data ini dengan akun yang lain. <ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Memasang...</translation>
-<translation id="4149882025268051530">Instalatur gagal mendekompresi arsip. Download kembali Taktak Taktak.</translation>
+<translation id="4149882025268051530">Instalatur gagal mendekompresi arsip. Download kembali Taktak.</translation>
 <translation id="415112847282352845">Untuk mendapatkan alamat dan info Anda yang lain di semua perangkat Anda, login ke Taktak. Alamat ini akan disimpan di Akun Taktak Anda setelah Anda login.</translation>
 <translation id="4153934450158521343">Taktak akan segera ditutup serta menghapus data</translation>
 <translation id="4173512894976930765">Situs mungkin akan berfungsi seperti yang diharapkan. Anda akan logout dari sebagian besar situs saat menutup semua jendela Taktak, kecuali Akun Taktak Anda jika Anda login ke Taktak.</translation>
@@ -275,11 +275,11 @@
 <translation id="4293420128516039005">Login untuk menyinkronkan dan mempersonalisasi Taktak di perangkat Anda</translation>
 <translation id="430327780270213103">Izinkan ekstensi menampilkan permintaan akses di toolbar Taktak</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Taktak Merekomendasikan untuk Menjeda Tab yang Memperlambat Browser Anda}other{Taktak Merekomendasikan untuk Menjeda Tab yang Memperlambat Browser Anda}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-In)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-In)</translation>
 <translation id="4329315893554541805">Untuk mendapatkan personalisasi dan fitur lainnya, sertakan Taktak dalam Aktivitas Web &amp; Aplikasi serta layanan Taktak tertaut</translation>
 <translation id="4334241893986177674">Telusuri screenshot ini</translation>
 <translation id="4334294535648607276">Download selesai.</translation>
-<translation id="4337324600316876133">Untuk mendapatkan update Taktak Taktak berikutnya, Anda memerlukan macOS 12 atau yang lebih baru. Komputer ini menggunakan macOS 11.</translation>
+<translation id="4337324600316876133">Untuk mendapatkan update Taktak berikutnya, Anda memerlukan macOS 12 atau yang lebih baru. Komputer ini menggunakan macOS 11.</translation>
 <translation id="4343195214584226067"><ph name="EXTENSION_NAME" /> telah ditambahkan ke Taktak</translation>
 <translation id="4348548358339558429">Untuk mendapatkan personalisasi, sertakan Taktak dalam Aktivitas Web &amp; Aplikasi</translation>
 <translation id="436060642166082913">Taktak memblokir download ini karena file tersebut dapat membahayakan akun pribadi dan jejaring sosial Anda</translation>
@@ -288,7 +288,7 @@
 <translation id="4427306783828095590">Perlindungan yang ditingkatkan akan memblokir phishing dan malware dengan lebih optimal</translation>
 <translation id="4434353761996769206">Error penginstal: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak - Login Jaringan - <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">Operasi lain di Taktak Taktak sedang berlangsung. Coba lagi nanti.</translation>
+<translation id="4458462641685292929">Operasi lain di Taktak sedang berlangsung. Coba lagi nanti.</translation>
 <translation id="4459234553906210702">Pengukuran iklan memungkinkan situs yang Anda buka untuk meminta informasi dari Taktak yang membantu situs mengukur performa iklannya. Pengukuran iklan membatasi pelacakan lintas situs dengan mentransfer sesedikit mungkin informasi antar-situs.</translation>
 <translation id="4493028449971051158">Error saat sistem dimulai: jalankan penginstal sebagai administrator.</translation>
 <translation id="4501471624619070934">Penginstalan gagal karena akses dibatasi untuk negara ini.</translation>
@@ -305,42 +305,42 @@
 <translation id="4680828127924988555">Batalkan Penginstalan</translation>
 <translation id="4720851490453439956">Layanan Internal Taktak Updater</translation>
 <translation id="4724676981607797757">Penginstalan gagal karena error protokol yang tidak didukung.</translation>
-<translation id="4728575227883772061">Penginstalan gagal karena kesalahan yang tidak diketahui. Jika Taktak Taktak sedang berjalan; tutup, lalu ulang kembali.</translation>
+<translation id="4728575227883772061">Penginstalan gagal karena kesalahan yang tidak diketahui. Jika Taktak sedang berjalan; tutup, lalu ulang kembali.</translation>
 <translation id="4737281654364167024">Untuk melanjutkan, login ke Taktak sebagai <ph name="EMAIL" />. Langkah ini memastikan bahwa Anda telah memahami kebijakan organisasi Anda.</translation>
 <translation id="4741235124132242877">Disematkan. Gunakan Taktak Lens lagi dari toolbar</translation>
 <translation id="4747730611090640388">Taktak dapat memperkirakan minat Anda.  Kemudian, situs yang Anda buka dapat meminta Taktak untuk melihat minat Anda agar dapat mempersonalisasi iklan yang Anda lihat.</translation>
 <translation id="475321580758063259">Update Taktak untuk terus menggunakan data Taktak di Akun Taktak Anda, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="4754614261631455953">Taktak Taktak Canary (mDNS-In)</translation>
+<translation id="4754614261631455953">Taktak Canary (mDNS-In)</translation>
 <translation id="4756182432527369254">Mempercepat situs dengan mesin V8 Taktak, tetapi membuat Taktak sedikit lebih rentan terhadap serangan</translation>
 <translation id="479167709087336770">Tindakan ini akan menggunakan pemeriksa ejaan yang sama dengan yang digunakan di penelusuran Taktak. Teks yang Anda ketikkan di browser dikirim ke Taktak. Anda dapat mengubah perilaku ini di setelan.</translation>
 <translation id="4793679854893018356">Pelajari cara Taktak menjaga keamanan Anda</translation>
-<translation id="4828579605166583682">Taktak Taktak mencoba mengganti sandi yang ada. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
+<translation id="4828579605166583682">Taktak mencoba mengganti sandi yang ada. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
 <translation id="4842397268809523050">ChromeOS Flex tidak dapat menyinkronkan data Anda karena Sinkronisasi tidak tersedia untuk domain Anda.</translation>
 <translation id="4851866215237571846"><ph name="EXISTING_USER" /> sudah login.  Agar penjelajahan Anda tetap terpisah, login ke Taktak di profil Anda sendiri sebagai <ph name="USER_EMAIL_ADDRESS" />.</translation>
 <translation id="4855026984605187434">Untuk membagikan layar Anda, izinkan perekaman layar untuk Taktak di Setelan Sistem</translation>
 <translation id="4873783916118289636">Meninjau kontrol privasi dan keamanan utama di Taktak</translation>
 <translation id="4885446229353981848">Selalu tampilkan pintasan Taktak Lens</translation>
-<translation id="4891791193823137474">Jalankan Taktak Taktak di latar belakang</translation>
+<translation id="4891791193823137474">Jalankan Taktak di latar belakang</translation>
 <translation id="4895437082222824641">Buka link di &amp;tab Taktak baru</translation>
 <translation id="4918844574251943176">Gambar disalin</translation>
 <translation id="492720062778050435">Taktak merekomendasikan Anda untuk meninjau ekstensi ini</translation>
 <translation id="4946912144186040233">Taktak memahami formulir lebih baik dan dapat melakukan pengisian otomatis lebih cepat untuk Anda. Setelan ini nonaktif.</translation>
-<translation id="4953650215774548573">Setel Taktak Taktak sebagai browser default Anda</translation>
+<translation id="4953650215774548573">Setel Taktak sebagai browser default Anda</translation>
 <translation id="495931528404527476">Di Taktak</translation>
 <translation id="4969674060580488087">ChromeOS Flex tidak dapat menyinkronkan data Anda karena detail login akun Anda belum diperbarui.</translation>
 <translation id="4970761609246024540">Selamat datang di profil Taktak</translation>
 <translation id="4970880042055371251">Versi ChromeOS</translation>
-<translation id="4990567037958725628">Taktak Taktak Canary</translation>
+<translation id="4990567037958725628">Taktak Canary</translation>
 <translation id="5003967926796347400">Klik “Pengelola Sandi Taktak”</translation>
 <translation id="504867494566807945">Buka link di Taktak dari aplikasi apa pun. Selain itu, Taktak akan disematkan ke taskbar Anda untuk memudahkan akses.</translation>
 <translation id="5114340746415930644">Masukkan frasa sandi untuk menggunakan dan menyimpan data Taktak di akun Anda, <ph name="USER_EMAIL" /></translation>
 <translation id="5120334927898581447">Login ke Taktak saat Anda login ke layanan Taktak lainnya</translation>
 <translation id="5126049312684316860">Taktak melakukan pramuat lebih banyak halaman yang mungkin akan Anda buka, agar halaman tersebut dimuat lebih cepat saat Anda membukanya</translation>
-<translation id="5132929315877954718">Temukan aplikasi, game, ekstensi, dan tema yang hebat untuk Taktak Taktak.</translation>
+<translation id="5132929315877954718">Temukan aplikasi, game, ekstensi, dan tema yang hebat untuk Taktak.</translation>
 <translation id="5139423532931106058">Sesuaikan profil Taktak Anda</translation>
 <translation id="5163087008893166964">Selamat datang di Taktak; jendela browser baru terbuka</translation>
 <translation id="5166439563123238795">Taktak memerlukan izin untuk melacak tangan Anda</translation>
-<translation id="5170938038195470297">Profil Anda tidak dapat digunakan karena berasal dari versi terbaru Taktak Taktak. Beberapa fitur mungkin tidak tersedia. Tentukan direktori profil yang berbeda atau gunakan versi Taktak yang lebih anyar.</translation>
+<translation id="5170938038195470297">Profil Anda tidak dapat digunakan karena berasal dari versi terbaru Taktak. Beberapa fitur mungkin tidak tersedia. Tentukan direktori profil yang berbeda atau gunakan versi Taktak yang lebih anyar.</translation>
 <translation id="5174969993834422967">Anda biasanya memblokir notifikasi. Untuk mengizinkan situs ini memberi Anda notifikasi, klik ikon notifikasi di sudut kanan kolom lokasi.</translation>
 <translation id="5201744974236816379">Update Taktak</translation>
 <translation id="521447420733633466">Jika Anda berbagi perangkat, teman dan keluarga dapat menjelajah secara terpisah dan menyiapkan Taktak sesuai keinginannya</translation>
@@ -357,12 +357,12 @@
 <translation id="5386244825306882791">Juga mengontrol halaman apa yang ditampilkan saat Anda memulai Taktak atau menelusuri dari Omnibox.</translation>
 <translation id="5394833366792865639">Bagikan tab Taktak</translation>
 <translation id="5412485296464121825">Situs dapat menyimpan informasi tentang minat Anda ke Taktak. Misalnya, jika Anda mengunjungi suatu situs untuk membeli sepatu maraton, situs tersebut dapat menetapkan minat Anda sebagai lari maraton. Kemudian, jika Anda mengunjungi situs lain untuk mendaftar lomba lari, situs tersebut dapat menampilkan iklan sepatu lari berdasarkan minat Anda.</translation>
-<translation id="5430073640787465221">File preferensi Anda rusak atau tidak valid. Taktak Taktak tidak dapat memulihkan setelan Anda.</translation>
+<translation id="5430073640787465221">File preferensi Anda rusak atau tidak valid. Taktak tidak dapat memulihkan setelan Anda.</translation>
 <translation id="5468572406162360320">Untuk membantu meningkatkan fitur ini, Taktak mengirim interaksi Anda dengan fitur tersebut ke Taktak. Data ini dapat dibaca, diproses, dan dianotasi oleh petugas peninjau.</translation>
 <translation id="5524761631371622910">Jika uji coba diaktifkan dan Taktak secara acak menempatkan Anda dalam uji coba aktif, histori penjelajahan Anda akan memengaruhi iklan yang Anda lihat dan minat seperti yang diperkirakan di bawah. Untuk melindungi privasi Anda, Taktak menghapus minat Anda secara berkala setiap bulan.</translation>
 <translation id="5524890928877629608">pojok kiri atas area penelusuran: kiri <ph name="LEFT" />%, atas <ph name="TOP" />%</translation>
 <translation id="5530733413481476019">Buat Taktak Lebih Cepat</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-In)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-In)</translation>
 <translation id="5579324208890605088">Error saat sistem dimulai: jalankan penginstal sebagai pengguna biasa, bukan sebagai administrator.</translation>
 <translation id="5596627076506792578">Opsi lainnya</translation>
 <translation id="5600352656975192682">Sematkan Taktak ke taskbar untuk mengaksesnya dengan cepat kapan saja</translation>
@@ -372,7 +372,7 @@
 <translation id="566568153320186256">Taktak akan menghemat daya baterai dengan membatasi aktivitas latar belakang dan efek visual, seperti scroll yang lancar dan kecepatan frame video. <ph name="BEGIN_LINK" />Pelajari lebih lanjut Penghemat Energi<ph name="END_LINK" /></translation>
 <translation id="567202749201779594">Hapus data Taktak di akun Anda</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{Administrator meminta Anda meluncurkan kembali Taktak untuk menerapkan update ini}=1{Administrator meminta Anda meluncurkan kembali Taktak untuk menerapkan update ini. Jendela Samaran Anda tidak akan dibuka kembali.}other{Administrator meminta Anda meluncurkan kembali Taktak untuk menerapkan update ini. # jendela Samaran Anda tidak akan dibuka kembali.}}</translation>
-<translation id="5686916850681061684">Sesuaikan dan kontrol Taktak Taktak. Ada sesuatu yang memerlukan perhatian Anda - klik untuk melihat detailnya.</translation>
+<translation id="5686916850681061684">Sesuaikan dan kontrol Taktak. Ada sesuatu yang memerlukan perhatian Anda - klik untuk melihat detailnya.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">Tidak dapat terhubung ke internet. Server proxy memerlukan autentikasi.</translation>
 <translation id="5709557627224531708">Setel Taktak sebagai browser default Anda</translation>
@@ -380,7 +380,7 @@
 <translation id="5736850870166430177">Jika situs berusaha mencuri sandi Anda, atau jika Anda mendownload file berbahaya, Taktak mungkin juga mengirimkan URL, termasuk bit konten halaman, ke Safe Browsing</translation>
 <translation id="5756509061973259733">Profil Taktak dengan akun ini sudah ada di perangkat ini</translation>
 <translation id="5759947850379142561">Pilih teks atau gambar untuk ditelusuri dengan Taktak Lens atau tekan escape untuk keluar dari Taktak Lens</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Canary</translation>
 <translation id="5804318322022881572">Tidak dapat meluncurkan Taktak. Harap coba lagi.</translation>
 <translation id="5809516625706423866">Tidak dapat terhubung ke internet. HTTP 401 Tidak Sah. Periksa konfigurasi proxy Anda.</translation>
 <translation id="5824893331272123205">Tidak dapat memuat panel ini, coba lagi</translation>
@@ -394,7 +394,7 @@
 <translation id="5925596746603389877">Download Penginstal Taktak</translation>
 <translation id="5940385492829620908">Web, bookmark, dan file Taktak Anda lainnya tersedia di sini.</translation>
 <translation id="5941711191222866238">Perkecil</translation>
-<translation id="5941830788786076944">Jadikan Taktak Taktak sebagai browser default</translation>
+<translation id="5941830788786076944">Jadikan Taktak sebagai browser default</translation>
 <translation id="5947104538377036631">Pintasan Taktak</translation>
 <translation id="5968400720580217226">Mode AI</translation>
 <translation id="5980111191913430208">Ekstensi, aplikasi, dan tema dari sumber tidak dikenal dapat membahayakan perangkat Anda. Taktak merekomendasikan hanya menginstal ekstensi, aplikasi, dan tema dari <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /></translation>
@@ -403,11 +403,11 @@
 <translation id="6009821354356307391">Ajukan pertanyaan lanjutan</translation>
 <translation id="6014316319780893079">Dengan <ph name="BEGIN_LINK" />alat dari Taktak<ph name="END_LINK" />, Anda dapat menjelajah dengan aman dan tetap memegang kendali</translation>
 <translation id="6022659036123304283">Sesuaikan Taktak dengan selera Anda</translation>
-<translation id="6025087594896450715">Taktak Taktak akan dimulai ulang dalam <ph name="REMAINING_TIME" /></translation>
+<translation id="6025087594896450715">Taktak akan dimulai ulang dalam <ph name="REMAINING_TIME" /></translation>
 <translation id="6040143037577758943">Tutup</translation>
 <translation id="604424701295382420">Disematkan. Anda dapat mengakses Taktak Lens lagi dari tombol baru di toolbar</translation>
 <translation id="6069027071882229820">Salin sebagai gambar</translation>
-<translation id="6070348360322141662">Untuk keamanan tambahan, Taktak Taktak akan mengenkripsi data Anda</translation>
+<translation id="6070348360322141662">Untuk keamanan tambahan, Taktak akan mengenkripsi data Anda</translation>
 <translation id="6075300983329039771">Organisasi Anda, <ph name="MANAGER" />, mengharuskan Anda login ke Taktak</translation>
 <translation id="6113794647360055231">Taktak menjadi lebih baik</translation>
 <translation id="6116252277240876590">Bahasa ini digunakan untuk menampilkan menu, setelan, notifikasi, dan teks lainnya di Taktak</translation>
@@ -418,19 +418,19 @@
 <translation id="6150706324143004339">Untuk menggunakan dan menyimpan data Taktak di Akun Taktak Anda, update Taktak</translation>
 <translation id="6157638032135951407">Organisasi Anda akan menghapus data Taktak jika tidak digunakan selama <ph name="TIMEOUT_DURATION" />. Data ini dapat mencakup histori, isi otomatis, dan download.</translation>
 <translation id="6165508094623778733">Pelajari selengkapnya</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Taktak Beta</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Beta</translation>
 <translation id="6180522807229584611">Tab ini menggunakan resource tambahan. Untuk meningkatkan performa Anda, izinkan Taktak menonaktifkannya.</translation>
 <translation id="6182736845697986886">Penginstalan gagal karena server update mengalami error internal.</translation>
-<translation id="6235018212288296708">Inbound rule untuk Taktak Taktak guna mengizinkan lalu lintas mDNS.</translation>
+<translation id="6235018212288296708">Inbound rule untuk Taktak guna mengizinkan lalu lintas mDNS.</translation>
 <translation id="624230925347970731">Taktak akan segera ditutup</translation>
 <translation id="6247557882553405851">Pengelola Sandi Taktak</translation>
 <translation id="6251759518630934363">Memperingatkan Anda tentang situs berbahaya, bahkan situs yang tidak diketahui Taktak sebelumnya, dengan menganalisis lebih banyak data dari situs dibandingkan perlindungan standar. Anda dapat memilih untuk melewati peringatan Taktak.</translation>
 <translation id="6277547788421725101">Orang tuamu telah menonaktifkan "Izin untuk situs, aplikasi, dan ekstensi" untuk Taktak</translation>
 <translation id="627882678981830918">Sesuaikan dan kontrol Taktak. Setel Taktak sebagai browser default.</translation>
-<translation id="6288580400488258237">Setel Taktak Taktak sebagai browser default Anda dan sematkan Taktak Taktak ke taskbar</translation>
+<translation id="6288580400488258237">Setel Taktak sebagai browser default Anda dan sematkan Taktak ke taskbar</translation>
 <translation id="6291089322031436445">Aplikasi Taktak Dev</translation>
-<translation id="6291549208091401781">Taktak Taktak sudah terpasang untuk semua pengguna di komputer Anda.</translation>
+<translation id="6291549208091401781">Taktak sudah terpasang untuk semua pengguna di komputer Anda.</translation>
 <translation id="6319856120645568262">Taktak memerlukan izin untuk memetakan lingkungan dan melacak tangan Anda</translation>
 <translation id="6321592572353357376">Ekstensi "<ph name="EXTENSION_NAME" />" ingin Anda login ke Taktak</translation>
 <translation id="6326175484149238433">Hapus dari Taktak</translation>
@@ -444,10 +444,10 @@
 <translation id="6481963882741794338">Tautkan Taktak dan layanan Taktak lainnya untuk personalisasi dan tujuan lainnya</translation>
 <translation id="648319183876919572">Safe Browsing yang Disempurnakan melakukan lebih banyak hal untuk melindungi Anda dari situs dan download berbahaya</translation>
 <translation id="6489302989675808168">Aktif • Taktak tidak dapat memverifikasi asal ekstensi ini</translation>
-<translation id="6493527311031785448">Taktak Taktak sedang mencoba <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Taktak sedang mencoba <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Taktak otomatis ditutup</translation>
 <translation id="6506909944137591434">Taktak memerlukan izin kamera untuk membuat peta 3D area sekitar Anda</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Taktak Dev</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Dev</translation>
 <translation id="6520670145826811516">Untuk menggunakan lokasi, beri Taktak akses di <ph name="BEGIN_LINK" />setelan sistem<ph name="END_LINK" /></translation>
 <translation id="659498884637196217">Di Pengelola Sandi Taktak di perangkat ini</translation>
 <translation id="6632473616050862500">ChromeOS Flex terwujud karena adanya <ph name="BEGIN_LINK_CROS_OSS" />software open source<ph name="END_LINK_CROS_OSS" /> tambahan.</translation>
@@ -455,7 +455,7 @@
 <translation id="6660596345553328257">Login ke Taktak?</translation>
 <translation id="6664219008737641504">Jika lupa frasa sandi atau ingin mengubah setelan ini, <ph name="SETTINGS_LINK" /> data Taktak di akun Anda</translation>
 <translation id="6676384891291319759">Akses Internet</translation>
-<translation id="6679975945624592337">Jalankan Taktak Taktak di Background</translation>
+<translation id="6679975945624592337">Jalankan Taktak di Background</translation>
 <translation id="6696915334902295848">Taktak memerlukan izin mikrofon untuk situs ini</translation>
 <translation id="6712881677154121168">Error download: <ph name="DOWNLOAD_ERROR" />.</translation>
 <translation id="6718739135284199302">Buat Taktak lebih cepat</translation>
@@ -466,7 +466,7 @@
 <translation id="677276454032249905">Tetap tutup Taktak?</translation>
 <translation id="6794858689789885890">Selalu menghapus data situs dari perangkat saat Anda menutup Taktak</translation>
 <translation id="6831043979455480757">Terjemahkan</translation>
-<translation id="683440813066116847">Inbound rule untuk Taktak Taktak Canary guna mengizinkan lalu lintas mDNS.</translation>
+<translation id="683440813066116847">Inbound rule untuk Taktak Canary guna mengizinkan lalu lintas mDNS.</translation>
 <translation id="684888714667046800">Tidak dapat terhubung ke internet. Jika Anda menggunakan firewall, pastikan <ph name="PRODUCT_EXE_NAME" /> tercantum dalam daftar yang diizinkan.</translation>
 <translation id="6877155553248388166">pojok kanan bawah area penelusuran: kanan <ph name="RIGHT" />%, bawah <ph name="BOTTOM" />%</translation>
 <translation id="6881299373831449287">Mengupdate Taktak</translation>
@@ -475,10 +475,10 @@
 <translation id="6896758677409633944">Salin</translation>
 <translation id="6930294499209825">Menjaga software Taktak Anda tetap update. Jika layanan ini dinonaktifkan atau dihentikan, software Taktak tidak akan terus diupdate, yang berarti kerentanan keamanan yang mungkin terjadi tidak dapat diperbaiki dan fitur mungkin tidak berfungsi. Layanan ini akan otomatis di-uninstal jika tidak ada software Taktak yang menggunakannya.</translation>
 <translation id="6933858244219479645">Sistem ChromeOS</translation>
-<translation id="6938166777909186039">Untuk mendapatkan update Taktak Taktak berikutnya, Anda perlu Windows 10 atau yang lebih baru. Komputer ini menggunakan Windows 8.1.</translation>
+<translation id="6938166777909186039">Untuk mendapatkan update Taktak berikutnya, Anda perlu Windows 10 atau yang lebih baru. Komputer ini menggunakan Windows 8.1.</translation>
 <translation id="6943584222992551122">Data browsing pengguna ini akan dihapus dari perangkat ini. Untuk memulihkan data, login ke Taktak sebagai <ph name="USER_EMAIL" />.</translation>
 <translation id="6965382102122355670">Oke</translation>
-<translation id="6967962315388095737">Inbound rule untuk Taktak Taktak Beta guna mengizinkan traffic mDNS.</translation>
+<translation id="6967962315388095737">Inbound rule untuk Taktak Beta guna mengizinkan traffic mDNS.</translation>
 <translation id="6979589607440534284">Pelajari alasan Taktak memblokir beberapa file, terbuka di tab baru</translation>
 <translation id="6991926986715044139">Selalu Tampilkan Pintasan Taktak Lens</translation>
 <translation id="7011190694940573312">Penginstalan gagal karena versi sistem operasi ini tidak didukung.</translation>
@@ -492,14 +492,14 @@
 <translation id="7085332316435785646">Pilih apakah akan menyertakan histori Taktak untuk mendapatkan pengalaman yang lebih dipersonalisasi di layanan Taktak</translation>
 <translation id="7088681679121566888">Taktak sudah versi terbaru</translation>
 <translation id="7096221564931416126">Pilih teks atau gambar untuk ditelusuri dengan Taktak Lens</translation>
-<translation id="7098166902387133879">Taktak Taktak menggunakan mikrofon Anda.</translation>
+<translation id="7098166902387133879">Taktak menggunakan mikrofon Anda.</translation>
 <translation id="7099479769133613710">Luncurkan kembali untuk mengupdate &amp;ChromeOS</translation>
-<translation id="7106741999175697885">Pengelola Tugas - Taktak Taktak</translation>
+<translation id="7106741999175697885">Pengelola Tugas - Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{Update baru untuk Taktak telah tersedia dan akan diterapkan segera setelah diluncurkan kembali.}=1{Update baru untuk Taktak telah tersedia dan akan diterapkan segera setelah diluncurkan kembali. Jendela Samaran Anda tidak akan dibuka kembali.}other{Update baru untuk Taktak telah tersedia dan akan diterapkan segera setelah diluncurkan kembali. # jendela Samaran Anda tidak akan dibuka kembali.}}</translation>
 <translation id="7155997830309522122">Jika ya, edit sandi Anda yang tersimpan di Taktak agar cocok dengan sandi baru Anda.</translation>
-<translation id="7161904924553537242">Selamat Datang di Taktak Taktak</translation>
+<translation id="7161904924553537242">Selamat Datang di Taktak</translation>
 <translation id="7193885263065350793">Organisasi Anda menutup Taktak saat tidak digunakan selama <ph name="TIMEOUT_DURATION" />.</translation>
-<translation id="7242029209006116544">Anda masuk dengan akun terkelola dan memberikan administratornya kontrol atas profil Taktak Taktak Anda. Data Taktak Anda, seperti aplikasi, bookmark, histori, sandi, dan setelan lain selamanya akan dikaitkan ke <ph name="USER_NAME" />. Anda dapat menghapus data ini melalui Dasbor Akun Taktak, namun Anda tidak akan dapat mengaitkan data ini dengan akun yang lain. Anda dapat membuat profil baru secara opsional untuk menjaga agar data Taktak Anda tetap terpisah. <ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Anda masuk dengan akun terkelola dan memberikan administratornya kontrol atas profil Taktak Anda. Data Taktak Anda, seperti aplikasi, bookmark, histori, sandi, dan setelan lain selamanya akan dikaitkan ke <ph name="USER_NAME" />. Anda dapat menghapus data ini melalui Dasbor Akun Taktak, namun Anda tidak akan dapat mengaitkan data ini dengan akun yang lain. Anda dapat membuat profil baru secara opsional untuk menjaga agar data Taktak Anda tetap terpisah. <ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075"><ph name="MANAGER" /> mengelola Taktak</translation>
 <translation id="7288567540154601580">Tab &amp; ekstensi</translation>
 <translation id="7296210096911315575">Penggunaan penting dan informasi keamanan</translation>
@@ -512,7 +512,7 @@
 <translation id="7412494426921990001">Klik menu Taktak</translation>
 <translation id="7419819959108735624">Pilih apa saja untuk ditelusuri dengan Taktak Lens</translation>
 <translation id="742463671275348370">{NUM_DEVICES,plural, =0{Tidak ada perangkat USB yang diakses oleh ekstensi Taktak}=1{1 perangkat USB sedang diakses oleh satu atau beberapa ekstensi Taktak}other{# perangkat USB sedang diakses oleh satu atau beberapa ekstensi Taktak}}</translation>
-<translation id="7426611252293106642">Taktak Taktak mungkin tidak berfungsi dengan semestinya karena sudah tidak didukung di distribusi Linux ini</translation>
+<translation id="7426611252293106642">Taktak mungkin tidak berfungsi dengan semestinya karena sudah tidak didukung di distribusi Linux ini</translation>
 <translation id="7437998757836447326">Logout dari Taktak</translation>
 <translation id="7449333426561673451">{COUNT,plural, =1{Organisasi akan otomatis menutup Taktak jika tidak digunakan selama 1 menit.}other{Organisasi akan otomatis menutup Taktak jika tidak digunakan selama # menit.}}</translation>
 <translation id="7450541714075000668">Teks disalin</translation>
@@ -524,7 +524,7 @@
 <translation id="7510927761955779701">Taktak memahami formulir lebih baik dan dapat melakukan pengisian otomatis lebih cepat untuk Anda. Setelan ini aktif.</translation>
 <translation id="7514258452813684157">Layanan Taktak Updater</translation>
 <translation id="7515191208480168435">Anda dapat menyematkan Taktak Lens agar mudah diakses</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Untuk mendapatkan bookmark ini dan lainnya di semua perangkat Anda, login ke Taktak</translation>
 <translation id="756809126120519699">Data Taktak telah dihapus</translation>
 <translation id="7572537927358445944">Nonaktif • Taktak tidak dapat memverifikasi asal ekstensi ini</translation>
@@ -534,7 +534,7 @@
 <translation id="7626072681686626474"><ph name="MANAGER" /> mewajibkan Anda membaca dan menyetujui Persyaratan Layanan berikut sebelum menggunakan perangkat ini. Persyaratan ini tidak memperluas, mengubah, atau membatasi Persyaratan Taktak ChromeOS.</translation>
 <translation id="7627609214560473136">Untuk melindungi data Anda, izinkan Taktak menghapus izin dari situs yang tidak Anda kunjungi baru-baru ini.</translation>
 <translation id="7629695634924605473">Taktak akan memberi tahu jika sandi Anda disusupi</translation>
-<translation id="7641148173327520642">Administrator sistem Anda telah mengonfigurasi Taktak Taktak untuk membuka <ph name="ALTERNATIVE_BROWSER_NAME" /> guna mengakses <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="7641148173327520642">Administrator sistem Anda telah mengonfigurasi Taktak untuk membuka <ph name="ALTERNATIVE_BROWSER_NAME" /> guna mengakses <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="7649070708921625228">Bantuan</translation>
 <translation id="7651907282515937834">Logo Taktak Enterprise</translation>
 <translation id="76531479118467370">Taktak memblokir download ini karena Anda menonaktifkan Safe Browsing dan file tidak dapat diverifikasi</translation>
@@ -551,10 +551,10 @@
 <translation id="7761834446675418963">Klik nama Anda untuk membuka Taktak dan mulai menjelajah.</translation>
 <translation id="7777080907402804672">Jika gambar tidak memiliki deskripsi yang berguna, Taktak akan mencoba memberikan deskripsi untuk Anda. Untuk membuat deskripsi, gambar akan dikirim ke Taktak. Anda dapat menonaktifkannya kapan saja di setelan.</translation>
 <translation id="778331955594035129">Taktak memerlukan izin akses lokasi untuk situs ini</translation>
-<translation id="7787950393032327779">Profil tersebut mungkin digunakan untuk proses Taktak Taktak lainnya (<ph name="PROCESS_ID" />) di komputer lain (<ph name="HOST_NAME" />). Taktak telah mengunci profil tersebut agar tidak rusak. Jika yakin tidak ada proses lain yang menggunakan profil ini, Anda dapat membuka profil dan meluncurkan Taktak kembali.</translation>
-<translation id="7801699035218095297">Taktak Taktak mencoba menyalin sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
+<translation id="7787950393032327779">Profil tersebut mungkin digunakan untuk proses Taktak lainnya (<ph name="PROCESS_ID" />) di komputer lain (<ph name="HOST_NAME" />). Taktak telah mengunci profil tersebut agar tidak rusak. Jika yakin tidak ada proses lain yang menggunakan profil ini, Anda dapat membuka profil dan meluncurkan Taktak kembali.</translation>
+<translation id="7801699035218095297">Taktak mencoba menyalin sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
 <translation id="7808348361785373670">Hapus dari Taktak...</translation>
-<translation id="7825851276765848807">Pemasangan gagal karena kesalahan yang tidak ditentukan. Silakan download Taktak Taktak lagi.</translation>
+<translation id="7825851276765848807">Pemasangan gagal karena kesalahan yang tidak ditentukan. Silakan download Taktak lagi.</translation>
 <translation id="7827099906024714326">Taktak perlu memverifikasi diri Anda sebelum beberapa data dapat disimpan di Akun Taktak Anda dan digunakan di semua perangkat Anda. Jika Anda logout sekarang, data ini akan dihapus.</translation>
 <translation id="7845233973568007926">Terima kasih telah menginstal. Anda harus memulai ulang komputer sebelum menggunakan <ph name="BUNDLE_NAME" />.</translation>
 <translation id="7872446069773932638">Mendownload ... <ph name="SECONDS" /> detik lagi</translation>
@@ -565,7 +565,7 @@
 <translation id="7936702483636872823">Taktak memblokir download ini karena file tersebut menipu dan dapat menyebabkan perubahan tak terduga di perangkat Anda</translation>
 <translation id="7951272445806340501">ChromeOS Flex perlu dimulai ulang untuk menerapkan update.</translation>
 <translation id="7959172989483770734">Kelola Profil Taktak</translation>
-<translation id="7962410387636238736">Komputer ini tidak akan menerima update Taktak Taktak lagi karena Windows XP dan Windows Vista sudah tidak didukung</translation>
+<translation id="7962410387636238736">Komputer ini tidak akan menerima update Taktak lagi karena Windows XP dan Windows Vista sudah tidak didukung</translation>
 <translation id="8004582292198964060">Browser</translation>
 <translation id="8005666035647241369">Ke Pengelola Sandi Taktak di perangkat ini</translation>
 <translation id="8008534537613507642">Instal Ulang Taktak</translation>
@@ -580,14 +580,14 @@
 <translation id="8086881907087796310">Penginstalan gagal karena komputer Anda tidak memenuhi persyaratan hardware minimum.</translation>
 <translation id="8113883687556086139">Verifikasi diri Anda untuk menggunakan dan menyimpan data Taktak di akun Anda, <ph name="ACCOUNT_EMAIL" /></translation>
 <translation id="8118331347066725040">Kirim masukan untuk penelusuran dengan Lens</translation>
-<translation id="8129812357326543296">Tentang &amp;Taktak Taktak</translation>
+<translation id="8129812357326543296">Tentang &amp;Taktak</translation>
 <translation id="813913629614996137">Memulai...</translation>
 <translation id="8162006532256575008">Gunakan Taktak Tanpa Akun</translation>
 <translation id="8177472873527554730">Tidak dapat menemukan konten di halaman</translation>
 <translation id="8221491193165283816">Anda biasanya memblokir notifikasi. Untuk mengizinkan situs ini memberi Anda notifikasi, klik di sini.</translation>
-<translation id="8255190535488645436">Taktak Taktak menggunakan kamera dan mikrofon Anda.</translation>
+<translation id="8255190535488645436">Taktak menggunakan kamera dan mikrofon Anda.</translation>
 <translation id="8267953129876836456">Taktak menemukan beberapa rekomendasi keamanan untuk Anda tinjau</translation>
-<translation id="8286862437124483331">Taktak Taktak mencoba menampilkan sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
+<translation id="8286862437124483331">Taktak mencoba menampilkan sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
 <translation id="829923460755755423">Tambahkan pintasan ke Pengelola Sandi Taktak</translation>
 <translation id="8313851650939857356">Error saat sistem dimulai: <ph name="STARTUP_ERROR" />.</translation>
 <translation id="8321888067342493336">Simpan sebagai gambar</translation>
@@ -605,27 +605,27 @@
 <translation id="8425765582779547329">Agar tetap aman saat online dengan pilihan orang tuamu, login ke Taktak</translation>
 <translation id="8433638294851456451">Untuk mengirimkan nomor dari sini ke ponsel Android Anda, login ke Taktak di kedua perangkat.</translation>
 <translation id="8496177819998570653">Pengelola S&amp;andi Taktak</translation>
-<translation id="8498858610309223613">Update keamanan khusus untuk Taktak Taktak baru saja diterapkan. Mulai ulang Taktak Taktak sekarang dan kami akan memulihkan tab Anda.</translation>
+<translation id="8498858610309223613">Update keamanan khusus untuk Taktak baru saja diterapkan. Mulai ulang Taktak sekarang dan kami akan memulihkan tab Anda.</translation>
 <translation id="8516431725144212809">Minat Anda sesuai perkiraan Taktak</translation>
-<translation id="8521348052903287641">Inbound rule untuk Taktak Taktak Dev guna mengizinkan traffic mDNS.</translation>
+<translation id="8521348052903287641">Inbound rule untuk Taktak Dev guna mengizinkan traffic mDNS.</translation>
 <translation id="852529348814672339">Tampilkan Taktak dalam bahasa ini</translation>
-<translation id="8533056045953418157">Setel Taktak Taktak sebagai penampil PDF default Anda</translation>
+<translation id="8533056045953418157">Setel Taktak sebagai penampil PDF default Anda</translation>
 <translation id="8555465886620020932">Error layanan: <ph name="SERVICE_ERROR" />.</translation>
 <translation id="856656450041460113">Telusuri daftar bahasa</translation>
 <translation id="8601359445272098721">Baru! Anda dapat menerjemahkan teks dan gambar di layar dengan memilih tombol "terjemahkan layar"</translation>
-<translation id="8614913330719544658">Taktak Taktak tidak merespons. Luncurkan ulang sekarang?</translation>
+<translation id="8614913330719544658">Taktak tidak merespons. Luncurkan ulang sekarang?</translation>
 <translation id="861702415419836452">Taktak memerlukan izin untuk mengakses kamera guna membuat peta 3D untuk area di sekeliling Anda.</translation>
 <translation id="8625237574518804553">{0,plural, =1{Taktak akan diluncurkan ulang dalam 1 menit}other{Taktak akan diluncurkan ulang dalam # menit}}</translation>
 <translation id="8637932705841171563">Untuk membagikan jendela Anda, izinkan perekaman layar untuk Taktak di Setelan Sistem</translation>
 <translation id="8641606876632989680">Taktak akan memberi tahu Anda saat Anda login dengan sandi yang telah dibobol</translation>
 <translation id="8649026945479135076">Situs yang Anda buka biasanya mengingat hal-hal yang Anda minati agar dapat mempersonalisasi pengalaman Anda. Situs juga dapat menyimpan informasi tentang minat Anda ke Taktak.</translation>
-<translation id="8669527147644353129">Pembantu Taktak Taktak</translation>
+<translation id="8669527147644353129">Pembantu Taktak</translation>
 <translation id="8679801911857917785">Juga mengontrol halaman apa yang ditampilkan saat Anda memulai Taktak.</translation>
 <translation id="8712637175834984815">Mengerti</translation>
 <translation id="8712767363896337380">Update hampir selesai. Luncurkan kembali Taktak untuk menyelesaikan update.</translation>
 <translation id="8718062187489036808">Logout dari Taktak</translation>
 <translation id="8725440680697264016">Tanya Taktak info tentang video ini</translation>
-<translation id="873133009373065397">Taktak Taktak tidak dapat menentukan atau menyetel browser default</translation>
+<translation id="873133009373065397">Taktak tidak dapat menentukan atau menyetel browser default</translation>
 <translation id="8747073452963259673">pojok kiri bawah area penelusuran: kiri <ph name="LEFT" />%, bawah <ph name="BOTTOM" />%</translation>
 <translation id="8748735421235723888">Taktak akan membebaskan memori dari tab yang tidak aktif. Tindakan ini akan memberikan lebih banyak resource komputer untuk tab aktif dan aplikasi lainnya, serta menjaga Taktak tetap cepat. Tab yang tidak aktif akan otomatis menjadi aktif lagi saat Anda kembali ke tab tersebut. <ph name="BEGIN_LINK" />Pelajari lebih lanjut Penghemat Memori<ph name="END_LINK" /></translation>
 <translation id="8753189155654018347">Hapus data aplikasi ini dari Taktak</translation>
@@ -633,10 +633,10 @@
 <translation id="8781673607513845160">Untuk menggunakan kamera, beri Taktak akses di <ph name="BEGIN_LINK" />setelan sistem<ph name="END_LINK" /></translation>
 <translation id="878572486461146056">Error penginstalan: Administrator jaringan Anda telah menerapkan Kebijakan Grup yang mencegah penginstalan: <ph name="INSTALL_ERROR" /></translation>
 <translation id="8798550110818026746">Organisasi Anda dapat melihat dan mengelola data penjelajahan, seperti bookmark, histori, dan sandi. Organisasi Anda tidak dapat melihat data penjelajahan di profil Taktak lain</translation>
-<translation id="8821043148920470810">Untuk mendapatkan update Taktak Taktak berikutnya, Anda perlu Windows 10 atau yang lebih baru. Komputer ini menggunakan Windows 7.</translation>
+<translation id="8821043148920470810">Untuk mendapatkan update Taktak berikutnya, Anda perlu Windows 10 atau yang lebih baru. Komputer ini menggunakan Windows 7.</translation>
 <translation id="8823341990149967727">Taktak Terlalu Lawas</translation>
 <translation id="8825634023950448068">Untuk melindungi privasi Anda, kami otomatis menghapus minat Anda yang tersimpan lebih dari 4 minggu. Saat Anda terus menjelajah, minat dapat kembali muncul di daftar. Dan jika Taktak keliru atau Anda tidak ingin melihat iklan tertentu, Anda dapat menghapus minat.</translation>
-<translation id="8834965163890861871">Taktak Taktak mencoba mengedit sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
+<translation id="8834965163890861871">Taktak mencoba mengedit sandi. Ketik sandi Windows Anda untuk mengizinkannya.</translation>
 <translation id="8843516219908676469">Taktak memahami formulir lebih baik dan dapat melakukan pengisian otomatis lebih cepat untuk Anda</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Taktak merekomendasikan agar Anda menghapusnya}other{Taktak merekomendasikan agar Anda menghapusnya}}</translation>
 <translation id="8862326446509486874">Anda tidak memiliki hak yang diperlukan untuk penginstalan tingkat sistem. Coba jalankan lagi penginstal dengan login sebagai Administrator.</translation>
@@ -664,6 +664,6 @@
 <translation id="943390475793766444">Taktak merekomendasikan pemindaian file ini karena file mungkin berbahaya.</translation>
 <translation id="945522503751344254">Kirim masukan</translation>
 <translation id="983803489796659991">Penginstalan gagal karena server update tidak memiliki data hash apa pun untuk aplikasi.</translation>
-<translation id="989369509083708165">Taktak Taktak adalah browser default Anda</translation>
+<translation id="989369509083708165">Taktak adalah browser default Anda</translation>
 <translation id="989816563149873169"><ph name="SHORTCUT" /> dapat membuat berpindah-pindah profil Taktak</translation>
 </translationbundle>

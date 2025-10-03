@@ -176,7 +176,7 @@
 <translation id="1114202307280046356">Ромб</translation>
 <translation id="1114525161406758033">Переходити в режим сну, коли кришка закрита</translation>
 <translation id="1116639326869298217">Не вдалося підтвердити вашу особу</translation>
-<translation id="1116694919640316211">Про Taktak Taktak</translation>
+<translation id="1116694919640316211">Про Taktak</translation>
 <translation id="1116779635164066733">Цей параметр встановлюється розширенням "<ph name="NAME" />".</translation>
 <translation id="1118428905044642028">Паролі й автозаповнення</translation>
 <translation id="1118738876271697201">Системі не вдалося визначити модель і серійний номер пристрою.</translation>
@@ -2053,7 +2053,7 @@
 <translation id="2391805183137601570">Відкрити Steam</translation>
 <translation id="2392369802118427583">Активувати</translation>
 <translation id="2393136602862631930">Налаштуйте додаток "<ph name="APP_NAME" />" на Chromebook</translation>
-<translation id="2393313392064891208">Зміст Умов використання ОС Taktak Taktak Flex</translation>
+<translation id="2393313392064891208">Зміст Умов використання ОС Taktak Flex</translation>
 <translation id="2395616325548404795">Ваш пристрій <ph name="DEVICE_TYPE" /> зареєстровано для корпоративного керування, однак ми не отримали інформацію про його об’єкти та місцезнаходження. Введіть ці дані вручну на Консолі адміністратора.</translation>
 <translation id="2396783860772170191">Введіть 4-значний PIN-код (0000–9999)</translation>
 <translation id="2398546389094871088">Під час виконання Powerwash на пристрої профілі eSIM-карти не видаляються. Це можна зробити вручну в розділі <ph name="LINK_BEGIN" />налаштування мобільних пристроїв<ph name="LINK_END" />.</translation>
@@ -2115,7 +2115,7 @@
 <translation id="2434449159125086437">Не вдалося налаштувати принтер. Перевірте конфігурацію й повторіть спробу.</translation>
 <translation id="2434758125294431199">Виберіть, хто може надсилати вам дані</translation>
 <translation id="2434915728183570229">Тепер ви можете переглядати додатки з телефона</translation>
-<translation id="2435137177546457207">Додаткові умови використання Taktak Taktak і ОС Taktak Flex</translation>
+<translation id="2435137177546457207">Додаткові умови використання Taktak і ОС Taktak Flex</translation>
 <translation id="2435248616906486374">Немає з’єднання з мережею</translation>
 <translation id="2435457462613246316">Показати пароль</translation>
 <translation id="2436385001956947090">Копіювати &amp;посилання</translation>
@@ -2452,7 +2452,7 @@
 <translation id="266079277508604648">Не вдається під’єднатися до принтера. Перевірте, чи принтер увімкнено та під’єднано до Chromebook через Wi-Fi або USB.</translation>
 <translation id="2661315027005813059">Сторінка зворотного кешу: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Відкривайте веб-сторінки швидше та заощаджуйте трафік у спрощеному режимі. Натисніть, щоб дізнатися більше.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Додавання профілю eSIM. Це може зайняти кілька хвилин.</translation>
 <translation id="2663302507110284145">Мова</translation>
 <translation id="2665394472441560184">Додати нове слово</translation>
@@ -4083,7 +4083,7 @@
 <translation id="3798670284305777884">Динамік (внутрішній)</translation>
 <translation id="3799128412641261490">Налаштування кнопкового доступу</translation>
 <translation id="3800764353337460026">Стиль символів</translation>
-<translation id="3800828618615365228">Додаткові умови використання Taktak Taktak і ОС Taktak</translation>
+<translation id="3800828618615365228">Додаткові умови використання Taktak і ОС Taktak</translation>
 <translation id="3800898876950197674">Щоб дозволити це розширення, введіть пароль.</translation>
 <translation id="3801449494961771207">Системний голос для синтезу мовлення</translation>
 <translation id="3802486193901166966">Для цього розширення не потрібні спеціальні дозволи, і воно не має додаткового доступу до сайтів</translation>
@@ -4106,7 +4106,7 @@
 <translation id="3810973564298564668">Керувати</translation>
 <translation id="381202950560906753">Додати ще</translation>
 <translation id="3812525830114410218">Недійсний сертифікат</translation>
-<translation id="3813296892522778813">Якщо не вдається знайти потрібний вміст, перейдіть на сторінку <ph name="BEGIN_LINK_CHROMIUM" />довідки Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Якщо не вдається знайти потрібний вміст, перейдіть на сторінку <ph name="BEGIN_LINK_CHROMIUM" />довідки Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Мова для перекладу сторінок і швидких відповідей</translation>
 <translation id="3813458570141926987">Список тем, визначених Taktak на основі вашої нещодавньої історії веб-перегляду</translation>
 <translation id="3814529970604306954">Обліковий запис закладу освіти</translation>
@@ -4583,7 +4583,7 @@
 <translation id="4133076602192971179">Щоб змінити пароль, відкрийте додаток</translation>
 <translation id="4134838386867070505">Крок 1 із 4. Опишіть проблему</translation>
 <translation id="413534985210133938">Папка "<ph name="LOCAL_FOLDER" />" зберігається лише на поточному пристрої. Якщо перемістити закладку в папку "<ph name="LOCAL_FOLDER" />", вона більше не буде доступна на інших пристроях.</translation>
-<translation id="4135746311382563554">Додаткові умови використання Taktak Taktak і ОС Taktak</translation>
+<translation id="4135746311382563554">Додаткові умови використання Taktak і ОС Taktak</translation>
 <translation id="4136203100490971508">Нічний екран вимкнеться автоматично на світанку</translation>
 <translation id="41365691917097717">Якщо продовжити, буде ввімкнено налагодження ADB для створення й тестування додатків для Android. Зауважте, що цією дією ви дозволяєте встановлювати додатки для Android, які не були перевірені Taktak. Щоб вимкнути цю функцію, доведеться скинути налаштування.</translation>
 <translation id="4137923333452716643">Виділіть текст, який хочете відкрити в режимі читання</translation>
@@ -7598,7 +7598,7 @@
 <translation id="6314819609899340042">Функції налагодження ввімкнено на цьому пристрої <ph name="IDS_SHORT_PRODUCT_NAME" />.</translation>
 <translation id="6315170314923504164">Голос</translation>
 <translation id="6315493146179903667">Перемістити все на передній план</translation>
-<translation id="6316432269411143858">Умови використання ОС Taktak Taktak</translation>
+<translation id="6316432269411143858">Умови використання ОС Taktak</translation>
 <translation id="6317369057005134371">Очікування вікна програми…</translation>
 <translation id="6318125393809743217">Включити файл policies.json із налаштуваннями правила.</translation>
 <translation id="6318944945640833942">Не вдалося виявити принтер. Введіть його адресу знову.</translation>
@@ -7845,7 +7845,7 @@
 <translation id="6511607461419653612">Перезапустіть Chromebook і повторіть спробу</translation>
 <translation id="6511827214781912955">Радимо видалити файл "<ph name="FILENAME" />", щоб інші користувачі цього пристрою не бачили ваші паролі</translation>
 <translation id="6512759338201777379">Створене зображення <ph name="INDEX" /> об’єкта "<ph name="SUBJECT" />". Настрій: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak використовуватиме мобільне передавання даних, якщо ви не підключені до іншої мережі.</translation>
+<translation id="6513247462497316522">Taktak використовуватиме мобільне передавання даних, якщо ви не підключені до іншої мережі.</translation>
 <translation id="6514010653036109809">Доступний пристрій:</translation>
 <translation id="6516990372629061585">Переглянути сертифікати, імпортовані з Linux</translation>
 <translation id="6517382055541687102">Тепер вибрано пристрій <ph name="DEVICE_NAME" /></translation>
@@ -8801,7 +8801,7 @@
 <translation id="7180611975245234373">Оновити</translation>
 <translation id="7180865173735832675">Налаштувати</translation>
 <translation id="7181117767881540376">Сховати панель закладок</translation>
-<translation id="7181329571386134105">Якщо ви вважаєте, що <ph name="CHILD_NAME" /> може надалі встановлювати розширення без вашого схвалення, відкрийте додаток Family Link на своєму пристрої і оновіть налаштування вебпереглядача Taktak Taktak, яким користується <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Якщо ви вважаєте, що <ph name="CHILD_NAME" /> може надалі встановлювати розширення без вашого схвалення, відкрийте додаток Family Link на своєму пристрої і оновіть налаштування вебпереглядача Taktak, яким користується <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Приєднатися до групи вкладок, з якою працює <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Приєднатися до групи вкладок, з якою працює <ph name="OWNER_FIRST_NAME" />}=1{Приєднатися до групи вкладок, з якою працюють <ph name="OWNER_FIRST_NAME" /> і ще # користувач}one{Приєднатися до групи вкладок, з якою працюють <ph name="OWNER_FIRST_NAME" /> і ще # користувач}few{Приєднатися до групи вкладок, з якою працюють <ph name="OWNER_FIRST_NAME" /> і ще # користувачі}many{Приєднатися до групи вкладок, з якою працюють <ph name="OWNER_FIRST_NAME" /> і ще # користувачів}other{Приєднатися до групи вкладок, з якою працюють <ph name="OWNER_FIRST_NAME" /> і ще # користувача}}</translation>
 <translation id="7181976109296206547">Перевірте оновлені логотип, назву і URL-адресу</translation>

@@ -1321,7 +1321,7 @@ Comprova les contrasenyes sempre que vulguis al <ph name="GOOGLE_PASSWORD_MANAGE
 <translation id="1901760057081700494">Actualment, la zona horària està establerta en <ph name="TIME_ZONE_ENTRY" />. Per actualitzar automàticament la zona horària, <ph name="BEGIN_LINK" />activa l'accés a la ubicació del sistema<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">Els URL que visites es desen al teu Compte de Taktak</translation>
 <translation id="1906181697255754968">Els llocs web solen accedir als fitxers i a les carpetes del dispositiu per a funcions com ara desar automàticament la teva feina</translation>
-<translation id="1906488504371069394">Descobreix més extensions i temes a <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Descobreix més extensions i temes a <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Escriu amb la veu. Fes servir Cerca+D i, tot seguit, comença a parlar.</translation>
 <translation id="1907659324308286326">Alguns accessoris Thunderbolt o USB4 necessiten accés a la memòria per funcionar correctament.</translation>
 <translation id="1908591798274282246">Torna a obrir el grup tancat</translation>
@@ -2064,7 +2064,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="2412015533711271895">El teu pare, mare o tutor ha d'aprovar que utilitzis aquesta extensió</translation>
 <translation id="2412593942846481727">Hi ha una actualització disponible</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Personalitza encara més el navegador amb extensions de <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" />.</translation>
+<translation id="2413009156320833859">Personalitza encara més el navegador amb extensions de <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" />.</translation>
 <translation id="2414159296888870200">Reprèn la navegació per a <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Fosc</translation>
 <translation id="2415117815770324983">Se't tancarà la sessió de la majoria de llocs web. Continuaràs tenint la sessió iniciada al teu Compte de Taktak.</translation>
@@ -2099,7 +2099,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="2434449159125086437">La impressora no es pot configurar. Comprova'n la configuració i torna-ho a provar.</translation>
 <translation id="2434758125294431199">Selecciona qui pot compartir contingut amb tu</translation>
 <translation id="2434915728183570229">Ara pots consultar les aplicacions del telèfon</translation>
-<translation id="2435137177546457207">Condicions addicionals de Taktak Taktak i ChromeOS Flex</translation>
+<translation id="2435137177546457207">Condicions addicionals de Taktak i ChromeOS Flex</translation>
 <translation id="2435248616906486374">S'ha desconnectat la xarxa</translation>
 <translation id="2435457462613246316">Mostra la contrasenya</translation>
 <translation id="2436385001956947090">Copia l'&amp;enllaç</translation>
@@ -2436,7 +2436,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="266079277508604648">No es pot contactar amb la impressora. Comprova que estigui encesa i connectada al teu Chromebook per Wi-Fi o USB.</translation>
 <translation id="2661315027005813059">Pàgina desada a la memòria cau endavant/enrere: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Navega més de pressa i estalvia dades amb el mode lleuger. Fes clic per obtenir més informació.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">S'està afegint el perfil d'eSIM. Aquest procés pot tardar uns minuts.</translation>
 <translation id="2663302507110284145">Idioma</translation>
 <translation id="2665394472441560184">Afegeix una paraula nova</translation>
@@ -2445,7 +2445,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="2666247341166669829">Nivell de bateria de l'auricular esquerre: <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">S'han configurat altres aplicacions per obrir els mateixos enllaços que <ph name="APP_NAME" />. Es desactivarà l'obertura d'enllaços compatibles des de les aplicacions <ph name="APP_NAME_2" /> i <ph name="APP_NAME_3" />.</translation>
 <translation id="2667463864537187133">Gestiona el corrector ortogràfic</translation>
-<translation id="2668604389652548400">Suprimeix-la o substitueix-la per una extensió similar de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Suprimeix-la o substitueix-la per una extensió similar de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785">No s'ha pogut obrir <ph name="APP_NAME" /></translation>
 <translation id="2669454659051515572">Qualsevol persona que utilitzi aquest dispositiu pot veure els fitxers baixats</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> està compartint una pestanya de Taktak.</translation>
@@ -2461,7 +2461,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="267442004702508783">actualitza</translation>
 <translation id="2674764818721168631">Desactivat</translation>
 <translation id="2675716371350192683">El teu contingut no s'utilitzarà per millorar la IA. La teva organització pot canviar aquestes opcions de configuració en qualsevol moment.</translation>
-<translation id="2676084251379299915">La política d'empresa ha desactivat aquesta extensió perquè ja no està disponible a Taktak Web Store.</translation>
+<translation id="2676084251379299915">La política d'empresa ha desactivat aquesta extensió perquè ja no està disponible a Chrome Web Store.</translation>
 <translation id="2677748264148917807">Surt</translation>
 <translation id="2678063897982469759">Torna a activar</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Vols conservar el grup de pestanyes?}other{Vols conservar els grups de pestanyes?}}</translation>
@@ -2860,7 +2860,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="2953210795988451570">Ja no hi haurà més actualitzacions de seguretat. Compra't un Chromebook nou.</translation>
 <translation id="2953218713108551165">No es permeten les notificacions per a <ph name="SITE" />. Se't tornarà a preguntar a la propera visita.</translation>
 <translation id="2956070239128776395">Secció imbricada en grup: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Activa el mode de desenvolupador per utilitzar aquesta extensió, que Taktak Web Store no pot revisar.</translation>
+<translation id="2957124229512318478">Activa el mode de desenvolupador per utilitzar aquesta extensió, que Chrome Web Store no pot revisar.</translation>
 <translation id="2958721676848865875">Advertiment de l'empaquetatge d'extensió</translation>
 <translation id="2959127025785722291">S'ha produït un error. No s'ha pogut completar l'anàlisi. Torna-ho a provar.</translation>
 <translation id="2959474507964749987">Aquest fitxer encriptat pot ser un virus o programari maliciós.<ph name="LINE_BREAK" />Per comprovar si és segur, pots enviar el fitxer i la contrasenya a Navegació segura de Taktak. Les anàlisis solen tardar uns quants segons.<ph name="LINE_BREAK" />Per dur a terme l'anàlisi, afegeix la contrasenya del fitxer.</translation>
@@ -2920,7 +2920,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="2996108796702395498">El número de sèrie del dispositiu és <ph name="SERIAL_NUMBER" />. Aquest número es pot utilitzar per activar el servei.</translation>
 <translation id="2996286169319737844">Les dades estan encriptades amb la teva frase de contrasenya de sincronització. No inclouen les formes de pagament ni les adreces de Taktak Pay.</translation>
 <translation id="2996722619877761919">Capgira per la vora llarga</translation>
-<translation id="2998097899774209901">Activada • Aquesta extensió infringeix la política de Taktak Web Store</translation>
+<translation id="2998097899774209901">Activada • Aquesta extensió infringeix la política de Chrome Web Store</translation>
 <translation id="2998267783395280091">S'ha trobat una xarxa</translation>
 <translation id="3000378525979847272">Permisos concedits: <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="3000461861112256445">Àudio mono</translation>
@@ -2951,7 +2951,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">Només les connexions segures dins del mateix lloc</translation>
 <translation id="3012917896646559015">Contacteu immediatament amb el fabricant del maquinari per enviar l'ordinador a un centre de reparació.</translation>
-<translation id="3013652227108802944">Desactivada • Aquesta extensió infringeix la política de Taktak Web Store</translation>
+<translation id="3013652227108802944">Desactivada • Aquesta extensió infringeix la política de Chrome Web Store</translation>
 <translation id="301525898020410885">La teva organització ha definit l'idioma</translation>
 <translation id="3015639418649705390">Reinicia ara</translation>
 <translation id="3015651504578568463">Afegeix la pestanya a una taula de comparació nova</translation>
@@ -3221,7 +3221,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="3226487301970807183">Commuta el tauler lateral alineat a l'esquerra</translation>
 <translation id="322708765617468434">Sempre pots afegir una altra persona al dispositiu després de la configuració. Cada persona pot personalitzar la seva experiència i mantenir la privadesa de les dades.</translation>
 <translation id="3227137524299004712">Micròfon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Suprimeix-la o substitueix-la per una extensió similar de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{Suprimeix-les o substitueix-les per extensions similars de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Suprimeix-la o substitueix-la per una extensió similar de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{Suprimeix-les o substitueix-les per extensions similars de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}}</translation>
 <translation id="3229254977651514276">Comprova la data</translation>
 <translation id="3230539834943294477">Consulta els articles d'ajuda o cerca assistència per a dispositius</translation>
 <translation id="3232168089952388105">Vols compartir informació sobre el dispositiu?</translation>
@@ -4027,7 +4027,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="3775432569830822555">Certificat de servidor SSL</translation>
 <translation id="3775705724665058594">Envia als teus dispositius</translation>
 <translation id="3776508619697147021">Els llocs web poden demanar permís per baixar automàticament diversos fitxers</translation>
-<translation id="3776796446459804932">Aquesta extensió incompleix la política de Taktak Web Store.</translation>
+<translation id="3776796446459804932">Aquesta extensió incompleix la política de Chrome Web Store.</translation>
 <translation id="3777483481409781352">No s'ha pogut activar el dispositiu mòbil</translation>
 <translation id="3777796259512476958">Se't tancarà la sessió de la majoria de llocs web</translation>
 <translation id="3778208826288864398">La clau de seguretat està bloquejada perquè s'ha introduït un PIN incorrecte massa vegades. Cal que la restableixis.</translation>
@@ -4065,7 +4065,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="3798670284305777884">Altaveu (intern)</translation>
 <translation id="3799128412641261490">Configuració d'Accés amb interruptors</translation>
 <translation id="3800764353337460026">Estil de símbols</translation>
-<translation id="3800828618615365228">Condicions addicionals de Taktak Taktak i Taktak OS</translation>
+<translation id="3800828618615365228">Condicions addicionals de Taktak i Taktak OS</translation>
 <translation id="3800898876950197674">Per permetre aquesta extensió, introdueix la contrasenya.</translation>
 <translation id="3801449494961771207">Veu del text a parla del sistema</translation>
 <translation id="3802486193901166966">Aquesta extensió no requereix cap permís especial i no té accés a cap lloc web addicional</translation>
@@ -4088,7 +4088,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="3810973564298564668">Gestiona</translation>
 <translation id="381202950560906753">Afegeix-ne una altra</translation>
 <translation id="3812525830114410218">Certificat incorrecte</translation>
-<translation id="3813296892522778813">Si no trobes el que busques, ves a l'<ph name="BEGIN_LINK_CHROMIUM" />ajuda de Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Si no trobes el que busques, ves a l'<ph name="BEGIN_LINK_CHROMIUM" />ajuda de Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Idioma utilitzat per traduir pàgines i per a les Respostes ràpides</translation>
 <translation id="3813458570141926987">Llista de temes estimats per Taktak en funció del teu historial de navegació recent</translation>
 <translation id="3814529970604306954">Compte de centre educatiu</translation>
@@ -4564,7 +4564,7 @@ Pots gestionar la configuració d'aquest compte instal·lant l'aplicació Family
 <translation id="4133076602192971179">Obre l'aplicació per canviar la contrasenya</translation>
 <translation id="4134838386867070505">Pas 1 de 4: descriu el problema</translation>
 <translation id="413534985210133938">L'adreça d'interès "<ph name="LOCAL_FOLDER" />" només es desa en aquest dispositiu. Si la mous a <ph name="LOCAL_FOLDER" />, ja no hi podràs accedir des dels teus altres dispositius.</translation>
-<translation id="4135746311382563554">Condicions del servei addicionals de Taktak Taktak i Taktak OS</translation>
+<translation id="4135746311382563554">Condicions del servei addicionals de Taktak i Taktak OS</translation>
 <translation id="4136203100490971508">La funció Llum nocturna es desactivarà automàticament a l'alba</translation>
 <translation id="41365691917097717">Si continues, s'activarà la depuració d'ADB per crear i provar les aplicacions d'Android. Tingues en compte que aquesta acció permet instal·lar aplicacions d'Android que Taktak no ha verificat. Per desactivar ADB, hauràs de restablir les dades de fàbrica del dispositiu.</translation>
 <translation id="4137923333452716643">Marca el text que vols que s'obri en mode de lectura</translation>
@@ -5578,7 +5578,7 @@ Fes servir Ctrl+Alt+disminueix la brillantor per reduir.</translation>
 <translation id="4869170227080975044">Llegir informació de la xarxa de ChromeOS</translation>
 <translation id="4870724079713069532">Amb aquesta aplicació pots obrir i editar fitxers admesos des de l'Explorador de fitxers o des d'altres aplicacions. Si vols controlar quins fitxers s'obren amb aquesta aplicació de manera predeterminada, ves a la <ph name="BEGIN_LINK" />configuració de Windows<ph name="END_LINK" />.</translation>
 <translation id="4870995365819149457">Alguns enllaços admesos es continuaran obrint a <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> i en 1 aplicació més.</translation>
-<translation id="4871308555310586478">No des de Taktak Web Store.</translation>
+<translation id="4871308555310586478">No des de Chrome Web Store.</translation>
 <translation id="4871322859485617074">El PIN conté caràcters que no són vàlids</translation>
 <translation id="4871370605780490696">Afegeix una adreça d'interès</translation>
 <translation id="4871568871368204250">Desactiva la sincronització</translation>
@@ -6414,7 +6414,7 @@ Pots assignar diferents interruptors a aquesta acció.</translation>
 <translation id="5470741195701938302">Números</translation>
 <translation id="5471768120198416576">Hola! Soc la teva veu per a la conversió de text a parla.</translation>
 <translation id="5472627187093107397">Desa les contrasenyes d'aquest lloc web</translation>
-<translation id="5473062644742711742">Troba més eines d'accessibilitat a Taktak Web Store</translation>
+<translation id="5473062644742711742">Troba més eines d'accessibilitat a Chrome Web Store</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">En continuar, acceptes que aquest dispositiu també pugui baixar i instal·lar automàticament actualitzacions i aplicacions de Taktak, de l'operador de telefonia mòbil i del fabricant del dispositiu del teu fill o filla, i que és possible que ho faci utilitzant dades mòbils. Pot ser que algunes d'aquestes aplicacions ofereixin compres des de l'aplicació.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{El PIN ha de tenir almenys 1 caràcter}other{El PIN ha de tenir almenys # caràcters}}</translation>
@@ -7041,7 +7041,7 @@ Assegureu-vos que no es pugui accedir a informació sensible.</translation>
 <translation id="5932224571077948991">El lloc web mostra anuncis intrusius o enganyosos</translation>
 <translation id="59324397759951282">Dispositiu USB fabricat per <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">No tens prou llicències disponibles per inscriure aquest dispositiu de maquinari de Taktak Meet. Contacta amb l'equip de vendes per comprar-ne més. Si creus que veus aquest missatge per error, posa't en contacte amb el servei d'assistència.</translation>
-<translation id="593271375210025655">Activa el mode de desenvolupador per utilitzar aquesta extensió, però només si hi confies. És possible que contingui funcions experimentals i que Taktak Web Store no les hagi revisat.</translation>
+<translation id="593271375210025655">Activa el mode de desenvolupador per utilitzar aquesta extensió, però només si hi confies. És possible que contingui funcions experimentals i que Chrome Web Store no les hagi revisat.</translation>
 <translation id="5932881020239635062">Número de sèrie</translation>
 <translation id="5933376509899483611">Zona horària</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> està utilitzant la càmera i el micròfon</translation>
@@ -7581,7 +7581,7 @@ Assegureu-vos que no es pugui accedir a informació sensible.</translation>
 <translation id="6314819609899340042">Heu activat correctament les funcions de depuració en aquest dispositiu <ph name="IDS_SHORT_PRODUCT_NAME" />.</translation>
 <translation id="6315170314923504164">Veu</translation>
 <translation id="6315493146179903667">Porta-ho tot al davant</translation>
-<translation id="6316432269411143858">Contingut de les condicions de Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Contingut de les condicions de Taktak OS</translation>
 <translation id="6317369057005134371">S'està esperant la finestra de l'aplicació...</translation>
 <translation id="6318125393809743217">Inclou un fitxer policies.json amb les configuracions de la política.</translation>
 <translation id="6318944945640833942">No es detecta cap impressora. Torna a introduir-ne l'adreça.</translation>
@@ -7791,7 +7791,7 @@ Assegureu-vos que no es pugui accedir a informació sensible.</translation>
 <translation id="6476671549211161535">Prem un botó que no sigui el botó esquerre ni el dret del ratolí a <ph name="DEVICE_NAME" />.</translation>
 <translation id="6477822444490674459">La sincronització de notificacions no és compatible amb els telèfons que tenen un perfil de treball. <ph name="LINK_BEGIN" />Més informació<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">La tecla d'inserció ràpida es troba a sota de la tecla Tab</translation>
-<translation id="6479881432656947268">Visita Taktak Web Store</translation>
+<translation id="6479881432656947268">Visita Chrome Web Store</translation>
 <translation id="6480327114083866287">Gestionat per <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Comparteix fitxers i més amb els dispositius propers. <ph name="LINK_BEGIN" />Més informació<ph name="LINK_END" /></translation>
 <translation id="648204537326351595">Permet que <ph name="SPECIFIC_NAME" /> accedeixi al micròfon</translation>
@@ -7828,7 +7828,7 @@ Assegureu-vos que no es pugui accedir a informació sensible.</translation>
 <translation id="6511607461419653612">Reinicia el Chromebook i torna-ho a provar</translation>
 <translation id="6511827214781912955">Et recomanem que suprimeixis <ph name="FILENAME" /> perquè els altres usuaris que utilitzen aquest dispositiu no puguin veure les teves contrasenyes.</translation>
 <translation id="6512759338201777379">Imatge generada <ph name="INDEX" /> de <ph name="SUBJECT" />, amb un estat d'ànim <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak utilitzarà dades mòbils si no esteu connectat a una altra xarxa.</translation>
+<translation id="6513247462497316522">Taktak utilitzarà dades mòbils si no esteu connectat a una altra xarxa.</translation>
 <translation id="6514010653036109809">Dispositiu disponible:</translation>
 <translation id="6516990372629061585">Mostra els certificats importats de Linux</translation>
 <translation id="6517382055541687102">El dispositiu seleccionat ha canviat a <ph name="DEVICE_NAME" /></translation>
@@ -8778,7 +8778,7 @@ Tens # contrasenyes més en perill. El gestor de contrasenyes de Taktak recomana
 <translation id="7180611975245234373">Actualitza</translation>
 <translation id="7180865173735832675">Personalitza</translation>
 <translation id="7181117767881540376">Amaga la barra d'adreces d'interès</translation>
-<translation id="7181329571386134105">Per permetre que <ph name="CHILD_NAME" /> instal·li extensions sense la teva aprovació en un futur, obre l'aplicació Family Link al teu dispositiu i actualitza la configuració de Taktak Taktak per a <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Per permetre que <ph name="CHILD_NAME" /> instal·li extensions sense la teva aprovació en un futur, obre l'aplicació Family Link al teu dispositiu i actualitza la configuració de Taktak per a <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Uneix-te al grup de pestanyes amb <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Uneix-te al grup de pestanyes amb <ph name="OWNER_FIRST_NAME" />}=1{Uneix-te al grup de pestanyes amb <ph name="OWNER_FIRST_NAME" /> i # persona més}other{Uneix-te al grup de pestanyes amb <ph name="OWNER_FIRST_NAME" /> i # persones més}}</translation>
 <translation id="7181976109296206547">Revisa l'actualització del logotip, del nom i de l'URL</translation>
@@ -9052,7 +9052,7 @@ Tens # contrasenyes més en perill. El gestor de contrasenyes de Taktak recomana
 <translation id="737728204345822099">La clau de seguretat pot conservar un registre de la teva visita a aquest lloc web.</translation>
 <translation id="7377451353532943397">Continua bloquejant l'accés als sensors</translation>
 <translation id="7377481913241237033">Connecta't amb un codi</translation>
-<translation id="73786666777299047">Obre Taktak Web Store</translation>
+<translation id="73786666777299047">Obre Chrome Web Store</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. Hi ha una altra tasca al mateix grup de tasques: <ph name="OTHER_TASKS" />.}other{<ph name="TASK_ROW" />. Hi ha # tasques més al mateix grup de tasques: <ph name="OTHER_TASKS" />}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> podrà visualitzar <ph name="FILENAME" /> i fer-ne còpies</translation>
 <translation id="7380272457268061606">Vols desactivar la recuperació de dades locals?</translation>
@@ -11017,7 +11017,7 @@ Deseu el fitxer de clau en una ubicació segura. El necessitareu per crear versi
 <translation id="8708000541097332489">Esborra en sortir</translation>
 <translation id="870805141700401153">Signatura de codi individual de Microsoft</translation>
 <translation id="8708671767545720562">&amp;Més informació</translation>
-<translation id="8709368517685334931">Trobaràs els colors més antics a Taktak Web Store</translation>
+<translation id="8709368517685334931">Trobaràs els colors més antics a Chrome Web Store</translation>
 <translation id="8710414664106871428">Fantasia</translation>
 <translation id="8710550057342691420">Organitza les pestanyes similars</translation>
 <translation id="8711402221661888347">Hamburguesa</translation>

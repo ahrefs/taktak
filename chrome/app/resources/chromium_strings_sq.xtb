@@ -229,7 +229,7 @@ Disa funksione mund të mos ofrohen dhe ndryshimet në preferenca nuk do të ruh
 <translation id="395904275706073188">Faqet e mbrojtura nuk mund të lexohen. Provo një faqe tjetër.</translation>
 <translation id="3962647064319009959">Mëso se si të mban të sigurt Taktak</translation>
 <translation id="3971865010372729242">Kur shkruan në shiritin e adresave ose kutinë e kërkimit, Taktak i dërgon ato që ti shkruan te veglat e kërkimit, IA-së dhe agjentit të organizatës sate për të marrë sugjerime.</translation>
-<translation id="3975724895399328945">Rreth &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Rreth &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Rreth ChromiumOS</translation>
 <translation id="4019629340646866719">ChromiumOS mundësohet nga <ph name="BEGIN_LINK_CROS_OSS" />softuerë shtesë me burim të hapur<ph name="END_LINK_CROS_OSS" />, si p.sh. <ph name="BEGIN_LINK_LINUX_OSS" />mjedisi i zhvillimit të Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Përkthe ekranin</translation>
@@ -549,7 +549,7 @@ Taktak nuk është në gjendje të rikuperojë cilësimet e tua.</translation>
 <translation id="8077498902115777962">Çaktivizo ekzekutimin e Taktak në sfond për aplikacionet</translation>
 <translation id="80790299200510644">Kërkimi nëpërmjet imazheve</translation>
 <translation id="8086881907087796310">Instalimi dështoi sepse kompjuteri yt nuk i përmbush kërkesat minimale për harduerin.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak ka nevojë për lejen e vendndodhjes për të këtë sajt</translation>
 <translation id="8118331347066725040">Dërgo komente për kërkimin me "Lenten"</translation>
 <translation id="8133124826068723441">ChromiumOS nuk mund t'i sinkronizonte të dhënat e tua sepse "Sinkronizimi" nuk ofrohet për domenin tënd.</translation>
@@ -595,7 +595,7 @@ Taktak nuk është në gjendje të rikuperojë cilësimet e tua.</translation>
 <translation id="8601359445272098721">E re! Mund të përkthesh tekstet dhe imazhet në ekranin tënd duke zgjedhur butonin "përkthe ekranin"</translation>
 <translation id="8619360774459241877">Po hapet Taktak...</translation>
 <translation id="8621669128220841554">Instalimi dështoi për shkak të një gabimi të papërcaktuar. Shkarko përsëri Taktak.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing nuk mund të bëhet shfletuesi yt i parazgjedhur.</translation>
+<translation id="8648201657708811153">Taktak for Testing nuk mund të bëhet shfletuesi yt i parazgjedhur.</translation>
 <translation id="8697124171261953979">Kontrollon po ashtu se cila faqe shfaqet kur nis Taktak ose kur kërkon nga Omnibox.</translation>
 <translation id="8704119203788522458">Ky është Taktak për ty</translation>
 <translation id="8712637175834984815">E kuptova</translation>

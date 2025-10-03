@@ -348,7 +348,7 @@ Fel arall, bydd eich gosodiadau preifatrwydd yn rhwystro hyn. Bydd hyn yn caniat
 <translation id="1567040042588613346">Mae'r polisi hwn yn gweithio yn ôl y bwriad ond gosodir yr un gwerth mewn man arall ac mae'n cael ei ddisodli gan y polisi hwn.</translation>
 <translation id="1567405528131216114">Ychwanegu <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Rhowch y dyddiad dod i ben</translation>
-<translation id="1569694109004336106">Mae Taktak Taktak yn ceisio troi Windows Hello ymlaen ar gyfer llenwi cyfrineiriau.</translation>
+<translation id="1569694109004336106">Mae Taktak yn ceisio troi Windows Hello ymlaen ar gyfer llenwi cyfrineiriau.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> modfedd</translation>
 <translation id="1574714699824202614">Wrthi'n dilysu'r dull talu</translation>
 <translation id="1576277203042721907">Mewnwelediadau siopa</translation>
@@ -654,7 +654,7 @@ Fel arall, bydd eich gosodiadau preifatrwydd yn rhwystro hyn. Bydd hyn yn caniat
 <translation id="2090451897496479509">Cysylltwch â'r darparwr am ragor o wybodaeth</translation>
 <translation id="2091887806945687916">Sain</translation>
 <translation id="2093184051799735948">Chwiliwch <ph name="ENGINE_NAME" /> neu teipiwch URL</translation>
-<translation id="2093982008204312032">Mae Taktak Taktak yn ceisio diffodd Windows Hello ar gyfer llenwi cyfrineiriau.</translation>
+<translation id="2093982008204312032">Mae Taktak yn ceisio diffodd Windows Hello ar gyfer llenwi cyfrineiriau.</translation>
 <translation id="2094505752054353250">Camgymhariad parth</translation>
 <translation id="2094704029599359040">Gwybodaeth Fersiwn</translation>
 <translation id="2099652385553570808">Tair stapl ar y chwith</translation>
@@ -864,7 +864,7 @@ Fel arall, bydd eich gosodiadau preifatrwydd yn rhwystro hyn. Bydd hyn yn caniat
 <translation id="2396249848217231973">&amp;Dadwneud dileu</translation>
 <translation id="239708975263889666">Golygu'r rhif teithiwr hysbys</translation>
 <translation id="2399344929880464793">Mae'r IBAN hwn wedi'i gadw yn eich Cyfrif Taktak fel y gallwch ei ddefnyddio ar draws gwasanaethau Taktak.</translation>
-<translation id="2399868464369312507">Mae Taktak Taktak yn ceisio golygu dulliau talu.</translation>
+<translation id="2399868464369312507">Mae Taktak yn ceisio golygu dulliau talu.</translation>
 <translation id="2400263725572336749">Ychwanegu pasbort</translation>
 <translation id="2400271059665846158">Rheoli eich cardiau teyrngarwch yn Taktak Wallet</translation>
 <translation id="2400600116338235695">Yn gallu gofyn am gysylltu â phyrth cyfresol</translation>
@@ -1994,7 +1994,7 @@ Fel arall, bydd eich gosodiadau preifatrwydd yn rhwystro hyn. Bydd hyn yn caniat
 <translation id="4269599248168651462">Rhoddir tystysgrif y gweinydd i enw nad yw'n unigryw.</translation>
 <translation id="4270541775497538019">Pentyrrwr 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Gweld 0 adolygiadau. Y sgôr gyfartalog yw <ph name="STARS" /> seren.}=1{Gweld 1 adolygiad. Y sgôr gyfartalog yw <ph name="STARS" /> seren.}two{Gweld pob un o'r # adolygiad. Y sgôr gyfartalog yw <ph name="STARS" /> seren.}few{Gweld pob un o'r # adolygiad. Y sgôr gyfartalog yw <ph name="STARS" /> seren.}many{Gweld pob un o'r # adolygiad. Y sgôr gyfartalog yw <ph name="STARS" /> seren.}other{Gweld pob un o'r # adolygiad. Y sgôr gyfartalog yw <ph name="STARS" /> seren.}}</translation>
-<translation id="4271652479722040953">Pan ychwanegir estyniadau at Taktak, anfonir data perthnasol am yr estyniadau hyn at drydydd partïon i'w dadansoddi a gallant fod yn weladwy i'ch gweinyddwr. Mae'r data'n cynnwys gwybodaeth am yr estyniadau megis enw, amser gosod, ffynhonnell gosod yn ogystal â gweithgarwch sy'n gysylltiedig â'r estyniadau hyn (megis newid tabiau, cysylltu â gwefannau, neu gyrchu cwcis). Cesglir y data hyn ar gyfer estyniadau a osodwyd o Taktak Web Store yn ogystal ag estyniadau oddi ar y siop.</translation>
+<translation id="4271652479722040953">Pan ychwanegir estyniadau at Taktak, anfonir data perthnasol am yr estyniadau hyn at drydydd partïon i'w dadansoddi a gallant fod yn weladwy i'ch gweinyddwr. Mae'r data'n cynnwys gwybodaeth am yr estyniadau megis enw, amser gosod, ffynhonnell gosod yn ogystal â gweithgarwch sy'n gysylltiedig â'r estyniadau hyn (megis newid tabiau, cysylltu â gwefannau, neu gyrchu cwcis). Cesglir y data hyn ar gyfer estyniadau a osodwyd o Chrome Web Store yn ogystal ag estyniadau oddi ar y siop.</translation>
 <translation id="4275830172053184480">Ailgychwynnwch eich dyfais</translation>
 <translation id="4276974990916607331">Dim diolch</translation>
 <translation id="4277028893293644418">Ailosod cyfrinair</translation>
@@ -3119,7 +3119,7 @@ Fel arall, bydd eich gosodiadau preifatrwydd yn rhwystro hyn. Bydd hyn yn caniat
 <translation id="6164605812717770913">Dywedodd rhiant neu warcheidwad nad yw’r wefan hon yn iawn i chi ymweld â hi. Gallwch ofyn iddynt ei ddadrwystro.</translation>
 <translation id="6165508094623778733">Dysgu rhagor</translation>
 <translation id="6167577165590485365">Ceisiwyd nôl ddiwethaf:</translation>
-<translation id="617256461084925519">Mae Taktak Taktak yn ceisio cadarnhau mai chi sydd yno fel y gall lenwi'ch gwybodaeth talu.</translation>
+<translation id="617256461084925519">Mae Taktak yn ceisio cadarnhau mai chi sydd yno fel y gall lenwi'ch gwybodaeth talu.</translation>
 <translation id="6173208311907792313">Cwblhewch eich pryniant gan ddefnyddio Windows Hello</translation>
 <translation id="6176387967264100435">Mae'r pris hwn yn uchel</translation>
 <translation id="6177128806592000436">Nid yw eich cysylltiad â'r wefan hon yn ddiogel</translation>
@@ -3978,7 +3978,7 @@ Manylion ychwanegol:
 <translation id="7564049878696755256">Gallech golli mynediad at eich cyfrif <ph name="ORG_NAME" /> neu brofi dwyn hunaniaeth. Mae Taktak yn argymell newid eich cyfrinair nawr.</translation>
 <translation id="7564667064360547717">Crysau a Thopiau</translation>
 <translation id="7567204685887185387">Ni allai'r gweinydd hwn brofi ei fod yn <ph name="DOMAIN" />; mae'n bosib bod ei dystysgrif ddiogelwch wedi'i chyhoeddi'n dwyllodrus. Gall hyn gael ei achosi gan gamffurfweddiad neu ymosodwr yn rhyng-gipio'ch cysylltiad.</translation>
-<translation id="7568616151991626879">Mae Taktak Taktak yn ceisio llenwi'ch cyfrinair ar <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Mae Taktak yn ceisio llenwi'ch cyfrinair ar <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Dim}=1{1 tab ar y ddyfais hon}two{# dab ar y ddyfais hon}few{# thab ar y ddyfais hon}many{# thab ar y ddyfais hon}other{# tab ar y ddyfais hon}}</translation>
 <translation id="7569490014721427265">Golff</translation>
 <translation id="7569952961197462199">Tynnu cerdyn credyd o Taktak?</translation>
@@ -4559,7 +4559,7 @@ Manylion ychwanegol:
 <translation id="8541579497401304453">Cysylltwch â busnes trwy gychwyn galwad ffôn.</translation>
 <translation id="8542014550340843547">Tair stapl ar y gwaelod</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Mae Taktak Taktak yn ceisio addasu gosodiadau ar gyfer llenwi dulliau talu.</translation>
+<translation id="8544217240017914508">Mae Taktak yn ceisio addasu gosodiadau ar gyfer llenwi dulliau talu.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Opsiwn Pris Uchel</translation>
 <translation id="8546254312340305428">Rhowch reswm dros uwchlwytho (gofynnol)</translation>

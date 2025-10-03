@@ -348,7 +348,7 @@ Bestela, pribatutasun-ezarpenek blokeatu egingo dute baimen hori. Baimen honekin
 <translation id="1567040042588613346">Gidalerroak espero bezala funtzionatzen du, baina balio bera beste nonbait dago ezarrita, eta gidalerro honek hura ordezten du.</translation>
 <translation id="1567405528131216114">Gehitu <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Adierazi iraungitze-data</translation>
-<translation id="1569694109004336106">Taktak Taktak Windows Hello aktibatzen saiatzen ari da, pasahitzak betetzeko.</translation>
+<translation id="1569694109004336106">Taktak Windows Hello aktibatzen saiatzen ari da, pasahitzak betetzeko.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> × <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Ordainketa-metodoa egiaztatzen</translation>
 <translation id="1576277203042721907">Erosketen estatistikak</translation>
@@ -654,7 +654,7 @@ Bestela, pribatutasun-ezarpenek blokeatu egingo dute baimen hori. Baimen honekin
 <translation id="2090451897496479509">Informazio gehiago lortzeko, jarri hornitzailearekin harremanetan</translation>
 <translation id="2091887806945687916">Soinua</translation>
 <translation id="2093184051799735948">Bilatu <ph name="ENGINE_NAME" /> edo idatzi URLa</translation>
-<translation id="2093982008204312032">Taktak Taktak Windows Hello desaktibatzen saiatzen ari da, pasahitzak betetzeko.</translation>
+<translation id="2093982008204312032">Taktak Windows Hello desaktibatzen saiatzen ari da, pasahitzak betetzeko.</translation>
 <translation id="2094505752054353250">Domeinuak ez datoz bat</translation>
 <translation id="2094704029599359040">Bertsioaren informazioa</translation>
 <translation id="2099652385553570808">Hiru grapa ezkerrean</translation>
@@ -864,7 +864,7 @@ Bestela, pribatutasun-ezarpenek blokeatu egingo dute baimen hori. Baimen honekin
 <translation id="2396249848217231973">&amp;Desegin ezabatzea</translation>
 <translation id="239708975263889666">Editatu bidaiari ezagunaren zenbakia</translation>
 <translation id="2399344929880464793">IBANa zure Taktak-ko kontuan gorde da; beraz, Taktak-ren zerbitzu guztietan erabil dezakezu.</translation>
-<translation id="2399868464369312507">Taktak Taktak-k ordainketa-metodoak editatu behar ditu.</translation>
+<translation id="2399868464369312507">Taktak-k ordainketa-metodoak editatu behar ditu.</translation>
 <translation id="2400263725572336749">Gehitu pasaportea</translation>
 <translation id="2400271059665846158">Kudeatu fideltasun-txartelak Taktak Diru-zorroa zerbitzuan</translation>
 <translation id="2400600116338235695">Serieko ataketara konektatzea eska dezake</translation>
@@ -1990,7 +1990,7 @@ Bestela, pribatutasun-ezarpenek blokeatu egingo dute baimen hori. Baimen honekin
 <translation id="4269599248168651462">Zerbitzari-ziurtagiria esklusiboa ez den izen bati jaulki zaio.</translation>
 <translation id="4270541775497538019">6. pilatzailea</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Ikusi 0 iritzi. Batez besteko balorazioa <ph name="STARS" /> izarrekoa da.}=1{Ikusi iritzi bat. Batez besteko balorazioa <ph name="STARS" /> izarrekoa da.}other{Ikusi iritzi guztiak (#). Batez besteko balorazioa <ph name="STARS" /> izarrekoa da.}}</translation>
-<translation id="4271652479722040953">Taktak-n luzapenak gehitzen direnean, luzapen horiei buruzko datu egokiak bidaltzen zaizkie hirugarrenei, azter ditzaten, eta baliteke zure administratzaileak ikusi ahal izatea. Datu horietan luzapenei buruzko informazioa dago (adibidez, izena, instalatze-ordua, instalazioaren iturburua eta luzapen horiekin loturiko jarduerak; esaterako, fitxaz aldatzea, webguneekin harremanetan jartzea edo cookieak atzitzea). Taktak Web Store-tik nahiz denda bat ez den iturburu batetik instalatutako luzapenei buruz biltzen dira datuok.</translation>
+<translation id="4271652479722040953">Taktak-n luzapenak gehitzen direnean, luzapen horiei buruzko datu egokiak bidaltzen zaizkie hirugarrenei, azter ditzaten, eta baliteke zure administratzaileak ikusi ahal izatea. Datu horietan luzapenei buruzko informazioa dago (adibidez, izena, instalatze-ordua, instalazioaren iturburua eta luzapen horiekin loturiko jarduerak; esaterako, fitxaz aldatzea, webguneekin harremanetan jartzea edo cookieak atzitzea). Chrome Web Store-tik nahiz denda bat ez den iturburu batetik instalatutako luzapenei buruz biltzen dira datuok.</translation>
 <translation id="4275830172053184480">Berrabiarazi gailua</translation>
 <translation id="4276974990916607331">Ez, eskerrik asko</translation>
 <translation id="4277028893293644418">Berrezarri pasahitza</translation>
@@ -3114,7 +3114,7 @@ Bestela, pribatutasun-ezarpenek blokeatu egingo dute baimen hori. Baimen honekin
 <translation id="6164605812717770913">Guraso edo tutore batek webgune hau zuk bisitatzeko egokia ez dela esan du. Desblokeatzeko eska diezaiokezu.</translation>
 <translation id="6165508094623778733">Lortu informazio gehiago</translation>
 <translation id="6167577165590485365">Eskuratzeko azken saiakera:</translation>
-<translation id="617256461084925519">Taktak Taktak-k zu zaren egiaztatu nahi du, zure ordainketa-informazioa betetzeko.</translation>
+<translation id="617256461084925519">Taktak-k zu zaren egiaztatu nahi du, zure ordainketa-informazioa betetzeko.</translation>
 <translation id="6173208311907792313">Amaitu erosketa Windows Hello erabilita</translation>
 <translation id="6176387967264100435">Garestia da prezioa</translation>
 <translation id="6177128806592000436">Webgune honetarako konexioa ez da guztiz segurua</translation>
@@ -3973,7 +3973,7 @@ Xehetasun gehiago:
 <translation id="7564049878696755256"><ph name="ORG_NAME" /> konturako sarbidea gal zenezake, edo kontua lapur liezazukete. Pasahitza aldatzea gomendatzen dizu Taktak-k.</translation>
 <translation id="7564667064360547717">Alkandorak eta kamisetak</translation>
 <translation id="7567204685887185387">Zerbitzari honek ezin izan du egiaztatu <ph name="DOMAIN" /> domeinua denik. Bere segurtasun-ziurtagiria iruzurrezko moduan igorrita egon liteke. Baliteke gaizki konfiguratuta dagoelako izatea edo erasotzaile batek zure konexioa atzeman duelako izatea.</translation>
-<translation id="7568616151991626879"><ph name="APP_NAME" /> aplikazioko pasahitza betetzen saiatzen ari da Taktak Taktak.</translation>
+<translation id="7568616151991626879"><ph name="APP_NAME" /> aplikazioko pasahitza betetzen saiatzen ari da Taktak.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Bat ere ez}=1{Gailu honetako fitxa bat}other{Gailu honetako # fitxa}}</translation>
 <translation id="7569490014721427265">Golfa</translation>
 <translation id="7569952961197462199">Kreditu-txartela Taktak-tik kendu nahi duzu?</translation>
@@ -4554,7 +4554,7 @@ Xehetasun gehiago:
 <translation id="8541579497401304453">Jarri enpresa batekin harremanetan telefonoz deituta.</translation>
 <translation id="8542014550340843547">Hiru grapa behean</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak-k ordainketa-metodoak betetzeko ezarpenak aldatu behar ditu.</translation>
+<translation id="8544217240017914508">Taktak-k ordainketa-metodoak betetzeko ezarpenak aldatu behar ditu.</translation>
 <translation id="8544303911974837265">Poliesterra</translation>
 <translation id="854548366864113872">Aukera garestia</translation>
 <translation id="8546254312340305428">Kargatzeko arrazoia (beharrezkoa)</translation>

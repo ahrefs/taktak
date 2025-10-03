@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="af">
-<translation id="1001534784610492198">Die installeerderargief is korrup of ongeldig. Laai Taktak Taktak asseblief weer af.</translation>
+<translation id="1001534784610492198">Die installeerderargief is korrup of ongeldig. Laai Taktak asseblief weer af.</translation>
 <translation id="1018937009655463387">Om jou venster te deel, moet jy skermopname vir Taktak in Stelselinstellings toelaat.</translation>
 <translation id="1026101648481255140">Hervat installering</translation>
-<translation id="102763973188675173">Pasmaak en beheer Taktak Taktak. Opdatering is beskikbaar.</translation>
+<translation id="102763973188675173">Pasmaak en beheer Taktak. Opdatering is beskikbaar.</translation>
 <translation id="1028061813283459617"><ph name="BEGIN_LINK" />Meld af by Taktak<ph name="END_LINK" /> om blaaierdata net van hierdie toestel af uit te vee terwyl jy dit in jou Taktak-rekening hou.</translation>
 <translation id="1042270987544905725">Klik om die Taktak-aanmeldingdialoog toe te maak</translation>
 <translation id="1051793555070215510">Voltooi hierdie 1-minuutopname om ons te help om Incognito te verbeter.</translation>
@@ -27,13 +27,13 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="1290883685122687410">Opstellingfout: <ph name="METAINSTALLER_EXIT_CODE" />. <ph name="WINDOWS_ERROR" /></translation>
 <translation id="1302523850133262269">Wag asseblief terwyl Taktak die jongste stelselopdaterings installeer.</translation>
 <translation id="1330562121671411446">Bespeur taal</translation>
-<translation id="1335640173511558774"><ph name="MANAGER" /> vereis dat jy die volgende diensbepalings lees en aanvaar voordat jy hierdie toestel gebruik. Hierdie bepalings wysig, beperk of brei nie die Taktak Taktak OS Flex-bepalings uit nie.</translation>
+<translation id="1335640173511558774"><ph name="MANAGER" /> vereis dat jy die volgende diensbepalings lees en aanvaar voordat jy hierdie toestel gebruik. Hierdie bepalings wysig, beperk of brei nie die Taktak OS Flex-bepalings uit nie.</translation>
 <translation id="1341711321000856656">Jy kan oorskakel om wagwoorde van ’n ander Taktak-profiel af te sien</translation>
 <translation id="1356661055722410047">Nuut! Jy kan sowel teks as prente op jou skerm vertaal</translation>
 <translation id="1363996462118479832">Taktak-bedryfstelsel kon nie jou data sinkroniseer nie weens ’n fout met aanmelding.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Soek</translation>
-<translation id="1399397803214730675">Hierdie rekenaar het reeds 'n meer onlangse weergawe van Taktak Taktak. As die sagteware nie werk nie, deïnstalleer Taktak Taktak en probeer weer.</translation>
+<translation id="1399397803214730675">Hierdie rekenaar het reeds 'n meer onlangse weergawe van Taktak. As die sagteware nie werk nie, deïnstalleer Taktak en probeer weer.</translation>
 <translation id="141901961143729572">Deel jou gedagtes</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Taktak het klaar opgedateer. Jy kan die jongste weergawe gebruik sodra jy herbegin het. Jou huidige oortjies sal daarna weer oopgemaak word.}=1{Taktak het klaar opgedateer. Jy kan die jongste weergawe gebruik sodra jy herbegin het. Jou huidige oortjies sal daarna weer oopgemaak word. Jou Incognito-venster sal nie weer oopgemaak word nie.}other{Taktak het klaar opgedateer. Jy kan die jongste weergawe gebruik sodra jy herbegin het. Jou huidige oortjies sal daarna weer oopgemaak word. Jou # Incognito-vensters sal nie weer oopgemaak word nie.}}</translation>
 <translation id="1434626383986940139">Taktak Kanarie-programme</translation>
@@ -46,7 +46,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="1547295885616600893">Taktak-bedryfstelsel word deur bykomende <ph name="BEGIN_LINK_CROS_OSS" />oopbronsagteware<ph name="END_LINK_CROS_OSS" /> moontlik gemaak.</translation>
 <translation id="1547469039832541117">Beëindig die gemerkte taak.</translation>
 <translation id="1553358976309200471">Dateer Taktak op</translation>
-<translation id="1587223624401073077">Taktak Taktak gebruik tans jou kamera.</translation>
+<translation id="1587223624401073077">Taktak gebruik tans jou kamera.</translation>
 <translation id="1587325591171447154"><ph name="FILE_NAME" /> is gevaarlik en daarom het Taktak dit geblokkeer.</translation>
 <translation id="1597911401261118146"><ph name="BEGIN_LINK" />Meld by Taktak aan<ph name="END_LINK" /> om te kyk of jou wagwoorde teen dataskendings en ander sekuriteitkwessies beveilig word.</translation>
 <translation id="1619887657840448962">Om Taktak veiliger te maak, het ons die volgende uitbreiding, wat nie in die <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> gelys word nie en wat dalk sonder jou medewete bygevoeg is, gedeaktiveer.</translation>
@@ -55,11 +55,11 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="1651617469580841801">Wanneer jy Taktak Lens gebruik, word die bladsytitel, URL en inhoud, insluitend PDF’s, na Taktak toe gestuur. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">Meer oor Taktak OS Flex</translation>
 <translation id="1674870198290878346">Maak skakel in 'n incognitovenster in Taktak oop</translation>
-<translation id="1682634494516646069">Taktak Taktak kan nie sy datagids lees of daarheen skryf nie:
+<translation id="1682634494516646069">Taktak kan nie sy datagids lees of daarheen skryf nie:
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Wanneer jy in die adresbalk of soekkassie tik, stuur Taktak dit wat jy tik na jou organisasie se soek-, KI- en agentnutsgoed om voorstelle te kry.</translation>
-<translation id="1698376642261615901">Taktak Taktak is 'n webblaaier wat webbladsye en programme teen die spoed van lig laat loop. Dit is vinnig, stabiel en maklik om te gebruik. Blaai veiliger deur die web aangesien wanware- en uitvissingbeskerming by Taktak Taktak ingebou is.</translation>
+<translation id="1698376642261615901">Taktak is 'n webblaaier wat webbladsye en programme teen die spoed van lig laat loop. Dit is vinnig, stabiel en maklik om te gebruik. Blaai veiliger deur die web aangesien wanware- en uitvissingbeskerming by Taktak ingebou is.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Taktak sal oor 'n uur herbegin}other{Taktak sal oor # uur herbegin}}</translation>
 <translation id="1722488837206509557">Hiermee sal jy uit beskikbare toestelle kan kies en inhoud daarop kan wys.</translation>
 <translation id="1786003790898721085">Maak seker dat jy by Taktak aangemeld is op jou <ph name="TARGET_DEVICE_NAME" /> en probeer dan weer stuur.</translation>
@@ -70,8 +70,8 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="1832046143430087831">Maak werwe vinniger met Taktak se V8-enjin, maar maak Taktak effens minder bestand teen aanvalle. Hierdie instelling is af.</translation>
 <translation id="1838374766361614909">Vee soektog uit</translation>
 <translation id="1860536484129686729">Taktak het toestemming nodig om toegang te kry tot jou kamera vir hierdie werf</translation>
-<translation id="1873233029667955273">Taktak Taktak is nie jou verstekblaaier nie</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-In)</translation>
+<translation id="1873233029667955273">Taktak is nie jou verstekblaaier nie</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-In)</translation>
 <translation id="1877026089748256423">Taktak is verouderd</translation>
 <translation id="1880677175115548835">Kies teks</translation>
 <translation id="1919130412786645364">Laat Taktak-aanmelding toe</translation>
@@ -83,7 +83,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="2024959665595762054">Verifieer dis jy om Taktak-data in jou Taktak-rekening te gebruik en te stoor</translation>
 <translation id="2034233344106846793">Taktak gradeer onveilige verbindings outomaties op na HTTPS, wanneer moontlik</translation>
 <translation id="207902854391093810">Wanneer proeflopies aan is, stel advertensiemeting werwe wat jy besoek in staat om inligting van Taktak af te versoek wat die werf help om die werkverrigting van hul advertensies te meet. Advertensiemeting beperk oorkruiswerfnasporing deur so min inligting moontlik tussen werwe oor te dra.</translation>
-<translation id="2091012649849228750">Jy het Windows 10 of nuwer nodig om in die toekoms Taktak Taktak-opdaterings te kry. Hierdie rekenaar gebruik Windows 8.</translation>
+<translation id="2091012649849228750">Jy het Windows 10 of nuwer nodig om in die toekoms Taktak-opdaterings te kry. Hierdie rekenaar gebruik Windows 8.</translation>
 <translation id="2094648590148273905">Taktak OS Flex-bepalings</translation>
 <translation id="2094919256425865063">Verlaat Taktak in elk geval?</translation>
 <translation id="2096213354152647998">Jy het nie onlangs die webwerf besoek nie. Taktak het <ph name="PERMISSION" /> verwyder.</translation>
@@ -105,8 +105,8 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="2199691482078155239">Taktak gee jou meer beheer oor die advertensies wat jy sien en beperk wat werwe oor jou kan uitvind wanneer hulle vir jou gepersonaliseerde advertensies wys</translation>
 <translation id="2216543877350048334">Meld af om jou Taktak-rekening uit Taktak te verwyder</translation>
 <translation id="2236949375853147973">My aktiwiteit</translation>
-<translation id="2290014774651636340">Taktak API-sleutels ontbreek. Sommige funksies van Taktak Taktak sal gedeaktiveer word.</translation>
-<translation id="2290095356545025170">Is jy seker jy wil Taktak Taktak deïnstalleer?</translation>
+<translation id="2290014774651636340">Taktak API-sleutels ontbreek. Sommige funksies van Taktak sal gedeaktiveer word.</translation>
+<translation id="2290095356545025170">Is jy seker jy wil Taktak deïnstalleer?</translation>
 <translation id="2301513536169703857">Meld aan by Taktak om jou wagwoorde, boekmerke en meer op al jou toestelle te kry.</translation>
 <translation id="2309047409763057870">Dit is 'n sekondêre installering van Taktak en kan nie jou verstekblaaier gemaak word nie.</translation>
 <translation id="2345992953227471816">Taktak het bevind dat hierdie uitbreidings wanware bevat:</translation>
@@ -116,7 +116,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="2403703063067034158">Aanskakelingsfout: ’n ander geval of opstelling word tans gebruik; probeer weer later.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{Een of meer Taktak-uitbreidings het toegang tot 1 MKT-toestel gehad}=1{Een of meer Taktak-uitbreidings het tans toegang tot 1 MKT-toestel}other{Een of meer Taktak-uitbreidings het tans toegang tot # MKT-toestelle}}</translation>
 <translation id="2424440923901031101">Hierdie uitbreiding oortree Taktak Webwinkel se beleid, en kan onveilig wees. Verwyder dit uit Taktak sodat dit nie meer jou data, insluitend jou persoonlike inligting, op werwe wat jy besoek kan sien en verander nie.</translation>
-<translation id="2467438592969358367">Taktak Taktak wil jou wagwoorde uitvoer. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
+<translation id="2467438592969358367">Taktak wil jou wagwoorde uitvoer. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
 <translation id="2472092250898121027">Hierdie uitbreiding bevat wanware en is onveilig. Verwyder dit uit Taktak sodat dit nie meer jou data, insluitend jou persoonlike inligting, op werwe wat jy besoek kan sien en verander nie.</translation>
 <translation id="2485422356828889247">Deïnstalleer</translation>
 <translation id="2513154137948333830">Herselflaai word vereis: <ph name="INSTALL_SUCCESS" /></translation>
@@ -128,19 +128,19 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="2571392474191184472">Jou organisasie bestuur Taktak</translation>
 <translation id="2574930892358684005"><ph name="EXISTING_USER" /> is reeds by hierdie Taktak-profiel aangemeld. Taktak kan jou eie profiel vir jou skep om jou blaaidata apart te hou.</translation>
 <translation id="2579190314336775785">Wagwoorde kan net buite Taktak uitgevee word</translation>
-<translation id="2580411288591421699">Kan nie dieselfde Taktak Taktak-weergawe installeer as wat tans gebruik word nie. Maak Taktak Taktak asseblief toe en probeer weer.</translation>
+<translation id="2580411288591421699">Kan nie dieselfde Taktak-weergawe installeer as wat tans gebruik word nie. Maak Taktak asseblief toe en probeer weer.</translation>
 <translation id="2586406160782125153">Dit sal jou blaaierdata op hierdie toestel uitvee. Meld as <ph name="USER_EMAIL" /> by Taktak aan om jou data later op te haal.</translation>
 <translation id="259935314519650377">Kon nie die afgelaaide installeerder kas nie. Fout: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">Stelsel</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Taktak kontroleer gereeld om seker te maak jou blaaier het die veiligste instellings. Ons sal jou laat weet as jy enigiets moet nagaan.</translation>
 <translation id="2652691236519827073">Maak skakel in 'n nuwe Taktak-oortjie oop</translation>
-<translation id="2665296953892887393">Help om Taktak Taktak beter te maak deur omvalverslae en <ph name="UMA_LINK" /> na Taktak te stuur</translation>
+<translation id="2665296953892887393">Help om Taktak beter te maak deur omvalverslae en <ph name="UMA_LINK" /> na Taktak te stuur</translation>
 <translation id="2668094785979141847">Klik om uit Taktak Lens te gaan</translation>
-<translation id="2681444469812712297">Maak <ph name="URL" /> in 'n nuwe oortjie in Taktak Taktak oop.</translation>
+<translation id="2681444469812712297">Maak <ph name="URL" /> in 'n nuwe oortjie in Taktak oop.</translation>
 <translation id="2712141162840347885">Kies enigiets om met Taktak Lens te soek of druk Escape om uit Taktak Lens te gaan</translation>
 <translation id="2738871930057338499">Kon nie aan die internet koppel nie. HTTP 403 verbode. Gaan asseblief jou proxy-opstelling na.</translation>
-<translation id="2742320827292110288">Waarskuwing: Taktak Taktak kan nie keer dat uitbreidings jou blaaigeskiedenis opneem nie. Ontkies hierdie opsie om hierdie uitbreiding in Incognitomodus te deaktiveer.</translation>
+<translation id="2742320827292110288">Waarskuwing: Taktak kan nie keer dat uitbreidings jou blaaigeskiedenis opneem nie. Ontkies hierdie opsie om hierdie uitbreiding in Incognitomodus te deaktiveer.</translation>
 <translation id="2753623023919742414">Klik om te soek</translation>
 <translation id="2765403129283291972">Taktak het toestemming nodig om toegang te kry tot jou mikrofoon vir hierdie werf</translation>
 <translation id="2770231113462710648">Verander verstekblaaier na:</translation>
@@ -172,13 +172,13 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="3003694935412297923">Alle take</translation>
 <translation id="3018957014024118866">Vee ook data uit Taktak uit (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">Herbegin om Taktak OS Flex op te dateer</translation>
-<translation id="3037838751736561277">Taktak Taktak is in agtergrondmodus.</translation>
+<translation id="3037838751736561277">Taktak is in agtergrondmodus.</translation>
 <translation id="3038232873781883849">Wag tans om te installeer...</translation>
 <translation id="3045032126857188731">Vertaalde taal: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Maak terugvoerdialoog toe</translation>
 <translation id="306179102415443347">Gebruik jou kortpad om vinnig na Taktak Wagwoordbestuurder toe te gaan. Jy kan jou kortpad na jou rekenaar se tuisskerm of applanseerder toe skuif.</translation>
 <translation id="3065168410429928842">Taktak-oortjie</translation>
-<translation id="3080151273017101988">Hou aan om agtergrondprogramme te laat loop wanneer Taktak Taktak toe is</translation>
+<translation id="3080151273017101988">Hou aan om agtergrondprogramme te laat loop wanneer Taktak toe is</translation>
 <translation id="3100998948628680988">Gee jou Taktak-profiel 'n naam</translation>
 <translation id="310459126943037700">Kon nie taak(take) beëindig nie.</translation>
 <translation id="3112458742631356345">Taktak het hierdie aflaai geblokkeer omdat die lêer nie algemeen afgelaai word nie en dit gevaarlik kan wees</translation>
@@ -186,7 +186,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="3119573284443908657">Taktak het hierdie aflaai geblokkeer omdat die argieflêer ander lêers insluit wat wanware kan versteek</translation>
 <translation id="3135560418014806498">Voeg Taktak-profiel by</translation>
 <translation id="3137969841538672700">Sleep om te soek</translation>
-<translation id="3140883423282498090">Jou veranderinge sal die volgende keer wanneer jy Taktak Taktak herbegin, in werking tree.</translation>
+<translation id="3140883423282498090">Jou veranderinge sal die volgende keer wanneer jy Taktak herbegin, in werking tree.</translation>
 <translation id="3149510190863420837">Taktak-programme</translation>
 <translation id="3161522574479303604">Alle tale</translation>
 <translation id="319199214552513804">Meld by Taktak aan om hierdie uitbreiding en meer op al jou rekenaars te kry</translation>
@@ -203,7 +203,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="3352986031709923790">boonste regterhoek van soekgebied: regs <ph name="RIGHT" />%, bo <ph name="TOP" />%</translation>
 <translation id="3360895254066713204">Taktak-helper</translation>
 <translation id="3379938682270551431">{0,plural, =0{Taktak sal nou herbegin}=1{Taktak sal oor 1 sekonde herbegin}other{Taktak sal oor # sekondes herbegin}}</translation>
-<translation id="3396977131400919238">'n Bedryfstelselfout het met installering voorgekom. Laai Taktak Taktak asseblief weer af.</translation>
+<translation id="3396977131400919238">'n Bedryfstelselfout het met installering voorgekom. Laai Taktak asseblief weer af.</translation>
 <translation id="3428747202529429621">Hou jou veilig op Taktak en kan gebruik word om jou sekuriteit in ander Taktak-programme te verbeter wanneer jy aangemeld is</translation>
 <translation id="3434246496373299699">Taktak kan jou wagwoorde nagaan as jy met jou Taktak-rekening aanmeld</translation>
 <translation id="3438681572027105609">Meld aan by Taktak om jou wagwoorde en meer op al jou toestelle te kry.</translation>
@@ -214,7 +214,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="3503306920980160878">Taktak het toegang tot jou ligging nodig om jou ligging met hierdie werf te deel</translation>
 <translation id="3533694711092285624">Geen gestoorde wagwoorde nie. Taktak kan jou wagwoorde nagaan wanneer jy hulle stoor.</translation>
 <translation id="3541482654983822893">Taktak kan nie jou wagwoorde nagaan nie. Probeer weer ná 24 uur.</translation>
-<translation id="3576528680708590453">Jou stelseladministrateur het Taktak Taktak opgestel om 'n alternatiewe blaaier oop te maak om na <ph name="TARGET_URL_HOSTNAME" /> toe te gaan.</translation>
+<translation id="3576528680708590453">Jou stelseladministrateur het Taktak opgestel om 'n alternatiewe blaaier oop te maak om na <ph name="TARGET_URL_HOSTNAME" /> toe te gaan.</translation>
 <translation id="3582972582564653026">Sinkroniseer en personaliseer Taktak op al jou toestelle</translation>
 <translation id="3583751698304738917">Jy het reeds in ’n ander Taktak-profiel as <ph name="USER_EMAIL_ADDRESS" /> aangemeld</translation>
 <translation id="358381413217813387">Soek hierdie bladsy met Taktak Lens</translation>
@@ -235,34 +235,34 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="3756724684201900923">Kry meer inligting oor hoe om Taktak te installeer</translation>
 <translation id="3780814664026482060">Taktak – <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">Taktak OS Flex kon nie jou data sinkroniseer nie weens ’n fout met aanmelding.</translation>
-<translation id="3795971588916395511">Taktak Taktak-bedryfstelsel</translation>
-<translation id="3809772425479558446">Taktak Taktak vereis Windows 10 of nuwer.</translation>
+<translation id="3795971588916395511">Taktak-bedryfstelsel</translation>
+<translation id="3809772425479558446">Taktak vereis Windows 10 of nuwer.</translation>
 <translation id="3810973564298564668">Bestuur</translation>
-<translation id="383928141529488001">Taktak Taktak het Bluetooth-toegang nodig om 
+<translation id="383928141529488001">Taktak het Bluetooth-toegang nodig om 
  Bluetooth-toestelle te verken. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Maak asseblief alle Taktak Taktak-vensters toe en probeer weer.</translation>
+<translation id="386202838227397562">Maak asseblief alle Taktak-vensters toe en probeer weer.</translation>
 <translation id="3873044882194371212">Maak skakel in 'n incognitovenster in Taktak oop</translation>
 <translation id="3885770153807205175">Taalkieser</translation>
-<translation id="3889417619312448367">Deïnstalleer Taktak Taktak</translation>
+<translation id="3889417619312448367">Deïnstalleer Taktak</translation>
 <translation id="3892148308691398805">Kopieer teks</translation>
 <translation id="3941890832296813527">Installeerfout: Die installeerderlêernaam is ongeldig of word nie ondersteun nie.</translation>
 <translation id="395904275706073188">Beskermde bladsye kan nie gelees word nie. Probeer ’n ander bladsy.</translation>
 <translation id="3968962723676998462">Voer jou wagfrase in om Taktak-data in jou rekening, <ph name="ACCOUNT_EMAIL" />, te gebruik en te stoor</translation>
-<translation id="3973161977468201858">Taktak Taktak wil jou Taktak Wagwoordbestuurder-data uitvee. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
+<translation id="3973161977468201858">Taktak wil jou Taktak Wagwoordbestuurder-data uitvee. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
 <translation id="400161754580828648">Om jou skerm te deel, moet jy skermopname vir Taktak in Stelselinstellings toelaat.</translation>
 <translation id="4022972681110646219">Vertaal skerm</translation>
 <translation id="4023601594785368013">Oorspronklike taal: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">Taktak-bedryfstelsel moet herbegin word om die opdatering toe te pas.</translation>
 <translation id="4050175100176540509">Belangrike sekuriteitverbeterings en nuwe kenmerke is in die jongste weergawe beskikbaar.</translation>
-<translation id="4053720452172726777">Pasmaak en beheer Taktak Taktak</translation>
+<translation id="4053720452172726777">Pasmaak en beheer Taktak</translation>
 <translation id="408393047846373801">Meld aan by Taktak om jou wagwoorde en meer op al jou toestelle te kry. Hierdie wagwoord sal in jou Taktak-rekening gestoor word nadat jy aangemeld het.</translation>
 <translation id="409936259433005390">Gaan jy binnekort na Windows 11 opgradeer? Laai die Taktak-installeerder in OneDrive af sodat jy uit die staanspoor gereed is.</translation>
 <translation id="4110895483821904099">Stel jou nuwe Taktak-profiel op</translation>
 <translation id="4111566860456076004">Taktak kan nie verifieer waar hierdie uitbreiding vandaan kom nie, en dit kan dalk onveilig wees. Verwyder dit uit Taktak sodat dit nie meer jou data, insluitend persoonlike inligting, op werwe wat jy besoek kan sien en verander nie.</translation>
 <translation id="4128488089242627000">Taktak werk vinniger en kenmerke wat JavaScript gebruik, moet werk soos ontwerp (aanbeveel)</translation>
-<translation id="4147555960264124640">Jy meld tans met 'n bestuurde rekening aan en gee sy administrateur beheer oor jou Taktak Taktak-profiel. Jou Taktak-data, soos jou programme, boekmerke, geskiedenis, wagwoorde en ander instellings, sal permanent aan <ph name="USER_NAME" /> gekoppel word. Jy sal hierdie data via die Taktak-rekeningekontroleskerm kan uitvee, maar jy sal hierdie data nie met 'n ander rekening kan assosieer nie. <ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Jy meld tans met 'n bestuurde rekening aan en gee sy administrateur beheer oor jou Taktak-profiel. Jou Taktak-data, soos jou programme, boekmerke, geskiedenis, wagwoorde en ander instellings, sal permanent aan <ph name="USER_NAME" /> gekoppel word. Jy sal hierdie data via die Taktak-rekeningekontroleskerm kan uitvee, maar jy sal hierdie data nie met 'n ander rekening kan assosieer nie. <ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Installeer tans …</translation>
-<translation id="4149882025268051530">Die installeerder kon nie die argief se saampersing omkeer nie. Laai Taktak Taktak asseblief weer af.</translation>
+<translation id="4149882025268051530">Die installeerder kon nie die argief se saampersing omkeer nie. Laai Taktak asseblief weer af.</translation>
 <translation id="415112847282352845">Meld aan by Taktak om jou adresse en meer op al jou toestelle te kry. Hierdie adres sal in jou Taktak-rekening gestoor word nadat jy aangemeld het.</translation>
 <translation id="4153934450158521343">Taktak gaan binnekort toemaak en data uitvee</translation>
 <translation id="4173512894976930765">Werwe sal waarskynlik werk soos verwag. Jy sal by die meeste werwe afgemeld word wanneer jy alle Taktak-vensters toemaak, behalwe jou Taktak-rekening as jy by Taktak aangemeld is.</translation>
@@ -279,11 +279,11 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="4293420128516039005">Meld aan om Taktak op al jou toestelle te sinkroniseer en personaliseer</translation>
 <translation id="430327780270213103">Laat uitbreiding toe om toegangversoeke op die Taktak-nutsbalk te wys</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Taktak beveel aan dat jy die oortjie wat jou blaaier stadig maak, onderbreek}other{Taktak beveel aan dat jy die oortjies wat jou blaaier stadig maak, onderbreek}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-In)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-In)</translation>
 <translation id="4329315893554541805">Sluit Taktak by Web- en Appaktiwiteit en gekoppelde Taktak-dienste in om personalisering en ander kenmerke te kry</translation>
 <translation id="4334241893986177674">Deursoek hierdie skermskoot</translation>
 <translation id="4334294535648607276">Aflaai is voltooi.</translation>
-<translation id="4337324600316876133">Jy het macOS 12 of nuwer nodig om in die toekoms Taktak Taktak-opdaterings te kry. Hierdie rekenaar gebruik macOS 11.</translation>
+<translation id="4337324600316876133">Jy het macOS 12 of nuwer nodig om in die toekoms Taktak-opdaterings te kry. Hierdie rekenaar gebruik macOS 11.</translation>
 <translation id="4343195214584226067"><ph name="EXTENSION_NAME" /> is by Taktak gevoeg</translation>
 <translation id="4348548358339558429">Sluit Taktak by Web- en Appaktiwiteit in om personalisering te kry</translation>
 <translation id="436060642166082913">Taktak het hierdie aflaai geblokkeer omdat die lêer jou persoonlike en sosialenetwerkrekeninge kan beskadig</translation>
@@ -292,7 +292,7 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="4427306783828095590">Verbeterde beskerming doen meer om uitvissing en wanware te blokkeer</translation>
 <translation id="4434353761996769206">Installeerderfout: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak – Netwerkaanmelding – <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">'n Ander handeling in Taktak Taktak vind tans plaas. Probeer asseblief later weer.</translation>
+<translation id="4458462641685292929">'n Ander handeling in Taktak vind tans plaas. Probeer asseblief later weer.</translation>
 <translation id="4459234553906210702">Advertensiemeting stel werwe wat jy besoek in staat om inligting van Taktak af te versoek wat die werf help om die werkverrigting van hul advertensies te meet. Advertensiemeting beperk oorkruiswerfnasporing deur so min inligting moontlik tussen werwe oor te dra.</translation>
 <translation id="4493028449971051158">Aanskakelingfout: laat loop die installeerder as administrateur.</translation>
 <translation id="4501471624619070934">Installasie het misluk omdat toegang in hierdie land beperk is.</translation>
@@ -309,42 +309,42 @@ Sommige kenmerke kan dalk nie beskikbaar wees nie en veranderings aan voorkeure 
 <translation id="4680828127924988555">Kanselleer installering</translation>
 <translation id="4720851490453439956">Taktak-opdateerderdiens (intern)</translation>
 <translation id="4724676981607797757">Installasie het misluk as gevolg van ’n ongesteunde protokolfout.</translation>
-<translation id="4728575227883772061">Installering het weens 'n ongespesifiseerde fout misluk. As Taktak Taktak tans gebruik word, maak dit asseblief toe en probeer weer.</translation>
+<translation id="4728575227883772061">Installering het weens 'n ongespesifiseerde fout misluk. As Taktak tans gebruik word, maak dit asseblief toe en probeer weer.</translation>
 <translation id="4737281654364167024">Meld aan by Taktak as <ph name="EMAIL" /> om voort te gaan. Dit maak seker dat jy jou organisasie se beleide het.</translation>
 <translation id="4741235124132242877">Vasgespeld! Gebruik weer Taktak Lens op die nutsbalk</translation>
 <translation id="4747730611090640388">Taktak kan jou belangstellings skat.  ’n Werf wat jy besoek kan Taktak later vra om jou belangstellings te sien om die advertensies wat jy sien, te personaliseer.</translation>
 <translation id="475321580758063259">Dateer Taktak op om aan te hou om die Taktak-data in jou Taktak-rekening, <ph name="ACCOUNT_EMAIL" />, te gebruik</translation>
-<translation id="4754614261631455953">Taktak Taktak Kanarie (mDNS-In)</translation>
+<translation id="4754614261631455953">Taktak Kanarie (mDNS-In)</translation>
 <translation id="4756182432527369254">Maak werwe met Taktak se V8-enjin vinniger, maar maak Taktak effens minder bestand teen aanvalle</translation>
 <translation id="479167709087336770">Dit gebruik dieselfde speltoetser wat in Taktak-soektog gebruik word. Teks wat jy in die blaaier tik, word na Taktak toe gestuur. Jy kan altyd hierdie gedrag in instellings verander.</translation>
 <translation id="4793679854893018356">Vinnd uit hoe Taktak jou veilig hou</translation>
-<translation id="4828579605166583682">Taktak Taktak probeer tans bestaande wagwoorde vervang. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
+<translation id="4828579605166583682">Taktak probeer tans bestaande wagwoorde vervang. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
 <translation id="4842397268809523050">Taktak OS Flex kon nie jou data sinkroniseer nie omdat sinkronisering nie vir jou domein beskikbaar is nie.</translation>
 <translation id="4851866215237571846"><ph name="EXISTING_USER" /> is reeds aangemeld.  Meld in jou eie profiel as <ph name="USER_EMAIL_ADDRESS" /> by Taktak aan om jou blaai-aktiwiteit apart te hou.</translation>
 <translation id="4855026984605187434">Om jou skerm te deel, moet jy skermopname vir Taktak in Stelselinstellings toelaat.</translation>
 <translation id="4873783916118289636">Gaan belangrike privaatheid- en sekuriteitkontroles in Taktak na</translation>
 <translation id="4885446229353981848">Wys altyd Taktak Lens-kortpad</translation>
-<translation id="4891791193823137474">Laat Taktak Taktak in die agtergrond loop.</translation>
+<translation id="4891791193823137474">Laat Taktak in die agtergrond loop.</translation>
 <translation id="4895437082222824641">Maak skakel in 'n nuwe Taktak-oortjie oop</translation>
 <translation id="4918844574251943176">Prent is gekopieer</translation>
 <translation id="492720062778050435">Taktak beveel aan dat jy hierdie uitbreiding nagaan</translation>
 <translation id="4946912144186040233">Taktak verstaan vorms beter en kan hulle vir jou vinniger outovul. Hierdie instelling is af.</translation>
-<translation id="4953650215774548573">Stel Taktak Taktak as jou verstekblaaier</translation>
+<translation id="4953650215774548573">Stel Taktak as jou verstekblaaier</translation>
 <translation id="495931528404527476">In Taktak</translation>
 <translation id="4969674060580488087">Taktak OS Flex kon nie jou data sinkroniseer nie omdat jou rekening se aanmeldbesonderhede verouderd is.</translation>
 <translation id="4970761609246024540">Welkom by Taktak-profiele</translation>
 <translation id="4970880042055371251">Taktak-bedryfstelselweergawe</translation>
-<translation id="4990567037958725628">Taktak Taktak Kanarie</translation>
+<translation id="4990567037958725628">Taktak Kanarie</translation>
 <translation id="5003967926796347400">Klik “Taktak Wagwoordbestuurder”</translation>
 <translation id="504867494566807945">Maak skakels in Taktak vanaf enige app oop. Dit word ook vir maklike toegang in jou taakbalk vasgespeld.</translation>
 <translation id="5114340746415930644">Voer jou wagfrase in om Taktak-data in jou rekening, <ph name="USER_EMAIL" />, te gebruik en te stoor</translation>
 <translation id="5120334927898581447">Meld aan by Taktak wanneer jy by ander Taktak-dienste aanmeld</translation>
 <translation id="5126049312684316860">Taktak laai selfs nog meer bladsye wat jy moontlik sal besoek vooraf, sodat hulle vinniger laai wanneer jy hulle wel besoek</translation>
-<translation id="5132929315877954718">Ontdek wonderlike programme, speletjies, uitbreidings en temas vir Taktak Taktak.</translation>
+<translation id="5132929315877954718">Ontdek wonderlike programme, speletjies, uitbreidings en temas vir Taktak.</translation>
 <translation id="5139423532931106058">Pasmaak jou Taktak-profiel</translation>
 <translation id="5163087008893166964">Welkom by Taktak; nuwe blaaiervenster is oopgemaak</translation>
 <translation id="5166439563123238795">Taktak benodig toestemming om jou hande na te spoor</translation>
-<translation id="5170938038195470297">Jou profiel kan nie gebruik word nie, want dit kom van 'n nuwer weergawe van Taktak Taktak af.
+<translation id="5170938038195470297">Jou profiel kan nie gebruik word nie, want dit kom van 'n nuwer weergawe van Taktak af.
 
 Sommige kenmerke kan dalk onbeskikbaar wees. Spesifiseer 'n ander profielgids of gebruik 'n nuwer weergawe van Taktak.</translation>
 <translation id="5174969993834422967">Jy blokkeer gewoonlik kennisgewings. Klik die kennisgewing-ikoon in die regter hoek van jou liggingbalk sodat dié werf jou in kennis kan stel.</translation>
@@ -365,12 +365,12 @@ Sommige kenmerke kan dalk onbeskikbaar wees. Spesifiseer 'n ander profielgids of
 <translation id="5412485296464121825">Werwe kan inligting oor jou belangstellings in Taktak stoor. As jy byvoorbeeld ’n werf besoek om skoene vir ’n marathon te koop, kan die werf jou belangstelling definieer as iemand wat marathons hardloop. As jy later ’n ander werf besoek om vir ’n wedloop te registreer, kan daardie werf vir jou ’n advertensie vir drafskoene op grond van jou belangstellings wys.</translation>
 <translation id="5430073640787465221">Jou voorkeurelêer is korrup of ongeldig.
 
-Taktak Taktak kan nie jou instellings terugstel nie.</translation>
+Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="5468572406162360320">Om hierdie kenmerke te help verbeter, stuur Taktak jou interaksies daarmee na Taktak. Hierdie data kan deur menslike kontroleerders gelees, verwerk en geannoteer word.</translation>
 <translation id="5524761631371622910">Wanneer proeflopies aan is en Taktak jou lukraak vir ’n aktiewe proeflopie gekies het, sal jou blaaigeskiedenis die advertensies wat jy sien, beïnvloed asook die belangstellings soos hieronder geskat. Taktak vee elke maand jou belangstellings op ’n rollende basis uit om jou privaatheid te beskerm.</translation>
 <translation id="5524890928877629608">boonste linkerhoek van soekgebied: links <ph name="LEFT" />%, bo <ph name="TOP" />%</translation>
 <translation id="5530733413481476019">Maak Taktak vinniger</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-In)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-In)</translation>
 <translation id="5579324208890605088">Aanskakelingfout: laat loop die installeerder as ’n gereelde gebruiker, nie as administrateur nie.</translation>
 <translation id="5596627076506792578">Meer opsies</translation>
 <translation id="5600352656975192682">Speld Taktak vas op jou taakbalk om enige tyd vinnig daarby uit te kom</translation>
@@ -380,7 +380,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="566568153320186256">Taktak bespaar batterykrag deur agtergrondaktiwiteit en visuele effekte, soos gladde rollees en videoraamtempo’s, te beperk. <ph name="BEGIN_LINK" />Kry meer inligting oor Energiebespaarder<ph name="END_LINK" /></translation>
 <translation id="567202749201779594">Vee die Taktak-data in jou rekening uit</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{Jou administrateur vra dat jy Taktak herbegin om hierdie opdatering toe te pas}=1{Jou administrateur vra dat jy Taktak herbegin om hierdie opdatering toe te pas. Jou incognitovenster sal nie weer oopgemaak word nie.}other{Jou administrateur vra dat jy Taktak herbegin om hierdie opdatering toe te pas. Jou # incognitovensters sal nie weer oopgemaak word nie.}}</translation>
-<translation id="5686916850681061684">Pasmaak en beheer Taktak Taktak. Iets verg jou aandag – klik vir besonderhede.</translation>
+<translation id="5686916850681061684">Pasmaak en beheer Taktak. Iets verg jou aandag – klik vir besonderhede.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">Kon nie aan die internet koppel nie. Instaanbediener vereis stawing.</translation>
 <translation id="5709557627224531708">Stel Taktak as jou verstekblaaier</translation>
@@ -388,7 +388,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="5736850870166430177">As 'n werf probeer om jou wagwoord te steel, of wanneer jy 'n skadelike lêer aflaai, sal Taktak dalk ook URL'e, insluitend stukkies bladsyinhoud, na Veiligblaai toe stuur</translation>
 <translation id="5756509061973259733">'n Taktak-profiel met hierdie rekening bestaan reeds op hierdie toestel</translation>
 <translation id="5759947850379142561">Kies enige teks of prent om met Taktak Lens te soek of druk Escape om uit Taktak Lens te gaan</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> – Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> – Taktak Canary</translation>
 <translation id="5804318322022881572">Kon nie Taktak begin nie. Probeer weer.</translation>
 <translation id="5809516625706423866">Kon nie aan die internet koppel nie. HTTP 401 ongemagtig. Gaan asseblief jou proxy-opstelling na.</translation>
 <translation id="5824893331272123205">Kon nie hierdie paneel laai nie, probeer weer</translation>
@@ -402,7 +402,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="5925596746603389877">Laai Taktak-installeerder af</translation>
 <translation id="5940385492829620908">Jou web, boekmerke en ander Taktak-goed woon hier.</translation>
 <translation id="5941711191222866238">Maak kleiner</translation>
-<translation id="5941830788786076944">Maak Taktak Taktak die verstekblaaier</translation>
+<translation id="5941830788786076944">Maak Taktak die verstekblaaier</translation>
 <translation id="5947104538377036631">Taktak-kortpad</translation>
 <translation id="5968400720580217226">KI-modus</translation>
 <translation id="5980111191913430208">Uitbreidings, apps en temas van onbekende bronne af kan jou toestel beskadig. Taktak beveel aan dat hulle net uit die <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> geïnstalleer word</translation>
@@ -411,11 +411,11 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="6009821354356307391">Vra vir ’n opvolg</translation>
 <translation id="6014316319780893079">Met <ph name="BEGIN_LINK" />nutsgoed van Taktak<ph name="END_LINK" /> kan jy veilig blaai en in beheer bly</translation>
 <translation id="6022659036123304283">Maak Taktak jou eie</translation>
-<translation id="6025087594896450715">Taktak Taktak sal oor <ph name="REMAINING_TIME" /> herbegin</translation>
+<translation id="6025087594896450715">Taktak sal oor <ph name="REMAINING_TIME" /> herbegin</translation>
 <translation id="6040143037577758943">Maak toe</translation>
 <translation id="604424701295382420">Vasgespeld! Jy kan weer toegang tot Taktak Lens kry vanaf die nuwe knoppie op die nutsbalk</translation>
 <translation id="6069027071882229820">Kopieer as prent</translation>
-<translation id="6070348360322141662">Taktak Taktak sal jou data enkripteer vir bykomende sekuriteit</translation>
+<translation id="6070348360322141662">Taktak sal jou data enkripteer vir bykomende sekuriteit</translation>
 <translation id="6075300983329039771">Jou organisasie, <ph name="MANAGER" />, vereis dat jy by Taktak aanmeld</translation>
 <translation id="6113794647360055231">Taktak het pas beter geword</translation>
 <translation id="6116252277240876590">Hierdie taal word gebruik om kieslyste, instellings, opletberigte en ander teks in Taktak te vertoon</translation>
@@ -426,19 +426,19 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="6150706324143004339">Dateer Taktak op om Taktak-data in jou Taktak-rekening te gebruik en te stoor</translation>
 <translation id="6157638032135951407">Jou organisasie vee Taktak-data uit wanneer dit <ph name="TIMEOUT_DURATION" /> lank nie gebruik is nie. Dit kan geskiedenis, outovul en aflaaie insluit.</translation>
 <translation id="6165508094623778733">Kom meer te wete</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> – Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> – Taktak Taktak Beta</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> – Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> – Taktak Beta</translation>
 <translation id="6180522807229584611">Hierdie oortjie gebruik ekstra hulpbronne. Laat Taktak dit onaktief maak om jou werkverrigting te verbeter.</translation>
 <translation id="6182736845697986886">Installering het misluk as gevolg van ’n interne opdateringbedienerfout.</translation>
-<translation id="6235018212288296708">Inkomende reël vir Taktak Taktak om mDNS-verkeer toe te laat.</translation>
+<translation id="6235018212288296708">Inkomende reël vir Taktak om mDNS-verkeer toe te laat.</translation>
 <translation id="624230925347970731">Taktak gaan binnekort toemaak</translation>
 <translation id="6247557882553405851">Taktak Wagwoordbestuurder</translation>
 <translation id="6251759518630934363">Waarsku jou oor gevaarlike werwe – selfs werwe waarvan Taktak nie voorheen geweet het nie – deur meer data van werwe te ontleed as standaardbeskerming. Jy kan kies om Taktak-waarskuwings oor te slaan.</translation>
 <translation id="6277547788421725101">Jou ouer het “Toestemmings vir werwe, apps en uitbreidings” vir Taktak afgeskakel</translation>
 <translation id="627882678981830918">Pasmaak en beheer Taktak. Stel Taktak as jou verstek.</translation>
-<translation id="6288580400488258237">Stel Taktak Taktak as jou verstekblaaier en speld dit aan jou taakbalk vas</translation>
+<translation id="6288580400488258237">Stel Taktak as jou verstekblaaier en speld dit aan jou taakbalk vas</translation>
 <translation id="6291089322031436445">Taktak Dev-programme</translation>
-<translation id="6291549208091401781">Taktak Taktak is reeds vir alle gebruikers op jou rekenaar geïnstalleer.</translation>
+<translation id="6291549208091401781">Taktak is reeds vir alle gebruikers op jou rekenaar geïnstalleer.</translation>
 <translation id="6319856120645568262">Taktak het toestemming nodig om jou omgewing te karteer en jou hande na te spoor</translation>
 <translation id="6321592572353357376">Die uitbreiding “<ph name="EXTENSION_NAME" />” wil hê dat jy by Taktak moet aanmeld</translation>
 <translation id="6326175484149238433">Verwyder van Taktak af</translation>
@@ -452,10 +452,10 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="6481963882741794338">Koppel Taktak en ander Taktak-dienste vir personalisering en ander doeleindes</translation>
 <translation id="648319183876919572">Verbeterde Veiligblaai doen meer om jou teen gevaarlike webwerwe en aflaaie te beskerm</translation>
 <translation id="6489302989675808168">Aan • Taktak kan nie verifieer waarvandaan hierdie uitbreiding kom nie</translation>
-<translation id="6493527311031785448">Taktak Taktak probeer tans om <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Taktak probeer tans om <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Taktak is outomaties toegemaak</translation>
 <translation id="6506909944137591434">Taktak het kameratoestemming nodig om 'n 3D-kaart van jou omgewing te skep</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> – Taktak Taktak Dev</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> – Taktak Dev</translation>
 <translation id="6520670145826811516">Jy moet vir Taktak toegang in <ph name="BEGIN_LINK" />stelselinstellings<ph name="END_LINK" /> gee om jou ligging te gebruik</translation>
 <translation id="659498884637196217">In Taktak Wagwoordbestuurder op hierdie toestel</translation>
 <translation id="6632473616050862500">Taktak OS Flex word moontlik gemaak deur bykomende <ph name="BEGIN_LINK_CROS_OSS" />oopbronsagteware<ph name="END_LINK_CROS_OSS" />.</translation>
@@ -463,7 +463,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="6660596345553328257">Meld by Taktak aan?</translation>
 <translation id="6664219008737641504"><ph name="SETTINGS_LINK" /> die Taktak-data in jou rekening indien jy jou wagfrase vergeet het of hierdie instelling wil verander</translation>
 <translation id="6676384891291319759">Gaan by die internet in</translation>
-<translation id="6679975945624592337">Laat Taktak Taktak in die agtergrond loop</translation>
+<translation id="6679975945624592337">Laat Taktak in die agtergrond loop</translation>
 <translation id="6696915334902295848">Taktak het mikrofoontoestemming vir hierdie werf nodig</translation>
 <translation id="6712881677154121168">Aflaaifout: <ph name="DOWNLOAD_ERROR" />.</translation>
 <translation id="6718739135284199302">Maak Taktak vinniger</translation>
@@ -474,7 +474,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="677276454032249905">Verlaat Taktak in elk geval?</translation>
 <translation id="6794858689789885890">Vee altyd werfdata op jou toestel uit wanneer jy Taktak toemaak</translation>
 <translation id="6831043979455480757">Vertaal</translation>
-<translation id="683440813066116847">Inkomende reël vir Taktak Taktak Kanarie om mDNS-verkeer toe te laat.</translation>
+<translation id="683440813066116847">Inkomende reël vir Taktak Kanarie om mDNS-verkeer toe te laat.</translation>
 <translation id="684888714667046800">Kan nie aan die internet koppel nie. As jy ’n brandmuur gebruik, moet jy seker maak dat <ph name="PRODUCT_EXE_NAME" /> op die toelaatlys is.</translation>
 <translation id="6877155553248388166">onderste regterhoek van soekgebied: regs <ph name="RIGHT" />%, onder <ph name="BOTTOM" />%</translation>
 <translation id="6881299373831449287">Dateer tans Taktak op</translation>
@@ -483,10 +483,10 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="6896758677409633944">Kopieer</translation>
 <translation id="6930294499209825">Hou jou Taktak-sagteware bygewerk. As hierdie diens gedeaktiveer of gestop word, sal jou Taktak-sagteware nie bygewerk gehou word nie, wat beteken dat sekuriteitskwesbaarhede kan opduik wat nie reggestel kan word nie, en dat kenmerke dalk nie sal werk nie. Hierdie diens deïnstalleer vanself wanneer geen Taktak-sagteware dit gebruik nie.</translation>
 <translation id="6933858244219479645">ChromeOS</translation>
-<translation id="6938166777909186039">Jy het Windows 10 of nuwer nodig om in die toekoms Taktak Taktak-opdaterings te kry. Hierdie rekenaar gebruik Windows 8.1.</translation>
+<translation id="6938166777909186039">Jy het Windows 10 of nuwer nodig om in die toekoms Taktak-opdaterings te kry. Hierdie rekenaar gebruik Windows 8.1.</translation>
 <translation id="6943584222992551122">Hierdie persoon se blaaierdata sal van hierdie toestel af uitgevee word. Meld as <ph name="USER_EMAIL" /> by Taktak aan om hierdie data te herwin.</translation>
 <translation id="6965382102122355670">OK</translation>
-<translation id="6967962315388095737">Inkomende reël vir Taktak Taktak Beta om mDNS-verkeer toe te laat.</translation>
+<translation id="6967962315388095737">Inkomende reël vir Taktak Beta om mDNS-verkeer toe te laat.</translation>
 <translation id="6979589607440534284">Vind uit hoekom Taktak sommige lêers blokkeer – maak in ’n nuwe oortjie oop</translation>
 <translation id="6991926986715044139">Wys altyd Taktak Lens-kortpad</translation>
 <translation id="7011190694940573312">Installering het misluk omdat hierdie weergawe van die bedryfstelsel nie gesteun word nie.</translation>
@@ -500,14 +500,14 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="7085332316435785646">Kies of jy Taktak-geskiedenis wil insluit vir meer gepersonaliseerde ervarings in Taktak-dienste</translation>
 <translation id="7088681679121566888">Taktak is op datum</translation>
 <translation id="7096221564931416126">Kies enige teks of prent om met Taktak Lens te soek</translation>
-<translation id="7098166902387133879">Taktak Taktak gebruik tans jou mikrofoon.</translation>
+<translation id="7098166902387133879">Taktak gebruik tans jou mikrofoon.</translation>
 <translation id="7099479769133613710">Herbegin om &amp;Taktak-bedryfstelsel op te dateer</translation>
-<translation id="7106741999175697885">Taakbestuurder – Taktak Taktak</translation>
+<translation id="7106741999175697885">Taakbestuurder – Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{'n Nuwe opdatering vir Taktak is beskikbaar en sal toegepas word sodra jy herbegin.}=1{'n Nuwe opdatering vir Taktak is beskikbaar en sal toegepas word sodra jy herbegin. Jou incognitovenster sal nie weer oopgemaak word nie.}other{'n Nuwe opdatering vir Taktak is beskikbaar en sal toegepas word sodra jy herbegin. Jou # incognitovensters sal nie weer oopgemaak word nie.}}</translation>
 <translation id="7155997830309522122">Indien wel moet jy asseblief jou gestoorde wagwoord in Taktak wysig sodat dit met jou nuwe wagwoord ooreenstem.</translation>
-<translation id="7161904924553537242">Welkom by Taktak Taktak</translation>
+<translation id="7161904924553537242">Welkom by Taktak</translation>
 <translation id="7193885263065350793">Jou organisasie maak Taktak toe wanneer dit <ph name="TIMEOUT_DURATION" /> lank nie gebruik is nie.</translation>
-<translation id="7242029209006116544">Jy meld tans aan met 'n bestuurde rekening en gee sy administrateur beheer oor jou Taktak Taktak-profiel. Jou Taktak-data, soos jou programme, boekmerke, geskiedenis, wagwoorde en ander instellings sal permanent aan <ph name="USER_NAME" /> gekoppel word. Jy sal hierdie data via die Taktak-rekeningekontroleskerm kan uitvee, maar jy sal hierdie data nie met 'n ander rekening kan assosieer nie. Jou ander opsie is om 'n nuwe profiel te skep om jou Taktak-data apart te hou. <ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Jy meld tans aan met 'n bestuurde rekening en gee sy administrateur beheer oor jou Taktak-profiel. Jou Taktak-data, soos jou programme, boekmerke, geskiedenis, wagwoorde en ander instellings sal permanent aan <ph name="USER_NAME" /> gekoppel word. Jy sal hierdie data via die Taktak-rekeningekontroleskerm kan uitvee, maar jy sal hierdie data nie met 'n ander rekening kan assosieer nie. Jou ander opsie is om 'n nuwe profiel te skep om jou Taktak-data apart te hou. <ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075"><ph name="MANAGER" /> bestuur Taktak</translation>
 <translation id="7288567540154601580">Oortjies en uitbreidings</translation>
 <translation id="7296210096911315575">Belangrike gebruik- en veiligheidinligting</translation>
@@ -520,7 +520,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="7412494426921990001">Klik die Taktak-kieslys</translation>
 <translation id="7419819959108735624">Kies enigiets om met Taktak Lens te soek</translation>
 <translation id="742463671275348370">{NUM_DEVICES,plural, =0{Een of meer Taktak-uitbreidings het toegang tot 1 USB-toestel gehad}=1{Een of meer Taktak-uitbreidings het tans toegang tot 1 USB-toestel}other{Een of meer Taktak-uitbreidings het tans toegang tot # USB-toestelle}}</translation>
-<translation id="7426611252293106642">Taktak Taktak sal dalk nie reg werk nie omdat dit nie meer in hierdie Linux-uitreiking gesteun word nie</translation>
+<translation id="7426611252293106642">Taktak sal dalk nie reg werk nie omdat dit nie meer in hierdie Linux-uitreiking gesteun word nie</translation>
 <translation id="7437998757836447326">Meld af uit Taktak</translation>
 <translation id="7449333426561673451">{COUNT,plural, =1{Jou organisasie maak Taktak outomaties toe nadat dit 1 minuut lank nie gebruik is nie.}other{Jou organisasie maak Taktak outomaties toe nadat dit # minute lank nie gebruik is nie.}}</translation>
 <translation id="7450541714075000668">Teks gekopieer</translation>
@@ -532,17 +532,17 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="7510927761955779701">Taktak verstaan vorms beter en kan hulle vir jou vinniger outovul. Hierdie instelling is aan.</translation>
 <translation id="7514258452813684157">Taktak-opdateerderdiens</translation>
 <translation id="7515191208480168435">Jy kan Taktak Lens vasspeld vir maklike toegang</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Meld aan by Taktak om hierdie boekmerk en meer op al jou toestelle te kry</translation>
 <translation id="756809126120519699">Het Taktak-data uitgevee</translation>
 <translation id="7572537927358445944">Af • Taktak kan nie verifieer waarvandaan hierdie uitbreiding kom nie</translation>
 <translation id="7583399374488819119"><ph name="COMPANY_NAME" />-installeerder</translation>
 <translation id="7602868996817972616">Vra Taktak oor hierdie bladsy</translation>
-<translation id="7606334485649076285">Taktak Taktak OS Flex</translation>
-<translation id="7626072681686626474"><ph name="MANAGER" /> vereis dat jy die volgende diensbepalings lees en aanvaar voordat jy hierdie toestel gebruik. Hierdie bepalings verander, beperk of brei nie die Taktak Taktak-bedryfstelsel se bepalings uit nie.</translation>
+<translation id="7606334485649076285">Taktak OS Flex</translation>
+<translation id="7626072681686626474"><ph name="MANAGER" /> vereis dat jy die volgende diensbepalings lees en aanvaar voordat jy hierdie toestel gebruik. Hierdie bepalings verander, beperk of brei nie die Taktak-bedryfstelsel se bepalings uit nie.</translation>
 <translation id="7627609214560473136">Laat Taktak toestemmings van werwe verwyder wat jy nie onlangs besoek het nie om jou data te beskerm.</translation>
 <translation id="7629695634924605473">Taktak sal jou laat weet as jou wagwoorde gekompromitteer is</translation>
-<translation id="7641148173327520642">Jou stelseladministrateur het Taktak Taktak opgestel om <ph name="ALTERNATIVE_BROWSER_NAME" /> oop te maak om by <ph name="TARGET_URL_HOSTNAME" /> in te gaan.</translation>
+<translation id="7641148173327520642">Jou stelseladministrateur het Taktak opgestel om <ph name="ALTERNATIVE_BROWSER_NAME" /> oop te maak om by <ph name="TARGET_URL_HOSTNAME" /> in te gaan.</translation>
 <translation id="7649070708921625228">Hulp</translation>
 <translation id="7651907282515937834">Taktak-onderneminglogo</translation>
 <translation id="76531479118467370">Taktak het hierdie aflaai geblokkeer omdat jy Veiligblaai afgeskakel het en die lêer nie geverifieer kan word nie</translation>
@@ -559,10 +559,10 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="7761834446675418963">Klik jou naam om Taktak oop te maak en te begin blaai.</translation>
 <translation id="7777080907402804672">As 'n prent nie 'n nuttige beskrywing het nie, sal Taktak probeer om een vir jou te verskaf. Prente word na Taktak toe gestuur om beskrywings te skep. Jy kan dit enige tyd in instellings afskakel.</translation>
 <translation id="778331955594035129">Taktak het liggingtoestemming vir hierdie werf nodig</translation>
-<translation id="7787950393032327779">Dit lyk of die profiel tans deur 'n ander Taktak Taktak-proses (<ph name="PROCESS_ID" />) op 'n ander rekenaar (<ph name="HOST_NAME" />) gebruik word. Taktak het die profiel gesluit sodat dit nie gekorrupteer word nie. As jy seker is geen ander prosesse gebruik hierdie profiel nie, kan jy die profiel ontsluit en Taktak herbegin.</translation>
-<translation id="7801699035218095297">Taktak Taktak probeer tans om wagwoorde te kopieer. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
+<translation id="7787950393032327779">Dit lyk of die profiel tans deur 'n ander Taktak-proses (<ph name="PROCESS_ID" />) op 'n ander rekenaar (<ph name="HOST_NAME" />) gebruik word. Taktak het die profiel gesluit sodat dit nie gekorrupteer word nie. As jy seker is geen ander prosesse gebruik hierdie profiel nie, kan jy die profiel ontsluit en Taktak herbegin.</translation>
+<translation id="7801699035218095297">Taktak probeer tans om wagwoorde te kopieer. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
 <translation id="7808348361785373670">Verwyder uit Taktak …</translation>
-<translation id="7825851276765848807">Installering het weens 'n ongespesifiseerde fout misluk. Laai Taktak Taktak asseblief weer af.</translation>
+<translation id="7825851276765848807">Installering het weens 'n ongespesifiseerde fout misluk. Laai Taktak asseblief weer af.</translation>
 <translation id="7827099906024714326">Taktak moet verifieer dat dit jy is voordat sommige data in jou Taktak-rekening gestoor kan word en op al jou toestelle gebruik kan word. As jy nou afmeld, sal hierdie data uitgevee word.</translation>
 <translation id="7845233973568007926">Dankie dat jy geïnstalleer het. Jy moet jou rekenaar herbegin voordat jy <ph name="BUNDLE_NAME" /> gebruik.</translation>
 <translation id="7872446069773932638">Laai tans af … <ph name="SECONDS" /> sekonde(s) oor.</translation>
@@ -573,7 +573,7 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="7936702483636872823">Taktak het hierdie aflaai geblokkeer omdat die lêer misleidend is en onverwagte veranderinge aan jou toestel kan maak</translation>
 <translation id="7951272445806340501">Taktak OS Flex moet herbegin word om die opdatering toe te pas.</translation>
 <translation id="7959172989483770734">Bestuur Taktak-profiele</translation>
-<translation id="7962410387636238736">Hierdie rekenaar sal nie meer Taktak Taktak-opdaterings ontvang nie omdat Windows XP en Windows Vista nie meer gesteun word nie</translation>
+<translation id="7962410387636238736">Hierdie rekenaar sal nie meer Taktak-opdaterings ontvang nie omdat Windows XP en Windows Vista nie meer gesteun word nie</translation>
 <translation id="8004582292198964060">Blaaier</translation>
 <translation id="8005666035647241369">Na Taktak Wagwoordbestuurder op hierdie toestel</translation>
 <translation id="8008534537613507642">Herinstalleer Taktak</translation>
@@ -588,14 +588,14 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="8086881907087796310">Installering het misluk omdat jou rekenaar nie aan die minimum hardewarevereistes voldoen nie.</translation>
 <translation id="8113883687556086139">Verifieer dat dit jy is om Taktak-data in jou rekening, <ph name="ACCOUNT_EMAIL" />, te gebruik en te stoor</translation>
 <translation id="8118331347066725040">Stuur terugvoer vir soektog met Lens</translation>
-<translation id="8129812357326543296">Meer oor Taktak Taktak</translation>
+<translation id="8129812357326543296">Meer oor Taktak</translation>
 <translation id="813913629614996137">Inisialiseer tans …</translation>
 <translation id="8162006532256575008">Gebruik Taktak sonder ’n rekening</translation>
 <translation id="8177472873527554730">Kan nie inhoud op die bladsy vind nie</translation>
 <translation id="8221491193165283816">Jy blokkeer gewoonlik kennisgewings. Klik hier sodat dié werf jou in kennis kan stel.</translation>
-<translation id="8255190535488645436">Taktak Taktak gebruik jou kamera en mikrofoon.</translation>
+<translation id="8255190535488645436">Taktak gebruik jou kamera en mikrofoon.</translation>
 <translation id="8267953129876836456">Taktak het ’n paar veiligheidsaanbevelings vir jou hersiening gekry</translation>
-<translation id="8286862437124483331">Taktak Taktak probeer tans om wagwoorde te wys. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
+<translation id="8286862437124483331">Taktak probeer tans om wagwoorde te wys. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
 <translation id="829923460755755423">Voeg ’n kortpad na Taktak Wagwoordbestuurder by</translation>
 <translation id="8313851650939857356">Aanskakelingfout: <ph name="STARTUP_ERROR" />.</translation>
 <translation id="8321888067342493336">Stoor as prent</translation>
@@ -613,27 +613,27 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="8425765582779547329">Meld aan by Taktak om met jou ouers se keuses veiliger aanlyn te bly</translation>
 <translation id="8433638294851456451">Meld op albei toestelle by Taktak aan om 'n nommer van hier af na jou Android-foon te stuur.</translation>
 <translation id="8496177819998570653">Taktak W&amp;agwoordbestuurder</translation>
-<translation id="8498858610309223613">'n Spesiale sekuriteitsopdatering vir Taktak Taktak is sopas toegepas. Herbegin nou en ons sal jou oortjies teruglaai.</translation>
+<translation id="8498858610309223613">'n Spesiale sekuriteitsopdatering vir Taktak is sopas toegepas. Herbegin nou en ons sal jou oortjies teruglaai.</translation>
 <translation id="8516431725144212809">Jou belangstellings soos geskat deur Taktak</translation>
-<translation id="8521348052903287641">Inkomende reël vir Taktak Taktak Dev om mDNS-verkeer toe te laat.</translation>
+<translation id="8521348052903287641">Inkomende reël vir Taktak Dev om mDNS-verkeer toe te laat.</translation>
 <translation id="852529348814672339">Vertoon Taktak in hierdie taal</translation>
-<translation id="8533056045953418157">Stel Taktak Taktak as jou verstek-PDF-bekyker</translation>
+<translation id="8533056045953418157">Stel Taktak as jou verstek-PDF-bekyker</translation>
 <translation id="8555465886620020932">Diensfout: <ph name="SERVICE_ERROR" />.</translation>
 <translation id="856656450041460113">Deursoek lys tale</translation>
 <translation id="8601359445272098721">Nuut! Jy kan sowel teks as prente op jou skerm vertaal deur die “vertaal skerm”-knoppie te kies</translation>
-<translation id="8614913330719544658">Taktak Taktak reageer nie. Herbegin nou?</translation>
+<translation id="8614913330719544658">Taktak reageer nie. Herbegin nou?</translation>
 <translation id="861702415419836452">Taktak moet toestemming hê om toegang te kry tot jou kamera om 'n 3D-kaart van jou omgewing te skep</translation>
 <translation id="8625237574518804553">{0,plural, =1{Taktak sal oor 1 minuut herbegin}other{Taktak sal oor # minute herbegin}}</translation>
 <translation id="8637932705841171563">Om jou venster te deel, moet jy skermopname vir Taktak in Stelselinstellings toelaat.</translation>
 <translation id="8641606876632989680">Taktak sal jou in kennis stel wanneer jy met 'n gekompromitteerde wagwoord aanmeld</translation>
 <translation id="8649026945479135076">Dit is algemeen vir werwe wat jy besoek om dinge waarin jy belangstel te onthou en jou ervaring te personaliseer. Werwe kan ook inligting oor jou belangstellings in Taktak stoor.</translation>
-<translation id="8669527147644353129">Taktak Taktak-helper</translation>
+<translation id="8669527147644353129">Taktak-helper</translation>
 <translation id="8679801911857917785">Dit beheer ook watter bladsy gewys word wanneer jy Taktak begin.</translation>
 <translation id="8712637175834984815">Het dit</translation>
 <translation id="8712767363896337380">Amper op datum! Herbegin Taktak om opdatering te voltooi.</translation>
 <translation id="8718062187489036808">Meld af uit Taktak</translation>
 <translation id="8725440680697264016">Vra Taktak oor hierdie video</translation>
-<translation id="873133009373065397">Taktak Taktak kan nie die verstekblaaier bepaal of stel nie</translation>
+<translation id="873133009373065397">Taktak kan nie die verstekblaaier bepaal of stel nie</translation>
 <translation id="8747073452963259673">onderste linkerhoek van soekgebied: links <ph name="LEFT" />%, onder <ph name="BOTTOM" />%</translation>
 <translation id="8748735421235723888">Taktak maak geheue uit onaktiewe oortjies beskikbaar. Dit gee aktiewe oortjies en ander apps meer rekenaarhulpbronne en hou Taktak vinnig. Jou onaktiewe oortjies word outomaties weer aktief wanneer jy na hulle toe teruggaan. <ph name="BEGIN_LINK" />Kry meer inligting oor Geheuebespaarder<ph name="END_LINK" /></translation>
 <translation id="8753189155654018347">Verwyder hierdie appsdata uit Taktak</translation>
@@ -641,10 +641,10 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="8781673607513845160">Jy moet vir Taktak toegang in <ph name="BEGIN_LINK" />stelselinstellings<ph name="END_LINK" /> gee om jou kamera te gebruik</translation>
 <translation id="878572486461146056">Installeerfout: Jou netwerkadmin het ’n groepbeleid toegepas wat installasie verhinder: <ph name="INSTALL_ERROR" /></translation>
 <translation id="8798550110818026746">Jou organisasie kan blaaierdata sien en bestuur, soos jou boekmerke, geskiedenis en wagwoorde. Dit kan nie blaaierdata in ander Taktak-profiele sien nie</translation>
-<translation id="8821043148920470810">Jy het Windows 10 of nuwer nodig om in die toekoms Taktak Taktak-opdaterings te kry. Hierdie rekenaar gebruik Windows 7.</translation>
+<translation id="8821043148920470810">Jy het Windows 10 of nuwer nodig om in die toekoms Taktak-opdaterings te kry. Hierdie rekenaar gebruik Windows 7.</translation>
 <translation id="8823341990149967727">Taktak is verouderd</translation>
 <translation id="8825634023950448068">Ons vee outomaties jou belangstellings uit wat ouer as 4 weke is om jou privaatheid te beskerm. Terwyl jy aanhou blaai, kan ’n belangstelling weer op die lys verskyn. En as Taktak dit verkeerd kry of as jy sekere advertensies nie wil sien nie, kan jy ’n belangstelling verwyder.</translation>
-<translation id="8834965163890861871">Taktak Taktak probeer tans om wagwoorde te wysig. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
+<translation id="8834965163890861871">Taktak probeer tans om wagwoorde te wysig. Tik jou Windows-wagwoord in om dit toe te laat.</translation>
 <translation id="8843516219908676469">Taktak verstaan vorms beter en kan hulle vir jou vinniger outovul</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Taktak beveel aan dat jy dit verwyder}other{Taktak beveel aan dat jy hulle verwyder.}}</translation>
 <translation id="8862326446509486874">Jy het nie die gepaste regte vir stelselvlak-installering nie. Probeer om die installeerder weer te laat loop as Administrateur.</translation>
@@ -672,6 +672,6 @@ Taktak Taktak kan nie jou instellings terugstel nie.</translation>
 <translation id="943390475793766444">Taktak beveel aan dat hierdie lêer geskandeer word omdat dit gevaarlik kan wees.</translation>
 <translation id="945522503751344254">Stuur terugvoer</translation>
 <translation id="983803489796659991">Installering het misluk omdat die opdateringbediener nie enige hutsdata vir die app het nie.</translation>
-<translation id="989369509083708165">Taktak Taktak is jou verstekblaaier</translation>
+<translation id="989369509083708165">Taktak is jou verstekblaaier</translation>
 <translation id="989816563149873169"><ph name="SHORTCUT" /> kan tussen Taktak-profiele wissel</translation>
 </translationbundle>

@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Гэта палітыка працуе належным чынам, але замяняе аднолькавае значэнне, зададзенае з іншай крыніцы.</translation>
 <translation id="1567405528131216114">Дадаць тэму "<ph name="TOPIC" />"</translation>
 <translation id="1569487616857761740">Увядзіце тэрмін дзеяння</translation>
-<translation id="1569694109004336106">Taktak Taktak спрабуе ўключыць Windows Hello для ўводу пароляў.</translation>
+<translation id="1569694109004336106">Taktak спрабуе ўключыць Windows Hello для ўводу пароляў.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> цал.</translation>
 <translation id="1574714699824202614">Спраўджваецца спосаб аплаты</translation>
 <translation id="1576277203042721907">Статыстыка купляў</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">Каб даведацца больш, звярніцеся да пастаўшчыка</translation>
 <translation id="2091887806945687916">Гук</translation>
 <translation id="2093184051799735948">Выканайце пошук у <ph name="ENGINE_NAME" /> або ўвядзіце URL-адрас</translation>
-<translation id="2093982008204312032">Taktak Taktak спрабуе выключыць Windows Hello для ўводу пароляў.</translation>
+<translation id="2093982008204312032">Taktak спрабуе выключыць Windows Hello для ўводу пароляў.</translation>
 <translation id="2094505752054353250">Несупадзенне дамена</translation>
 <translation id="2094704029599359040">Інфармацыя пра версію</translation>
 <translation id="2099652385553570808">Тры скабы злева</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;Адрабіць выдаленне</translation>
 <translation id="239708975263889666">Змяненне нумара вядомага падарожніка</translation>
 <translation id="2399344929880464793">Гэты нумар IBAN захаваны ва Уліковым запісе Taktak, таму вы можаце выкарыстоўваць яго ў розных сэрвісах Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak спрабуе змяніць спосабы аплаты.</translation>
+<translation id="2399868464369312507">Taktak спрабуе змяніць спосабы аплаты.</translation>
 <translation id="2400263725572336749">Дадаць пашпарт</translation>
 <translation id="2400271059665846158">Кіруйце вашымі карткамі лаяльнасці ў Taktak Кашальку</translation>
 <translation id="2400600116338235695">Сайт можа запытваць дазвол на падключэнне да паслядоўных партоў</translation>
@@ -3118,7 +3118,7 @@
 <translation id="6164605812717770913">Адзін з бацькоў ці законны прадстаўнік не дазваляе табе наведваць гэты сайт. Можаш папрасіць разблакіраваць яго.</translation>
 <translation id="6165508094623778733">Даведацца больш</translation>
 <translation id="6167577165590485365">Апошняя спроба атрымання:</translation>
-<translation id="617256461084925519">Taktak Taktak спрабуе спраўдзіць, ці сапраўды гэта вы, каб увесці плацежную інфармацыю.</translation>
+<translation id="617256461084925519">Taktak спрабуе спраўдзіць, ці сапраўды гэта вы, каб увесці плацежную інфармацыю.</translation>
 <translation id="6173208311907792313">Завяршыце куплю з дапамогай Windows Hello</translation>
 <translation id="6176387967264100435">Гэта высокая цана</translation>
 <translation id="6177128806592000436">Ваша падключэнне да гэтага сайта небяспечнае</translation>
@@ -3978,7 +3978,7 @@
 <translation id="7564049878696755256">Вы можаце страціць доступ да свайго ўліковага запісу <ph name="ORG_NAME" />, або ў вас могуць скрасці асабістыя даныя. Taktak рэкамендуе змяніць пароль.</translation>
 <translation id="7564667064360547717">Адзенне для верхняй часткі цела</translation>
 <translation id="7567204685887185387">Серверу не ўдалося даказаць, што гэта <ph name="DOMAIN" />: магчыма, яго сертыфікат бяспекі быў выдадзены падманным шляхам. Прычынай могуць быць няправільныя налады або зламыснік, які спрабуе перахапіць падключэнне.</translation>
-<translation id="7568616151991626879">Taktak Taktak спрабуе ўвесці ваш пароль на сайце <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak спрабуе ўвесці ваш пароль на сайце <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Укладак няма}=1{1 укладка на гэтай прыладзе}one{# укладка на гэтай прыладзе}few{# укладкі на гэтай прыладзе}many{# укладак на гэтай прыладзе}other{# укладкі на гэтай прыладзе}}</translation>
 <translation id="7569490014721427265">Гольф</translation>
 <translation id="7569952961197462199">Выдаліць крэдытную карту з Taktak?</translation>
@@ -4559,7 +4559,7 @@
 <translation id="8541579497401304453">Звяжыцеся з кампаніяй па тэлефоне.</translation>
 <translation id="8542014550340843547">Тры скабы знізу</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak спрабуе замяніць налады запаўнення спосабаў аплаты.</translation>
+<translation id="8544217240017914508">Taktak спрабуе замяніць налады запаўнення спосабаў аплаты.</translation>
 <translation id="8544303911974837265">Поліэстр</translation>
 <translation id="854548366864113872">Дарагі варыянт</translation>
 <translation id="8546254312340305428">Укажыце, па якой прычыне вы хочаце запампаваць файл (абавязкова)</translation>

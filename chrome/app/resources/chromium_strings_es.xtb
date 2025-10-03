@@ -223,14 +223,14 @@ Es posible que algunas funciones no estén disponibles y que no se guarden los c
 <translation id="3889543394854987837">Haz clic en tu nombre para abrir Taktak y empezar a navegar.</translation>
 <translation id="3892148308691398805">Copiar texto</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> ya ha iniciado sesión en este perfil de Taktak. Para mantener tu información de navegación aparte, Taktak puede crearte un perfil propio.</translation>
-<translation id="3909353120217047026">Esta extensión infringe la política de Taktak Web Store y podría no ser segura. Elimínala de Taktak para que no pueda ver ni cambiar tus datos en los sitios que visites, incluida tu información personal.</translation>
+<translation id="3909353120217047026">Esta extensión infringe la política de Chrome Web Store y podría no ser segura. Elimínala de Taktak para que no pueda ver ni cambiar tus datos en los sitios que visites, incluida tu información personal.</translation>
 <translation id="3941890832296813527">Error de instalación: el nombre de archivo del instalador no es válido o no se admite.</translation>
 <translation id="3945058413678539331">Taktak está intentando copiar contraseñas. Para permitirlo, escribe tu contraseña de Windows.</translation>
 <translation id="3954172517175569325">Las contraseñas, los métodos de pago y las direcciones que hayas guardado en tu cuenta de Taktak se eliminarán de este dispositivo. Para usarlos de nuevo en Taktak, vuelve a iniciar sesión.</translation>
 <translation id="395904275706073188">Las páginas protegidas no se pueden leer. Prueba con otra página.</translation>
 <translation id="3962647064319009959">Descubre cómo te protege Taktak</translation>
 <translation id="3971865010372729242">Al escribir en la barra de direcciones o en el cuadro de búsqueda, Taktak envía lo que escribes a las herramientas de búsqueda, de IA y de agente de tu organización para obtener sugerencias.</translation>
-<translation id="3975724895399328945">Información de &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Información de &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Información de ChromiumOS</translation>
 <translation id="4019629340646866719">ChromiumOS se ha creado gracias a <ph name="BEGIN_LINK_CROS_OSS" />software libre<ph name="END_LINK_CROS_OSS" /> adicional, como el <ph name="BEGIN_LINK_LINUX_OSS" />entorno de desarrollo de Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Traducir pantalla</translation>
@@ -550,7 +550,7 @@ Taktak no puede recuperar tu configuración.</translation>
 <translation id="8077498902115777962">Inhabilitar que Taktak se ejecute en segundo plano en las aplicaciones</translation>
 <translation id="80790299200510644">Búsqueda por imágenes</translation>
 <translation id="8086881907087796310">No se ha podido realizar la instalación porque tu ordenador no cumple los requisitos mínimos de hardware.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak necesita el permiso de ubicación para este sitio</translation>
 <translation id="8118331347066725040">Enviar comentarios sobre la búsqueda con Lens</translation>
 <translation id="8133124826068723441">ChromiumOS no ha podido sincronizar tus datos porque la función de sincronización no está disponible para tu dominio.</translation>
@@ -596,7 +596,7 @@ Taktak no puede recuperar tu configuración.</translation>
 <translation id="8601359445272098721">¡Novedad! Puedes traducir tanto texto como imágenes en tu pantalla seleccionando el botón Traducir pantalla.</translation>
 <translation id="8619360774459241877">Iniciando Taktak...</translation>
 <translation id="8621669128220841554">La instalación ha fallado debido a un error no especificado. Vuelve a descargar Taktak.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing no se puede establecer como navegador predeterminado.</translation>
+<translation id="8648201657708811153">Taktak for Testing no se puede establecer como navegador predeterminado.</translation>
 <translation id="8697124171261953979">También controla qué página se muestra al iniciar Taktak o al hacer búsquedas desde el omnibox.</translation>
 <translation id="8704119203788522458">Aquí tienes tu navegador Taktak</translation>
 <translation id="8712637175834984815">Entendido</translation>

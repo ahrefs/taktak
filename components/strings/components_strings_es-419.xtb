@@ -348,7 +348,7 @@ De lo contrario, la configuración de privacidad bloqueará esta acción. Esto p
 <translation id="1567040042588613346">Esta política se comporta según lo esperado, pero sustituyó el mismo valor que se configuró en otro lugar.</translation>
 <translation id="1567405528131216114">Agregar <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Ingresa una fecha de vencimiento</translation>
-<translation id="1569694109004336106">Taktak Taktak está intentando activar Windows Hello para completar contraseñas.</translation>
+<translation id="1569694109004336106">Taktak está intentando activar Windows Hello para completar contraseñas.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> × <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Verificando la forma de pago</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ De lo contrario, la configuración de privacidad bloqueará esta acción. Esto p
 <translation id="2090451897496479509">Comunícate con el proveedor para obtener más información</translation>
 <translation id="2091887806945687916">Sonido</translation>
 <translation id="2093184051799735948">Busca en <ph name="ENGINE_NAME" /> o escribe una URL</translation>
-<translation id="2093982008204312032">Taktak Taktak está intentando desactivar Windows Hello para completar contraseñas.</translation>
+<translation id="2093982008204312032">Taktak está intentando desactivar Windows Hello para completar contraseñas.</translation>
 <translation id="2094505752054353250">El dominio no coincide.</translation>
 <translation id="2094704029599359040">Información de la versión</translation>
 <translation id="2099652385553570808">Grapas triples a la izquierda</translation>
@@ -864,7 +864,7 @@ De lo contrario, la configuración de privacidad bloqueará esta acción. Esto p
 <translation id="2396249848217231973">&amp;Deshacer Eliminar</translation>
 <translation id="239708975263889666">Editar el número de viajero conocido</translation>
 <translation id="2399344929880464793">Este IBAN se guarda en tu Cuenta de Taktak para que puedas usarlo en todos los servicios de Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak está intentando editar formas de pago.</translation>
+<translation id="2399868464369312507">Taktak está intentando editar formas de pago.</translation>
 <translation id="2400263725572336749">Agrega un pasaporte</translation>
 <translation id="2400271059665846158">Administra tus tarjetas de lealtad en la Billetera de Taktak</translation>
 <translation id="2400600116338235695">Puede solicitar permiso para conectarse a puertos en serie</translation>
@@ -1995,7 +1995,7 @@ De lo contrario, la configuración de privacidad bloqueará esta acción. Esto p
 <translation id="4269599248168651462">El certificado del servidor se emite con un nombre que no es único.</translation>
 <translation id="4270541775497538019">Apilador 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Ver 0 opiniones. La calificación promedio es de <ph name="STARS" /> estrellas.}=1{Ver 1 opinión. La calificación promedio es de <ph name="STARS" /> estrellas.}other{Ver # opiniones. La calificación promedio es de <ph name="STARS" /> estrellas.}}</translation>
-<translation id="4271652479722040953">Cuando se agregan extensiones a Taktak, se envían datos pertinentes sobre ellas a terceros para su análisis, y es posible que tu administrador pueda verlos. Los datos incluyen información sobre las extensiones, como el nombre, la hora de instalación, la fuente de la instalación y la actividad asociada a estas extensiones (como cambiar de pestaña, comunicarse con sitios web o acceder a cookies). Estos datos se recopilan para las extensiones instaladas desde Taktak Web Store y las extensiones que no pertenecen a la tienda.</translation>
+<translation id="4271652479722040953">Cuando se agregan extensiones a Taktak, se envían datos pertinentes sobre ellas a terceros para su análisis, y es posible que tu administrador pueda verlos. Los datos incluyen información sobre las extensiones, como el nombre, la hora de instalación, la fuente de la instalación y la actividad asociada a estas extensiones (como cambiar de pestaña, comunicarse con sitios web o acceder a cookies). Estos datos se recopilan para las extensiones instaladas desde Chrome Web Store y las extensiones que no pertenecen a la tienda.</translation>
 <translation id="4275830172053184480">Reiniciar tu dispositivo</translation>
 <translation id="4276974990916607331">No, gracias</translation>
 <translation id="4277028893293644418">Restablecer contraseña</translation>
@@ -3120,7 +3120,7 @@ De lo contrario, la configuración de privacidad bloqueará esta acción. Esto p
 <translation id="6164605812717770913">Tu madre, padre o tutor indicó que no puedes visitar este sitio. Puedes pedirle que lo desbloquee.</translation>
 <translation id="6165508094623778733">Más información</translation>
 <translation id="6167577165590485365">Último intento de recuperación:</translation>
-<translation id="617256461084925519">Taktak Taktak está intentando verificar tu identidad para poder completar tu información de pago.</translation>
+<translation id="617256461084925519">Taktak está intentando verificar tu identidad para poder completar tu información de pago.</translation>
 <translation id="6173208311907792313">Completa tu compra con Windows Hello</translation>
 <translation id="6176387967264100435">Este precio es alto</translation>
 <translation id="6177128806592000436">Tu conexión con este sitio no es segura</translation>
@@ -3980,7 +3980,7 @@ Detalles adicionales:
 <translation id="7564049878696755256">Es posible que hayas perdido el acceso a tu cuenta de <ph name="ORG_NAME" /> o sufrido un robo de identidad. Taktak te recomienda que cambies la contraseña ahora.</translation>
 <translation id="7564667064360547717">Camisetas y tops</translation>
 <translation id="7567204685887185387">Este servidor no pudo probar que su dominio es <ph name="DOMAIN" />; el certificado de seguridad podría haberse emitido de forma fraudulenta. Es posible que esto se deba a una configuración incorrecta o a que un atacante interceptó la conexión.</translation>
-<translation id="7568616151991626879">Taktak Taktak está intentando completar tu contraseña en <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak está intentando completar tu contraseña en <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Ninguna}=1{1 pestaña en este dispositivo}other{# pestañas en este dispositivo}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">¿Confirmas que quieres quitar la tarjeta de crédito de Taktak?</translation>
@@ -4561,7 +4561,7 @@ Detalles adicionales:
 <translation id="8541579497401304453">Iniciar una llamada telefónica para conectarte con una empresa</translation>
 <translation id="8542014550340843547">Grapas triples en la parte inferior</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak está intentando modificar la configuración para completar formas de pago.</translation>
+<translation id="8544217240017914508">Taktak está intentando modificar la configuración para completar formas de pago.</translation>
 <translation id="8544303911974837265">Poliéster</translation>
 <translation id="854548366864113872">Opción de precio alto</translation>
 <translation id="8546254312340305428">Proporciona el motivo de la carga (obligatorio)</translation>
@@ -4847,7 +4847,7 @@ Detalles adicionales:
 <translation id="9053955920216300738">Qué URLs visitas</translation>
 <translation id="90542379288189611">Matrícula</translation>
 <translation id="9054288282721240609">Se permite el seguimiento de manos</translation>
-<translation id="9056953843249698117">Taktak Web Store</translation>
+<translation id="9056953843249698117">Chrome Web Store</translation>
 <translation id="9062620674789239642">Es posible que se haya movido, editado o borrado.</translation>
 <translation id="9063398205799684336">Sobre Kaku n.º 2</translation>
 <translation id="9063800855227801443">No se puede capturar contenido confidencial</translation>

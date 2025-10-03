@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="tr">
-<translation id="1001534784610492198">Yükleyici arşivi bozuk veya geçersiz. Lütfen Taktak Taktak'u yeniden indirin.</translation>
+<translation id="1001534784610492198">Yükleyici arşivi bozuk veya geçersiz. Lütfen Taktak'u yeniden indirin.</translation>
 <translation id="1018937009655463387">Pencerenizi paylaşmak için Sistem Ayarları'nda Taktak'un ekranı kaydetmesine izin verin.</translation>
 <translation id="1026101648481255140">Yüklemeyi Devam Ettir</translation>
-<translation id="102763973188675173">Taktak Taktak'u özelleştirin ve kontrol edin. Güncelleme mevcut.</translation>
+<translation id="102763973188675173">Taktak'u özelleştirin ve kontrol edin. Güncelleme mevcut.</translation>
 <translation id="1028061813283459617">Tarama verilerini yalnızca bu cihazdan silip Taktak Hesabınızda tutmak için <ph name="BEGIN_LINK" />Taktak oturumunu kapatın<ph name="END_LINK" />.</translation>
 <translation id="1042270987544905725">Taktak'da oturum açma iletişim kutusunu kapatmak için tıklayın</translation>
 <translation id="1051793555070215510">Bu 1 dakikalık ankete katılarak Gizli mod'u daha iyi hale getirmemize yardımcı olun.</translation>
@@ -29,9 +29,9 @@
 <translation id="1341711321000856656">Başka bir Taktak profilindeki şifreleri görmek için profil değiştirebilirsiniz</translation>
 <translation id="1356661055722410047">Yeni! Ekranınızdaki metinleri ve resimleri çevirebilirsiniz</translation>
 <translation id="1363996462118479832">Oturum açmadaki bir hata nedeniyle ChromeOS, verilerinizi senkronize edemedi.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Ara</translation>
-<translation id="1399397803214730675">Bu bilgisayarda Taktak Taktak'un daha yeni bir sürümü zaten var. Yazılım çalışmıyorsa, lütfen Taktak Taktak'un yüklemesini kaldırın ve tekrar deneyin.</translation>
+<translation id="1399397803214730675">Bu bilgisayarda Taktak'un daha yeni bir sürümü zaten var. Yazılım çalışmıyorsa, lütfen Taktak'un yüklemesini kaldırın ve tekrar deneyin.</translation>
 <translation id="141901961143729572">Düşüncelerinizi paylaşın</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Taktak güncellemesi tamamlandı. Yeniden başlattığınızda son sürümü kullanabilirsiniz. Sonrasında mevcut sekmeleriniz yeniden açılır.}=1{Taktak güncellemesi tamamlandı. Yeniden başlattığınızda son sürümü kullanabilirsiniz. Sonrasında mevcut sekmeleriniz yeniden açılır. Gizli pencereniz yeniden açılmayacak.}other{Taktak güncellemesi tamamlandı. Yeniden başlattığınızda son sürümü kullanabilirsiniz. Sonrasında mevcut sekmeleriniz yeniden açılır. # gizli pencereniz yeniden açılmayacak.}}</translation>
 <translation id="1434626383986940139">Taktak Canary Uygulamaları</translation>
@@ -44,7 +44,7 @@
 <translation id="1547295885616600893">ChromeOS, ek <ph name="BEGIN_LINK_CROS_OSS" />açık kaynak yazılımlardan<ph name="END_LINK_CROS_OSS" /> yararlanılarak geliştirilmiştir.</translation>
 <translation id="1547469039832541117">Vurgulanan görevi sonlandırır.</translation>
 <translation id="1553358976309200471">Taktak'u güncelle</translation>
-<translation id="1587223624401073077">Taktak Taktak kameranızı kullanıyor.</translation>
+<translation id="1587223624401073077">Taktak kameranızı kullanıyor.</translation>
 <translation id="1587325591171447154"><ph name="FILE_NAME" /> tehlikeli olduğu için Taktak tarafından engellendi.</translation>
 <translation id="1597911401261118146">Şifrelerinizin veri ihlali ve diğer güvenlik sorunlarına karşı güvende olup olmadığını kontrol etmek için <ph name="BEGIN_LINK" />Taktak'da oturum açın<ph name="END_LINK" />.</translation>
 <translation id="1619887657840448962">Taktak'u daha güvenli bir hale getirmek için <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> altında listelenmeyen ve bilginiz dışında eklenmiş olabilecek aşağıdaki uzantıyı devre dışı bıraktık.</translation>
@@ -53,9 +53,9 @@
 <translation id="1651617469580841801">Taktak Lens'i kullandığınızda sayfa başlığı, URL'si ve içeriği (PDF'ler dahil) Taktak'a gönderilir. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">ChromeOS Flex hakkında</translation>
 <translation id="1674870198290878346">Bağlantıyı Taktak &amp;Gizli Penceresinde Aç</translation>
-<translation id="1682634494516646069">Taktak Taktak, veri dizini üzerinde okuma ve yazma işlemi yapamıyor: <ph name="USER_DATA_DIRECTORY" /></translation>
+<translation id="1682634494516646069">Taktak, veri dizini üzerinde okuma ve yazma işlemi yapamıyor: <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Adres çubuğuna veya arama kutusuna yazdığınızda Taktak, öneriler almak için, yazdıklarınızı kuruluşunuzun arama, yapay zeka ve temsilci araçlarına gönderir.</translation>
-<translation id="1698376642261615901">Taktak Taktak, web sayfalarını ve uygulamaları yıldırım hızıyla çalıştıran bir web tarayıcısıdır. Hızlı, dengeli ve kullanımı kolaydır. Kötü amaçlı yazılımlara ve e-dolandırıcılığa karşı Taktak Taktak'un içinde yerleşik olarak bulunan koruma özellikleriyle web'de daha güvenli bir şekilde gezinin.</translation>
+<translation id="1698376642261615901">Taktak, web sayfalarını ve uygulamaları yıldırım hızıyla çalıştıran bir web tarayıcısıdır. Hızlı, dengeli ve kullanımı kolaydır. Kötü amaçlı yazılımlara ve e-dolandırıcılığa karşı Taktak'un içinde yerleşik olarak bulunan koruma özellikleriyle web'de daha güvenli bir şekilde gezinin.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Taktak bir saat içinde yeniden başlatılacak}other{Taktak # saat içinde yeniden başlatılacak}}</translation>
 <translation id="1722488837206509557">Böylece, kullanılabilir cihazlar arasından seçiminizi yapıp içerikleri bu cihazlarda görüntüleyebilirsiniz.</translation>
 <translation id="1786003790898721085"><ph name="TARGET_DEVICE_NAME" /> cihazınızdan Taktak'da oturum açtığınızdan emin olup tekrar göndermeyi deneyin.</translation>
@@ -66,8 +66,8 @@
 <translation id="1832046143430087831">Taktak'un V8 motoruyla siteleri hızlandırır ancak bu durumda Taktak, saldırılara karşı biraz daha dirençsiz hale gelir. Bu ayar kapalı.</translation>
 <translation id="1838374766361614909">Aramayı temizle</translation>
 <translation id="1860536484129686729">Taktak'un bu sitede kameranıza erişmesi için izin gerekiyor</translation>
-<translation id="1873233029667955273">Taktak Taktak varsayılan tarayıcınız değil</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-In)</translation>
+<translation id="1873233029667955273">Taktak varsayılan tarayıcınız değil</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-In)</translation>
 <translation id="1877026089748256423">Taktak sürümü eski</translation>
 <translation id="1880677175115548835">Metin seç</translation>
 <translation id="1919130412786645364">Taktak'da oturum açmaya izin ver</translation>
@@ -79,7 +79,7 @@
 <translation id="2024959665595762054">Taktak verilerini kullanmak ve Taktak Hesabınıza kaydetmek için kimliğinizi doğrulayın</translation>
 <translation id="2034233344106846793">Taktak, güvensiz bağlantıları mümkün olduğunda otomatik olarak HTTPS'ye yükseltir</translation>
 <translation id="207902854391093810">Reklam ölçümü, denemeler açıkken ziyaret ettiğiniz sitelerin Taktak'dan bilgi istemesine olanak tanır. Bu bilgiler de sitenin, reklamlarının performansını ölçmesine yardımcı olur. Reklam ölçümü, siteler arasında mümkün olduğunca az bilgi aktararak siteler arası izlemeyi kısıtlar.</translation>
-<translation id="2091012649849228750">Gelecekteki Taktak Taktak güncellemelerini almak için Windows 10 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar Windows 8 kullanıyor.</translation>
+<translation id="2091012649849228750">Gelecekteki Taktak güncellemelerini almak için Windows 10 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar Windows 8 kullanıyor.</translation>
 <translation id="2094648590148273905">ChromeOS Flex şartları</translation>
 <translation id="2094919256425865063">Yine de Taktak'dan çıkılsın mı?</translation>
 <translation id="2096213354152647998">Son zamanlarda ziyaret etmediniz. Taktak; <ph name="PERMISSION" /> iznini kaldırdı.</translation>
@@ -101,10 +101,10 @@
 <translation id="2199691482078155239">Taktak, gördüğünüz reklamlarda daha fazla kontrol sahibi olmanızı sağlar ve kişiselleştirilmiş reklamlar gösteren sitelerin hakkınızda edinebileceği bilgileri sınırlandırır</translation>
 <translation id="2216543877350048334">Taktak Hesabınızı Taktak'dan kaldırmak için oturumu kapatın</translation>
 <translation id="2236949375853147973">Etkinliğim</translation>
-<translation id="2290014774651636340">Taktak API anahtarları eksik. Taktak Taktak'un bazı işlevleri devre dışı bırakılacak.</translation>
-<translation id="2290095356545025170">Taktak Taktak'u kaldırmak istediğinizden emin misiniz?</translation>
+<translation id="2290014774651636340">Taktak API anahtarları eksik. Taktak'un bazı işlevleri devre dışı bırakılacak.</translation>
+<translation id="2290095356545025170">Taktak'u kaldırmak istediğinizden emin misiniz?</translation>
 <translation id="2301513536169703857">Şifrelerinizi, yer işaretlerinizi ve diğer öğelerinizi tüm cihazlarınızda kullanmak için Taktak'da oturum açın</translation>
-<translation id="2309047409763057870">Bu, Taktak Taktak'un ikincil bir yüklemesidir ve varsayılan tarayıcınız yapılamaz.</translation>
+<translation id="2309047409763057870">Bu, Taktak'un ikincil bir yüklemesidir ve varsayılan tarayıcınız yapılamaz.</translation>
 <translation id="2345992953227471816">Taktak aşağıdaki uzantılarda kötü amaçlı yazılım tespit etti:</translation>
 <translation id="2348335408836342058">Taktak'un bu sitede kameranıza ve mikrofonunuza erişmesi için izin gerekiyor</translation>
 <translation id="234869673307233423">Taktak, şifrelerinizi kontrol edemiyor. Daha sonra tekrar deneyin.</translation>
@@ -112,7 +112,7 @@
 <translation id="2403703063067034158">Başlatma hatası: Şu anda başka bir kurulum işlemi devam ediyor. Lütfen daha sonra tekrar deneyin.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{Bir veya daha fazla Taktak uzantısı, 1 insan arabirim cihazına erişiyordu}=1{Bir veya daha fazla Taktak uzantısı, 1 insan arabirim cihazına erişiyor}other{Bir veya daha fazla Taktak uzantısı, # insan arabirim cihazına erişiyor}}</translation>
 <translation id="2424440923901031101">Bu uzantı Taktak Web Mağazası politikasını ihlal ettiği için güvenli olmayabilir. Kişisel bilgileriniz de dahil olmak üzere ziyaret ettiğiniz sitelerdeki verilerinizi artık görememesi ve değiştirememesi için bu uzantıyı Taktak'dan kaldırın.</translation>
-<translation id="2467438592969358367">Taktak Taktak şifrelerinizi dışa aktarmak istiyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
+<translation id="2467438592969358367">Taktak şifrelerinizi dışa aktarmak istiyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
 <translation id="2472092250898121027">Bu uzantı kötü amaçlı yazılım içerdiği için güvenli değil. Kişisel bilgileriniz de dahil olmak üzere ziyaret ettiğiniz sitelerdeki verilerinizi artık görememesi ve değiştirememesi için bu uzantıyı Taktak'dan kaldırın.</translation>
 <translation id="2485422356828889247">Kaldır</translation>
 <translation id="2513154137948333830">Yeniden başlatma gerekiyor: <ph name="INSTALL_SUCCESS" /></translation>
@@ -124,19 +124,19 @@
 <translation id="2571392474191184472">Taktak'u kuruluşunuz yönetiyor</translation>
 <translation id="2574930892358684005"><ph name="EXISTING_USER" /> kullanıcısının oturumu halihazırda bu Taktak profilinde açık. Göz atma işlemlerinizi ayrı tutmak isterseniz Taktak, sizin için kendi profilinizi oluşturabilir.</translation>
 <translation id="2579190314336775785">Şifreler yalnızca Taktak dışında silinebilir</translation>
-<translation id="2580411288591421699">Şu anda çalışmakta olan Taktak Taktak ile aynı sürüm yüklenemez. Lütfen Taktak Taktak'u kapatın ve tekrar deneyin.</translation>
+<translation id="2580411288591421699">Şu anda çalışmakta olan Taktak ile aynı sürüm yüklenemez. Lütfen Taktak'u kapatın ve tekrar deneyin.</translation>
 <translation id="2586406160782125153">Bu işlem, tarama verilerinizi bu cihazdan silecektir. Verilerinizi daha sonra geri almak için Taktak'da <ph name="USER_EMAIL" /> hesabıyla oturum açın.</translation>
 <translation id="259935314519650377">İndirilen yükleyici önbelleğe alınamadı. Hata: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">Sistem</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Taktak, tarayıcınızın en güvenli ayarlara sahip olup olmadığını düzenli olarak kontrol eder. İncelemeniz gereken bir konu varsa sizi bilgilendiririz.</translation>
 <translation id="2652691236519827073">Bağlantıyı Yeni Taktak &amp;sekmesinde aç</translation>
-<translation id="2665296953892887393">Kilitlenme raporlarını ve <ph name="UMA_LINK" /> bilgilerini Taktak'a göndererek Taktak Taktak'u daha iyi hale getirmeye yardımcı olun</translation>
+<translation id="2665296953892887393">Kilitlenme raporlarını ve <ph name="UMA_LINK" /> bilgilerini Taktak'a göndererek Taktak'u daha iyi hale getirmeye yardımcı olun</translation>
 <translation id="2668094785979141847">Taktak Lens'ten çıkmak için tıklayın</translation>
-<translation id="2681444469812712297">Taktak Taktak'da yeni bir sekmede <ph name="URL" /> adresini açın.</translation>
+<translation id="2681444469812712297">Taktak'da yeni bir sekmede <ph name="URL" /> adresini açın.</translation>
 <translation id="2712141162840347885">Taktak Lens ile aramak istediğiniz öğeyi seçin veya Taktak Lens'ten çıkmak için Escape tuşuna basın</translation>
 <translation id="2738871930057338499">İnternet'e bağlanılamadı. HTTP 403 Yasak. Lütfen proxy yapılandırmanızı kontrol edin.</translation>
-<translation id="2742320827292110288">Uyarı: Taktak Taktak, uzantıların tarama geçmişinizi kaydetmesini önleyemez. Gizli modda bu uzantıyı devre dışı bırakmak için bu seçeneğin onay işaretini kaldırın.</translation>
+<translation id="2742320827292110288">Uyarı: Taktak, uzantıların tarama geçmişinizi kaydetmesini önleyemez. Gizli modda bu uzantıyı devre dışı bırakmak için bu seçeneğin onay işaretini kaldırın.</translation>
 <translation id="2753623023919742414">Aramak için tıklayın</translation>
 <translation id="2765403129283291972">Taktak'un bu sitede mikrofonunuza erişmesi için izin gerekiyor</translation>
 <translation id="2770231113462710648">Varsayılan tarayıcıyı şuna dönüştür:</translation>
@@ -168,13 +168,13 @@
 <translation id="3003694935412297923">Tüm görevler</translation>
 <translation id="3018957014024118866">Taktak'daki verileri de sil (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">&amp;ChromeOS Flex'i güncellemek için yeniden başlatın</translation>
-<translation id="3037838751736561277">Taktak Taktak arka plan modunda.</translation>
+<translation id="3037838751736561277">Taktak arka plan modunda.</translation>
 <translation id="3038232873781883849">Yüklenmesi bekleniyor...</translation>
 <translation id="3045032126857188731">Hedef dil: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Geri bildirim iletişim kutusunu kapat</translation>
 <translation id="306179102415443347">Taktak Şifre Yöneticisi'ne hızlıca gitmek için kısayolunuzu kullanın. Kısayolunuzu bilgisayarınızın ana ekranına veya uygulama başlatıcıya taşıyabilirsiniz.</translation>
 <translation id="3065168410429928842">Taktak Sekmesi</translation>
-<translation id="3080151273017101988">Taktak Taktak kapandığında arka plan uygulamaları çalıştırmaya devam et</translation>
+<translation id="3080151273017101988">Taktak kapandığında arka plan uygulamaları çalıştırmaya devam et</translation>
 <translation id="3100998948628680988">Taktak profilinize bir ad verin</translation>
 <translation id="310459126943037700">Görevler sonlandırılamadı.</translation>
 <translation id="3112458742631356345">Dosya çok indirilmediği ve tehlikeli olabileceği için Taktak bu indirme işlemini engelledi</translation>
@@ -182,7 +182,7 @@
 <translation id="3119573284443908657">Arşiv dosyası, kötü amaçlı yazılımın gizlenmiş olabileceği başka dosyalar içerdiği için Taktak bu indirme işlemini engelledi</translation>
 <translation id="3135560418014806498">Taktak profili ekle</translation>
 <translation id="3137969841538672700">Aramak için sürükleyin</translation>
-<translation id="3140883423282498090">Yaptığınız değişiklikler Taktak Taktak'u yeniden başlattığınızda geçerli olacak.</translation>
+<translation id="3140883423282498090">Yaptığınız değişiklikler Taktak'u yeniden başlattığınızda geçerli olacak.</translation>
 <translation id="3149510190863420837">Taktak Uygulamaları</translation>
 <translation id="3161522574479303604">Tüm diller</translation>
 <translation id="319199214552513804">Bu uzantıya ve diğer öğelerinize tüm bilgisayarlarınızda erişmek için Taktak'da oturum açın</translation>
@@ -199,7 +199,7 @@
 <translation id="3352986031709923790">arama alanının sağ üst köşesi: sağ %<ph name="RIGHT" />, üst %<ph name="TOP" /></translation>
 <translation id="3360895254066713204">Taktak Helper</translation>
 <translation id="3379938682270551431">{0,plural, =0{Taktak şimdi yeniden başlatılacak}=1{Taktak 1 saniye içinde yeniden başlatılacak}other{Taktak # saniye içinde yeniden başlatılacak}}</translation>
-<translation id="3396977131400919238">Yükleme sırasında bir işletim sistemi hatası oluştu. Lütfen Taktak Taktak'u yeniden indirin.</translation>
+<translation id="3396977131400919238">Yükleme sırasında bir işletim sistemi hatası oluştu. Lütfen Taktak'u yeniden indirin.</translation>
 <translation id="3428747202529429621">Taktak'da güvende kalmanızı sağlar ve oturum açtığınızda diğer Taktak uygulamalarındaki güvenliğinizi artırmak için kullanılabilir</translation>
 <translation id="3434246496373299699">Taktak, Taktak Hesabınızla oturum açtığınızda şifrelerinizi kontrol edebilir</translation>
 <translation id="3438681572027105609">Şifrelerinizi ve diğer öğelerinizi tüm cihazlarınızda kullanmak için Taktak'da oturum açın</translation>
@@ -210,7 +210,7 @@
 <translation id="3503306920980160878">Konumunuzu bu siteyle paylaşabilmek için Taktak'un konum bilgilerinize erişmesi gerekiyor</translation>
 <translation id="3533694711092285624">Kaydedilen şifre yok. Kaydetmeniz halinde Taktak, şifrelerinizi kontrol edebilir.</translation>
 <translation id="3541482654983822893">Taktak, şifrelerinizi kontrol edemiyor. 24 saat sonra tekrar deneyin.</translation>
-<translation id="3576528680708590453">Sistem yöneticiniz Taktak Taktak'u <ph name="TARGET_URL_HOSTNAME" /> adresine erişmek için alternatif bir tarayıcıyı açacak şekilde yapılandırmış.</translation>
+<translation id="3576528680708590453">Sistem yöneticiniz Taktak'u <ph name="TARGET_URL_HOSTNAME" /> adresine erişmek için alternatif bir tarayıcıyı açacak şekilde yapılandırmış.</translation>
 <translation id="3582972582564653026">Taktak'u cihazlarınız arasında senkronize edin ve kişiselleştirin</translation>
 <translation id="3583751698304738917">Başka bir Taktak profilinde <ph name="USER_EMAIL_ADDRESS" /> olarak zaten oturum açmış durumdasınız.</translation>
 <translation id="358381413217813387">Bu sayfayı Taktak Lens ile arayın</translation>
@@ -232,32 +232,32 @@
 <translation id="3780814664026482060">Taktak - <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">ChromeOS Flex, oturum açma hatası nedeniyle verilerinizi senkronize edemedi.</translation>
 <translation id="3795971588916395511">Taktak ChromeOS</translation>
-<translation id="3809772425479558446">Taktak Taktak, Windows 10 veya daha sonraki bir sürümü gerektirir.</translation>
+<translation id="3809772425479558446">Taktak, Windows 10 veya daha sonraki bir sürümü gerektirir.</translation>
 <translation id="3810973564298564668">Yönet</translation>
-<translation id="383928141529488001">Taktak Taktak'un Bluetooth cihazları keşfedebilmesi için Bluetooth'a erişmesi gerekiyor. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Lütfen tüm Taktak Taktak pencerelerini kapatıp tekrar deneyin.</translation>
+<translation id="383928141529488001">Taktak'un Bluetooth cihazları keşfedebilmesi için Bluetooth'a erişmesi gerekiyor. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
+<translation id="386202838227397562">Lütfen tüm Taktak pencerelerini kapatıp tekrar deneyin.</translation>
 <translation id="3873044882194371212">Bağlantıyı Taktak &amp;gizli penceresinde aç</translation>
 <translation id="3885770153807205175">Dil seçici</translation>
-<translation id="3889417619312448367">Taktak Taktak'u Kaldır</translation>
+<translation id="3889417619312448367">Taktak'u Kaldır</translation>
 <translation id="3892148308691398805">Metni kopyala</translation>
 <translation id="3941890832296813527">Yükleme hatası: Yükleyici dosya adı geçersiz veya desteklenmiyor.</translation>
 <translation id="395904275706073188">Korumalı sayfalar okunamaz. Farklı bir sayfa deneyin.</translation>
 <translation id="3968962723676998462">Taktak verilerini kullanmak ve <ph name="ACCOUNT_EMAIL" /> hesabınıza kaydetmek için parolanızı girin</translation>
-<translation id="3973161977468201858">Taktak Taktak, Taktak Şifre Yöneticisi verilerinizi silmek istiyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
+<translation id="3973161977468201858">Taktak, Taktak Şifre Yöneticisi verilerinizi silmek istiyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
 <translation id="400161754580828648">Ekranınızı paylaşmak için Sistem Tercihleri'nde Taktak'un ekranı kaydetmesine izin verin.</translation>
 <translation id="4022972681110646219">Ekrandaki yazıları çevir</translation>
 <translation id="4023601594785368013">Orijinal dil: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">Güncellemenin uygulanması için ChromeOS yeniden başlatılmalıdır.</translation>
 <translation id="4050175100176540509">Son sürümde güvenlikle ilgili önemli iyileştirmeler ve yeni özellikler mevcuttur.</translation>
-<translation id="4053720452172726777">Taktak Taktak'u özelleştirin ve kontrol edin</translation>
+<translation id="4053720452172726777">Taktak'u özelleştirin ve kontrol edin</translation>
 <translation id="408393047846373801">Şifrelerinizi ve diğer öğelerinizi tüm cihazlarınızda kullanmak için Taktak'da oturum açın. Bu şifre, oturum açtıktan sonra Taktak Hesabınıza kaydedilir.</translation>
 <translation id="409936259433005390">Yakında Windows 11'e mi geçeceksiniz? Taktak yükleyicisini OneDrive'a indirerek ilk günden hazır olun.</translation>
 <translation id="4110895483821904099">Yeni Taktak profilinizi oluşturun</translation>
 <translation id="4111566860456076004">Taktak, bu uzantının kaynağını doğrulayamadığı için uzantı güvenli olmayabilir. Kişisel bilgileriniz de dahil olmak üzere ziyaret ettiğiniz sitelerdeki verilerinizi artık görememesi ve değiştirememesi için bu uzantıyı Taktak'dan kaldırın.</translation>
 <translation id="4128488089242627000">Taktak daha hızlı çalışır ve JavaScript kullanan özellikler tasarlandığı şekilde çalışır (önerilir)</translation>
-<translation id="4147555960264124640">Yönetilen bir hesapla oturum açıyor ve hesabın yöneticisine Taktak Taktak profilinizi denetleme izni veriyorsunuz. Uygulamalarınız, yer işaretleriniz, geçmişiniz, şifreleriniz ve diğer ayarlarınız gibi Taktak verileriniz kalıcı olarak <ph name="USER_NAME" /> ile bağlantılandırılacaktır. Taktak Hesapları Hesap Özeti'ni kullanarak bu verileri silebilecek, ancak bu verileri başka bir hesapla ilişkilendiremeyeceksiniz.<ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Yönetilen bir hesapla oturum açıyor ve hesabın yöneticisine Taktak profilinizi denetleme izni veriyorsunuz. Uygulamalarınız, yer işaretleriniz, geçmişiniz, şifreleriniz ve diğer ayarlarınız gibi Taktak verileriniz kalıcı olarak <ph name="USER_NAME" /> ile bağlantılandırılacaktır. Taktak Hesapları Hesap Özeti'ni kullanarak bu verileri silebilecek, ancak bu verileri başka bir hesapla ilişkilendiremeyeceksiniz.<ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Yükleniyor...</translation>
-<translation id="4149882025268051530">Yükleyici arşivi açamadı. Lütfen Taktak Taktak'u yeniden indirin.</translation>
+<translation id="4149882025268051530">Yükleyici arşivi açamadı. Lütfen Taktak'u yeniden indirin.</translation>
 <translation id="415112847282352845">Adreslerinizi ve diğer öğelerinizi tüm cihazlarınızda kullanmak için Taktak'da oturum açın Bu adres, oturum açtıktan sonra Taktak Hesabınıza kaydedilir.</translation>
 <translation id="4153934450158521343">Taktak yakında kapanacak ve verileri silecek</translation>
 <translation id="4173512894976930765">Siteler muhtemelen beklendiği gibi çalışır. Tüm Taktak pencerelerini kapattığınızda çoğu sitedeki oturumunuz kapatılır. Taktak'da oturum açtıysanız Taktak Hesabınız buna dahil değildir.</translation>
@@ -274,11 +274,11 @@
 <translation id="4293420128516039005">Taktak'u cihazlarınız arasında senkronize etmek ve kişiselleştirmek için oturum açın</translation>
 <translation id="430327780270213103">Uzantının, Taktak araç çubuğunda erişim isteklerini göstermesine izin ver</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Taktak, Tarayıcınızı Yavaşlatan Sekmeyi Duraklatmanızı Öneriyor}other{Taktak, Tarayıcınızı Yavaşlatan Sekmeleri Duraklatmanızı Öneriyor}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-In)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-In)</translation>
 <translation id="4329315893554541805">Kişiselleştirme ve diğer özelliklerden yararlanmak için Taktak'u Web ve Uygulama Etkinliği'nin yanı sıra bağlı Taktak hizmetlerine ekleyin</translation>
 <translation id="4334241893986177674">Bu ekran görüntüsünde arama yapın</translation>
 <translation id="4334294535648607276">İndirme işlemi tamamlandı.</translation>
-<translation id="4337324600316876133">Gelecekteki Taktak Taktak güncellemelerini almak için macOS 12 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar macOS 11 kullanıyor.</translation>
+<translation id="4337324600316876133">Gelecekteki Taktak güncellemelerini almak için macOS 12 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar macOS 11 kullanıyor.</translation>
 <translation id="4343195214584226067"><ph name="EXTENSION_NAME" /> Taktak'a eklendi</translation>
 <translation id="4348548358339558429">Kişiselleştirme için Taktak'u Web ve Uygulama Etkinliği'ne ekleyin</translation>
 <translation id="436060642166082913">Dosya kişisel ve sosyal ağ hesaplarınıza zarar verebileceği için Taktak bu indirme işlemini engelledi</translation>
@@ -287,7 +287,7 @@
 <translation id="4427306783828095590">Gelişmiş koruma, kimlik avını ve kötü amaçlı yazılımları engellemek için daha fazla özellik sunar</translation>
 <translation id="4434353761996769206">Yükleyici hatası: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak - Ağda Oturum Açın - <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">Taktak Taktak'da başka bir işlem devam ediyor. Lütfen daha sonra yeniden deneyin.</translation>
+<translation id="4458462641685292929">Taktak'da başka bir işlem devam ediyor. Lütfen daha sonra yeniden deneyin.</translation>
 <translation id="4459234553906210702">Reklam ölçümü, ziyaret ettiğiniz sitelerin Taktak'dan bilgi istemesine olanak tanır. Bu bilgiler de sitenin, reklamlarının performansını ölçmesine yardımcı olur. Reklam ölçümü, siteler arasında mümkün olduğunca az bilgi aktararak siteler arası izlemeyi kısıtlar.</translation>
 <translation id="4493028449971051158">Başlatma hatası: Lütfen yükleyiciyi yönetici olarak çalıştırın.</translation>
 <translation id="4501471624619070934">Bu ülkede erişim kısıtlandığı için yükleme başarısız oldu.</translation>
@@ -304,42 +304,42 @@
 <translation id="4680828127924988555">Yüklemeyi İptal Et</translation>
 <translation id="4720851490453439956">Taktak Güncelleyici Dahili Hizmeti</translation>
 <translation id="4724676981607797757">Desteklenmeyen bir protokol hatası nedeniyle yükleme işlemi başarısız oldu.</translation>
-<translation id="4728575227883772061">Belirlenemeyen bir hata nedeniyle yükleme başarısız oldu. Taktak Taktak şu anda çalışır durumdaysa, kapatıp yeniden deneyin.</translation>
+<translation id="4728575227883772061">Belirlenemeyen bir hata nedeniyle yükleme başarısız oldu. Taktak şu anda çalışır durumdaysa, kapatıp yeniden deneyin.</translation>
 <translation id="4737281654364167024">Devam etmek için Taktak'da <ph name="EMAIL" /> hesabıyla oturum açın. Böylece kuruluşunuzun politikalarına uyabilirsiniz.</translation>
 <translation id="4741235124132242877">Sabitlendi. Araç çubuğundan Taktak Lens'i tekrar kullanabilirsiniz.</translation>
 <translation id="4747730611090640388">Taktak, ilgi alanlarınızı tahmin edebilir.  Daha sonra ziyaret ettiğiniz bir site, gördüğünüz reklamları kişiselleştirmek için Taktak'dan ilgi alanlarınızı göstermesini isteyebilir.</translation>
 <translation id="475321580758063259"><ph name="ACCOUNT_EMAIL" /> Taktak Hesabınızdaki Taktak verilerini kullanmaya devam etmek için Taktak'u güncelleyin</translation>
-<translation id="4754614261631455953">Taktak Taktak Canary (mDNS-In)</translation>
+<translation id="4754614261631455953">Taktak Canary (mDNS-In)</translation>
 <translation id="4756182432527369254">Taktak'un V8 motoruyla siteleri hızlandırır ancak bu durumda Taktak, saldırılara karşı biraz daha dirençsiz hale gelir.</translation>
 <translation id="479167709087336770">Bu işlev, Taktak Arama'da kullanılan yazım denetiminin aynısını kullanır. Tarayıcıda yazdığınız metin Taktak'a gönderilir. Bu davranışı istediğiniz zaman ayarlardan değiştirebilirsiniz.</translation>
 <translation id="4793679854893018356">Taktak'un güvenliğinizi nasıl sağladığını öğrenin</translation>
-<translation id="4828579605166583682">Taktak Taktak mevcut şifreleri değiştirmeye çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
+<translation id="4828579605166583682">Taktak mevcut şifreleri değiştirmeye çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
 <translation id="4842397268809523050">Alanınızda senkronizasyon kullanılamadığı için ChromeOS Flex, verilerinizi senkronize edemedi.</translation>
 <translation id="4851866215237571846"><ph name="EXISTING_USER" /> zaten oturum açmış durumda.  Göz atma işlemlerinizi ayrı tutmak için Taktak'da kendi profilinizde <ph name="USER_EMAIL_ADDRESS" /> olarak oturum açın.</translation>
 <translation id="4855026984605187434">Ekranınızı paylaşmak için Sistem Ayarları'nda Taktak'un ekranı kaydetmesine izin verin.</translation>
 <translation id="4873783916118289636">Taktak'daki önemli gizlilik ve güvenlik kontrollerini inceleyin</translation>
 <translation id="4885446229353981848">Taktak Lens kısayolunu her zaman göster</translation>
-<translation id="4891791193823137474">Taktak Taktak'un arka planda çalışmasına izin ver</translation>
+<translation id="4891791193823137474">Taktak'un arka planda çalışmasına izin ver</translation>
 <translation id="4895437082222824641">Bağlantıyı yeni Taktak &amp;sekmesinde aç</translation>
 <translation id="4918844574251943176">Resim kopyalandı</translation>
 <translation id="492720062778050435">Taktak bu uzantıyı incelemenizi öneriyor</translation>
 <translation id="4946912144186040233">Taktak, formları daha iyi anlar ve sizin için daha hızlı bir şekilde otomatik olarak doldurabilir. Bu ayar kapalı.</translation>
-<translation id="4953650215774548573">Taktak Taktak'u varsayılan tarayıcım olarak ayarla</translation>
+<translation id="4953650215774548573">Taktak'u varsayılan tarayıcım olarak ayarla</translation>
 <translation id="495931528404527476">Taktak'da</translation>
 <translation id="4969674060580488087">Hesap oturum açma bilgileriniz güncel olmadığı için ChromeOS Flex, verilerinizi senkronize edemedi.</translation>
 <translation id="4970761609246024540">Taktak profillerine hoş geldiniz</translation>
 <translation id="4970880042055371251">ChromeOS sürümü</translation>
-<translation id="4990567037958725628">Taktak Taktak Canary</translation>
+<translation id="4990567037958725628">Taktak Canary</translation>
 <translation id="5003967926796347400">"Taktak Şifre Yöneticisi"ni tıklayın</translation>
 <translation id="504867494566807945">Uygulamalardaki bağlantıları Taktak'da açın. Ayrıca Taktak, kolay erişim için görev çubuğunuza sabitlenir.</translation>
 <translation id="5114340746415930644">Taktak verilerini kullanmak ve <ph name="USER_EMAIL" /> hesabınıza kaydetmek için parolanızı girin</translation>
 <translation id="5120334927898581447">Diğer Taktak hizmetlerinde oturum açtığınızda Taktak'da oturum açın</translation>
 <translation id="5126049312684316860">Taktak, ziyaret etme olasılığınızın yüksek olduğu daha fazla sayfayı önceden yükleyerek bu sayfaları ziyaret ettiğinizde daha hızlı yüklenmelerini sağlar.</translation>
-<translation id="5132929315877954718">Taktak Taktak'a özgü harika uygulamaları, oyunları, uzantıları ve temaları keşfedin.</translation>
+<translation id="5132929315877954718">Taktak'a özgü harika uygulamaları, oyunları, uzantıları ve temaları keşfedin.</translation>
 <translation id="5139423532931106058">Taktak profilinizi özelleştirin</translation>
 <translation id="5163087008893166964">Taktak'a hoş geldiniz; yeni tarayıcı penceresi açıldı</translation>
 <translation id="5166439563123238795">Taktak'un ellerinizi takip etmek için izne ihtiyacı var</translation>
-<translation id="5170938038195470297">Profiliniz daha yeni bir Taktak Taktak sürümünden geldiği için kullanılamıyor.
+<translation id="5170938038195470297">Profiliniz daha yeni bir Taktak sürümünden geldiği için kullanılamıyor.
 
 Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirtin veya daha yeni bir Taktak sürümü kullanın.</translation>
 <translation id="5174969993834422967">Genelde bildirimleri engelliyorsunuz. Bu sitenin size bildirim göndermesine izin vermek için konum çubuğunuzun sağ köşesindeki bildirim simgesini tıklayın.</translation>
@@ -358,12 +358,12 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="5386244825306882791">Ayrıca, Taktak'u başlattığınızda veya Çok Amaçlı Adres Çubuğu'ndan arama yaptığınızda gösterilecek sayfayı da denetler.</translation>
 <translation id="5394833366792865639">Taktak sekmesi paylaşın</translation>
 <translation id="5412485296464121825">Siteler, ilgi alanlarınız hakkındaki bilgileri Taktak'da saklayabilir. Örneğin, maraton ayakkabısı satın almak için ziyaret ettiğiniz bir site, maraton koşmayı ilgi alanınız olarak tanımlayabilir. Daha sonra bir yarışa kaydolmak için farklı bir siteyi ziyaret ettiğinizde o site ilgi alanlarınıza dayalı olarak size koşu ayakkabısı reklamı gösterebilir.</translation>
-<translation id="5430073640787465221">Tercih dosyanız bozuk veya geçersiz. Taktak Taktak, ayarlarınızı kurtaramıyor.</translation>
+<translation id="5430073640787465221">Tercih dosyanız bozuk veya geçersiz. Taktak, ayarlarınızı kurtaramıyor.</translation>
 <translation id="5468572406162360320">Taktak, özelliklerle olan etkileşimlerinizi Taktak'a göndererek bu özelliklerin iyileştirilmesini sağlar. İnceleme uzmanları bu verileri okuyabilir, işleyebilir ve bunlara ek açıklama ekleyebilir.</translation>
 <translation id="5524761631371622910">Denemeler açıksa ve Taktak tarafından etkin bir denemeye rastgele yerleştirildiyseniz tarama geçmişiniz gördüğünüz reklamları ve aşağıdaki şekilde tahmin edilen ilgi alanlarınızı etkiler. Taktak, gizliliğinizi korumak için ilgi alanlarınızı her ay sürekli olarak siler.</translation>
 <translation id="5524890928877629608">arama alanının sol üst köşesi: sol %<ph name="LEFT" />, üst %<ph name="TOP" /></translation>
 <translation id="5530733413481476019">Taktak'u Daha Hızlı Hale Getirin</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-In)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-In)</translation>
 <translation id="5579324208890605088">Başlatma hatası: Lütfen yükleyiciyi yönetici olarak değil, normal bir kullanıcı olarak çalıştırın.</translation>
 <translation id="5596627076506792578">Diğer seçenekler</translation>
 <translation id="5600352656975192682">Taktak'a istediğiniz zaman hızlıca erişmek için görev çubuğunuza sabitleyin</translation>
@@ -373,7 +373,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="566568153320186256">Taktak, arka plan etkinliğini ve görsel efektleri (ör. kolay kaydırma ve video kare hızı) sınırlandırarak pil gücünden tasarruf eder. <ph name="BEGIN_LINK" />Enerji Tasarrufu hakkında daha fazla bilgi edinin<ph name="END_LINK" />.</translation>
 <translation id="567202749201779594">Hesabınızdaki Taktak verilerini temizleyin</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{Yöneticiniz bu güncellemeyi uygulamak için Taktak'u yeniden başlatmanızı istiyor}=1{Yöneticiniz bu güncellemeyi uygulamak için Taktak'u yeniden başlatmanızı istiyor. Gizli pencereniz yeniden açılmayacak.}other{Yöneticiniz bu güncellemeyi uygulamak için Taktak'u yeniden başlatmanızı istiyor. # Gizli pencereniz yeniden açılmayacak.}}</translation>
-<translation id="5686916850681061684">Taktak Taktak'u özelleştirin ve kontrol edin. İlgilenmeniz gereken bir konu var. Ayrıntılar için tıklayın.</translation>
+<translation id="5686916850681061684">Taktak'u özelleştirin ve kontrol edin. İlgilenmeniz gereken bir konu var. Ayrıntılar için tıklayın.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">İnternet'e bağlanılamıyor. Proxy sunucu kimlik doğrulama gerektiriyor.</translation>
 <translation id="5709557627224531708">Taktak'u varsayılan tarayıcınız olarak ayarlayın</translation>
@@ -381,7 +381,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="5736850870166430177">Taktak, bir sitenin şifrenizi çalmaya çalışması veya zararlı bir dosya indirmeniz halinde de Güvenli Tarama'ya sayfa içeriğinden parçalarla birlikte URL'ler gönderebilir</translation>
 <translation id="5756509061973259733">Cihazda bu hesaba sahip bir Taktak profili zaten var</translation>
 <translation id="5759947850379142561">Taktak Lens ile aramak istediğiniz metni veya resmi seçin ya da Taktak Lens'ten çıkmak için Escape tuşuna basın</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Canary</translation>
 <translation id="5804318322022881572">Taktak başlatılamadı. Tekrar deneyin.</translation>
 <translation id="5809516625706423866">İnternet'e bağlanılamadı. HTTP 401 Yetkisiz. Lütfen proxy yapılandırmanızı kontrol edin.</translation>
 <translation id="5824893331272123205">Bu panel yüklenemedi, tekrar deneyin</translation>
@@ -395,7 +395,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="5925596746603389877">Taktak yükleyiciyi indir</translation>
 <translation id="5940385492829620908">Web, yer işaretleri ve diğer Taktak öğeleriniz burada bulunur.</translation>
 <translation id="5941711191222866238">Küçült</translation>
-<translation id="5941830788786076944">Taktak Taktak varsayılan tarayıcı olsun</translation>
+<translation id="5941830788786076944">Taktak varsayılan tarayıcı olsun</translation>
 <translation id="5947104538377036631">Taktak Kısayolu</translation>
 <translation id="5968400720580217226">Yapay Zeka Modu</translation>
 <translation id="5980111191913430208">Bilinmeyen kaynaklardan gelen uzantılar, uygulamalar ve temalar cihazınıza zarar verebilir. Taktak bunların yalnızca <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> kaynağından yüklenmesini önerir.</translation>
@@ -404,11 +404,11 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="6009821354356307391">Ek soru sorun</translation>
 <translation id="6014316319780893079"><ph name="BEGIN_LINK" />Taktak araçları<ph name="END_LINK" /> ile güvenli bir şekilde göz atabilir ve kontrolü elinizde tutabilirsiniz</translation>
 <translation id="6022659036123304283">Taktak'u kendinize uyarlayın</translation>
-<translation id="6025087594896450715">Taktak Taktak <ph name="REMAINING_TIME" /> sonra yeniden başlatılacak</translation>
+<translation id="6025087594896450715">Taktak <ph name="REMAINING_TIME" /> sonra yeniden başlatılacak</translation>
 <translation id="6040143037577758943">Kapat</translation>
 <translation id="604424701295382420">Sabitlendi. Araç çubuğundaki yeni düğmeyi kullanarak Taktak Lens'e tekrar erişebilirsiniz.</translation>
 <translation id="6069027071882229820">Resim olarak kopyala</translation>
-<translation id="6070348360322141662">Taktak Taktak ek güvenlik sağlamak için verilerinizi şifreler</translation>
+<translation id="6070348360322141662">Taktak ek güvenlik sağlamak için verilerinizi şifreler</translation>
 <translation id="6075300983329039771">Kuruluşunuz (<ph name="MANAGER" />), Taktak'da oturum açmanızı zorunlu kılıyor</translation>
 <translation id="6113794647360055231">Taktak daha da iyi bir hale geldi</translation>
 <translation id="6116252277240876590">Bu dil, Taktak'da menüleri, ayarları, uyarıları ve diğer metinleri görüntülemek için kullanılır</translation>
@@ -419,19 +419,19 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="6150706324143004339">Taktak verilerini kullanmak ve Taktak Hesabınıza kaydetmek için Taktak'u güncelleyin</translation>
 <translation id="6157638032135951407"><ph name="TIMEOUT_DURATION" /> boyunca kullanılmadığında Taktak verileri kuruluşunuz tarafından silinir. Bu veriler geçmiş, otomatik doldurma ve indirilenleri içerebilir.</translation>
 <translation id="6165508094623778733">Daha fazla bilgi</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Taktak Beta</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Beta</translation>
 <translation id="6180522807229584611">Bu sekme ekstra kaynak kullanıyor. Performansınızı artırmak için Taktak'un bu sekmeleri devre dışı bırakmasına izin verin.</translation>
 <translation id="6182736845697986886">Güncelleme sunucusundaki dahili hata nedeniyle yükleme işlemi başarısız oldu.</translation>
-<translation id="6235018212288296708">Taktak Taktak'un mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
+<translation id="6235018212288296708">Taktak'un mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
 <translation id="624230925347970731">Taktak yakında kapanacak</translation>
 <translation id="6247557882553405851">Taktak Şifre Yöneticisi</translation>
 <translation id="6251759518630934363">Standart korumaya ek olarak sitelerden alınmış daha fazla veriyi analiz ederek Taktak'ın daha önce bilmedikleri de dahil olmak üzere tehlikeli siteler hakkında sizi uyarır. Taktak uyarılarını atlamayı seçebilirsiniz.</translation>
 <translation id="6277547788421725101">Anne veya babanız, Taktak'a yönelik "Siteler, uygulamalar ve uzantılar için izinler"i kapattı.</translation>
 <translation id="627882678981830918">Taktak'u özelleştirin ve kontrol edin. Taktak'u varsayılan tarayıcınız olarak ayarlayın.</translation>
-<translation id="6288580400488258237">Taktak Taktak'u varsayılan tarayıcınız olarak ayarlayın ve görev çubuğunuza sabitleyin</translation>
+<translation id="6288580400488258237">Taktak'u varsayılan tarayıcınız olarak ayarlayın ve görev çubuğunuza sabitleyin</translation>
 <translation id="6291089322031436445">Taktak Dev Uygulamaları</translation>
-<translation id="6291549208091401781">Taktak Taktak zaten bilgisayarınızdaki tüm kullanıcılar için yüklendi.</translation>
+<translation id="6291549208091401781">Taktak zaten bilgisayarınızdaki tüm kullanıcılar için yüklendi.</translation>
 <translation id="6319856120645568262">Çevrenizin haritasını çıkarması ve ellerinizi takip etmesi için Taktak'a izin vermeniz gerekir.</translation>
 <translation id="6321592572353357376">"<ph name="EXTENSION_NAME" />" uzantısı, Taktak'da oturum açmanızı istiyor</translation>
 <translation id="6326175484149238433">Taktak'dan kaldır</translation>
@@ -445,10 +445,10 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="6481963882741794338">Kişiselleştirme ve diğer amaçlar için Taktak ile diğer Taktak hizmetlerini bağlayın</translation>
 <translation id="648319183876919572">Gelişmiş Güvenli Tarama sizi tehlikeli web sitelerinden ve indirmelerden korumak için daha fazlasını yapar</translation>
 <translation id="6489302989675808168">Açık • Taktak, bu uzantının kaynağını doğrulayamıyor</translation>
-<translation id="6493527311031785448">Taktak Taktak şunu yapmaya çalışıyor: <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Taktak şunu yapmaya çalışıyor: <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Taktak otomatik olarak kapatıldı</translation>
 <translation id="6506909944137591434">Çevrenizin 3D haritasını oluşturmak için Taktak'un kamera iznine ihtiyacı var</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Taktak Dev</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Dev</translation>
 <translation id="6520670145826811516">Konumunuzu kullanması için <ph name="BEGIN_LINK" />sistem ayarlarında<ph name="END_LINK" /> Taktak'a erişim izni verin</translation>
 <translation id="659498884637196217">Bu cihazdaki Taktak Şifre Yöneticisi'nde</translation>
 <translation id="6632473616050862500">ChromeOS Flex, ek <ph name="BEGIN_LINK_CROS_OSS" />açık kaynak yazılımlardan<ph name="END_LINK_CROS_OSS" /> yararlanılarak geliştirilmiştir.</translation>
@@ -456,7 +456,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="6660596345553328257">Taktak'da oturum açılsın mı?</translation>
 <translation id="6664219008737641504">Parolanızı unuttuysanız veya bu ayarı değiştirmek istiyorsanız hesabınızdaki Taktak verilerini <ph name="SETTINGS_LINK" />.</translation>
 <translation id="6676384891291319759">İnternet'e erişin</translation>
-<translation id="6679975945624592337">Taktak Taktak'un Arka Planda Çalışmasına İzin Ver</translation>
+<translation id="6679975945624592337">Taktak'un Arka Planda Çalışmasına İzin Ver</translation>
 <translation id="6696915334902295848">Bu site için Taktak'un mikrofon iznine ihtiyacı var</translation>
 <translation id="6712881677154121168">İndirme hatası: <ph name="DOWNLOAD_ERROR" />.</translation>
 <translation id="6718739135284199302">Taktak'u daha hızlı hale getirin</translation>
@@ -467,7 +467,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="677276454032249905">Yine de Taktak'dan çıkılsın mı?</translation>
 <translation id="6794858689789885890">Taktak'u kapattığımda site verileri her zaman cihazımdan silinsin</translation>
 <translation id="6831043979455480757">Çevir</translation>
-<translation id="683440813066116847">Taktak Taktak Canary'nin mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
+<translation id="683440813066116847">Taktak Canary'nin mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
 <translation id="684888714667046800">İnternete bağlanılamıyor. Güvenlik duvarı kullanıyorsanız lütfen <ph name="PRODUCT_EXE_NAME" /> dosyasının izin verilenler listesine eklendiğinden emin olun.</translation>
 <translation id="6877155553248388166">arama alanının sağ alt köşesi: sağ %<ph name="RIGHT" />, alt %<ph name="BOTTOM" /></translation>
 <translation id="6881299373831449287">Taktak güncelleniyor</translation>
@@ -476,10 +476,10 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="6896758677409633944">Kopyala</translation>
 <translation id="6930294499209825">Taktak yazılımlarınızı güncel tutar. Bu hizmet devre dışı bırakılırsa veya durdurulursa, Taktak yazılımlarınız güncel tutulmayacaktır; bu da onarılamayacak güvenlik açıkları meydana gelebileceği ve özelliklerin çalışmayabileceği anlamına gelir. Bu hizmet, kendisini kullanan herhangi bir Taktak yazılımı olmadığında kendi kendini kaldırır.</translation>
 <translation id="6933858244219479645">ChromeOS Sistemi</translation>
-<translation id="6938166777909186039">Gelecekteki Taktak Taktak güncellemelerini almak için Windows 10 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar Windows 8.1 kullanıyor.</translation>
+<translation id="6938166777909186039">Gelecekteki Taktak güncellemelerini almak için Windows 10 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar Windows 8.1 kullanıyor.</translation>
 <translation id="6943584222992551122">Bu kullanıcının göz atma verileri bu cihazdan silinecektir. Verileri kurtarmak için Taktak'da <ph name="USER_EMAIL" /> olarak oturum açın.</translation>
 <translation id="6965382102122355670">Tamam</translation>
-<translation id="6967962315388095737">Taktak Taktak Beta'nın mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
+<translation id="6967962315388095737">Taktak Beta'nın mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
 <translation id="6979589607440534284">Taktak'un bazı dosyaları neden engellediğini öğrenin, yeni sekmede açılır</translation>
 <translation id="6991926986715044139">Taktak Lens Kısayolunu Her Zaman Göster</translation>
 <translation id="7011190694940573312">İşletim sisteminin bu sürümü desteklenmediğinden yükleme işlemi başarısız oldu.</translation>
@@ -493,14 +493,14 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="7085332316435785646">Taktak hizmetlerinde daha fazla kişiselleştirilmiş deneyimden faydalanmak için Taktak geçmişinin eklenip eklenmeyeceğini seçin</translation>
 <translation id="7088681679121566888">Taktak güncel</translation>
 <translation id="7096221564931416126">Taktak Lens ile aramak istediğiniz metni veya resmi seçin</translation>
-<translation id="7098166902387133879">Taktak Taktak mikrofonunuzu kullanıyor.</translation>
+<translation id="7098166902387133879">Taktak mikrofonunuzu kullanıyor.</translation>
 <translation id="7099479769133613710">&amp;ChromeOS'i güncellemek için yeniden başlat</translation>
-<translation id="7106741999175697885">Görev Yöneticisi - Taktak Taktak</translation>
+<translation id="7106741999175697885">Görev Yöneticisi - Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{Taktak için yeni bir güncelleme var. Yeniden başlattığınızda güncelleme hemen uygulanacaktır.}=1{Taktak için yeni bir güncelleme var. Yeniden başlattığınızda güncelleme hemen uygulanacaktır. Gizli pencereniz yeniden açılmayacak.}other{Taktak için yeni bir güncelleme var. Yeniden başlattığınızda güncelleme hemen uygulanacaktır. # Gizli pencereniz yeniden açılmayacak.}}</translation>
 <translation id="7155997830309522122">Değiştirdiyseniz Taktak'da kayıtlı şifrenizi, lütfen yeni şifrenizle aynı olacak şekilde düzenleyin.</translation>
-<translation id="7161904924553537242">Taktak Taktak'a Hoş Geldiniz</translation>
+<translation id="7161904924553537242">Taktak'a Hoş Geldiniz</translation>
 <translation id="7193885263065350793"><ph name="TIMEOUT_DURATION" /> boyunca kullanılmadığında Taktak kuruluşunuz tarafından kapatılır.</translation>
-<translation id="7242029209006116544">Yönetilen bir hesapla oturum açıyor ve hesabın yöneticisine Taktak Taktak profilinizi denetleme izni veriyorsunuz. Uygulamalarınız, yer işaretleriniz, geçmişiniz, şifreleriniz ve diğer ayarlarınız gibi Taktak verileriniz kalıcı olarak <ph name="USER_NAME" /> ile bağlantılandırılacaktır. Taktak Hesapları Hesap Özeti'ni kullanarak bu verileri silebilecek, ancak bu verileri başka bir hesapla ilişkilendiremeyeceksiniz. İsterseniz mevcut Taktak verilerinizi ayrı tutmak için yeni bir profil oluşturabilirsiniz.<ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Yönetilen bir hesapla oturum açıyor ve hesabın yöneticisine Taktak profilinizi denetleme izni veriyorsunuz. Uygulamalarınız, yer işaretleriniz, geçmişiniz, şifreleriniz ve diğer ayarlarınız gibi Taktak verileriniz kalıcı olarak <ph name="USER_NAME" /> ile bağlantılandırılacaktır. Taktak Hesapları Hesap Özeti'ni kullanarak bu verileri silebilecek, ancak bu verileri başka bir hesapla ilişkilendiremeyeceksiniz. İsterseniz mevcut Taktak verilerinizi ayrı tutmak için yeni bir profil oluşturabilirsiniz.<ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075">Taktak'u <ph name="MANAGER" /> yönetiyor</translation>
 <translation id="7288567540154601580">Sekmeler ve uzantılar</translation>
 <translation id="7296210096911315575">Önemli kullanım ve güvenlik bilgileri</translation>
@@ -513,7 +513,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="7412494426921990001">Taktak menüsünü tıklayın</translation>
 <translation id="7419819959108735624">Taktak Lens ile aramak istediğiniz öğeyi seçin</translation>
 <translation id="742463671275348370">{NUM_DEVICES,plural, =0{Bir veya daha fazla Taktak uzantısı, 1 USB cihazına erişiyordu}=1{Bir veya daha fazla Taktak uzantısı, 1 USB cihazına erişiyor}other{Bir veya daha fazla Taktak uzantısı, # USB cihazına erişiyor}}</translation>
-<translation id="7426611252293106642">Taktak Taktak artık bu Linux dağıtımında desteklenmediği için doğru şekilde çalışmayabilir</translation>
+<translation id="7426611252293106642">Taktak artık bu Linux dağıtımında desteklenmediği için doğru şekilde çalışmayabilir</translation>
 <translation id="7437998757836447326">Taktak oturumunu kapat</translation>
 <translation id="7449333426561673451">{COUNT,plural, =1{Kuruluşunuz, 1 dakika kullanılmadığında Taktak'u otomatik olarak kapatır.}other{Kuruluşunuz, # dakika kullanılmadığında Taktak'u otomatik olarak kapatır.}}</translation>
 <translation id="7450541714075000668">Metin kopyalandı</translation>
@@ -525,7 +525,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="7510927761955779701">Taktak, formları daha iyi anlar ve sizin için daha hızlı bir şekilde otomatik olarak doldurabilir. Bu ayar açık.</translation>
 <translation id="7514258452813684157">Taktak Güncelleyici Hizmeti</translation>
 <translation id="7515191208480168435">Daha kolay erişmek için Taktak Lens'i sabitleyebilirsiniz</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Bu yer işaretine ve diğer öğelere tüm cihazlarınızdan erişmek için Taktak'da oturum açın</translation>
 <translation id="756809126120519699">Taktak verileri temizlendi</translation>
 <translation id="7572537927358445944">Kapalı • Taktak, bu uzantının kaynağını doğrulayamıyor</translation>
@@ -535,7 +535,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="7626072681686626474"><ph name="MANAGER" />, bu cihazı kullanmadan önce aşağıdaki Hizmet Şartları'nı okuyup kabul etmenizi zorunlu tutmaktadır. Bu şartlar, Taktak ChromeOS Şartları'nın kapsamını genişletmez, değiştirmez veya sınırlamaz.</translation>
 <translation id="7627609214560473136">Verilerinizin korunması için Taktak'un, yakın zamanda ziyaret etmediğiniz sitelerin izinlerini kaldırmasına izin verin.</translation>
 <translation id="7629695634924605473">Taktak, şifrelerinizin güvenliğinin ihlal edilip edilmediğini size bildirir</translation>
-<translation id="7641148173327520642">Sistem yöneticiniz Taktak Taktak'u <ph name="TARGET_URL_HOSTNAME" /> adresine erişmek için <ph name="ALTERNATIVE_BROWSER_NAME" /> tarayıcısını açacak şekilde yapılandırmış.</translation>
+<translation id="7641148173327520642">Sistem yöneticiniz Taktak'u <ph name="TARGET_URL_HOSTNAME" /> adresine erişmek için <ph name="ALTERNATIVE_BROWSER_NAME" /> tarayıcısını açacak şekilde yapılandırmış.</translation>
 <translation id="7649070708921625228">Yardım</translation>
 <translation id="7651907282515937834">Taktak Enterprise logosu</translation>
 <translation id="76531479118467370">Güvenli Tarama'yı devre dışı bıraktığınız ve dosya doğrulanamadığı için Taktak bu indirme işlemini engelledi</translation>
@@ -552,10 +552,10 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="7761834446675418963">Taktak'u açmak ve göz atmaya başlamak için adınızı tıklayın.</translation>
 <translation id="7777080907402804672">Bir resmin işe yarar bir açıklaması yoksa, Taktak sizin için bir açıklama sağlamaya çalışır. Açıklama oluşturmak için resimler Taktak'a gönderilir. Bu özelliği istediğiniz zaman ayarlardan kapatabilirsiniz.</translation>
 <translation id="778331955594035129">Bu site için Taktak'un konum iznine ihtiyacı var</translation>
-<translation id="7787950393032327779">Profilin başka bir bilgisayarda (<ph name="HOST_NAME" />) başka bir Taktak Taktak işlemi (<ph name="PROCESS_ID" />) tarafından kullanıldığı anlaşılıyor. Taktak, profili bozulmaması için kilitledi. Bu profili kullanan başka bir işlem olmadığından eminseniz profilin kilidini açabilir ve Taktak'u tekrar başlatabilirsiniz.</translation>
-<translation id="7801699035218095297">Taktak Taktak şifreleri kopyalamaya çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
+<translation id="7787950393032327779">Profilin başka bir bilgisayarda (<ph name="HOST_NAME" />) başka bir Taktak işlemi (<ph name="PROCESS_ID" />) tarafından kullanıldığı anlaşılıyor. Taktak, profili bozulmaması için kilitledi. Bu profili kullanan başka bir işlem olmadığından eminseniz profilin kilidini açabilir ve Taktak'u tekrar başlatabilirsiniz.</translation>
+<translation id="7801699035218095297">Taktak şifreleri kopyalamaya çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
 <translation id="7808348361785373670">Taktak'dan kaldır...</translation>
-<translation id="7825851276765848807">Yükleme belirtilmeyen bir hata nedeniyle başarısız oldu. Lütfen Taktak Taktak'u tekrar yükleyin.</translation>
+<translation id="7825851276765848807">Yükleme belirtilmeyen bir hata nedeniyle başarısız oldu. Lütfen Taktak'u tekrar yükleyin.</translation>
 <translation id="7827099906024714326">Bazı verilerin Taktak Hesabınıza kaydedilip tüm cihazlarınızda kullanılabilmesi için Taktak'un kimliğinizi doğrulaması gerekir. Oturumu şimdi kapatırsanız bu veriler silinir.</translation>
 <translation id="7845233973568007926">Yüklediğiniz için teşekkür ederiz. <ph name="BUNDLE_NAME" /> uygulamasını kullanmadan önce bilgisayarınızı yeniden başlatmanız gerekir.</translation>
 <translation id="7872446069773932638">İndiriliyor... <ph name="SECONDS" /> saniye kaldı</translation>
@@ -566,7 +566,7 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="7936702483636872823">Dosya yanıltıcı olduğu ve cihazınızda beklenmeyen değişiklikler yapabileceği için Taktak bu indirme işlemini engelledi</translation>
 <translation id="7951272445806340501">Güncellemenin uygulanması için ChromeOS Flex yeniden başlatılmalıdır.</translation>
 <translation id="7959172989483770734">Taktak profillerini yönetin</translation>
-<translation id="7962410387636238736">Windows XP ve Windows Vista artık desteklenmediğinden, bu bilgisayar bundan böyle Taktak Taktak güncellemelerini almayacaktır</translation>
+<translation id="7962410387636238736">Windows XP ve Windows Vista artık desteklenmediğinden, bu bilgisayar bundan böyle Taktak güncellemelerini almayacaktır</translation>
 <translation id="8004582292198964060">Tarayıcı</translation>
 <translation id="8005666035647241369">Bu cihazdaki Taktak Şifre Yöneticisi'ne</translation>
 <translation id="8008534537613507642">Taktak'u yeniden yükle</translation>
@@ -581,14 +581,14 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="8086881907087796310">Bilgisayarınız minimum donanım gereksinimlerini karşılamadığından yükleme işlemi başarısız oldu.</translation>
 <translation id="8113883687556086139">Taktak verilerini kullanmak ve <ph name="ACCOUNT_EMAIL" /> hesabınıza kaydetmek için kimliğinizi doğrulayın</translation>
 <translation id="8118331347066725040">Lens ile arama hakkında geri bildirim gönderin</translation>
-<translation id="8129812357326543296">&amp;Taktak Taktak hakkında</translation>
+<translation id="8129812357326543296">&amp;Taktak hakkında</translation>
 <translation id="813913629614996137">İlk kullanıma hazırlanıyor...</translation>
 <translation id="8162006532256575008">Taktak'u hesap olmadan kullan</translation>
 <translation id="8177472873527554730">Sayfada içerik bulunamadı</translation>
 <translation id="8221491193165283816">Genelde bildirimleri engelliyorsunuz. Bu sitenin size bildirim göndermesine izin vermek için burayı tıklayın.</translation>
-<translation id="8255190535488645436">Taktak Taktak kameranızı ve mikrofonunuzu kullanıyor.</translation>
+<translation id="8255190535488645436">Taktak kameranızı ve mikrofonunuzu kullanıyor.</translation>
 <translation id="8267953129876836456">Taktak, incelemeniz gereken bazı güvenlik önerileri tespit etti</translation>
-<translation id="8286862437124483331">Taktak Taktak şifreleri göstermeye çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
+<translation id="8286862437124483331">Taktak şifreleri göstermeye çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
 <translation id="829923460755755423">Taktak Şifre Yöneticisi için kısayol ekleyin</translation>
 <translation id="8313851650939857356">Başlatma hatası: <ph name="STARTUP_ERROR" /></translation>
 <translation id="8321888067342493336">Resim olarak kaydet</translation>
@@ -606,27 +606,27 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="8425765582779547329">Anne veya babanızın seçimleriyle internette daha güvende olmak için Taktak'da oturum açın</translation>
 <translation id="8433638294851456451">Buradan Android telefonunuza numara göndermek için iki cihazdan da Taktak'da oturum açın.</translation>
 <translation id="8496177819998570653">Taktak Ş&amp;ifre Yöneticisi</translation>
-<translation id="8498858610309223613">Taktak Taktak için özel bir güvenlik güncellemesi uygulandı. Uygulamayı hemen yeniden başlatın; açık sekmeleriniz geri yüklenir.</translation>
+<translation id="8498858610309223613">Taktak için özel bir güvenlik güncellemesi uygulandı. Uygulamayı hemen yeniden başlatın; açık sekmeleriniz geri yüklenir.</translation>
 <translation id="8516431725144212809">Taktak'un tahmin ettiği ilgi alanlarınız</translation>
-<translation id="8521348052903287641">Taktak Taktak Dev'in mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
+<translation id="8521348052903287641">Taktak Dev'in mDNS trafiğine izin vermeyi sağlayan gelen trafik kuralı.</translation>
 <translation id="852529348814672339">Taktak'u bu dilde görüntüle</translation>
-<translation id="8533056045953418157">Taktak Taktak'u varsayılan PDF görüntüleyiciniz olarak ayarlayın</translation>
+<translation id="8533056045953418157">Taktak'u varsayılan PDF görüntüleyiciniz olarak ayarlayın</translation>
 <translation id="8555465886620020932">Hizmet hatası: <ph name="SERVICE_ERROR" />.</translation>
 <translation id="856656450041460113">Arama dili listesi</translation>
 <translation id="8601359445272098721">Yeni! "Ekrandaki yazıları çevir" düğmesini seçerek ekranınızdaki metinleri ve resimleri çevirebilirsiniz</translation>
-<translation id="8614913330719544658">Taktak Taktak yanıt vermiyor. Yeniden başlatılsın mı?</translation>
+<translation id="8614913330719544658">Taktak yanıt vermiyor. Yeniden başlatılsın mı?</translation>
 <translation id="861702415419836452">Çevrenizin 3D haritasını oluşturmak için Taktak'un kameranıza erişim iznine ihtiyacı var</translation>
 <translation id="8625237574518804553">{0,plural, =1{Taktak 1 dakika içinde yeniden başlatılacak}other{Taktak # dakika içinde yeniden başlatılacak}}</translation>
 <translation id="8637932705841171563">Pencerenizi paylaşmak için Sistem Ayarları'nda Taktak'un ekranı kaydetmesine izin verin.</translation>
 <translation id="8641606876632989680">Taktak, güvenliği ihlal edilmiş bir şifreyle oturum açtığınızda size haber verir</translation>
 <translation id="8649026945479135076">Ziyaret ettiğiniz sitelerin deneyiminizi kişiselleştirmek için ilgi alanlarınızı hatırlaması olağan bir durumdur. Siteler, ilgi alanlarınız hakkındaki bilgileri Taktak'da da saklayabilir.</translation>
-<translation id="8669527147644353129">Taktak Taktak Helper</translation>
+<translation id="8669527147644353129">Taktak Helper</translation>
 <translation id="8679801911857917785">Ayrıca Taktak'u başlattığınızda gösterilecek sayfayı da denetler.</translation>
 <translation id="8712637175834984815">Anladım</translation>
 <translation id="8712767363896337380">Güncel hale gelmek üzere. Güncellemenin tamamlanması için Taktak'u yeniden başlatın.</translation>
 <translation id="8718062187489036808">Taktak Oturumunu Kapat</translation>
 <translation id="8725440680697264016">Taktak'a bu video hakkında soru sorun</translation>
-<translation id="873133009373065397">Taktak Taktak, varsayılan tarayıcıyı tespit edemiyor veya ayarlayamıyor</translation>
+<translation id="873133009373065397">Taktak, varsayılan tarayıcıyı tespit edemiyor veya ayarlayamıyor</translation>
 <translation id="8747073452963259673">arama alanının sol alt köşesi: sol %<ph name="LEFT" />, alt %<ph name="BOTTOM" /></translation>
 <translation id="8748735421235723888">Taktak, etkin olmayan sekmelerdeki belleği boşaltır. Böylece, etkin sekmeler ile diğer uygulamalar daha fazla bilgisayar kaynağına sahip olur ve Taktak hızlı çalışmaya devam eder. Geri döndüğünüz etkin olmayan sekmeler otomatik olarak tekrar etkin hale gelir. <ph name="BEGIN_LINK" />Bellek Tasarrufu hakkında daha fazla bilgi edinin<ph name="END_LINK" />.</translation>
 <translation id="8753189155654018347">Bu uygulama verilerini Taktak'dan kaldır</translation>
@@ -634,10 +634,10 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="8781673607513845160">Kameranızı kullanması için <ph name="BEGIN_LINK" />sistem ayarlarında<ph name="END_LINK" /> Taktak'a erişim izni verin</translation>
 <translation id="878572486461146056">Yükleme hatası: Ağ yöneticiniz, yükleme işlemini engelleyen bir grup politikası uygulamış: <ph name="INSTALL_ERROR" /></translation>
 <translation id="8798550110818026746">Kuruluşunuz; yer işaretleri, geçmiş ve şifreler gibi tarama verilerini görüp yönetebilir. Kişisel Taktak profillerindeki tarama verilerini göremez</translation>
-<translation id="8821043148920470810">Gelecekteki Taktak Taktak güncellemelerini almak için Windows 10 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar Windows 7 kullanıyor.</translation>
+<translation id="8821043148920470810">Gelecekteki Taktak güncellemelerini almak için Windows 10 veya sonraki bir sürümün yüklü olması gerekir. Bu bilgisayar Windows 7 kullanıyor.</translation>
 <translation id="8823341990149967727">Taktak Sürümü Eski</translation>
 <translation id="8825634023950448068">Gizliliğinizi korumak için 4 haftadan eski ilgi alanlarınızı otomatik olarak sileriz. Siz internette gezindikçe ilgi alanları tekrar listede görünmeye başlayabilir. Taktak ilgi alanınızı yanlış algılarsa veya belirli reklamları görmek istemezseniz ilgi alanlarını kaldırabilirsiniz.</translation>
-<translation id="8834965163890861871">Taktak Taktak şifreleri düzenlemeye çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
+<translation id="8834965163890861871">Taktak şifreleri düzenlemeye çalışıyor. Buna izin vermek için Windows şifrenizi yazın.</translation>
 <translation id="8843516219908676469">Taktak, formları daha iyi anlar ve sizin için daha hızlı bir şekilde otomatik olarak doldurabilir.</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Taktak, bu uzantıyı kaldırmanızı önerir}other{Taktak, bu uzantıları kaldırmanızı önerir}}</translation>
 <translation id="8862326446509486874">Sistem düzeyinde yükleme için gerekli haklara sahip değilsiniz. Yükleyiciyi Yönetici olarak tekrar çalıştırmayı deneyin.</translation>
@@ -665,6 +665,6 @@ Bazı özellikler kullanılamayabilir. Lütfen farklı bir profil dizini belirti
 <translation id="943390475793766444">Taktak, tehlikeli olabileceği için bu dosyanın taranmasını öneriyor.</translation>
 <translation id="945522503751344254">Geri bildirim gönder</translation>
 <translation id="983803489796659991">Güncelleme sunucusunda uygulamanın karma verisi bulunmadığından yükleme işlemi başarısız oldu.</translation>
-<translation id="989369509083708165">Taktak Taktak varsayılan tarayıcınız</translation>
+<translation id="989369509083708165">Taktak varsayılan tarayıcınız</translation>
 <translation id="989816563149873169"><ph name="SHORTCUT" />, Taktak profilleri arasında geçiş yapabilir</translation>
 </translationbundle>

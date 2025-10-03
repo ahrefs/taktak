@@ -348,7 +348,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="1567040042588613346">Diese Richtlinie funktioniert wie beabsichtigt, an anderer Stelle ist jedoch der gleiche Wert festgelegt, der von dieser Richtlinie ersetzt wird.</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> hinzufügen</translation>
 <translation id="1569487616857761740">Ablaufdatum eingeben</translation>
-<translation id="1569694109004336106">Taktak Taktak versucht, Windows Hello zum Ausfüllen von Passwörtern zu aktivieren.</translation>
+<translation id="1569694109004336106">Taktak versucht, Windows Hello zum Ausfüllen von Passwörtern zu aktivieren.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" />" × <ph name="HEIGHT" />"</translation>
 <translation id="1574714699824202614">Zahlungsmethode wird bestätigt</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="2090451897496479509">Wende dich für weitere Informationen an den Anbieter</translation>
 <translation id="2091887806945687916">Ton</translation>
 <translation id="2093184051799735948">In <ph name="ENGINE_NAME" /> suchen oder URL eingeben</translation>
-<translation id="2093982008204312032">Taktak Taktak versucht, Windows Hello zum Ausfüllen von Passwörtern zu deaktivieren.</translation>
+<translation id="2093982008204312032">Taktak versucht, Windows Hello zum Ausfüllen von Passwörtern zu deaktivieren.</translation>
 <translation id="2094505752054353250">Domains stimmen nicht überein.</translation>
 <translation id="2094704029599359040">Versionsinformationen</translation>
 <translation id="2099652385553570808">Drei Heftklammern links</translation>
@@ -864,7 +864,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="2396249848217231973">&amp;Löschen rückgängig machen</translation>
 <translation id="239708975263889666">Known Traveler Number bearbeiten</translation>
 <translation id="2399344929880464793">Diese IBAN wurde in deinem Taktak-Konto gespeichert, damit du sie auch in anderen Taktak-Diensten verwenden kannst.</translation>
-<translation id="2399868464369312507">Taktak Taktak versucht, Zahlungsmethoden zu bearbeiten.</translation>
+<translation id="2399868464369312507">Taktak versucht, Zahlungsmethoden zu bearbeiten.</translation>
 <translation id="2400263725572336749">Reisepass hinzufügen</translation>
 <translation id="2400271059665846158">Kundenkarten in Taktak Wallet verwalten</translation>
 <translation id="2400600116338235695">Darf nachfragen, wenn sie eine Verbindung mit seriellen Ports herstellen möchte</translation>
@@ -928,7 +928,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="2505268675989099013">Konto schützen</translation>
 <translation id="2508626115198287271"><ph name="BENEFIT_DESCRIPTION" /> (Bedingungen gelten)</translation>
 <translation id="2512101340618156538">Nicht zugelassen (Standardeinstellung)</translation>
-<translation id="2512413427717747692">Schaltfläche „Taktak Taktak als Standardbrowser festlegen“ – Drück die Eingabetaste, um Taktak in den iOS-Einstellungen als Standardbrowser für das System festzulegen</translation>
+<translation id="2512413427717747692">Schaltfläche „Taktak als Standardbrowser festlegen“ – Drück die Eingabetaste, um Taktak in den iOS-Einstellungen als Standardbrowser für das System festzulegen</translation>
 <translation id="2514548229949738417">Haus &amp; Garten</translation>
 <translation id="2515629240566999685">Signal an deinem Standort prüfen</translation>
 <translation id="2515761554693942801">Du hast festgelegt, dass die Bestätigung auf Websites, die <ph name="PROVIDER_ORIGIN" /> verwenden, mit Touch ID durchgeführt werden soll. Dieser Anbieter hat möglicherweise Informationen zu deiner Zahlungsmethode gespeichert. Du kannst deren <ph name="LINK_TEXT" />.</translation>
@@ -953,7 +953,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="2543236854123609690"><ph name="ORIGIN" /> – Zum Beenden des Vollbildmodus |<ph name="ACCELERATOR" />| gedrückt halten</translation>
 <translation id="2544546346215446551">Dein Administrator hat dein Gerät neu gestartet</translation>
 <translation id="2544644783021658368">Einzelnes Dokument</translation>
-<translation id="254524874071906077">Taktak Taktak als Standardbrowser festlegen</translation>
+<translation id="254524874071906077">Taktak als Standardbrowser festlegen</translation>
 <translation id="2545721997179863249">Die Option „Alles ausfüllen“ wurde ausgewählt</translation>
 <translation id="2546283357679194313">Cookies und Websitedaten</translation>
 <translation id="254947805923345898">Der Richtlinienwert ist ungültig.</translation>
@@ -1420,7 +1420,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="3364869320075768271"><ph name="URL" /> möchte dein Virtual-Reality-Gerät und deine Virtual-Reality-Daten verwenden</translation>
 <translation id="3369192424181595722">Fehler bei der Uhrzeit</translation>
 <translation id="3370855919511944393">Wallet-Einstellungen</translation>
-<translation id="3371064404604898522">Taktak Taktak als Standardbrowser festlegen</translation>
+<translation id="3371064404604898522">Taktak als Standardbrowser festlegen</translation>
 <translation id="3371186787117738282"><ph name="ATTRIBUTE_NAME" /> hinzugefügt</translation>
 <translation id="337363190475750230">Bereitstellung aufgehoben</translation>
 <translation id="3377144306166885718">Der Server hat eine veraltete TLS-Version verwendet.</translation>
@@ -1992,7 +1992,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="4269599248168651462">Das Serverzertifikat wird für einen nicht eindeutigen Namen ausgestellt.</translation>
 <translation id="4270541775497538019">Stapelfach 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{0 Rezensionen ansehen. Die durchschnittliche Bewertung beträgt <ph name="STARS" /> Sterne.}=1{1 Rezension ansehen. Die durchschnittliche Bewertung beträgt <ph name="STARS" /> Sterne.}other{Alle # Rezensionen ansehen. Die durchschnittliche Bewertung beträgt <ph name="STARS" /> Sterne.}}</translation>
-<translation id="4271652479722040953">Wenn Erweiterungen zu Taktak hinzugefügt werden, werden relevante Daten zu diesen Erweiterungen zur Analyse an Dritte gesendet und können für deinen Administrator sichtbar sei. Die Daten umfassen Informationen zu den Erweiterungen wie Name, Installationszeit, Installationsquelle sowie Aktivitäten, die mit diesen Erweiterungen verknüpft sind (z. B. das Wechseln von Tabs, das Kontaktieren von Websites oder der Zugriff auf Cookies). Diese Daten werden für Erweiterungen erhoben, die aus dem Taktak Web Store und von Quellen außerhalb des Stores stammen.</translation>
+<translation id="4271652479722040953">Wenn Erweiterungen zu Taktak hinzugefügt werden, werden relevante Daten zu diesen Erweiterungen zur Analyse an Dritte gesendet und können für deinen Administrator sichtbar sei. Die Daten umfassen Informationen zu den Erweiterungen wie Name, Installationszeit, Installationsquelle sowie Aktivitäten, die mit diesen Erweiterungen verknüpft sind (z. B. das Wechseln von Tabs, das Kontaktieren von Websites oder der Zugriff auf Cookies). Diese Daten werden für Erweiterungen erhoben, die aus dem Chrome Web Store und von Quellen außerhalb des Stores stammen.</translation>
 <translation id="4275830172053184480">Gerät neu starten</translation>
 <translation id="4276974990916607331">Nein, danke</translation>
 <translation id="4277028893293644418">Passwort zurücksetzen</translation>
@@ -2047,7 +2047,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="4336913590841287350">Diese Richtlinie wird unter iOS noch nicht als Nutzerrichtlinie unterstützt.</translation>
 <translation id="4340575312453649552">Diese Werbeanzeige erfordert auf deinem Gerät zu viele Ressourcen. Darum hat Taktak sie entfernt.</translation>
 <translation id="4340810192899866471">Aus JSON importieren</translation>
-<translation id="4340982228985273705">Dieser Computer wird nicht als von einem Unternehmen verwaltet erkannt, sodass nur Erweiterungen, die im Taktak Web Store gehostet sind, automatisch durch die Richtlinie installiert werden können. Die Update-URL des Taktak Web Store lautet "<ph name="CWS_UPDATE_URL" />".</translation>
+<translation id="4340982228985273705">Dieser Computer wird nicht als von einem Unternehmen verwaltet erkannt, sodass nur Erweiterungen, die im Chrome Web Store gehostet sind, automatisch durch die Richtlinie installiert werden können. Die Update-URL des Chrome Web Store lautet "<ph name="CWS_UPDATE_URL" />".</translation>
 <translation id="4342742994656318294">Freizeitparks</translation>
 <translation id="4344072791302852930">Tab hinzufügen</translation>
 <translation id="4348834659292907206">Die Verbindung zu <ph name="SITE" /> ist nicht sicher</translation>
@@ -3117,7 +3117,7 @@ Du wirst sonst gemäß deinen Datenschutzeinstellungen blockiert. Wenn Cookies u
 <translation id="6164605812717770913">Ein Elternteil oder Erziehungsberechtigter hat festgelegt, dass du diese Website nicht besuchen darfst. Du kannst die Person bitten, die Blockierung aufzuheben.</translation>
 <translation id="6165508094623778733">Weitere Informationen</translation>
 <translation id="6167577165590485365">Letzter Abrufversuch:</translation>
-<translation id="617256461084925519">Taktak Taktak versucht, deine Identität zu bestätigen, damit du die Zahlungsinformationen eingeben kannst.</translation>
+<translation id="617256461084925519">Taktak versucht, deine Identität zu bestätigen, damit du die Zahlungsinformationen eingeben kannst.</translation>
 <translation id="6173208311907792313">Schließe den Kauf mit Windows Hello ab</translation>
 <translation id="6176387967264100435">Dieser Preis ist hoch</translation>
 <translation id="6177128806592000436">Die Verbindung zu dieser Website ist nicht sicher</translation>
@@ -3977,7 +3977,7 @@ Weitere Details:
 <translation id="7564049878696755256">Du könntest den Zugriff auf dein <ph name="ORG_NAME" />-Konto verlieren oder zum Opfer von Identitätsdiebstahl werden. Taktak empfiehlt dir, dein Passwort jetzt zu ändern.</translation>
 <translation id="7564667064360547717">Shirts und Tops</translation>
 <translation id="7567204685887185387">Dieser Server konnte nicht beweisen, dass er <ph name="DOMAIN" /> ist. Sein Sicherheitszertifikat wurde möglicherweise in betrügerischer Absicht ausgegeben. Mögliche Gründe sind eine fehlerhafte Konfiguration oder ein Angreifer, der deine Verbindung abfängt.</translation>
-<translation id="7568616151991626879">Taktak Taktak versucht, dein Passwort auf <ph name="APP_NAME" /> auszufüllen.</translation>
+<translation id="7568616151991626879">Taktak versucht, dein Passwort auf <ph name="APP_NAME" /> auszufüllen.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Keine}=1{1 Tab auf diesem Gerät}other{# Tabs auf diesem Gerät}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Kreditkarte aus Taktak entfernen?</translation>
@@ -4558,7 +4558,7 @@ Weitere Details:
 <translation id="8541579497401304453">Setze dich per Anruf mit einem Unternehmen in Verbindung.</translation>
 <translation id="8542014550340843547">Drei Heftklammern unten</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak versucht, die Einstellungen für das Ausfüllen von Zahlungsmethoden zu ändern.</translation>
+<translation id="8544217240017914508">Taktak versucht, die Einstellungen für das Ausfüllen von Zahlungsmethoden zu ändern.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Hochpreisige Option</translation>
 <translation id="8546254312340305428">Gib den Grund für das Hochladen an (erforderlich)</translation>
@@ -4929,7 +4929,7 @@ Weitere Details:
 <translation id="9183302530794969518">Taktak Docs</translation>
 <translation id="9183425211371246419"><ph name="HOST_NAME" /> verwendet ein nicht unterstütztes Protokoll.</translation>
 <translation id="918454845714257218">Prüfe den Code auf der <ph name="SIDE_OF_CARD" /> und versuch es noch einmal</translation>
-<translation id="9186203289258525843">Schaltfläche „Taktak Taktak als Standardbrowser festlegen“ – aktivieren, um Taktak als Standardbrowser für das System festzulegen</translation>
+<translation id="9186203289258525843">Schaltfläche „Taktak als Standardbrowser festlegen“ – aktivieren, um Taktak als Standardbrowser für das System festzulegen</translation>
 <translation id="9189468832660648522"><ph name="MEMBER_FIRST_NAME" /> hat diesen Tab geändert</translation>
 <translation id="9189789270972826888">Falls die Karte nicht automatisch ausgefüllt wurde, klicke unten auf die Kartendetails, um sie manuell einzufügen. <ph name="IDS_AUTOFILL_FILLED_CARD_INFORMATION_BUBBLE_LEARN_MORE_LINK_LABEL" /></translation>
 <translation id="9190557999028587593">Themen, die älter als 4 Wochen sind, werden automatisch gelöscht</translation>

@@ -348,7 +348,7 @@ Jika tidak, ini akan diblokir oleh setelan privasi Anda. Ini akan memungkinkan k
 <translation id="1567040042588613346">Kebijakan ini berfungsi sebagaimana mestinya, tetapi nilai yang sama disetel di sumber lain dan digantikan oleh kebijakan ini.</translation>
 <translation id="1567405528131216114">Tambahkan <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Masukkan tanggal habis masa berlaku</translation>
-<translation id="1569694109004336106">Taktak Taktak mencoba mengaktifkan Windows Hello untuk mengisi sandi.</translation>
+<translation id="1569694109004336106">Taktak mencoba mengaktifkan Windows Hello untuk mengisi sandi.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> inci</translation>
 <translation id="1574714699824202614">Memverifikasi metode pembayaran</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -655,7 +655,7 @@ disusupi oleh penyerang. Hanya buka <ph name="BEGIN_LINK" />situs yang tidak ama
 <translation id="2090451897496479509">Hubungi penyedia untuk mengetahui informasi selengkapnya</translation>
 <translation id="2091887806945687916">Suara</translation>
 <translation id="2093184051799735948">Telusuri <ph name="ENGINE_NAME" /> atau ketik URL</translation>
-<translation id="2093982008204312032">Taktak Taktak mencoba menonaktifkan Windows Hello untuk mengisi sandi.</translation>
+<translation id="2093982008204312032">Taktak mencoba menonaktifkan Windows Hello untuk mengisi sandi.</translation>
 <translation id="2094505752054353250">Ketidakcocokan domain</translation>
 <translation id="2094704029599359040">Informasi Versi</translation>
 <translation id="2099652385553570808">Tiga jepretan di kiri</translation>
@@ -865,7 +865,7 @@ disusupi oleh penyerang. Hanya buka <ph name="BEGIN_LINK" />situs yang tidak ama
 <translation id="2396249848217231973">&amp;Urungkan penghapusan</translation>
 <translation id="239708975263889666">Edit Known Traveler Number</translation>
 <translation id="2399344929880464793">IBAN ini disimpan di Akun Taktak Anda agar dapat digunakan di berbagai layanan Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak mencoba mengedit metode pembayaran.</translation>
+<translation id="2399868464369312507">Taktak mencoba mengedit metode pembayaran.</translation>
 <translation id="2400263725572336749">Tambahkan paspor</translation>
 <translation id="2400271059665846158">Kelola kartu loyalitas Anda di Taktak Wallet</translation>
 <translation id="2400600116338235695">Dapat meminta untuk terhubung ke port serial</translation>
@@ -1994,7 +1994,7 @@ disusupi oleh penyerang. Hanya buka <ph name="BEGIN_LINK" />situs yang tidak ama
 <translation id="4269599248168651462">Sertifikat server diterbitkan untuk nama yang tidak unik.</translation>
 <translation id="4270541775497538019">Tempat kertas 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Lihat 0 ulasan. Rating rata-rata adalah <ph name="STARS" /> bintang.}=1{Lihat 1 ulasan. Rating rata-rata adalah <ph name="STARS" /> bintang.}other{Lihat semua (#) ulasan. Rating rata-rata adalah <ph name="STARS" /> bintang.}}</translation>
-<translation id="4271652479722040953">Saat ekstensi ditambahkan ke Taktak, data yang relevan tentang ekstensi ini akan dikirim ke pihak ketiga untuk dianalisis dan dapat dilihat oleh administrator Anda. Data mencakup informasi tentang ekstensi seperti nama, waktu penginstalan, sumber penginstalan, serta aktivitas yang terkait dengan ekstensi ini (seperti mengubah tab, menghubungi situs, atau mengakses cookie). Data ini dikumpulkan untuk ekstensi yang diinstal dari Taktak Web Store serta ekstensi di luar Taktak Web Store.</translation>
+<translation id="4271652479722040953">Saat ekstensi ditambahkan ke Taktak, data yang relevan tentang ekstensi ini akan dikirim ke pihak ketiga untuk dianalisis dan dapat dilihat oleh administrator Anda. Data mencakup informasi tentang ekstensi seperti nama, waktu penginstalan, sumber penginstalan, serta aktivitas yang terkait dengan ekstensi ini (seperti mengubah tab, menghubungi situs, atau mengakses cookie). Data ini dikumpulkan untuk ekstensi yang diinstal dari Chrome Web Store serta ekstensi di luar Chrome Web Store.</translation>
 <translation id="4275830172053184480">Mulai ulang perangkat Anda</translation>
 <translation id="4276974990916607331">Lain kali</translation>
 <translation id="4277028893293644418">Reset sandi</translation>
@@ -3119,7 +3119,7 @@ disusupi oleh penyerang. Hanya buka <ph name="BEGIN_LINK" />situs yang tidak ama
 <translation id="6164605812717770913">Orang tua atau wali mengatakan bahwa kamu tidak boleh membuka situs ini. Kamu bisa meminta mereka berhenti memblokir situs ini.</translation>
 <translation id="6165508094623778733">Pelajari selengkapnya</translation>
 <translation id="6167577165590485365">Upaya pengambilan terakhir:</translation>
-<translation id="617256461084925519">Taktak Taktak mencoba memverifikasi diri Anda agar dapat mengisi info pembayaran.</translation>
+<translation id="617256461084925519">Taktak mencoba memverifikasi diri Anda agar dapat mengisi info pembayaran.</translation>
 <translation id="6173208311907792313">Selesaikan pembelian menggunakan Windows Hello</translation>
 <translation id="6176387967264100435">Harganya tinggi</translation>
 <translation id="6177128806592000436">Sambungan Anda ke situs ini tidak aman</translation>
@@ -3977,7 +3977,7 @@ disusupi oleh penyerang. Hanya buka <ph name="BEGIN_LINK" />situs yang tidak ama
 <translation id="7564049878696755256">Anda dapat kehilangan akses ke akun <ph name="ORG_NAME" /> atau mengalami pencurian identitas. Taktak menyarankan Anda untuk mengubah sandi sekarang.</translation>
 <translation id="7564667064360547717">Kaus &amp; Atasan</translation>
 <translation id="7567204685887185387">Server ini tidak dapat membuktikan bahwa ini adalah <ph name="DOMAIN" />; sertifikat keamanannya mungkin telah dikeluarkan dengan curang. Hal ini disebabkan oleh kesalahan konfigurasi atau penyerang memotong sambungan Anda.</translation>
-<translation id="7568616151991626879">Taktak Taktak mencoba mengisi sandi Anda di <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak mencoba mengisi sandi Anda di <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Tidak ada}=1{1 tab di perangkat ini}other{# tab di perangkat ini}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Hapus kartu kredit dari Taktak?</translation>
@@ -4556,7 +4556,7 @@ disusupi oleh penyerang. Hanya buka <ph name="BEGIN_LINK" />situs yang tidak ama
 <translation id="8541579497401304453">Terhubung dengan bisnis melalui panggilan telepon.</translation>
 <translation id="8542014550340843547">Tiga jepretan di bawah</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak mencoba mengubah setelan pengisian metode pembayaran.</translation>
+<translation id="8544217240017914508">Taktak mencoba mengubah setelan pengisian metode pembayaran.</translation>
 <translation id="8544303911974837265">Poliester</translation>
 <translation id="854548366864113872">Opsi Harga Tinggi</translation>
 <translation id="8546254312340305428">Berikan alasan mengupload (wajib)</translation>

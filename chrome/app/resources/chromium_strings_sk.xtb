@@ -184,7 +184,7 @@ Niektoré funkcie nemusia byť k dispozícii a zmeny vykonané v predvoľbách s
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="3286538390144397061">Reštartovať</translation>
-<translation id="328888136576916638">Chýbajú kľúče rozhrania Taktak API. Niektoré funkcie prehliadača Taktak Taktak budú zakázané.</translation>
+<translation id="328888136576916638">Chýbajú kľúče rozhrania Taktak API. Niektoré funkcie prehliadača Taktak budú zakázané.</translation>
 <translation id="3296368748942286671">Po zatvorení prehliadača Taktak ponechať spustené aplikácie na pozadí</translation>
 <translation id="3313189106987092621">Taktak vás bude pred načítaním webu používajúceho nezabezpečené pripojenie upozorňovať</translation>
 <translation id="3316771292331273802">Po zavretí všetkých okien prehliadača Taktak vás odhlásime z väčšiny webov. Neplatí to však pre váš účet Taktak v prípade, že ste sa prihlásili do prehliadača Taktak. Ak chcete, aby si vás weby pamätali, <ph name="SETTINGS_LINK" />.</translation>
@@ -229,7 +229,7 @@ Niektoré funkcie nemusia byť k dispozícii a zmeny vykonané v predvoľbách s
 <translation id="395904275706073188">Chránené stránky sa nedajú čítať. Skúste inú stránku.</translation>
 <translation id="3962647064319009959">Ako vás Taktak chráni</translation>
 <translation id="3971865010372729242">Keď píšete do panela s adresou alebo vyhľadávacieho poľa, prehliadač Taktak odosiela zadávaný text vyhľadávaniu, nástrojom umelej inteligencie a nástrojom agentov vašej organizácie, aby získal návrhy.</translation>
-<translation id="3975724895399328945">Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Taktak for Testing</translation>
 <translation id="3997429360543082038">Taktak OS</translation>
 <translation id="4019629340646866719">Taktak OS mohol vzniknúť vďaka ďalšiemu <ph name="BEGIN_LINK_CROS_OSS" />softvéru typu open source<ph name="END_LINK_CROS_OSS" />, ako je <ph name="BEGIN_LINK_LINUX_OSS" />vývojové prostredie systému Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Preložiť obrazovku</translation>
@@ -549,7 +549,7 @@ Prehliadač Taktak nedokáže obnoviť vaše nastavenia.</translation>
 <translation id="8077498902115777962">Deaktivovať spustenie prehliadača Taktak na pozadí pre aplikácie</translation>
 <translation id="80790299200510644">Vyhľadávanie podľa obrázkov</translation>
 <translation id="8086881907087796310">Nepodarilo sa nainštalovať, pretože váš počítač nespĺňa minimálne požiadavky na hardvér.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak vyžaduje pre tento web povolený prístup k polohe</translation>
 <translation id="8118331347066725040">Odošlite spätnú väzbu k vyhľadávaniu pomocou funkcie Lens</translation>
 <translation id="8133124826068723441">Systému Taktak OS sa nepodarilo synchronizovať vaše údaje, pretože možnosť synchronizácie nie je pre vašu doménu k dispozícii.</translation>
@@ -595,7 +595,7 @@ Prehliadač Taktak nedokáže obnoviť vaše nastavenia.</translation>
 <translation id="8601359445272098721">Novinka! Môžete prekladať text aj obrázky na obrazovke. Stačí vybrať tlačidlo Preložiť obrazovku.</translation>
 <translation id="8619360774459241877">Spúšťa sa Taktak…</translation>
 <translation id="8621669128220841554">Inštalácia zlyhala kvôli neznámej chybe. Skúste prehliadač Taktak stiahnuť znova.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing nemôžete nastaviť ako svoj predvolený prehliadač.</translation>
+<translation id="8648201657708811153">Taktak for Testing nemôžete nastaviť ako svoj predvolený prehliadač.</translation>
 <translation id="8697124171261953979">Tiež určuje, ktorá stránka sa zobrazí pri spustení prehliadača Taktak alebo pri vyhľadávaní pomocou všeobecného poľa.</translation>
 <translation id="8704119203788522458">Toto je váš prehliadač Taktak</translation>
 <translation id="8712637175834984815">Dobre</translation>

@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">นโยบายนี้ทำงานตามที่ควรจะเป็นแต่มีการตั้งค่าเดียวกันไว้ที่อื่นและถูกแทนที่โดยนโยบายนี้</translation>
 <translation id="1567405528131216114">เพิ่ม <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">ป้อนวันที่หมดอายุ</translation>
-<translation id="1569694109004336106">Taktak Taktak กำลังพยายามเปิด Windows Hello เพื่อป้อนรหัสผ่าน</translation>
+<translation id="1569694109004336106">Taktak กำลังพยายามเปิด Windows Hello เพื่อป้อนรหัสผ่าน</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> นิ้ว</translation>
 <translation id="1574714699824202614">กําลังยืนยันวิธีการชําระเงิน</translation>
 <translation id="1576277203042721907">ข้อมูลเชิงลึกเกี่ยวกับ Shopping</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">โปรดติดต่อผู้ให้บริการเพื่อขอข้อมูลเพิ่มเติม</translation>
 <translation id="2091887806945687916">เสียง</translation>
 <translation id="2093184051799735948">ค้นหา <ph name="ENGINE_NAME" /> หรือพิมพ์ URL</translation>
-<translation id="2093982008204312032">Taktak Taktak กำลังพยายามปิด Windows Hello เพื่อป้อนรหัสผ่าน</translation>
+<translation id="2093982008204312032">Taktak กำลังพยายามปิด Windows Hello เพื่อป้อนรหัสผ่าน</translation>
 <translation id="2094505752054353250">โดเมนไม่ตรง</translation>
 <translation id="2094704029599359040">ข้อมูลเวอร์ชัน</translation>
 <translation id="2099652385553570808">เย็บด้วยลวดเย็บกระดาษด้านซ้าย 3 ครั้ง</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;เลิกทำการนำออก</translation>
 <translation id="239708975263889666">แก้ไขหมายเลขประจำตัวผู้เดินทางที่ตรวจสอบแล้ว (KTN)</translation>
 <translation id="2399344929880464793">ระบบบันทึก IBAN นี้ไว้ในบัญชี Taktak เพื่อให้คุณใช้ในบริการต่างๆ ของ Taktak ได้</translation>
-<translation id="2399868464369312507">Taktak Taktak กําลังพยายามแก้ไขวิธีการชําระเงิน</translation>
+<translation id="2399868464369312507">Taktak กําลังพยายามแก้ไขวิธีการชําระเงิน</translation>
 <translation id="2400263725572336749">เพิ่มหนังสือเดินทาง</translation>
 <translation id="2400271059665846158">จัดการบัตรสะสมคะแนนใน Taktak Wallet</translation>
 <translation id="2400600116338235695">สามารถขอเชื่อมต่อกับพอร์ตอนุกรมได้</translation>
@@ -3118,7 +3118,7 @@
 <translation id="6164605812717770913">พ่อแม่หรือผู้ปกครองระบุว่าคุณเข้าชมเว็บไซต์นี้ไม่ได้ แต่คุณขอให้เลิกบล็อกได้</translation>
 <translation id="6165508094623778733">ดูข้อมูลเพิ่มเติม</translation>
 <translation id="6167577165590485365">การพยายามดึงข้อมูลครั้งล่าสุด:</translation>
-<translation id="617256461084925519">Taktak Taktak กำลังพยายามยืนยันว่าเป็นคุณเพื่อให้ระบบกรอกข้อมูลการชำระเงินของคุณได้</translation>
+<translation id="617256461084925519">Taktak กำลังพยายามยืนยันว่าเป็นคุณเพื่อให้ระบบกรอกข้อมูลการชำระเงินของคุณได้</translation>
 <translation id="6173208311907792313">ทำการซื้อให้เสร็จสมบูรณ์โดยใช้ Windows Hello</translation>
 <translation id="6176387967264100435">ราคานี้เป็นราคาสูง</translation>
 <translation id="6177128806592000436">การเชื่อมต่อกับเว็บไซต์นี้ไม่ปลอดภัย</translation>
@@ -3978,7 +3978,7 @@
 <translation id="7564049878696755256">คุณอาจเข้าถึงบัญชี <ph name="ORG_NAME" /> ไม่ได้หรือถูกโจรกรรมข้อมูลประจำตัว Taktak ขอแนะนำให้เปลี่ยนรหัสผ่านตอนนี้เลย</translation>
 <translation id="7564667064360547717">เสื้อเชิ้ตและเสื้อยืด</translation>
 <translation id="7567204685887185387">เซิร์ฟเวอร์นี้ไม่สามารถพิสูจน์ได้ว่าเป็น <ph name="DOMAIN" /> เพราะอาจมีการออกใบรับรองความปลอดภัยปลอม โดยอาจเกิดจากการกำหนดค่าผิดหรือผู้บุกรุกที่ขัดขวางการเชื่อมต่อของคุณ</translation>
-<translation id="7568616151991626879">Taktak Taktak กำลังพยายามป้อนรหัสผ่านของคุณใน "<ph name="APP_NAME" />"</translation>
+<translation id="7568616151991626879">Taktak กำลังพยายามป้อนรหัสผ่านของคุณใน "<ph name="APP_NAME" />"</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{ไม่มี}=1{1 แท็บในอุปกรณ์นี้}other{# แท็บในอุปกรณ์นี้}}</translation>
 <translation id="7569490014721427265">กอล์ฟ</translation>
 <translation id="7569952961197462199">นำบัตรเครดิตออกจาก Taktak ไหม</translation>
@@ -4559,7 +4559,7 @@
 <translation id="8541579497401304453">ติดต่อกับธุรกิจด้วยการเริ่มต้นการโทร</translation>
 <translation id="8542014550340843547">เย็บด้วยลวดเย็บกระดาษด้านล่าง 3 ครั้ง</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak กำลังพยายามแก้ไขการตั้งค่าสำหรับการกรอกวิธีการชำระเงิน</translation>
+<translation id="8544217240017914508">Taktak กำลังพยายามแก้ไขการตั้งค่าสำหรับการกรอกวิธีการชำระเงิน</translation>
 <translation id="8544303911974837265">ผ้าใยสังเคราะห์</translation>
 <translation id="854548366864113872">ตัวเลือกที่มีราคาสูง</translation>
 <translation id="8546254312340305428">ระบุเหตุผลในการอัปโหลด (ต้องระบุ)</translation>

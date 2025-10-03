@@ -228,7 +228,7 @@
 <translation id="395904275706073188">Zaštićene stranice nije moguće čitati. Pokušajte s nekom drugom stranicom.</translation>
 <translation id="3962647064319009959">Saznajte kako vas Taktak štiti</translation>
 <translation id="3971865010372729242">Kad upisujete u adresnu traku ili okvir za pretraživanje, ono što upišete Taktak šalje alatima za pretraživanje, AI alatima i alatima za agente vaše organizacije kako bi vam pružio prijedloge.</translation>
-<translation id="3975724895399328945">O verziji &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">O verziji &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">O Taktak OS-u</translation>
 <translation id="4019629340646866719">Taktak OS omogućen je dodatnim <ph name="BEGIN_LINK_CROS_OSS" />softverom utemeljenim na otvorenom izvornom kodu<ph name="END_LINK_CROS_OSS" />, isto kao i <ph name="BEGIN_LINK_LINUX_OSS" />razvojnim okruženjem Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Prevedi zaslon</translation>
@@ -548,7 +548,7 @@ Taktak ne može oporaviti vaše postavke.</translation>
 <translation id="8077498902115777962">Onemogući rad Chromiuma u pozadini za aplikacije</translation>
 <translation id="80790299200510644">Pretraživanje slika</translation>
 <translation id="8086881907087796310">Instalacija nije uspjela jer vaše računalo ne zadovoljava minimalne zahtjeve za hardver.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak treba dopuštenje za lokaciju za ovu web-lokaciju</translation>
 <translation id="8118331347066725040">Pošaljite povratne informacije za pretraživanje pomoću Objektiva</translation>
 <translation id="8133124826068723441">Taktak OS nije mogao sinkronizirati vaše podatke jer sinkronizacija nije dostupna za vašu domenu.</translation>
@@ -594,7 +594,7 @@ Taktak ne može oporaviti vaše postavke.</translation>
 <translation id="8601359445272098721">Novo! Možete prevesti tekst i slike na zaslonu tako da odaberete gumb Prevedi zaslon</translation>
 <translation id="8619360774459241877">Pokretanje Chromiuma...</translation>
 <translation id="8621669128220841554">Instalacija nije uspjela zbog nepoznate pogreške. Ponovo preuzmite Taktak.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing ne može biti vaš zadani preglednik.</translation>
+<translation id="8648201657708811153">Taktak for Testing ne može biti vaš zadani preglednik.</translation>
 <translation id="8697124171261953979">Upravlja i time koja se stranica prikazuje prilikom pokretanja Chromiuma ili pretraživanja putem višenamjenskog okvira.</translation>
 <translation id="8704119203788522458">To je vaš Taktak</translation>
 <translation id="8712637175834984815">Shvaćam</translation>

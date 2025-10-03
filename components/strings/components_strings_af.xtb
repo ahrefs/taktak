@@ -348,7 +348,7 @@ Dit sal andersins deur jou privaatheidinstellings geblokkeer word. Dit sal die i
 <translation id="1567040042588613346">Hierdie beleid werk soos bedoel, maar dieselfde waarde is elders gestel en word deur hierdie beleid vervang.</translation>
 <translation id="1567405528131216114">Voeg <ph name="TOPIC" /> by</translation>
 <translation id="1569487616857761740">Voer vervaldatum in</translation>
-<translation id="1569694109004336106">Taktak Taktak probeer tans om Windows Hello aan te skakel om wagwoorde in te vul.</translation>
+<translation id="1569694109004336106">Taktak probeer tans om Windows Hello aan te skakel om wagwoorde in te vul.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" />x<ph name="HEIGHT" /> dm.</translation>
 <translation id="1574714699824202614">Verifieer tans betaalmetode</translation>
 <translation id="1576277203042721907">Shopping-insigte</translation>
@@ -654,7 +654,7 @@ Dit sal andersins deur jou privaatheidinstellings geblokkeer word. Dit sal die i
 <translation id="2090451897496479509">Kontak die verskaffer vir meer inligting</translation>
 <translation id="2091887806945687916">Klank</translation>
 <translation id="2093184051799735948">Deursoek <ph name="ENGINE_NAME" /> of tik URL in</translation>
-<translation id="2093982008204312032">Taktak Taktak probeer tans om Windows Hello vir die invul van wagwoorde af te skakel.</translation>
+<translation id="2093982008204312032">Taktak probeer tans om Windows Hello vir die invul van wagwoorde af te skakel.</translation>
 <translation id="2094505752054353250">Domein stem nie ooreen nie</translation>
 <translation id="2094704029599359040">Weergawe-inligting</translation>
 <translation id="2099652385553570808">Tripelkram links</translation>
@@ -864,7 +864,7 @@ Dit sal andersins deur jou privaatheidinstellings geblokkeer word. Dit sal die i
 <translation id="2396249848217231973">Ontdoen uitvee</translation>
 <translation id="239708975263889666">Wysig bekende reisigernommer</translation>
 <translation id="2399344929880464793">Hierdie IBAN is in jou Taktak-rekening gestoor sodat jy dit in alle Taktak-dienste kan gebruik.</translation>
-<translation id="2399868464369312507">Taktak Taktak probeer tans om betaalmetodes te wysig.</translation>
+<translation id="2399868464369312507">Taktak probeer tans om betaalmetodes te wysig.</translation>
 <translation id="2400263725572336749">Voeg paspoort by</translation>
 <translation id="2400271059665846158">Bestuur jou lojaliteitskaarte in Taktak Wallet</translation>
 <translation id="2400600116338235695">Kan vra om aan reekspoorte te koppel</translation>
@@ -3119,7 +3119,7 @@ Dit sal andersins deur jou privaatheidinstellings geblokkeer word. Dit sal die i
 <translation id="6164605812717770913">’n Ouer of voog het gesê dat hierdie webwerf nie OK is vir jou om te besoek nie. Jy kan hulle vra om dit te deblokkeer.</translation>
 <translation id="6165508094623778733">Kom meer te wete</translation>
 <translation id="6167577165590485365">Laaste haalpoging:</translation>
-<translation id="617256461084925519">Taktak Taktak probeer verifieer dat dit jy is sodat dit jou betaalinligting kan invul.</translation>
+<translation id="617256461084925519">Taktak probeer verifieer dat dit jy is sodat dit jou betaalinligting kan invul.</translation>
 <translation id="6173208311907792313">Voltooi jou aankoop met Windows Hello</translation>
 <translation id="6176387967264100435">Hierdie prys is hoog</translation>
 <translation id="6177128806592000436">Jou verbinding aan hierdie werf is nie veilig nie</translation>
@@ -3978,7 +3978,7 @@ om uit te vind hoe om die sagteware permanent van jou rekenaar te verwyder&lt;/o
 <translation id="7564049878696755256">Jy kan toegang tot jou <ph name="ORG_NAME" />-rekening verloor of identiteitdiefstal ervaar. Taktak beveel aan dat jy jou wagwoord nou verander.</translation>
 <translation id="7564667064360547717">Hemde en boklere</translation>
 <translation id="7567204685887185387">Hierdie bediener kon nie bewys dat dit <ph name="DOMAIN" /> is nie; sy sekuriteitsertifikaat is dalk valslik uitgereik. Dit kan veroorsaak word deur 'n wanopstelling of 'n aanvaller wat jou verbinding onderskep.</translation>
-<translation id="7568616151991626879">Taktak Taktak probeer tans om jou wagwoord op <ph name="APP_NAME" /> in te vul.</translation>
+<translation id="7568616151991626879">Taktak probeer tans om jou wagwoord op <ph name="APP_NAME" /> in te vul.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Geen}=1{1 oortjie op hierdie toestel}other{# oortjies op hierdie toestel}}</translation>
 <translation id="7569490014721427265">Gholf</translation>
 <translation id="7569952961197462199">Verwyder kredietkaart uit Taktak?</translation>
@@ -4559,7 +4559,7 @@ Bykomende besonderhede:
 <translation id="8541579497401304453">Kom met ’n besigheid in aanraking deur ’n foonoproep te inisieer.</translation>
 <translation id="8542014550340843547">Tripelkram onder</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak probeer tans instellings vir die invul van betaalmetodes wysig.</translation>
+<translation id="8544217240017914508">Taktak probeer tans instellings vir die invul van betaalmetodes wysig.</translation>
 <translation id="8544303911974837265">Poliëster</translation>
 <translation id="854548366864113872">Duur opsie</translation>
 <translation id="8546254312340305428">Verskaf rede vir oplaai (vereis)</translation>

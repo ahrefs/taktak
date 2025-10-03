@@ -1320,7 +1320,7 @@ Ilovalarga berilgan ruxsatlar bu hisobga tatbiq etilishi mumkin. Android ilovala
 <translation id="1901760057081700494">Hozirgi vaqt mintaqasi: <ph name="TIME_ZONE_ENTRY" />. Vaqt mintaqasi avtomatik yangilanishi uchun <ph name="BEGIN_LINK" />tizim joylashuv ruxsatini yoqing<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">Tashrif qilingan URL manzillar Taktak hisobingizda saqlanadi</translation>
 <translation id="1906181697255754968">Saytlar odatda yopilmagan ishlaringizni saqlash maqsadida qurilmangizdagi fayllar va jildlar bilan ishlaydi</translation>
-<translation id="1906488504371069394"><ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> doʻkonida koʻplab kengaytma va mavzular bilan tanishing</translation>
+<translation id="1906488504371069394"><ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> doʻkonida koʻplab kengaytma va mavzular bilan tanishing</translation>
 <translation id="1907044622262489040">Ovoz bilan yozing. Search+D tugmalarini bosib, gapirishni boshlang.</translation>
 <translation id="1907659324308286326">Ayrim Thunderbolt yoki USB4 aksessuarlari toʻgʻri ishlashi uchun xotiraga kirish ruxsati kerak.</translation>
 <translation id="1908591798274282246">Yopilgan guruhni qayta ochish</translation>
@@ -2066,7 +2066,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="2412015533711271895">Ota-ona yoki vasiy bu kengaytmani ishlatishga ruxsat berishi kerak</translation>
 <translation id="2412593942846481727">Yangilanish chiqdi</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859"><ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /> kengaytmalari bilan brauzerni oʻzingizga moslang</translation>
+<translation id="2413009156320833859"><ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /> kengaytmalari bilan brauzerni oʻzingizga moslang</translation>
 <translation id="2414159296888870200"><ph name="MODULE_TITLE" />ni koʻrishda davom etish</translation>
 <translation id="2414886740292270097">Qorong‘i</translation>
 <translation id="2415117815770324983">Bir nechta saytlardagi hisobingizdan chiqasiz. Taktak hisobingizga kirgan holda qolasiz.</translation>
@@ -2101,7 +2101,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="2434449159125086437">Printer sozlanmadi. Sozlamalarni tekshiring va qaytadan urining.</translation>
 <translation id="2434758125294431199">Sizga kim fayl yubora olishini tanlang</translation>
 <translation id="2434915728183570229">Endi siz telefoningizdagi ilovalarni koʻra olasiz</translation>
-<translation id="2435137177546457207">Taktak Taktak va ChromeOS Flex qoʻshimcha shartlari</translation>
+<translation id="2435137177546457207">Taktak va ChromeOS Flex qoʻshimcha shartlari</translation>
 <translation id="2435248616906486374">Tarmoqqa ulanish yo‘q</translation>
 <translation id="2435457462613246316">Parolni ko‘rsatish</translation>
 <translation id="2436385001956947090">Havolani nusxalash</translation>
@@ -2447,7 +2447,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="2666247341166669829"><ph name="PERCENTAGE" />% quvvat qoldi.</translation>
 <translation id="2667144577800272420"><ph name="APP_NAME" /> ilovasini standart ilova sifatida oʻrnatishni istaysizmi? Bu havola oʻzgartirilgandan keyin <ph name="APP_NAME_2" /> va <ph name="APP_NAME_3" /> ilovalari ochilmay qoladi.</translation>
 <translation id="2667463864537187133">Imlo tekshirgichni boshqarish</translation>
-<translation id="2668604389652548400">Uni olib tashlang yoki <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> orqali unga oʻxshash kengaytmalar bilan almashtiring.</translation>
+<translation id="2668604389652548400">Uni olib tashlang yoki <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> orqali unga oʻxshash kengaytmalar bilan almashtiring.</translation>
 <translation id="2669241540496514785"><ph name="APP_NAME" /> ochilmadi</translation>
 <translation id="2669454659051515572">Bu qurilmaning barcha foydalanuvchilar yuklab olingan fayllarni koʻra oladi</translation>
 <translation id="2670102641511624474">“<ph name="APP_NAME" />” ilovasi Taktak sahifasini translatsiya qilmoqda.</translation>
@@ -2463,7 +2463,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="267442004702508783">yangilash</translation>
 <translation id="2674764818721168631">Oʻchiq</translation>
 <translation id="2675716371350192683">Kontentingiz AI funksiyalarni yaxshilashda ishlatilmaydi. Tashkilotingiz bu sozlamalarni istalgan vaqt oʻzgartirishi mumkin.</translation>
-<translation id="2676084251379299915">Bu kengaytma endi Taktak Web Storeda mavjud emasligi sababli korporativ siyosat tomonidan faolsizlantiridi.</translation>
+<translation id="2676084251379299915">Bu kengaytma endi Chrome Web Storeda mavjud emasligi sababli korporativ siyosat tomonidan faolsizlantiridi.</translation>
 <translation id="2677748264148917807">Tark etish</translation>
 <translation id="2678063897982469759">Qayta faollashtirish</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Varaqlar guruhi qolsinmi?}other{Varaq guruhlari qolsinmi?}}</translation>
@@ -2862,7 +2862,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="2953210795988451570">Xavfsizlik yangilanishlari tugadi. Yangi Chromebook oling.</translation>
 <translation id="2953218713108551165"><ph name="SITE" /> uchun bildirishnomalar chiqishi taqiqlangan. Keyingi tashrifda qaytadan soʻraladi.</translation>
 <translation id="2956070239128776395">Boʻlim guruhlandi: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Bu kengaytmadan foydalanish uchun dasturchi rejimini yoqing, uni Taktak Web Store tekshirolmaydi.</translation>
+<translation id="2957124229512318478">Bu kengaytmadan foydalanish uchun dasturchi rejimini yoqing, uni Chrome Web Store tekshirolmaydi.</translation>
 <translation id="2958721676848865875">Kengaytmani arxivlash ogohlantiruvi</translation>
 <translation id="2959127025785722291">Xatolik yuz berdi. Oxirigacha tekshirilmadi. Qaytadan urining.</translation>
 <translation id="2959474507964749987">Bu shifrlangan fayl tarkibida virus yoki zararli dastur boʻlishi mumkin.<ph name="LINE_BREAK" />Xavfsiz ekanini tekshirish uchun fayl va uning parolini Taktak Saytlarni xavfsiz kezish tekshiruviga yuboring. Tekshiruv bir necha soniya vaqt oladi.<ph name="LINE_BREAK" />Tekshirish uchun fayl parolini kiriting.</translation>
@@ -2922,7 +2922,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="2996108796702395498">Qurilmangiz serial raqami: <ph name="SERIAL_NUMBER" />. Bu raqam xizmatni faollashtirishga yordam beradi.</translation>
 <translation id="2996286169319737844">Ma’lumotlar kodli ibora bilan shifrlangan. Taktak Pay manzillari va toʻlov usullari esa shifrlanmagan.</translation>
 <translation id="2996722619877761919">Uzun chetidan almashtirish</translation>
-<translation id="2998097899774209901">Yoniq • Bu kengaytma Taktak Web Store qoidalariga mos emas</translation>
+<translation id="2998097899774209901">Yoniq • Bu kengaytma Chrome Web Store qoidalariga mos emas</translation>
 <translation id="2998267783395280091">Tarmoq topildi</translation>
 <translation id="3000378525979847272">Ruxsat berildi: <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="3000461861112256445">Mono audio</translation>
@@ -2953,7 +2953,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="3012631534724231212">(iframe oynasi)</translation>
 <translation id="3012804260437125868">Faqat bir saytga xavfsiz ulanishlar</translation>
 <translation id="3012917896646559015">Kompyuterni xizmat ko‘rsatish markaziga yuborish uchun ishlab chiqaruvchi bilan bog‘laning.</translation>
-<translation id="3013652227108802944">Oʻchiq • Bu kengaytma Taktak Web Store qoidalariga mos emas</translation>
+<translation id="3013652227108802944">Oʻchiq • Bu kengaytma Chrome Web Store qoidalariga mos emas</translation>
 <translation id="301525898020410885">Til tashkilotingiz tomonidan sozlangan</translation>
 <translation id="3015639418649705390">Qayta ishga tushirish</translation>
 <translation id="3015651504578568463">Varaqni yangi taqqoslash jadvaliga kiritish</translation>
@@ -3223,7 +3223,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="3226487301970807183">Chapga tekislangan yon panelni almashtirish</translation>
 <translation id="322708765617468434">Sozlashdan keyin boshqa odamni qurilmaga qoʻshishingiz mumkin. Har bir odamning tajribasi alohida moslashtiriladi va ularning maʼlumotlari xavfsiz saqlanadi.</translation>
 <translation id="3227137524299004712">Mikrofon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Uni olib tashlang yoki <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> orqali unga oʻxshash kengaytmalar bilan almashtiring.}other{Ularni olib tashlang yoki <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> orqali unga oʻxshash kengaytmalar bilan almashtiring.}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Uni olib tashlang yoki <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> orqali unga oʻxshash kengaytmalar bilan almashtiring.}other{Ularni olib tashlang yoki <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> orqali unga oʻxshash kengaytmalar bilan almashtiring.}}</translation>
 <translation id="3229254977651514276">Sanani tekshiring</translation>
 <translation id="3230539834943294477">Yordam maqolalarini ochish yoki qurilma yuzasidan yordam topish</translation>
 <translation id="3232168089952388105">Qurilma axboroti ulashilsinmi?</translation>
@@ -4067,7 +4067,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="3798670284305777884">Karnay (ichki)</translation>
 <translation id="3799128412641261490">Switch Access sozlamalari</translation>
 <translation id="3800764353337460026">Simvol uslubi</translation>
-<translation id="3800828618615365228">Taktak Taktak va ChromeOS qoʻshimcha shartlari</translation>
+<translation id="3800828618615365228">Taktak va ChromeOS qoʻshimcha shartlari</translation>
 <translation id="3800898876950197674">Bu kengaytmaga ruxsat berish uchun parol kiriting.</translation>
 <translation id="3801449494961771207">Tizim nutq sintezatori ovozi</translation>
 <translation id="3802486193901166966">Bu kengaytma hech qanday maxsus ruxsat talab qilmaydi va saytlarga qoʻshimcha ruxsati yoʻq</translation>
@@ -4090,7 +4090,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="3810973564298564668">Sozlash</translation>
 <translation id="381202950560906753">Yana qo‘shish</translation>
 <translation id="3812525830114410218">Sertifikat buzilgan</translation>
-<translation id="3813296892522778813">Agar qidirayotgan narsangiz topilmagan bo‘lsa, <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak yordam markazi<ph name="END_LINK_CHROMIUM" /> sahifasiga o‘ting</translation>
+<translation id="3813296892522778813">Agar qidirayotgan narsangiz topilmagan bo‘lsa, <ph name="BEGIN_LINK_CHROMIUM" />Taktak yordam markazi<ph name="END_LINK_CHROMIUM" /> sahifasiga o‘ting</translation>
 <translation id="3813358687923336574">Tildan sahifalarni tarjima qilish va tezkor javoblar uchun foydalaniladi</translation>
 <translation id="3813458570141926987">Oxirgi brauzer tarixi asosida Taktak qiziq deb taxmin qilgan mavzular roʻyxati</translation>
 <translation id="3814529970604306954">Maktab hisobi</translation>
@@ -4567,7 +4567,7 @@ Oʻz qurilmangizda Family Link ilovasini oʻrnatib, bu hisob sozlamalarini boshq
 <translation id="4133076602192971179">Parolni almashtirish uchun ilovani oching</translation>
 <translation id="4134838386867070505">Qadam: 1/4: Muammoni tavsiflang</translation>
 <translation id="413534985210133938"><ph name="LOCAL_FOLDER" /> faqat shu qurilmada saqlanadi. Bu bukmarkni <ph name="LOCAL_FOLDER" /> jildiga olsangiz, unga boshqa qurilmalardan kira olmaysiz.</translation>
-<translation id="4135746311382563554">Taktak Taktak va Taktak OS qoʻshimcha xizmat shartlari</translation>
+<translation id="4135746311382563554">Taktak va Taktak OS qoʻshimcha xizmat shartlari</translation>
 <translation id="4136203100490971508">Tungi rejim quyosh chiqishi bilan avtomatik faolsizlantiriladi</translation>
 <translation id="41365691917097717">Davom etsangiz, Android ilovalarni yaratish va sinash uchun ADB tuzatish vositasi yoqiladi. Eslatma: bunda Taktak tomonidan tekshirilmagan Android ilovalar ham oʻrnatilishi mumkin va zavod sozlamalariga tiklash yoqilmasligi kerak.</translation>
 <translation id="4137923333452716643">Oʻqish rejimida koʻrsatish kerak boʻlgan matnni belgilang</translation>
@@ -6417,7 +6417,7 @@ Bu amal uchun bir nechta kalit tugma belgilash mumkin.</translation>
 <translation id="5470741195701938302">Raqamlar</translation>
 <translation id="5471768120198416576">Salom! Men sizga matnni nutqqa aylantirib beraman.</translation>
 <translation id="5472627187093107397">Bu sayt parollarini saqlash</translation>
-<translation id="5473062644742711742">Taktak Web Store orqali maxsus qulay vositalarni toping</translation>
+<translation id="5473062644742711742">Chrome Web Store orqali maxsus qulay vositalarni toping</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Davom etish orqali siz bu qurilma Taktak, aloqa operatoringiz va qurilma ishlab chiqaruvchisidan dasturiy yangilanish va ilovalarni mobil internet orqali ham avtomatik ravishda yuklab olishi va oʻrnatishiga rozilik bildirgan hisoblanasiz. Ayrim ilovalar ichki xaridlarni ham taklif etishi mumkin.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN kod kamida bitta belgidan iborat boʻlsin}other{PIN kod kamida # ta belgidan iborat boʻlsin}}</translation>
@@ -7045,7 +7045,7 @@ Ochiq eksponenta (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bit):
 <translation id="5932224571077948991">Saytda yoqimsiz yoki befoyda reklamalar chiqadi</translation>
 <translation id="59324397759951282"><ph name="MANUFACTURER_NAME" /> USB qurilmasi</translation>
 <translation id="5932441198730183141">Bu Taktak Meet qurilmasini qoʻshish uchun mavjud litsenziyalaringiz soni yetarli emas. Qoʻshimcha litsenziya xarid qilish uchun savdo boʻlimiga murojaat qiling. Agar bu xabarni xato deb hisoblasangiz, yordam xizmatiga murojaat qiling.</translation>
-<translation id="593271375210025655">Bu kengaytmadan foydalanish uchun, faqat kengaytma ishonarli boʻlsa, dasturchi rejimini yoqing. U Taktak Web Store tomonidan tekshirilmagan tajribaviy funksiyalarni oʻz ichiga olishi mumkin.</translation>
+<translation id="593271375210025655">Bu kengaytmadan foydalanish uchun, faqat kengaytma ishonarli boʻlsa, dasturchi rejimini yoqing. U Chrome Web Store tomonidan tekshirilmagan tajribaviy funksiyalarni oʻz ichiga olishi mumkin.</translation>
 <translation id="5932881020239635062">Seriya raqami</translation>
 <translation id="5933376509899483611">Vaqt mintaqasi</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> kamera va mikrofondan foydalanmoqda</translation>
@@ -7796,7 +7796,7 @@ Ochiq eksponenta (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bit):
 <translation id="6476671549211161535"><ph name="DEVICE_NAME" /> qurilmasida chap va oʻng sichqoncha tugmalaridan boshqa tugmani bosing.</translation>
 <translation id="6477822444490674459">Ish profilidagi telefonlarda bildirishnomalar sinxronlanmaydi. <ph name="LINK_BEGIN" />Batafsil<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Tezkor joylash tugmasi tab tugmasining ostida joylashgan</translation>
-<translation id="6479881432656947268">Taktak Web Store doʻkonini ochish</translation>
+<translation id="6479881432656947268">Chrome Web Store doʻkonini ochish</translation>
 <translation id="6480327114083866287"><ph name="MANAGER" /> tomonidan boshqariladi</translation>
 <translation id="6481749622989211463">Atrofdagi qurilmalarga fayl va boshqalarni ulashish <ph name="LINK_BEGIN" />Batafsil<ph name="LINK_END" /></translation>
 <translation id="648204537326351595"><ph name="SPECIFIC_NAME" /> mikrofondan foydalanishiga ruxsat bering</translation>
@@ -7833,7 +7833,7 @@ Ochiq eksponenta (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bit):
 <translation id="6511607461419653612">Chromebook qurilmasini qayta yoqing va qaytadan urining</translation>
 <translation id="6511827214781912955">Bu qurilmaning boshqa foydalanuvchilari parollaringizni koʻrmasligi uchun <ph name="FILENAME" /> faylini oʻchirib tashlang</translation>
 <translation id="6512759338201777379">Yaratilgan rasm: <ph name="INDEX" />/<ph name="SUBJECT" />, kayfiyat: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Boshqa tarmoqqa ulanish yo‘qligida, Taktak Taktak mobil internet tarmog‘idan foydalanadi.</translation>
+<translation id="6513247462497316522">Boshqa tarmoqqa ulanish yo‘qligida, Taktak mobil internet tarmog‘idan foydalanadi.</translation>
 <translation id="6514010653036109809">Mavjud qurilma:</translation>
 <translation id="6516990372629061585">Linuxdan import qilingan sertifikatlarni koʻrish</translation>
 <translation id="6517382055541687102">Tanlangan qurilma oʻzgardi: <ph name="DEVICE_NAME" /></translation>
@@ -8782,7 +8782,7 @@ Yana # ta oshkor qilingan parollaringiz bor. Taktak Parollar menejeri ularni hoz
 <translation id="7180611975245234373">Yangilash</translation>
 <translation id="7180865173735832675">Sozlash</translation>
 <translation id="7181117767881540376">&amp;Bukmarklar panelini berkitish</translation>
-<translation id="7181329571386134105">Taktak Taktak sozlamalarida <ph name="CHILD_NAME" /> uchun sozlamalarni oʻzgartirsangiz, kelgusida <ph name="CHILD_NAME" /> kengaytmalarni mustaqil oʻrnatishi mumkin. Buni qurilmangizda Family Link ilovasi orqali bajarish mumkin.</translation>
+<translation id="7181329571386134105">Taktak sozlamalarida <ph name="CHILD_NAME" /> uchun sozlamalarni oʻzgartirsangiz, kelgusida <ph name="CHILD_NAME" /> kengaytmalarni mustaqil oʻrnatishi mumkin. Buni qurilmangizda Family Link ilovasi orqali bajarish mumkin.</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> ulashgan varaqlar guruhiga qoʻshilish
             {NUM_OTHER_MEMBERS,plural, =0{J<ph name="OWNER_FIRST_NAME" /> ulashgan varaqlar guruhiga qoʻshilish}=1{<ph name="OWNER_FIRST_NAME" /> va yana # kishi ulashgan varaqlar guruhiga qoʻshilish}other{<ph name="OWNER_FIRST_NAME" /> va yana # kishi ulashgan varaqlar guruhiga qoʻshilish}}</translation>
 <translation id="7181976109296206547">Yangi logotip, nom va URL manzilni tekshiring</translation>
@@ -10006,7 +10006,7 @@ Kalit faylini ishonchli joyda saqlang. U kengaytmaning yangi versiyalarini yarat
 <translation id="8012188750847319132">caps lock</translation>
 <translation id="8012463809859447963">Tezkor modem tafsilotlari</translation>
 <translation id="8013534738634318212">Bu saytlar <ph name="RWS_OWNER" /> guruhiga kiradi. Guruhdagi saytlar guruhdagi faoliyatni koʻra oladi.</translation>
-<translation id="8013993649590906847">Agar rasmga foydali tavsif berilmagan boʻlsa, Taktak Taktak uni sizga tavsiflaydi. Tavsif yaratish uchun rasmlar Googlega yuboriladi.</translation>
+<translation id="8013993649590906847">Agar rasmga foydali tavsif berilmagan boʻlsa, Taktak uni sizga tavsiflaydi. Tavsif yaratish uchun rasmlar Googlega yuboriladi.</translation>
 <translation id="8014154204619229810">Yangilash vositasi ishlamoqda. Bir necha daqiqadan so‘ng qayta urinib ko‘ring.</translation>
 <translation id="8014206674403687691"><ph name="IDS_SHORT_PRODUCT_NAME" />‘ni avval o‘rnatilgan versiyaga qaytarish imkoniyati yo‘q. Powerwash funksiyasidan foydalanib ko‘ring.</translation>
 <translation id="8015021949830563076">Mazkur AI funksiyalar erta ishlab chiqish davrida boʻlib, ishlashida xatolar chiqishi mumkin.</translation>

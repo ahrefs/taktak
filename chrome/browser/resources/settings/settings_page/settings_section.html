@@ -49,8 +49,8 @@
         display: none;
       }
     </style>
-    <div id="header">
-      <h2 id="title" class="title" tabindex="-1" hidden$="[[getTitleHiddenStatus_(pageTitle)]]"
+    <div id="header" hidden$="[[!pageTitle]]">
+      <h2 id="title" class="title" tabindex="-1"
           aria-hidden$="[[getTitleHiddenStatus_(pageTitle)]]">[[pageTitle]]</h2>
       <template is="dom-if" if="[[showSendFeedbackButton]]">
         <cr-icon-button id="feedback" iron-icon="settings:feedback"
@@ -60,6 +60,6 @@
         </cr-icon-button>
       </template>
     </div>
-    <div id="card">
+    <div id="card" hidden$="[[!pageTitle]]">
       <slot></slot>
     </div>

@@ -5,7 +5,7 @@
 <translation id="1029669172902658969">Endurræstu til að uppfæra &amp;ChromiumOS</translation>
 <translation id="103359417695385097">Taktak áttar sig betur á eyðublöðum og getur fyllt þau út fyrir þig með fljótlegri hætti. Slökkt er á þessari stillingu.</translation>
 <translation id="1040916596585577953">Taktak mælir með að þú farir yfir þessa viðbót</translation>
-<translation id="1042552502243217427">Þegar vefsvæði biður um að forhlaða tenglum á lokaðan hátt á síðunni sinni notar Taktak Taktak-þjóna. Þetta kemur í veg fyrir að forhlaðna vefsvæðið geti auðkennt þig en Taktak lærir að þekkja hvaða vefsvæðum er forhlaðið.</translation>
+<translation id="1042552502243217427">Þegar vefsvæði biður um að forhlaða tenglum á lokaðan hátt á síðunni sinni notar Taktak-þjóna. Þetta kemur í veg fyrir að forhlaðna vefsvæðið geti auðkennt þig en Taktak lærir að þekkja hvaða vefsvæðum er forhlaðið.</translation>
 <translation id="1051793555070215510">Taktu þátt í örstuttri könnun til að hjálpa okkur að bæta huliðsstillingu.</translation>
 <translation id="1065672644894730302">Ekki er tókst að lesa kjörstillingarnar þínar.
 
@@ -230,7 +230,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="395904275706073188">Ekki er hægt að lesa varðar síður. Prófaðu aðra síðu.</translation>
 <translation id="3962647064319009959">Kynntu þér hvernig Taktak gætir að öryggi þínu</translation>
 <translation id="3971865010372729242">Þegar þú skrifar í veffangastikuna eða leitarreitinn sendir Taktak það sem þú skrifar til leitarforrits fyrirtækisins þíns, gervigreindar og verkfæra hjá fulltrúum til að fá tillögur.</translation>
-<translation id="3975724895399328945">Um &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Um &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Um ChromiumOS</translation>
 <translation id="4019629340646866719">ChromiumOS á tilvist sína að þakka öðrum <ph name="BEGIN_LINK_CROS_OSS" />opnum hugbúnaði<ph name="END_LINK_CROS_OSS" /> og það sama á við um <ph name="BEGIN_LINK_LINUX_OSS" />Linux-forritunarumhverfið <ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Þýða skjá</translation>
@@ -497,7 +497,7 @@ Sumir eiginleikar kunna að verða óaðgengilegir. Tilgreindu aðra prófílam�
 Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="7339898014177206373">Nýr gluggi</translation>
 <translation id="734373864078049451">Hér er vefefnið þitt, bókamerkin og annað dót úr Taktak.</translation>
-<translation id="7349591376906416160">Kerfisstjórinn hefur stillt Taktak Taktak á að opna <ph name="ALTERNATIVE_BROWSER_NAME" /> til að fá aðgang að <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="7349591376906416160">Kerfisstjórinn hefur stillt Taktak á að opna <ph name="ALTERNATIVE_BROWSER_NAME" /> til að fá aðgang að <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="7352651011704765696">Eitthvað fór úrskeiðis</translation>
 <translation id="7376384068949534168">Þú hefur ekki skoðað vefsvæðið nýlega. Taktak fjarlægði <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="7384121030444253939">Þessi viðbót er ekki lengur studd. Taktak mælir með að þú fjarlægir hana þess í stað.</translation>
@@ -550,7 +550,7 @@ Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="8077498902115777962">Ekki leyfa Taktak að keyra forrit í bakgrunni</translation>
 <translation id="80790299200510644">Myndaleit</translation>
 <translation id="8086881907087796310">Uppsetning mistókst vegna þess að tölvan þín uppfyllir ekki lágmarksskilyrði um vélbúnað.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak verður að fá staðsetningarheimild fyrir þetta vefsvæði</translation>
 <translation id="8118331347066725040">Senda ábendingu vegna leitar með Linsu</translation>
 <translation id="8133124826068723441">ChromiumOS gat ekki samstillt gögnin þín vegna þess að samstilling er ekki í boði fyrir lénið þitt.</translation>
@@ -596,7 +596,7 @@ Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="8601359445272098721">Nýtt! Þú getur þýtt bæði texta og myndir á skjánum þínum með því að velja hnappinn „þýða skjá“</translation>
 <translation id="8619360774459241877">Ræsir Taktak...</translation>
 <translation id="8621669128220841554">Uppsetning mistókst vegna ótilgreindrar villu. Sæktu Taktak aftur.</translation>
-<translation id="8648201657708811153">Ekki er hægt að gera Taktak Taktak for Testing að sjálfgefna vafranum þínum.</translation>
+<translation id="8648201657708811153">Ekki er hægt að gera Taktak for Testing að sjálfgefna vafranum þínum.</translation>
 <translation id="8697124171261953979">Það stýrir því einnig hvaða síða opnast þegar þú ræsir Taktak eða leitar í veffangastikunni.</translation>
 <translation id="8704119203788522458">Taktak er þitt</translation>
 <translation id="8712637175834984815">Ég skil</translation>

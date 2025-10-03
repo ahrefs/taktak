@@ -2097,7 +2097,7 @@ Cihazınızda Family Link uygulamasını yükleyerek bu hesabın ayarlarını y�
 <translation id="2434449159125086437">Yazıcı kurulamıyor. Lütfen yapılandırmayı kontrol edip tekrar deneyin.</translation>
 <translation id="2434758125294431199">Sizinle kimlerin içerik paylaşabileceğini seçin</translation>
 <translation id="2434915728183570229">Artık telefonunuzdaki uygulamaları görüntüleyebilirsiniz</translation>
-<translation id="2435137177546457207">Taktak Taktak ve ChromeOS Flex Ek Şartları</translation>
+<translation id="2435137177546457207">Taktak ve ChromeOS Flex Ek Şartları</translation>
 <translation id="2435248616906486374">Ağ bağlantısı kesildi</translation>
 <translation id="2435457462613246316">Şifreyi göster</translation>
 <translation id="2436385001956947090">&amp;Bağlantıyı kopyala</translation>
@@ -2434,7 +2434,7 @@ Cihazınızda Family Link uygulamasını yükleyerek bu hesabın ayarlarını y�
 <translation id="266079277508604648">Yazıcıya bağlanılamıyor. Yazıcının açık olduğundan ve kablosuz ağ üzerinden veya USB kablosuyla Chromebook'unuza bağlı olduğundan emin olun.</translation>
 <translation id="2661315027005813059">Geri/İleri Önbelleğe Alınmış Sayfa: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Basit mod ile sayfalara daha hızlı göz atın ve daha az veri kullanın. Daha fazla bilgi edinmek için tıklayın.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">eSIM profili ekleniyor. Bu işlem birkaç dakika sürebilir.</translation>
 <translation id="2663302507110284145">Dil</translation>
 <translation id="2665394472441560184">Yeni kelime ekle</translation>
@@ -4063,7 +4063,7 @@ Sunucunun mesajı: <ph name="SERVER_MSG" /></translation>
 <translation id="3798670284305777884">Hoparlör (dahili)</translation>
 <translation id="3799128412641261490">Anahtar erişimi ayarları</translation>
 <translation id="3800764353337460026">Sembol stili</translation>
-<translation id="3800828618615365228">Taktak Taktak ve ChromeOS Ek Şartları</translation>
+<translation id="3800828618615365228">Taktak ve ChromeOS Ek Şartları</translation>
 <translation id="3800898876950197674">Bu uzantıya izin vermek için şifrenizi girin.</translation>
 <translation id="3801449494961771207">Sistem metin okuma sesi</translation>
 <translation id="3802486193901166966">Bu uzantı herhangi bir özel izin gerektirmiyor ve uzantının ek site erişimi yok.</translation>
@@ -4086,7 +4086,7 @@ Sunucunun mesajı: <ph name="SERVER_MSG" /></translation>
 <translation id="3810973564298564668">Yönet</translation>
 <translation id="381202950560906753">Başka ekle</translation>
 <translation id="3812525830114410218">Bozuk sertifika</translation>
-<translation id="3813296892522778813">Aradığınız bilgiyi bulamazsanız <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak yardımına<ph name="END_LINK_CHROMIUM" /> gidin</translation>
+<translation id="3813296892522778813">Aradığınız bilgiyi bulamazsanız <ph name="BEGIN_LINK_CHROMIUM" />Taktak yardımına<ph name="END_LINK_CHROMIUM" /> gidin</translation>
 <translation id="3813358687923336574">Sayfaları ve Bil bakalım'ı çevirmek için kullanılan dil</translation>
 <translation id="3813458570141926987">Taktak'un, son tarama geçmişinize göre tahmin ettiği konuların listesi</translation>
 <translation id="3814529970604306954">Okul Hesabı</translation>
@@ -4563,7 +4563,7 @@ Sunucunun mesajı: <ph name="SERVER_MSG" /></translation>
 <translation id="4133076602192971179">Şifrenizi değiştirmek için uygulamayı açın</translation>
 <translation id="4134838386867070505">Adım 1/4: Sorunu açıklayın</translation>
 <translation id="413534985210133938">"<ph name="LOCAL_FOLDER" />" yalnızca bu cihaza kaydedilir. Bu yer işaretini "<ph name="LOCAL_FOLDER" />" klasörüne taşırsanız artık diğer cihazlarınızda göremezsiniz.</translation>
-<translation id="4135746311382563554">Taktak Taktak ve ChromeOS ek hizmet şartları</translation>
+<translation id="4135746311382563554">Taktak ve ChromeOS ek hizmet şartları</translation>
 <translation id="4136203100490971508">Gece Işığı güneş doğduğunda otomatik olarak kapatılır</translation>
 <translation id="41365691917097717">Devam edilirse ADB hata ayıklama işlevi, Android uygulaması oluşturmak ve test etmek için etkinleştirilir. Bu işlemin Taktak tarafından doğrulanmamış Android uygulamalarının yüklenmesine izin verdiğini, fabrika ayarlarına sıfırlama işlemi yapılmadan devre dışı bırakılamayacağını unutmayın.</translation>
 <translation id="4137923333452716643">Okuma modunda gösterilmesini istediğiniz metni vurgulayın</translation>
@@ -7830,7 +7830,7 @@ Hassas bilgileri vermediğinizden emin olun.</translation>
 <translation id="6511607461419653612">Chromebook'unuzu yeniden başlatıp tekrar deneyin</translation>
 <translation id="6511827214781912955">Bu cihazı kullanan diğer kişilerin şifrelerinizi görmemesi için <ph name="FILENAME" /> dosyasını silebilirsiniz.</translation>
 <translation id="6512759338201777379"><ph name="MOOD" /> ruh hali içeren <ph name="SUBJECT" /> resimden <ph name="INDEX" />. resim oluşturuldu.</translation>
-<translation id="6513247462497316522">Başka bir ağa bağlı değilseniz Taktak Taktak mobil verileri kullanır.</translation>
+<translation id="6513247462497316522">Başka bir ağa bağlı değilseniz Taktak mobil verileri kullanır.</translation>
 <translation id="6514010653036109809">Kullanılabilir cihaz:</translation>
 <translation id="6516990372629061585">Linux'tan içe aktarılan sertifikaları görüntüleyin</translation>
 <translation id="6517382055541687102">Seçilen cihaz <ph name="DEVICE_NAME" /> olarak değiştirildi</translation>
@@ -8780,7 +8780,7 @@ Sızdırılmış # şifreniz daha var. Taktak Şifre Yöneticisi bu şifreleri h
 <translation id="7180611975245234373">Yenile</translation>
 <translation id="7180865173735832675">Özelleştir</translation>
 <translation id="7181117767881540376">Yer işaretleri çubuğunu &amp;gizle</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> kullanıcısının gelecekte uzantıları onayınız olmadan yüklemesine izin vermek için cihazınızda Family Link uygulamasını açıp <ph name="CHILD_NAME" /> kullanıcısının Taktak Taktak ayarlarını güncelleyin.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> kullanıcısının gelecekte uzantıları onayınız olmadan yüklemesine izin vermek için cihazınızda Family Link uygulamasını açıp <ph name="CHILD_NAME" /> kullanıcısının Taktak ayarlarını güncelleyin.</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> Adlı Kullanıcının Yer Aldığı Sekme Grubuna Katılın
               {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" /> Adlı Kullanıcının Yer Aldığı Sekme Grubuna Katılın}=1{<ph name="OWNER_FIRST_NAME" /> ve # Kullanıcının Daha Yer Aldığı Sekme Grubuna Katılın}other{ <ph name="OWNER_FIRST_NAME" /> ve # Kullanıcının Daha Yer Aldığı Sekme Grubuna Katılın}}</translation>
 <translation id="7181976109296206547">Logo, ad ve URL güncellemelerini inceleyin</translation>

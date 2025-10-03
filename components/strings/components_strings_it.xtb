@@ -348,7 +348,7 @@ In caso contrario l'uso sarà bloccato dalle impostazioni sulla privacy. I conte
 <translation id="1567040042588613346">Questa policy funziona come previsto, ma altrove è impostato lo stesso valore, che viene sostituito da questa policy.</translation>
 <translation id="1567405528131216114">Aggiungi <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Inserisci data di scadenza</translation>
-<translation id="1569694109004336106">Taktak Taktak sta tentando di attivare Windows Hello per inserire le password.</translation>
+<translation id="1569694109004336106">Taktak sta tentando di attivare Windows Hello per inserire le password.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Verifica del metodo di pagamento</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ In caso contrario l'uso sarà bloccato dalle impostazioni sulla privacy. I conte
 <translation id="2090451897496479509">Contatta il fornitore per ulteriori informazioni</translation>
 <translation id="2091887806945687916">Audio</translation>
 <translation id="2093184051799735948">Cerca con <ph name="ENGINE_NAME" /> o digita un URL</translation>
-<translation id="2093982008204312032">Taktak Taktak sta tentando di disattivare Windows Hello per inserire le password.</translation>
+<translation id="2093982008204312032">Taktak sta tentando di disattivare Windows Hello per inserire le password.</translation>
 <translation id="2094505752054353250">Dominio non corrispondente</translation>
 <translation id="2094704029599359040">Informazioni sulla versione</translation>
 <translation id="2099652385553570808">Tripla pinzatura a sinistra</translation>
@@ -864,7 +864,7 @@ In caso contrario l'uso sarà bloccato dalle impostazioni sulla privacy. I conte
 <translation id="2396249848217231973">&amp;Annulla eliminazione</translation>
 <translation id="239708975263889666">Modifica Known Traveler Number</translation>
 <translation id="2399344929880464793">Questo IBAN è stato salvato nel tuo Account Taktak per consentirti di utilizzarlo sui servizi Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak sta tentando di modificare i metodi di pagamento.</translation>
+<translation id="2399868464369312507">Taktak sta tentando di modificare i metodi di pagamento.</translation>
 <translation id="2400263725572336749">Aggiungi passaporto</translation>
 <translation id="2400271059665846158">Gestisci le tue carte fedeltà in Taktak Wallet</translation>
 <translation id="2400600116338235695">Può chiedere di connettersi alle porte seriali</translation>
@@ -1991,7 +1991,7 @@ In caso contrario l'uso sarà bloccato dalle impostazioni sulla privacy. I conte
 <translation id="4269599248168651462">Il certificato del server viene emesso con un nome non univoco.</translation>
 <translation id="4270541775497538019">Fascicolatore 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Visualizza 0 recensioni. La valutazione media è di <ph name="STARS" /> stelle.}=1{Visualizza 1 recensione. La valutazione media è di <ph name="STARS" /> stelle.}other{Visualizza # recensioni. La valutazione media è di <ph name="STARS" /> stelle.}}</translation>
-<translation id="4271652479722040953">Quando vengono aggiunte estensioni a Taktak, i relativi dati pertinenti vengono inviati a terze parti a scopo di analisi e potrebbero essere visibili all'amministratore. I dati includono informazioni sulle estensioni, come nome, momento di installazione, origine dell'installazione, nonché l'attività associata a queste estensioni (ad esempio, cambio di schede, contatto con siti web o accesso ai cookie). Questi dati vengono raccolti per le estensioni installate dal Taktak Web Store e per le estensioni non disponibili nel negozio.</translation>
+<translation id="4271652479722040953">Quando vengono aggiunte estensioni a Taktak, i relativi dati pertinenti vengono inviati a terze parti a scopo di analisi e potrebbero essere visibili all'amministratore. I dati includono informazioni sulle estensioni, come nome, momento di installazione, origine dell'installazione, nonché l'attività associata a queste estensioni (ad esempio, cambio di schede, contatto con siti web o accesso ai cookie). Questi dati vengono raccolti per le estensioni installate dal Chrome Web Store e per le estensioni non disponibili nel negozio.</translation>
 <translation id="4275830172053184480">Riavvia il dispositivo</translation>
 <translation id="4276974990916607331">No, grazie</translation>
 <translation id="4277028893293644418">Reimposta password</translation>
@@ -2046,7 +2046,7 @@ In caso contrario l'uso sarà bloccato dalle impostazioni sulla privacy. I conte
 <translation id="4336913590841287350">Questa policy non è ancora supportata come policy relativa agli utenti su iOS.</translation>
 <translation id="4340575312453649552">Questo annuncio usava troppe risorse per il tuo dispositivo, pertanto Taktak l'ha rimosso.</translation>
 <translation id="4340810192899866471">Importa da JSON</translation>
-<translation id="4340982228985273705">Questo computer sembra non essere gestito dall'azienda, pertanto la norma consente di installare automaticamente soltanto le estensioni ospitate sul Taktak Web Store. L'URL di aggiornamento del Taktak Web Store è "<ph name="CWS_UPDATE_URL" />".</translation>
+<translation id="4340982228985273705">Questo computer sembra non essere gestito dall'azienda, pertanto la norma consente di installare automaticamente soltanto le estensioni ospitate sul Chrome Web Store. L'URL di aggiornamento del Chrome Web Store è "<ph name="CWS_UPDATE_URL" />".</translation>
 <translation id="4342742994656318294">Parchi tematici</translation>
 <translation id="4344072791302852930">Aggiungi una scheda</translation>
 <translation id="4348834659292907206">La connessione al sito <ph name="SITE" /> non è sicura</translation>
@@ -3115,7 +3115,7 @@ In caso contrario l'uso sarà bloccato dalle impostazioni sulla privacy. I conte
 <translation id="6164605812717770913">Un genitore o tutore ha detto che non puoi visitare questo sito. Puoi chiedere loro di sbloccarlo.</translation>
 <translation id="6165508094623778733">Scopri di più</translation>
 <translation id="6167577165590485365">Ultimo tentativo di recupero:</translation>
-<translation id="617256461084925519">Taktak Taktak sta provando a verificare la tua identità per poter inserire i tuoi dati di pagamento.</translation>
+<translation id="617256461084925519">Taktak sta provando a verificare la tua identità per poter inserire i tuoi dati di pagamento.</translation>
 <translation id="6173208311907792313">Completa l'acquisto usando Windows Hello</translation>
 <translation id="6176387967264100435">Questo prezzo è alto</translation>
 <translation id="6177128806592000436">La tua connessione a questo sito non è sicura</translation>
@@ -3975,7 +3975,7 @@ Ulteriori dettagli:
 <translation id="7564049878696755256">Potresti non riuscire più ad accedere al tuo account <ph name="ORG_NAME" /> o subire un furto d'identità. Taktak ti consiglia di cambiare subito la password.</translation>
 <translation id="7564667064360547717">Camicie e top</translation>
 <translation id="7567204685887185387">Questo server non è riuscito a dimostrare che si tratta di <ph name="DOMAIN" />; il relativo certificato di sicurezza potrebbe essere stato emesso in modo fraudolento. Il problema potrebbe essere dovuto a un'errata configurazione o a un malintenzionato che intercetta la connessione.</translation>
-<translation id="7568616151991626879">Taktak Taktak sta cercando di inserire la password su <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak sta cercando di inserire la password su <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Nessuna}=1{1 scheda su questo dispositivo}other{# schede su questo dispositivo}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Rimuovere la carta di credito da Taktak?</translation>
@@ -4556,7 +4556,7 @@ Ulteriori dettagli:
 <translation id="8541579497401304453">Comunica con un'attività avviando una telefonata.</translation>
 <translation id="8542014550340843547">Tripla pinzatura in basso</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak sta cercando di modificare le impostazioni per la compilazione dei metodi di pagamento.</translation>
+<translation id="8544217240017914508">Taktak sta cercando di modificare le impostazioni per la compilazione dei metodi di pagamento.</translation>
 <translation id="8544303911974837265">Poliestere</translation>
 <translation id="854548366864113872">Opzione prezzo alto</translation>
 <translation id="8546254312340305428">Specifica il motivo del caricamento (obbligatorio)</translation>

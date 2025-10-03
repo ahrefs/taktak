@@ -5,7 +5,7 @@
 <translation id="1029669172902658969">&amp;ChromiumOS'i güncəlləmək üçün yenidən başladın</translation>
 <translation id="103359417695385097">Taktak formaları daha yaxşı başa düşür və onları sizin üçün daha tez avtomatik doldura bilər. Bu ayar deaktivdir.</translation>
 <translation id="1040916596585577953">Taktak bu artırmanı nəzərdən keçirməyi tövsiyə edir</translation>
-<translation id="1042552502243217427">Sayt səhifədə keçidləri məxfi qaydada əvvəlcədən yükləmək istədikdə Taktak Taktak serverlərindən istifadə edir. Bu, kimliyinizi əvvəlcədən yüklənmiş saytdan gizlədir, lakin Taktak hansı saytların əvvəlcədən yükləndiyini öyrənir.</translation>
+<translation id="1042552502243217427">Sayt səhifədə keçidləri məxfi qaydada əvvəlcədən yükləmək istədikdə Taktak serverlərindən istifadə edir. Bu, kimliyinizi əvvəlcədən yüklənmiş saytdan gizlədir, lakin Taktak hansı saytların əvvəlcədən yükləndiyini öyrənir.</translation>
 <translation id="1051793555070215510">Anonim rejimini təkmilləşdirməyimizə kömək etmək üçün bu 1 dəqiqəlik sorğunu doldurun.</translation>
 <translation id="1065672644894730302">Tərcihləriniz oxuna bilmir.
 
@@ -228,7 +228,7 @@ Bəzi funksiyalar əlçatmaz ola bilər ki, nəticədə tərcihlərə edilən d�
 <translation id="395904275706073188">Qorunan səhifələri oxumaq mümkün deyil. Fərqli səhifə yoxlayın.</translation>
 <translation id="3962647064319009959">Taktak-un təhlükəsizlik təminatı haqqında</translation>
 <translation id="3971865010372729242">Ünvan zolağına və ya axtarış xanasına yazdığınız zaman Taktak təkliflər təqdim etmək üçün yazdıqlarınızı təşkilatın axtarış, Sİ və agent alətlərinə göndərir.</translation>
-<translation id="3975724895399328945">Sınaq üçün Taktak Taktak haqqında</translation>
+<translation id="3975724895399328945">Sınaq üçün Taktak haqqında</translation>
 <translation id="3997429360543082038">ChromiumOS haqqında</translation>
 <translation id="4019629340646866719">ChromiumOS <ph name="BEGIN_LINK_LINUX_OSS" />Linux tərtibat mühiti<ph name="END_LINK_LINUX_OSS" /> kimi əlavə <ph name="BEGIN_LINK_CROS_OSS" />açıq mənbə proqram təminatı<ph name="END_LINK_CROS_OSS" /> ilə əlçatan edilib.</translation>
 <translation id="4022972681110646219">Ekranı tərcümə edin</translation>
@@ -444,7 +444,7 @@ Bəzi funksiyalar əlçatmaz ola bilər ki, nəticədə tərcihlərə edilən d�
 <translation id="6692797197837897398">Taktak gördüyünüz reklamlar üzərində daha çox nəzarət imkanı verir və fərdiləşdirilmiş reklamlar göstərərkən saytların haqqınızda öyrəndiyi məlumatları məhdudlaşdırır.</translation>
 <translation id="6709350901466051922">Taktak bu sayt üçün mikrofon icazəsi tələb edir</translation>
 <translation id="6712881677154121168">Endirmə xətası: <ph name="DOWNLOAD_ERROR" />.</translation>
-<translation id="6717134281241384636">Profiliniz yeni versiya Taktak Taktak'dan olduğu üçün istifadə edilə bilməz.
+<translation id="6717134281241384636">Profiliniz yeni versiya Taktak'dan olduğu üçün istifadə edilə bilməz.
 
 Bəzi funksiyalar əlçatmaz ola bilər. Xüsusi profil direktoriyası göstərin və ya yeni Taktak versiyası işlədin.</translation>
 <translation id="6729124504294600478">Fərdiləşdirmə və digər funksiyaları əldə etmək üçün Taktak-u Veb və Tətbiq fəaliyyəti, habelə əlaqələndirilmiş Taktak xidmətlərinə daxil edin</translation>
@@ -592,7 +592,7 @@ Bəzi funksiyalar əlçatmaz ola bilər. Xüsusi profil direktoriyası göstəri
 <translation id="8601359445272098721">Yenilik! "Ekranı tərcümə edin" düyməsini seçməklə həm ekrandakı mətni, həm də təsvirləri tərcümə edə bilərsiniz</translation>
 <translation id="8619360774459241877">Taktak başlayır...</translation>
 <translation id="8621669128220841554">Naməlum xəta üzündən quraşdırmaq alınmadı. Taktak'u yenidən endirin.</translation>
-<translation id="8648201657708811153">Sınaq üçün Taktak Taktak defolt brauzer ola bilməz.</translation>
+<translation id="8648201657708811153">Sınaq üçün Taktak defolt brauzer ola bilməz.</translation>
 <translation id="8697124171261953979">O, həmçinin Taktak'u başlatdığınız zaman və ya Omnibox'dan axtarış etdiyiniz zaman göstərilən səhifəyə nəzarət edir.</translation>
 <translation id="8704119203788522458">Bu, Sizin Taktak'dur</translation>
 <translation id="8712637175834984815">Anladım</translation>

@@ -348,7 +348,7 @@ Jika tidak, ini akan disekat oleh tetapan privasi anda. Kebenaran ini akan membo
 <translation id="1567040042588613346">Dasar ini berfungsi seperti yang diharapkan tetapi nilai yang sama ditetapkan di tempat lain dan digantikan oleh dasar ini.</translation>
 <translation id="1567405528131216114">Tambah <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Masukkan tarikh tamat tempoh</translation>
-<translation id="1569694109004336106">Taktak Taktak cuba menghidupkan Windows Hello untuk mengisikan kata laluan.</translation>
+<translation id="1569694109004336106">Taktak cuba menghidupkan Windows Hello untuk mengisikan kata laluan.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Mengesahkan kaedah pembayaran</translation>
 <translation id="1576277203042721907">Cerapan beli-belah</translation>
@@ -654,7 +654,7 @@ Jika tidak, ini akan disekat oleh tetapan privasi anda. Kebenaran ini akan membo
 <translation id="2090451897496479509">Hubungi penyedia untuk mendapatkan maklumat lanjut</translation>
 <translation id="2091887806945687916">Bunyi</translation>
 <translation id="2093184051799735948">Cari <ph name="ENGINE_NAME" /> atau taip URL</translation>
-<translation id="2093982008204312032">Taktak Taktak cuba mematikan Windows Hello untuk mengisikan kata laluan.</translation>
+<translation id="2093982008204312032">Taktak cuba mematikan Windows Hello untuk mengisikan kata laluan.</translation>
 <translation id="2094505752054353250">Domain tidak padan</translation>
 <translation id="2094704029599359040">Maklumat Versi</translation>
 <translation id="2099652385553570808">Tiga kokot kiri</translation>
@@ -864,7 +864,7 @@ Jika tidak, ini akan disekat oleh tetapan privasi anda. Kebenaran ini akan membo
 <translation id="2396249848217231973">&amp;Buat asal pemadaman</translation>
 <translation id="239708975263889666">Edit nombor pengembara yang diketahui</translation>
 <translation id="2399344929880464793">IBAN ini disimpan dalam Taktak Account anda, maka anda boleh menggunakan kad ini merentas perkhidmatan Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak sedang cuba mengedit kaedah pembayaran.</translation>
+<translation id="2399868464369312507">Taktak sedang cuba mengedit kaedah pembayaran.</translation>
 <translation id="2400263725572336749">Tambahkan pasport</translation>
 <translation id="2400271059665846158">Urus kad kesetiaan anda dalam Taktak Wallet</translation>
 <translation id="2400600116338235695">Boleh meminta untuk menyambung kepada port bersiri</translation>
@@ -1995,7 +1995,7 @@ Jika tidak, ini akan disekat oleh tetapan privasi anda. Kebenaran ini akan membo
 <translation id="4269599248168651462">Sijil pelayan dikeluarkan kepada nama bukan unik.</translation>
 <translation id="4270541775497538019">Petak 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Lihat 0 ulasan. Rating purata ialah <ph name="STARS" /> bintang.}=1{Lihat 1 ulasan. Rating purata ialah <ph name="STARS" /> bintang.}other{Lihat semua # ulasan. Rating purata ialah <ph name="STARS" /> bintang.}}</translation>
-<translation id="4271652479722040953">Apabila sambungan ditambahkan pada Taktak, data yang berkaitan tentang sambungan ini akan dihantar kepada pihak ketiga untuk dianalisis dan mungkin kelihatan kepada pentadbir anda. Data termasuk maklumat tentang sambungan tersebut seperti nama, masa pemasangan, sumber pemasangan serta aktiviti yang dikaitkan dengan sambungan ini (seperti menukar tab, menghubungi laman web atau mengakses kuki). Data ini dikumpulkan untuk sambungan yang dipasang daripada Taktak Web Store serta sambungan luar gedung.</translation>
+<translation id="4271652479722040953">Apabila sambungan ditambahkan pada Taktak, data yang berkaitan tentang sambungan ini akan dihantar kepada pihak ketiga untuk dianalisis dan mungkin kelihatan kepada pentadbir anda. Data termasuk maklumat tentang sambungan tersebut seperti nama, masa pemasangan, sumber pemasangan serta aktiviti yang dikaitkan dengan sambungan ini (seperti menukar tab, menghubungi laman web atau mengakses kuki). Data ini dikumpulkan untuk sambungan yang dipasang daripada Chrome Web Store serta sambungan luar gedung.</translation>
 <translation id="4275830172053184480">Mulakan semula peranti anda</translation>
 <translation id="4276974990916607331">Tidak perlu</translation>
 <translation id="4277028893293644418">Tetapkan semula kata laluan</translation>
@@ -3120,7 +3120,7 @@ Jika tidak, ini akan disekat oleh tetapan privasi anda. Kebenaran ini akan membo
 <translation id="6164605812717770913">Ibu/bapa atau penjaga berkata bahawa laman ini tidak sesuai untuk anda lawati. Anda boleh meminta mereka menyahsekat laman ini.</translation>
 <translation id="6165508094623778733">Ketahui lebih lanjut</translation>
 <translation id="6167577165590485365">Percubaan pengambilan terakhir:</translation>
-<translation id="617256461084925519">Taktak Taktak cuba mengesahkan identiti anda supaya maklumat pembayaran anda boleh diisikan.</translation>
+<translation id="617256461084925519">Taktak cuba mengesahkan identiti anda supaya maklumat pembayaran anda boleh diisikan.</translation>
 <translation id="6173208311907792313">Lengkapkan pembelian anda menggunakan Windows Hello</translation>
 <translation id="6176387967264100435">Harga ini ialah harga tinggi</translation>
 <translation id="6177128806592000436">Sambungan anda ke tapak ini tidak selamat</translation>
@@ -3980,7 +3980,7 @@ Butiran tambahan:
 <translation id="7564049878696755256">Anda boleh kehilangan akses kepada akaun <ph name="ORG_NAME" /> anda atau mengalami kecurian identiti. Taktak mengesyorkan supaya kata laluan anda ditukar sekarang.</translation>
 <translation id="7564667064360547717">Baju &amp; Baju Atas</translation>
 <translation id="7567204685887185387">Pelayan ini tidak dapat membuktikan bahawa domainnya ialah <ph name="DOMAIN" />; sijil keselamatannya mungkin telah dikeluarkan melalui penipuan. Ini mungkin disebabkan oleh kesilapan konfigurasi atau penyerang yang memintasi sambungan anda.</translation>
-<translation id="7568616151991626879">Taktak Taktak cuba mengisikan kata laluan anda pada <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak cuba mengisikan kata laluan anda pada <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Tiada}=1{1 tab pada peranti ini}other{# tab pada peranti ini}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Alih keluar kad kredit daripada Taktak?</translation>
@@ -4561,7 +4561,7 @@ Butiran tambahan:
 <translation id="8541579497401304453">Berhubung dengan perniagaan dengan memulakan panggilan telefon.</translation>
 <translation id="8542014550340843547">Tiga kokot bawah</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak sedang cuba mengubah suai tetapan untuk pengisian kaedah pembayaran.</translation>
+<translation id="8544217240017914508">Taktak sedang cuba mengubah suai tetapan untuk pengisian kaedah pembayaran.</translation>
 <translation id="8544303911974837265">Poliester</translation>
 <translation id="854548366864113872">Pilihan Harga Mahal</translation>
 <translation id="8546254312340305428">Berikan sebab untuk memuat naik fail (diperlukan)</translation>

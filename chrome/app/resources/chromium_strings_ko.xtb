@@ -229,7 +229,7 @@
 <translation id="395904275706073188">보호된 페이지는 읽을 수 없습니다. 다른 페이지를 사용해 보세요.</translation>
 <translation id="3962647064319009959">Taktak이 사용자를 안전하게 보호하는 방법 알아보기</translation>
 <translation id="3971865010372729242">주소 표시줄이나 검색창에 입력하면 추천을 받을 수 있도록 Taktak에서 입력 내용을 조직의 검색, AI, 에이전트 도구로 전송합니다.</translation>
-<translation id="3975724895399328945">&amp;Taktak Taktak for Testing 정보</translation>
+<translation id="3975724895399328945">&amp;Taktak for Testing 정보</translation>
 <translation id="3997429360543082038">ChromiumOS 정보</translation>
 <translation id="4019629340646866719"><ph name="BEGIN_LINK_LINUX_OSS" />Linux 개발 환경<ph name="END_LINK_LINUX_OSS" />과 마찬가지로, ChromiumOS는 추가 <ph name="BEGIN_LINK_CROS_OSS" />오픈소스 소프트웨어<ph name="END_LINK_CROS_OSS" />를 사용하여 개발되었습니다.</translation>
 <translation id="4022972681110646219">화면 번역</translation>
@@ -595,7 +595,7 @@ Taktak에서 설정을 복구할 수 없습니다.</translation>
 <translation id="8601359445272098721">New! '화면 번역' 버튼을 선택하여 화면의 텍스트와 이미지를 모두 번역할 수 있습니다.</translation>
 <translation id="8619360774459241877">Taktak 실행 중...</translation>
 <translation id="8621669128220841554">알 수 없는 오류로 인해 설치에 실패했습니다. Taktak을 다시 다운로드하세요.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing을 기본 브라우저로 설정할 수 없습니다.</translation>
+<translation id="8648201657708811153">Taktak for Testing을 기본 브라우저로 설정할 수 없습니다.</translation>
 <translation id="8697124171261953979">또한 Taktak을 시작하거나 검색주소창에서 검색할 때 표시되는 페이지를 설정합니다.</translation>
 <translation id="8704119203788522458">나만의 Taktak</translation>
 <translation id="8712637175834984815">확인</translation>

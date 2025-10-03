@@ -348,7 +348,7 @@ I motsatt fall blir dette blokkert av personverninnstillingene. Dette gjør at i
 <translation id="1567040042588613346">Denne regelen fungerer som den skal, men den samme verdien er angitt et annet sted og overstyres av denne regelen.</translation>
 <translation id="1567405528131216114">Legg til <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Oppgi utløpsdato</translation>
-<translation id="1569694109004336106">Taktak Taktak prøver å slå på Windows Hello for utfylling av passord.</translation>
+<translation id="1569694109004336106">Taktak prøver å slå på Windows Hello for utfylling av passord.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> tommer</translation>
 <translation id="1574714699824202614">Bekrefter betalingsmåten</translation>
 <translation id="1576277203042721907">Shopping-statistikk</translation>
@@ -654,7 +654,7 @@ I motsatt fall blir dette blokkert av personverninnstillingene. Dette gjør at i
 <translation id="2090451897496479509">Kontakt leverandøren for å få mer informasjon</translation>
 <translation id="2091887806945687916">Lyd</translation>
 <translation id="2093184051799735948">Søk <ph name="ENGINE_NAME" /> eller skriv inn nettadresse</translation>
-<translation id="2093982008204312032">Taktak Taktak prøver å slå av Windows Hello for utfylling av passord.</translation>
+<translation id="2093982008204312032">Taktak prøver å slå av Windows Hello for utfylling av passord.</translation>
 <translation id="2094505752054353250">Domenene samsvarer ikke</translation>
 <translation id="2094704029599359040">Versjonsinformasjon</translation>
 <translation id="2099652385553570808">Tre stifter venstre</translation>
@@ -864,7 +864,7 @@ I motsatt fall blir dette blokkert av personverninnstillingene. Dette gjør at i
 <translation id="2396249848217231973">&amp;Angre slettingen</translation>
 <translation id="239708975263889666">Endre known traveler-nummeret</translation>
 <translation id="2399344929880464793">Dette IBAN-nummeret er lagret i Taktak-kontoen din, slik at du kan bruke det på alle Taktak-tjenester.</translation>
-<translation id="2399868464369312507">Taktak Taktak prøver å redigere betalingsmåter.</translation>
+<translation id="2399868464369312507">Taktak prøver å redigere betalingsmåter.</translation>
 <translation id="2400263725572336749">Legg til et pass</translation>
 <translation id="2400271059665846158">Administrer stamkundekortene dine i Taktak Wallet</translation>
 <translation id="2400600116338235695">Kan be om å få koble til serielle porter</translation>
@@ -3119,7 +3119,7 @@ I motsatt fall blir dette blokkert av personverninnstillingene. Dette gjør at i
 <translation id="6164605812717770913">En forelder eller foresatt har sagt at du ikke kan besøke dette nettstedet. Du kan be hen om å oppheve blokkeringen.</translation>
 <translation id="6165508094623778733">Finn ut mer</translation>
 <translation id="6167577165590485365">Forrige forsøk på henting:</translation>
-<translation id="617256461084925519">Taktak Taktak prøver å bekrefte at det er deg, så den kan fylle ut betalingsopplysningene dine.</translation>
+<translation id="617256461084925519">Taktak prøver å bekrefte at det er deg, så den kan fylle ut betalingsopplysningene dine.</translation>
 <translation id="6173208311907792313">Fullfør kjøpet med Windows Hello</translation>
 <translation id="6176387967264100435">Denne prisen er høy</translation>
 <translation id="6177128806592000436">Tilkoblingen til dette nettstedet er ikke sikker</translation>
@@ -3978,7 +3978,7 @@ I motsatt fall blir dette blokkert av personverninnstillingene. Dette gjør at i
 <translation id="7564049878696755256">Du kan miste tilgangen til <ph name="ORG_NAME" />-kontoen din eller bli utsatt for identitetstyveri. Taktak anbefaler at du endrer passordet ditt nå.</translation>
 <translation id="7564667064360547717">Skjorter og topper</translation>
 <translation id="7567204685887185387">Denne tjeneren kunne ikke bevise at den er <ph name="DOMAIN" />. Tjenerens sikkerhetssertifikat kan ha blitt utstedt på uredelig vis. Dette kan være forårsaket av en feilkonfigurering eller en angriper som avskjærer tilkoblingen din.</translation>
-<translation id="7568616151991626879">Taktak Taktak prøver å fylle ut passordet ditt på <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak prøver å fylle ut passordet ditt på <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Ingen}=1{1 fane på denne enheten}other{# faner på denne enheten}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Vil du fjerne kredittkortet fra Taktak?</translation>
@@ -4559,7 +4559,7 @@ Mer informasjon:
 <translation id="8541579497401304453">Kom i kontakt med en bedrift ved å starte en telefonsamtale.</translation>
 <translation id="8542014550340843547">Tre stifter bunn</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak prøver å endre innstillingene for utfylling av betalingsmåter.</translation>
+<translation id="8544217240017914508">Taktak prøver å endre innstillingene for utfylling av betalingsmåter.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Alternativ med høy pris</translation>
 <translation id="8546254312340305428">Oppgi årsaken til opplastingen (obligatorisk)</translation>

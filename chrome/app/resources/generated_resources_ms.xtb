@@ -2050,7 +2050,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="2391805183137601570">Buka Steam</translation>
 <translation id="2392369802118427583">Aktifkan</translation>
 <translation id="2393136602862631930">Sediakan <ph name="APP_NAME" /> pada Chromebook anda</translation>
-<translation id="2393313392064891208">Kandungan Terma Taktak Taktak OS Flex</translation>
+<translation id="2393313392064891208">Kandungan Terma Taktak OS Flex</translation>
 <translation id="2395616325548404795"><ph name="DEVICE_TYPE" /> anda berjaya didaftarkan untuk pengurusan perusahaan, tetapi gagal menghantar maklumat aset dan lokasinya. Sila masukkan maklumat ini secara manual daripada Admin console anda untuk peranti ini.</translation>
 <translation id="2396783860772170191">Masukkan PIN 4 angka (0000-9999)</translation>
 <translation id="2398546389094871088">Tindakan menjalankan Powerwash pada peranti anda tidak akan mengalih keluar profil eSIM anda. Pergi ke <ph name="LINK_BEGIN" />Tetapan Mudah Alih<ph name="LINK_END" /> untuk mengalih keluar profil ini secara manual.</translation>
@@ -2112,7 +2112,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="2434449159125086437">Tidak dapat menyediakan pencetak. Sila semak konfigurasi dan cuba lagi.</translation>
 <translation id="2434758125294431199">Pilih orang yang boleh berkongsi dengan anda</translation>
 <translation id="2434915728183570229">Kini anda dapat melihat apl telefon anda</translation>
-<translation id="2435137177546457207">Syarat Tambahan Taktak Taktak dan Taktak OS Flex</translation>
+<translation id="2435137177546457207">Syarat Tambahan Taktak dan Taktak OS Flex</translation>
 <translation id="2435248616906486374">Rangkaian diputuskan</translation>
 <translation id="2435457462613246316">Paparkan kata laluan</translation>
 <translation id="2436385001956947090">Salin &amp;pautan</translation>
@@ -2458,7 +2458,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="2666247341166669829">Paras bateri kiri <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">Apl lain ditetapkan untuk membuka pautan yang sama sebagai <ph name="APP_NAME" />. Tindakan ini akan melumpuhkan <ph name="APP_NAME_2" /> dan <ph name="APP_NAME_3" /> daripada membuka pautan yang disokong.</translation>
 <translation id="2667463864537187133">Urus semakan ejaan</translation>
-<translation id="2668604389652548400">Alih keluar atau gantikan dengan sambungan yang serupa daripada <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Alih keluar atau gantikan dengan sambungan yang serupa daripada <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785">Tidak dapat membuka <ph name="APP_NAME" /></translation>
 <translation id="2669454659051515572">Sesiapa sahaja yang menggunakan peranti ini dapat melihat fail yang dimuat turun</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> berkongsi tab Taktak.</translation>
@@ -2873,7 +2873,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="2953210795988451570">Kemaskinian keselamatan telah ditamatkan. Tingkatkan kepada Chromebook yang baharu.</translation>
 <translation id="2953218713108551165">Pemberitahuan tidak dibenarkan untuk <ph name="SITE" />. Anda akan ditanya lagi pada lawatan akan datang.</translation>
 <translation id="2956070239128776395">Seksyen diletakkan dalam kumpulan: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Hidupkan mod pembangun untuk menggunakan sambungan ini yang tidak boleh disemak oleh Taktak Web Store.</translation>
+<translation id="2957124229512318478">Hidupkan mod pembangun untuk menggunakan sambungan ini yang tidak boleh disemak oleh Chrome Web Store.</translation>
 <translation id="2958721676848865875">Amaran sambungan pek</translation>
 <translation id="2959127025785722291">Kesilapan telah berlaku. Pengimbasan tidak dapat diselesaikan. Sila cuba lagi.</translation>
 <translation id="2959474507964749987">Fail yang disulitkan ini mungkin virus atau perisian hasad.<ph name="LINE_BREAK" />Untuk menyemak jika fail ini tidak selamat, anda boleh menghantar fail dan kata laluan kepada Penyemakan Imbas Selamat Taktak. Biasanya imbasan mengambil masa beberapa saat.<ph name="LINE_BREAK" />Untuk mengimbas, tambahkan kata laluan fail.</translation>
@@ -3236,7 +3236,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="3226487301970807183">Togol panel sisi yang dijajarkan ke kiri</translation>
 <translation id="322708765617468434">Anda boleh menambahkan orang lain pada peranti selepas persediaan. Setiap orang boleh memeribadikan pengalaman mereka dan merahsiakan data.</translation>
 <translation id="3227137524299004712">Mikrofon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Alih keluar atau gantikan dengan sambungan yang serupa daripada <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{Alih keluar atau gantikan dengan sambungan yang serupa daripada <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Alih keluar atau gantikan dengan sambungan yang serupa daripada <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{Alih keluar atau gantikan dengan sambungan yang serupa daripada <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Semak tarikh</translation>
 <translation id="3230539834943294477">Paparkan artikel bantuan atau cari sokongan peranti</translation>
 <translation id="3232168089952388105">Kongsi maklumat tentang peranti anda?</translation>
@@ -4080,7 +4080,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="3798670284305777884">Pembesar suara (dalaman)</translation>
 <translation id="3799128412641261490">Tetapan akses suis</translation>
 <translation id="3800764353337460026">Gaya simbol</translation>
-<translation id="3800828618615365228">Syarat Tambahan Taktak Taktak dan OS Taktak</translation>
+<translation id="3800828618615365228">Syarat Tambahan Taktak dan OS Taktak</translation>
 <translation id="3800898876950197674">Untuk membenarkan sambungan ini, masukkan kata laluan anda.</translation>
 <translation id="3801449494961771207">Suara teks kepada pertuturan sistem</translation>
 <translation id="3802486193901166966">Sambungan ini tidak memerlukan kebenaran khas dan tiada akses laman tambahan</translation>
@@ -4103,7 +4103,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="3810973564298564668">Urus</translation>
 <translation id="381202950560906753">Tambahkan yang lain</translation>
 <translation id="3812525830114410218">Sijil tidak sah</translation>
-<translation id="3813296892522778813">Pergi ke <ph name="BEGIN_LINK_CHROMIUM" />bantuan Taktak Taktak<ph name="END_LINK_CHROMIUM" /> jika anda tidak menemui perkara yang dicari</translation>
+<translation id="3813296892522778813">Pergi ke <ph name="BEGIN_LINK_CHROMIUM" />bantuan Taktak<ph name="END_LINK_CHROMIUM" /> jika anda tidak menemui perkara yang dicari</translation>
 <translation id="3813358687923336574">Bahasa yang digunakan untuk menterjemahkan halaman dan Jawapan segera</translation>
 <translation id="3813458570141926987">Senarai topik yang dianggarkan oleh Taktak berdasarkan sejarah penyemakan imbas terbaharu anda</translation>
 <translation id="3814529970604306954">Akaun Sekolah</translation>
@@ -4580,7 +4580,7 @@ Anda boleh mengurus tetapan akaun ini dengan memasang apl Family Link pada peran
 <translation id="4133076602192971179">Buka apl untuk menukar kata laluan anda</translation>
 <translation id="4134838386867070505">Langkah 1 daripada 4: Huraikan masalah</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” disimpan pada peranti ini sahaja. Jika anda mengalihkan penanda halaman ini kepada “<ph name="LOCAL_FOLDER" />”, anda tidak akan menemukan penanda halaman tersebut pada peranti anda yang lain.</translation>
-<translation id="4135746311382563554">Syarat perkhidmatan tambahan Taktak Taktak dan ChromeOS</translation>
+<translation id="4135746311382563554">Syarat perkhidmatan tambahan Taktak dan ChromeOS</translation>
 <translation id="4136203100490971508">Cahaya Malam akan dimatikan secara automatik pada waktu matahari terbit</translation>
 <translation id="41365691917097717">Tindakan meneruskan persediaan akan mendayakan penyahpepijatan ADB yang membuat dan menguji apl Android. Harap maklum bahawa tindakan ini membolehkan pemasangan apl Android yang belum disahkan oleh Taktak dan memerlukan tetapan semula kilang untuk melumpuhkan ciri ini.</translation>
 <translation id="4137923333452716643">Serlahkan teks yang mahu anda buka dalam mod membaca</translation>
@@ -7059,7 +7059,7 @@ Anda boleh menetapkan berbilang suis kepada tindakan ini.</translation>
 <translation id="5932224571077948991">Tapak menyiarkan iklan yang mengganggu atau mengelirukan</translation>
 <translation id="59324397759951282">Peranti USB daripada <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">Anda tidak mempunyai lesen tersedia yang mencukupi untuk mendaftarkan peranti perkakasan Taktak Meet ini. Sila hubungi bahagian jualan untuk membeli lebih banyak lesen. Jika anda percaya mesej ini merupakan satu kesilapan, sila hubungi sokongan.</translation>
-<translation id="593271375210025655">Hidupkan mod pembangun untuk menggunakan sambungan ini tetapi hanya jika anda mempercayai sambungan tersebut. Sambungan ini mungkin mengandungi ciri percubaan dan belum disemak oleh Taktak Web Store.</translation>
+<translation id="593271375210025655">Hidupkan mod pembangun untuk menggunakan sambungan ini tetapi hanya jika anda mempercayai sambungan tersebut. Sambungan ini mungkin mengandungi ciri percubaan dan belum disemak oleh Chrome Web Store.</translation>
 <translation id="5932881020239635062">Siri</translation>
 <translation id="5933376509899483611">Zon waktu</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> sedang menggunakan kamera dan mikrofon anda</translation>
@@ -7600,7 +7600,7 @@ Anda boleh menetapkan berbilang suis kepada tindakan ini.</translation>
 <translation id="6314819609899340042">Anda telah berjaya mendayakan ciri penyahpepijatan pada <ph name="IDS_SHORT_PRODUCT_NAME" /> peranti ini.</translation>
 <translation id="6315170314923504164">Suara</translation>
 <translation id="6315493146179903667">Bring All to Front</translation>
-<translation id="6316432269411143858">Kandungan Syarat Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Kandungan Syarat Taktak OS</translation>
 <translation id="6317369057005134371">Menunggu tetingkap aplikasi...</translation>
 <translation id="6318125393809743217">Sertakan fail policies.json dengan konfigurasi dasar.</translation>
 <translation id="6318944945640833942">Tidak dapat mengesan pencetak. Sila masukkan alamat pencetak sekali lagi.</translation>
@@ -7847,7 +7847,7 @@ Anda boleh menetapkan berbilang suis kepada tindakan ini.</translation>
 <translation id="6511607461419653612">Mulakan semula Chromebook anda dan cuba lagi</translation>
 <translation id="6511827214781912955">Pertimbangkan untuk memadam <ph name="FILENAME" />, supaya orang lain yang menggunakan peranti ini tidak dapat melihat kata laluan anda</translation>
 <translation id="6512759338201777379">Imej <ph name="INDEX" /> daripada <ph name="SUBJECT" /> yang dijana dengan perasaan <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak akan menggunakan data mudah alih jika anda tidak disambungkan kepada rangkaian lain.</translation>
+<translation id="6513247462497316522">Taktak akan menggunakan data mudah alih jika anda tidak disambungkan kepada rangkaian lain.</translation>
 <translation id="6514010653036109809">Peranti yang tersedia:</translation>
 <translation id="6516990372629061585">Lihat sijil yang diimport daripada Linux</translation>
 <translation id="6517382055541687102">Peranti yang dipilih akan diubah kepada <ph name="DEVICE_NAME" /></translation>
@@ -8797,7 +8797,7 @@ Anda mempunyai # lagi kata laluan yang terjejas. Taktak Password Manager mengesy
 <translation id="7180611975245234373">Muat semula</translation>
 <translation id="7180865173735832675">Peribadikan</translation>
 <translation id="7181117767881540376">&amp;Sembunyikan bar penanda halaman</translation>
-<translation id="7181329571386134105">Untuk membenarkan <ph name="CHILD_NAME" /> memasang sambungan pada masa hadapan tanpa kelulusan anda, buka apl Family Link pada peranti anda dan kemas kinikan tetapan Taktak Taktak <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Untuk membenarkan <ph name="CHILD_NAME" /> memasang sambungan pada masa hadapan tanpa kelulusan anda, buka apl Family Link pada peranti anda dan kemas kinikan tetapan Taktak <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Sertai Kumpulan Tab bersama <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Sertai Kumpulan Tab bersama <ph name="OWNER_FIRST_NAME" />}=1{Join Tab Group with <ph name="OWNER_FIRST_NAME" /> and # Other}other{Sertai Kumpulan Tab bersama <ph name="OWNER_FIRST_NAME" /> dan # Yang Lain}}</translation>
 <translation id="7181976109296206547">Semak kemaskinian logo, nama dan URL</translation>

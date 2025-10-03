@@ -2111,7 +2111,7 @@ Ha kezelni szeretné a fiók beállításait, telepítse eszközére a Family Li
 <translation id="2434449159125086437">Nem sikerült a nyomtató beállítása. Ellenőrizze a beállításokat, majd próbálja újra.</translation>
 <translation id="2434758125294431199">Válassza ki, ki oszthat meg Önnel tartalmakat</translation>
 <translation id="2434915728183570229">Mostantól megtekintheti a telefonra telepített alkalmazásokat</translation>
-<translation id="2435137177546457207">A Taktak Taktak és a ChromeOS Flex Kiegészítő Általános Szerződési Feltételei</translation>
+<translation id="2435137177546457207">A Taktak és a ChromeOS Flex Kiegészítő Általános Szerződési Feltételei</translation>
 <translation id="2435248616906486374">A hálózat leválasztva</translation>
 <translation id="2435457462613246316">Jelszó megjelenítése</translation>
 <translation id="2436385001956947090">&amp;Link másolása</translation>
@@ -2448,7 +2448,7 @@ Ha kezelni szeretné a fiók beállításait, telepítse eszközére a Family Li
 <translation id="266079277508604648">Nem sikerült csatlakozni a nyomtatóhoz. Ellenőrizze, hogy be van-e kapcsolva a nyomtató, és hogy csatlakozik-e a Chromebookhoz Wi-Fi-n vagy USB-n keresztül.</translation>
 <translation id="2661315027005813059">Előre-vissza gyorsítótárazott oldal: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Gyorsabb böngészés és csökkentett adatforgalom az Egyszerűsített móddal. További információért kattintson ide.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Folyamatban van az eSIM-profil hozzáadása. Ez eltarthat néhány percig.</translation>
 <translation id="2663302507110284145">Nyelv</translation>
 <translation id="2665394472441560184">Új szó hozzáadása</translation>
@@ -4079,7 +4079,7 @@ A(z) <ph name="DOMAIN" /> megköveteli, hogy ne távolítsa el az intelligens k�
 <translation id="3798670284305777884">Hangszóró (belső)</translation>
 <translation id="3799128412641261490">A kapcsolóalapú hozzáférés beállításai</translation>
 <translation id="3800764353337460026">Szimbólumstílus</translation>
-<translation id="3800828618615365228">A Taktak Taktak és a Taktak OS Kiegészítő Általános Szerződési Feltételei</translation>
+<translation id="3800828618615365228">A Taktak és a Taktak OS Kiegészítő Általános Szerződési Feltételei</translation>
 <translation id="3800898876950197674">A bővítmény engedélyezéséhez írja be a jelszavát.</translation>
 <translation id="3801449494961771207">Alapértelmezett szövegfelolvasó hang</translation>
 <translation id="3802486193901166966">A bővítmény nem igényel különleges engedélyeket, és nem rendelkezik további webhelyhozzáféréssel</translation>
@@ -4102,7 +4102,7 @@ A(z) <ph name="DOMAIN" /> megköveteli, hogy ne távolítsa el az intelligens k�
 <translation id="3810973564298564668">Kezelés</translation>
 <translation id="381202950560906753">Még egy hozzáadása</translation>
 <translation id="3812525830114410218">Helytelen tanúsítvány</translation>
-<translation id="3813296892522778813">Ha nem találja, amit keres, próbálkozzon a <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak súgójában<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Ha nem találja, amit keres, próbálkozzon a <ph name="BEGIN_LINK_CHROMIUM" />Taktak súgójában<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Az oldalak és a gyors válaszok lefordításához használni kívánt nyelv</translation>
 <translation id="3813458570141926987">A Taktak által felmért témakörök listája a legutóbbi böngészési előzményei alapján.</translation>
 <translation id="3814529970604306954">Iskolai fiók</translation>
@@ -4578,7 +4578,7 @@ Elindítja a következőt: <ph name="CONTROL_PANEL_APPLET_NAME" />?</translation
 <translation id="4133076602192971179">A jelszó módosításához nyissa meg az alkalmazást</translation>
 <translation id="4134838386867070505">4/1. lépés: A probléma leírása</translation>
 <translation id="413534985210133938">A(z) „<ph name="LOCAL_FOLDER" />” csak ezen az eszközön kerül mentésre. Ha áthelyezi ezt a könyvjelzőt a(z) „<ph name="LOCAL_FOLDER" />” mappába, akkor a többi eszközén már nem fog tudni hozzáférni.</translation>
-<translation id="4135746311382563554">A Taktak Taktak és a Taktak OS Kiegészítő Általános Szerződési Feltételei</translation>
+<translation id="4135746311382563554">A Taktak és a Taktak OS Kiegészítő Általános Szerződési Feltételei</translation>
 <translation id="4136203100490971508">Az Éjszakai fény automatikusan kikapcsol napkeltekor</translation>
 <translation id="41365691917097717">A folytatással engedélyezi az ADB-hibakeresés számára az Android-alkalmazások létrehozását és tesztelését. Ne feledje, hogy ez a művelet engedélyezi a Taktak által nem jóváhagyott Android-alkalmazások telepítését, és az eszköz letiltásához szükség van az eszköz gyári beállításainak visszaállítására.</translation>
 <translation id="4137923333452716643">Jelölje ki azt a szöveget, amelyet olvasási módban szeretne megnyitni</translation>
@@ -7846,7 +7846,7 @@ A(z) <ph name="DOMAIN" /> megköveteli, hogy ne távolítsa el az intelligens k�
 <translation id="6511607461419653612">Indítsa újra a Chromebookot, majd próbálja újra.</translation>
 <translation id="6511827214781912955">Fontolja meg a(z) <ph name="FILENAME" /> törlését, hogy az eszközt használó többi személy ne láthassa az Ön jelszavait</translation>
 <translation id="6512759338201777379"><ph name="INDEX" />. generált <ph name="SUBJECT" /> kép, <ph name="MOOD" /> hangulattal.</translation>
-<translation id="6513247462497316522">A Taktak Taktak mobil-adatforgalmat fog használni, ha nem kapcsolódik másik hálózathoz.</translation>
+<translation id="6513247462497316522">A Taktak mobil-adatforgalmat fog használni, ha nem kapcsolódik másik hálózathoz.</translation>
 <translation id="6514010653036109809">Rendelkezésre álló eszköz:</translation>
 <translation id="6516990372629061585">Linux rendszerről importált tanúsítványok megtekintése</translation>
 <translation id="6517382055541687102">A kiválasztott eszköz a következőre módosult: <ph name="DEVICE_NAME" /></translation>
@@ -8796,7 +8796,7 @@ A(z) <ph name="DOMAIN" /> megköveteli, hogy ne távolítsa el az intelligens k�
 <translation id="7180611975245234373">Frissítés</translation>
 <translation id="7180865173735832675">Testreszabás</translation>
 <translation id="7181117767881540376">&amp;Könyvjelzősáv elrejtése</translation>
-<translation id="7181329571386134105">Ha engedélyezni szeretné <ph name="CHILD_NAME" /> számára, hogy az Ön jóváhagyása nélkül telepíthessen a továbbiakban bővítményeket, nyissa meg a Family Link alkalmazást saját eszközén, és frissítse <ph name="CHILD_NAME" /> Taktak Taktak-beállításait.</translation>
+<translation id="7181329571386134105">Ha engedélyezni szeretné <ph name="CHILD_NAME" /> számára, hogy az Ön jóváhagyása nélkül telepíthessen a továbbiakban bővítményeket, nyissa meg a Family Link alkalmazást saját eszközén, és frissítse <ph name="CHILD_NAME" /> Taktak-beállításait.</translation>
 <translation id="7181840534454431748">Csatlakozás <ph name="OWNER_FIRST_NAME" /> lapcsoportjához
             {NUM_OTHER_MEMBERS,plural, =0{Csatlakozás <ph name="OWNER_FIRST_NAME" /> lapcsoportjához}=1{Csatlakozás <ph name="OWNER_FIRST_NAME" /> további # főt tartalmazó lapcsoportjához}other{Csatlakozás <ph name="OWNER_FIRST_NAME" /> további # főt tartalmazó lapcsoportjához}}</translation>
 <translation id="7181976109296206547">Logó, név és URL módosításainak áttekintése</translation>

@@ -2115,7 +2115,7 @@ Jei nenorite, dabar atsijunkite, kad šios paskyros pakeitimai būtų matomi ši
 <translation id="2434449159125086437">Nepavyko nustatyti spausdintuvo. Patikrinkite konfigūraciją ir bandykite dar kartą.</translation>
 <translation id="2434758125294431199">Pasirinkite, kas gali bendrinti su jumis</translation>
 <translation id="2434915728183570229">Dabar galite peržiūrėti telefono programas</translation>
-<translation id="2435137177546457207">„Taktak Taktak“ ir „ChromeOS Flex“ papildomos sąlygos</translation>
+<translation id="2435137177546457207">„Taktak“ ir „ChromeOS Flex“ papildomos sąlygos</translation>
 <translation id="2435248616906486374">Tinklas atjungtas</translation>
 <translation id="2435457462613246316">Rodyti slaptažodį</translation>
 <translation id="2436385001956947090">Kopijuoti nuorodą</translation>
@@ -2452,7 +2452,7 @@ Jei nenorite, dabar atsijunkite, kad šios paskyros pakeitimai būtų matomi ši
 <translation id="266079277508604648">Nepavyko prijungti spausdintuvo. Patikrinkite, ar spausdintuvas yra įjungtas ir prijungtas prie „Chromebook“ naudojant „Wi-Fi“ arba USB.</translation>
 <translation id="2661315027005813059">Ilgalaikis viso puslapio saugojimas talpykloje: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Įjungę supaprastintąjį režimą naršykite greičiau ir naudokite mažiau duomenų. Jei norite sužinoti daugiau, spustelėkite.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Pridedamas „eSIM“ kortelės profilis. Tai gali užtrukti kelias minutes.</translation>
 <translation id="2663302507110284145">Kalba</translation>
 <translation id="2665394472441560184">Pridėti naują žodį</translation>
@@ -4083,7 +4083,7 @@ Jei nenorite, dabar atsijunkite, kad šios paskyros pakeitimai būtų matomi ši
 <translation id="3798670284305777884">Garsiakalbis (vidinis)</translation>
 <translation id="3799128412641261490">Prieigos jungikliu nustatymai</translation>
 <translation id="3800764353337460026">Simbolių stilius</translation>
-<translation id="3800828618615365228">„Taktak Taktak“ ir „Taktak“ OS papildomos sąlygos</translation>
+<translation id="3800828618615365228">„Taktak“ ir „Taktak“ OS papildomos sąlygos</translation>
 <translation id="3800898876950197674">Jei leidžiate įdiegti šį plėtinį, įveskite slaptažodį.</translation>
 <translation id="3801449494961771207">Sistemos teksto į kalbą balsas</translation>
 <translation id="3802486193901166966">Šiam plėtiniui nereikia specialių leidimų ir jam nesuteikta papildoma svetainės prieiga</translation>
@@ -4106,7 +4106,7 @@ Jei nenorite, dabar atsijunkite, kad šios paskyros pakeitimai būtų matomi ši
 <translation id="3810973564298564668">Tvarkyti</translation>
 <translation id="381202950560906753">Pridėti kitą</translation>
 <translation id="3812525830114410218">Netinkamas sertifikatas</translation>
-<translation id="3813296892522778813">Jei nerandate to, ko ieškote, eikite į <ph name="BEGIN_LINK_CHROMIUM" />„Taktak Taktak“ pagalbos puslapį<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Jei nerandate to, ko ieškote, eikite į <ph name="BEGIN_LINK_CHROMIUM" />„Taktak“ pagalbos puslapį<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Kalba, į kurią verčiami puslapiai ir spartieji atsakymai</translation>
 <translation id="3813458570141926987">Temų, kurias „Taktak“ nustatė pagal jūsų naujausią naršymo istoriją, sąrašas</translation>
 <translation id="3814529970604306954">Mokyklos paskyra</translation>
@@ -4583,7 +4583,7 @@ Ar norite paleisti „<ph name="CONTROL_PANEL_APPLET_NAME" />“?</translation>
 <translation id="4133076602192971179">Atidarykite programą, kad pakeistumėte slaptažodį</translation>
 <translation id="4134838386867070505">1 veiksmas iš 4: aprašykite problemą</translation>
 <translation id="413534985210133938">„<ph name="LOCAL_FOLDER" />“ išsaugotas tik šiame įrenginyje. Jei perkelsite šią žymę į „<ph name="LOCAL_FOLDER" />“, jos nebegausite kituose įrenginiuose.</translation>
-<translation id="4135746311382563554">„Taktak Taktak“ ir „Taktak“ OS papildomos paslaugų teikimo sąlygos</translation>
+<translation id="4135746311382563554">„Taktak“ ir „Taktak“ OS papildomos paslaugų teikimo sąlygos</translation>
 <translation id="4136203100490971508">Nakties šviesa bus išjungta automatiškai saulei tekant</translation>
 <translation id="41365691917097717">Tęsdami įgalinsite ADB derinimą, naudojamą „Android“ programoms kurti ir testuoti. Atminkite, kad atlikus šį veiksmą bus leidžiama įdiegti „Android“ programas, kurios nebuvo patvirtintos „Taktak“, o norint išjungti ADB, reikės atkurti gamyklinius nustatymus.</translation>
 <translation id="4137923333452716643">Paryškinkite tekstą, kurį norite atidaryti skaitymo režimu</translation>
@@ -7604,7 +7604,7 @@ Jei norite nutolinti, naudokite „Ctrl“ + „Alt“ + šviesumo mažinimo kla
 <translation id="6314819609899340042">Sėkmingai įgalinote derinimo funkcijas šiame „<ph name="IDS_SHORT_PRODUCT_NAME" />“ įrenginyje.</translation>
 <translation id="6315170314923504164">Balsas</translation>
 <translation id="6315493146179903667">Viską iškelti į priekį</translation>
-<translation id="6316432269411143858">„Taktak Taktak“ OS sąlygų turinys</translation>
+<translation id="6316432269411143858">„Taktak“ OS sąlygų turinys</translation>
 <translation id="6317369057005134371">Laukiama programos lango...</translation>
 <translation id="6318125393809743217">Yra failas „policies.json“ su politikos konfigūracijomis.</translation>
 <translation id="6318944945640833942">Nepavyko aptikti spausdintuvo. Dar kartą įveskite spausdintuvo adresą.</translation>
@@ -7851,7 +7851,7 @@ Jei norite nutolinti, naudokite „Ctrl“ + „Alt“ + šviesumo mažinimo kla
 <translation id="6511607461419653612">Paleiskite „Chromebook“ iš naujo ir bandykite dar kartą</translation>
 <translation id="6511827214781912955">Apsvarstykite galimybę ištrinti „<ph name="FILENAME" />“, kad kiti šį įrenginį naudojantys asmenys negalėtų peržiūrėti jūsų slaptažodžių</translation>
 <translation id="6512759338201777379">Sugeneruotas <ph name="INDEX" /> vaizdas iš <ph name="SUBJECT" /> su nuotaika <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Jei nesate prisijungę prie kito tinklo, „Taktak Taktak“ naudos mobiliuosius duomenis.</translation>
+<translation id="6513247462497316522">Jei nesate prisijungę prie kito tinklo, „Taktak“ naudos mobiliuosius duomenis.</translation>
 <translation id="6514010653036109809">Pasiekiami įrenginiai:</translation>
 <translation id="6516990372629061585">Peržiūrėti iš „Linux“ importuotus sertifikatus</translation>
 <translation id="6517382055541687102">Pasirinktas įrenginys pakeistas į „<ph name="DEVICE_NAME" />“</translation>
@@ -8807,7 +8807,7 @@ Turite dar # pažeistų slaptažodžių. „Taktak“ slaptažodžių tvarkyklė
 <translation id="7180611975245234373">Atnaujinti</translation>
 <translation id="7180865173735832675">Tinkinti</translation>
 <translation id="7181117767881540376">&amp;Slėpti žymių juostą</translation>
-<translation id="7181329571386134105">Jei leidžiate vaikui (<ph name="CHILD_NAME" />) įdiegti būsimus plėtinius be jūsų patvirtinimo, atidarykite „Family Link“ programą įrenginyje ir atnaujinkite vaiko (<ph name="CHILD_NAME" />) „Taktak Taktak“ nustatymus.</translation>
+<translation id="7181329571386134105">Jei leidžiate vaikui (<ph name="CHILD_NAME" />) įdiegti būsimus plėtinius be jūsų patvirtinimo, atidarykite „Family Link“ programą įrenginyje ir atnaujinkite vaiko (<ph name="CHILD_NAME" />) „Taktak“ nustatymus.</translation>
 <translation id="7181840534454431748">Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" />}=1{Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" /> ir dar # asmeniu}one{Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" /> ir dar # asmeniu}few{Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" /> ir dar # asmenimis}many{Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" /> ir dar # asmens}other{Prisijungimas prie skirtukų grupės su <ph name="OWNER_FIRST_NAME" /> ir dar # asmenų}}</translation>
 <translation id="7181976109296206547">Logotipo, pavadinimo ir URL atnaujinimų peržiūra</translation>

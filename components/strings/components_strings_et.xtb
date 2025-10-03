@@ -348,7 +348,7 @@ Vastasel korral blokeeritakse see teie privaatsusseadetes. See võimaldab teie k
 <translation id="1567040042588613346">See reegel töötab eesmärgipäraselt, kuid mujal on seadistatud sama väärtus, mis on selle reegliga asendatud.</translation>
 <translation id="1567405528131216114">Lisa <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Sisestage aegumiskuupäev</translation>
-<translation id="1569694109004336106">Taktak Taktak üritab paroolide sisestamiseks lülitada sisse Windows Hello.</translation>
+<translation id="1569694109004336106">Taktak üritab paroolide sisestamiseks lülitada sisse Windows Hello.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> × <ph name="HEIGHT" /> tolli</translation>
 <translation id="1574714699824202614">Makseviisi kinnitamine</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ Vastasel korral blokeeritakse see teie privaatsusseadetes. See võimaldab teie k
 <translation id="2090451897496479509">Lisateabe saamiseks võtke ühendust teenusepakkujaga</translation>
 <translation id="2091887806945687916">Heli</translation>
 <translation id="2093184051799735948">Otsige teenusest <ph name="ENGINE_NAME" /> või sisestage URL</translation>
-<translation id="2093982008204312032">Taktak Taktak üritab paroolide sisestamiseks lülitada sisse Windows Hello.</translation>
+<translation id="2093982008204312032">Taktak üritab paroolide sisestamiseks lülitada sisse Windows Hello.</translation>
 <translation id="2094505752054353250">Domeeni vastuolu</translation>
 <translation id="2094704029599359040">Versiooniteave</translation>
 <translation id="2099652385553570808">Kolm kirjaklambrit vasakul</translation>
@@ -864,7 +864,7 @@ Vastasel korral blokeeritakse see teie privaatsusseadetes. See võimaldab teie k
 <translation id="2396249848217231973">&amp;Võta kustutamine tagasi</translation>
 <translation id="239708975263889666">Known Traveler Numberi muutmine</translation>
 <translation id="2399344929880464793">See IBAN salvestati teie Taktak'i kontole, nii et saate seda kõigis Taktak'i teenustes kasutada.</translation>
-<translation id="2399868464369312507">Taktak Taktak üritab muuta makseviise.</translation>
+<translation id="2399868464369312507">Taktak üritab muuta makseviise.</translation>
 <translation id="2400263725572336749">Passi lisamine</translation>
 <translation id="2400271059665846158">Hallake oma kliendikaarte teenuses Taktak Wallet</translation>
 <translation id="2400600116338235695">Saab küsida luba jadaportidega ühenduse loomiseks</translation>
@@ -3119,7 +3119,7 @@ Vastasel korral blokeeritakse see teie privaatsusseadetes. See võimaldab teie k
 <translation id="6164605812717770913">Vanem või eestkostja on otsustanud, et sa ei tohi seda saiti külastada. Võid paluda tal selle deblokeerida.</translation>
 <translation id="6165508094623778733">Lisateave</translation>
 <translation id="6167577165590485365">Viimane toomiskatse:</translation>
-<translation id="617256461084925519">Taktak Taktak üritab teie isikut kinnitada, et teie makseteave sisestada.</translation>
+<translation id="617256461084925519">Taktak üritab teie isikut kinnitada, et teie makseteave sisestada.</translation>
 <translation id="6173208311907792313">Viige ost lõpule Windows Hello abil</translation>
 <translation id="6176387967264100435">See hind on kõrge</translation>
 <translation id="6177128806592000436">Teie ühendus selle saidiga pole turvaline</translation>
@@ -3979,7 +3979,7 @@ Lisateave:
 <translation id="7564049878696755256">Võite kaotada juurdepääsu oma teenuse <ph name="ORG_NAME" /> kontole või teie identiteet võidakse varastada. Taktak soovitab teil kohe oma parooli muuta.</translation>
 <translation id="7564667064360547717">Särgid ja topid</translation>
 <translation id="7567204685887185387">Server ei suutnud tõestada, et see on domeen <ph name="DOMAIN" />, selle turvasertifikaat võib olla väljastatud pettuse teel. Selle põhjuseks võib olla vale seadistus või ründaja, kes on sekkunud teie ühendusse.</translation>
-<translation id="7568616151991626879">Taktak Taktak üritab rakenduses <ph name="APP_NAME" /> teie parooli sisestada.</translation>
+<translation id="7568616151991626879">Taktak üritab rakenduses <ph name="APP_NAME" /> teie parooli sisestada.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Ühtegi}=1{1 vaheleht selles seadmes}other{# vahelehte selles seadmes}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Kas eemaldada Taktak'ist krediitkaart?</translation>
@@ -4560,7 +4560,7 @@ Lisateave:
 <translation id="8541579497401304453">Võtke ühendust ettevõttega, algatades telefonikõne.</translation>
 <translation id="8542014550340843547">Kolm kirjaklambrit all</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak proovib muuta makseviiside sisestamise seadeid.</translation>
+<translation id="8544217240017914508">Taktak proovib muuta makseviiside sisestamise seadeid.</translation>
 <translation id="8544303911974837265">Polüester</translation>
 <translation id="854548366864113872">Kallis valik</translation>
 <translation id="8546254312340305428">Esitage üleslaadimise põhjus (nõutav)</translation>

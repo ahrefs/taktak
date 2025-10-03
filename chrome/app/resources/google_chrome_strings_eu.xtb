@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="eu">
-<translation id="1001534784610492198">Instalatzailearen artxiboa hondatuta dago edo baliogabea da. Deskargatu Taktak Taktak berriro.</translation>
+<translation id="1001534784610492198">Instalatzailearen artxiboa hondatuta dago edo baliogabea da. Deskargatu Taktak berriro.</translation>
 <translation id="1018937009655463387">Leihoa partekatzeko, eman pantaila grabatzeko baimena Taktak-ri sistemaren ezarpenetan.</translation>
 <translation id="1026101648481255140">Berrekin instalazioari</translation>
-<translation id="102763973188675173">Pertsonalizatu eta kontrolatu Taktak Taktak. Eguneratze bat erabilgarri dago.</translation>
+<translation id="102763973188675173">Pertsonalizatu eta kontrolatu Taktak. Eguneratze bat erabilgarri dago.</translation>
 <translation id="1028061813283459617">Zure arakatze-datuak gailu honetatik soilik ezabatzeko, baina Taktak-ko kontuko arakatze-datuak gordetzeko, <ph name="BEGIN_LINK" />amaitu saioa Taktak-n<ph name="END_LINK" />.</translation>
 <translation id="1042270987544905725">Taktak-n saioa hasteko leihoa ixteko, sakatu hau</translation>
 <translation id="1051793555070215510">Lagun iezaguzu ezkutuko modua hobetzen minutu bateko inkesta honi erantzunez.</translation>
@@ -27,13 +27,13 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="1290883685122687410">Konfigurazio-errorea: <ph name="METAINSTALLER_EXIT_CODE" />. <ph name="WINDOWS_ERROR" /></translation>
 <translation id="1302523850133262269">Itxaron Taktak-k sistemaren azken eguneratzeak instalatu arte.</translation>
 <translation id="1330562121671411446">Hauteman hizkuntza</translation>
-<translation id="1335640173511558774">Gailua erabili aurretik, <ph name="MANAGER" /> kudeatzaileak jarraian azalduko diren Zerbitzu-baldintzak irakurtzeko eta onartzeko eskatzen dizu. Baldintzok ez dituzte hedatuko, aldatuko edo mugatuko Taktak Taktak OS Flex-en Baldintzak.</translation>
+<translation id="1335640173511558774">Gailua erabili aurretik, <ph name="MANAGER" /> kudeatzaileak jarraian azalduko diren Zerbitzu-baldintzak irakurtzeko eta onartzeko eskatzen dizu. Baldintzok ez dituzte hedatuko, aldatuko edo mugatuko Taktak OS Flex-en Baldintzak.</translation>
 <translation id="1341711321000856656">Taktak-ko beste profil bateko pasahitzak ikustera joan zaitezke</translation>
 <translation id="1356661055722410047">Berria! Pantailan bertan itzuli ditzakezu testuak zein irudiak</translation>
 <translation id="1363996462118479832">Saioa hastean gertatu den errore bat dela eta, Taktak OS-k ezin izan ditu sinkronizatu zure datuak.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Bilaketa</translation>
-<translation id="1399397803214730675">Ordenagailuak Taktak Taktak arakatzailearen bertsio berriagoa du. Softwareak ez badu funtzionatzean, desinstalatu Taktak Taktak eta saiatu berriro.</translation>
+<translation id="1399397803214730675">Ordenagailuak Taktak arakatzailearen bertsio berriagoa du. Softwareak ez badu funtzionatzean, desinstalatu Taktak eta saiatu berriro.</translation>
 <translation id="141901961143729572">Partekatu burutazioak</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Taktak eguneratzen amaitu da. Berriro exekutatzen duzunean, bertsio berria erabili ahalko duzu. Ondoren, oraingo fitxak berriro irekiko dira.}=1{Taktak eguneratzen amaitu da. Berriro exekutatzen duzunean, bertsio berria erabili ahalko duzu. Ondoren, oraingo fitxak berriro irekiko dira. Ezkutuko moduko leihoa ez da irekiko berriro.}other{Taktak eguneratzen amaitu da. Berriro exekutatzen duzunean, bertsio berria erabili ahalko duzu. Ondoren, oraingo fitxak berriro irekiko dira. Ezkutuko moduko # leihoak ez dira irekiko berriro.}}</translation>
 <translation id="1434626383986940139">Taktak Canary aplikazioak</translation>
@@ -46,7 +46,7 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="1547295885616600893"><ph name="BEGIN_LINK_CROS_OSS" />Kode irekiko software<ph name="END_LINK_CROS_OSS" /> gehigarriari esker da posible Taktak OS.</translation>
 <translation id="1547469039832541117">Nabarmendutako zeregina amaitzen du.</translation>
 <translation id="1553358976309200471">Eguneratu Taktak</translation>
-<translation id="1587223624401073077">Taktak Taktak kamera erabiltzen ari da.</translation>
+<translation id="1587223624401073077">Taktak kamera erabiltzen ari da.</translation>
 <translation id="1587325591171447154"><ph name="FILE_NAME" /> arriskutsua da; horregatik, blokeatu egin du Taktak-k.</translation>
 <translation id="1597911401261118146">Pasahitzak datuen isilpekotasunaren urratzeen eta beste segurtasun-arazoen aurka babestuta dauden egiaztatzeko, <ph name="BEGIN_LINK" />hasi saioa Taktak-n<ph name="END_LINK" />.</translation>
 <translation id="1619887657840448962">Taktak seguruagoa izan dadin, zuk jakin gabe gehitu den eta <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> dendan zerrendatu gabe dagoen luzapena desgaitu dugu.</translation>
@@ -55,11 +55,11 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="1651617469580841801">Taktak Lens erabiltzen duzunean, orriaren izena, URLa eta edukia, PDFak barne, Taktak-ri bidaltzen zaizkio. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">ChromeOS Flex-i buruz</translation>
 <translation id="1674870198290878346">Ireki esteka Taktak-ko &amp;ezkutuko moduko leiho batean</translation>
-<translation id="1682634494516646069">Taktak Taktak-k ezin du irakurri bere datu-direktorioa eta ezin du idatzi bertan:
+<translation id="1682634494516646069">Taktak-k ezin du irakurri bere datu-direktorioa eta ezin du idatzi bertan:
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Helbide-barran edo bilaketa-koadroan zerbait idazten duzunean, Taktak-k erakundearen bilaketa- eta agente-tresnetara, eta AA bidezkoetara bidaltzen du idatzitakoa, iradokizunak lortzeko.</translation>
-<translation id="1698376642261615901">Web-orriak eta aplikazioak ziztu bizian abiarazten dituen web-arakatzailea da Taktak Taktak. Bizkorra, egonkorra eta erabilerraza da. Sarea segurtasun osoz arakatu ahal izango duzu, Taktak Taktak-k malwarearen eta phishingaren aurkako babesa barneratuta baitu.</translation>
+<translation id="1698376642261615901">Web-orriak eta aplikazioak ziztu bizian abiarazten dituen web-arakatzailea da Taktak. Bizkorra, egonkorra eta erabilerraza da. Sarea segurtasun osoz arakatu ahal izango duzu, Taktak-k malwarearen eta phishingaren aurkako babesa barneratuta baitu.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Ordubete barru exekutatuko da Taktak berriro}other{# ordu barru exekutatuko da Taktak berriro}}</translation>
 <translation id="1722488837206509557">Erabilgarri dauden gailuen artean hautatu ahal izango duzu, eta haietan edukia bistaratu.</translation>
 <translation id="1786003790898721085">Ziurtatu Taktak-ko saioa hasita daukazula <ph name="TARGET_DEVICE_NAME" /> gailuan eta saiatu berriro bidaltzen.</translation>
@@ -70,8 +70,8 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="1832046143430087831">Webguneen abiadura handitzen du Taktak-ren V8 motorrarekin, baina erasoen aurrean Taktak apur bat ahultzen du. Desaktibatuta dago ezarpena.</translation>
 <translation id="1838374766361614909">Garbitu bilaketa</translation>
 <translation id="1860536484129686729">Taktak-k webgune honen izenean kamera erabiltzeko baimena behar du</translation>
-<translation id="1873233029667955273">Taktak Taktak ez da arakatzaile lehenetsia</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-In)</translation>
+<translation id="1873233029667955273">Taktak ez da arakatzaile lehenetsia</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-In)</translation>
 <translation id="1877026089748256423">Taktak zaharkituta dago</translation>
 <translation id="1880677175115548835">Hautatu testua</translation>
 <translation id="1919130412786645364">Baimendu Taktak-n saioa hastea</translation>
@@ -83,7 +83,7 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="2024959665595762054">Taktak-ko datuak Taktak-ko kontuan gordetzeko eta erabiltzeko, egiaztatu zeu zarela</translation>
 <translation id="2034233344106846793">Taktak-k konexio ez-seguruen maila HTTPSra igotzen du automatikoki posible denean</translation>
 <translation id="207902854391093810">Probak abian diren bitartean, iragarkien neurketari esker, bisitatzen dituzun webguneek Taktak-ri informazioa eska diezaiokete. Informazio horren bidez, webguneek beren iragarkien errendimendua neur dezakete. Webguneen artean ahalik eta informazio gutxien transferituta mugatzen du iragarkien neurketak webgunearteko jarraipena.</translation>
-<translation id="2091012649849228750">Etorkizunean Taktak Taktak-ren eguneratzeak eskuratzeko, Windows 10 edo bertsio berriago bat beharko duzu. Ordenagailua Windows 8 erabiltzen ari da.</translation>
+<translation id="2091012649849228750">Etorkizunean Taktak-ren eguneratzeak eskuratzeko, Windows 10 edo bertsio berriago bat beharko duzu. Ordenagailua Windows 8 erabiltzen ari da.</translation>
 <translation id="2094648590148273905">ChromeOS Flex-en baldintzak</translation>
 <translation id="2094919256425865063">Taktak-tik irten nahi duzu hala ere?</translation>
 <translation id="2096213354152647998">Azkenaldian ez duzu bisitatu webgune hau. Taktak-k <ph name="PERMISSION" /> erabiltzeko baimena kendu dio.</translation>
@@ -105,18 +105,18 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="2199691482078155239">Taktak-k ikusten dituzun iragarkien gaineko kontrol handiagoa ematen dizu, eta webguneek iragarki pertsonalizatuak erakusten dizkizutenean zuri buruz atzi dezaketen informazioa mugatzen du</translation>
 <translation id="2216543877350048334">Zure Taktak-ko kontua Taktak-tik kentzeko, amaitu saioa</translation>
 <translation id="2236949375853147973">Nire jarduerak</translation>
-<translation id="2290014774651636340">Taktak APIko gakoak falta dira. Agian Taktak Taktak-ren funtzio batzuk desgaituta egongo dira.</translation>
-<translation id="2290095356545025170">Ziur Taktak Taktak desinstalatu nahi duzula?</translation>
+<translation id="2290014774651636340">Taktak APIko gakoak falta dira. Agian Taktak-ren funtzio batzuk desgaituta egongo dira.</translation>
+<translation id="2290095356545025170">Ziur Taktak desinstalatu nahi duzula?</translation>
 <translation id="2301513536169703857">Pasahitzak, laster-markak eta bestelako datuak zure gailu guztietan gordeta edukitzeko, hasi saioa Taktak-n</translation>
-<translation id="2309047409763057870">Taktak Taktak-ren bigarren mailako instalazio bat da hau; beraz, ezin duzu ezarri arakatzaile lehenetsi gisa.</translation>
+<translation id="2309047409763057870">Taktak-ren bigarren mailako instalazio bat da hau; beraz, ezin duzu ezarri arakatzaile lehenetsi gisa.</translation>
 <translation id="2345992953227471816">Luzapenok malwarea dutela hauteman du Taktak-k:</translation>
 <translation id="2348335408836342058">Taktak-k webgune honen izenean kamera eta mikrofonoa erabiltzeko baimena behar du</translation>
 <translation id="234869673307233423">Taktak-k ezin ditu egiaztatu pasahitzak. Saiatu geroago.</translation>
 <translation id="2359808026110333948">Egin aurrera</translation>
 <translation id="2403703063067034158">Abiarazte-errorea: konfigurazioaren beste instantzia bat exekutatzen ari da. Saiatu berriro geroago.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{Taktak-rako luzapen bat edo gehiago giza interfazeko gailu bat erabiltzen ari ziren}=1{Taktak-rako luzapen bat edo gehiago giza interfazeko gailu bat erabiltzen ari dira}other{Taktak-rako luzapen bat edo gehiago giza interfazeko # gailu erabiltzen ari dira}}</translation>
-<translation id="2424440923901031101">Luzapenak Taktak Web Store-ren gidalerroak urratzen ditu, eta agian ez da segurua. Ken ezazu Taktak-tik, bisitatzen dituzun webguneetan zure datuak ikusi eta aldatu ezin izan ditzan, informazio pertsonala barne.</translation>
-<translation id="2467438592969358367">Taktak Taktak-k pasahitzak esportatu nahi ditu. Hori baimentzeko, idatzi Windows pasahitza.</translation>
+<translation id="2424440923901031101">Luzapenak Chrome Web Store-ren gidalerroak urratzen ditu, eta agian ez da segurua. Ken ezazu Taktak-tik, bisitatzen dituzun webguneetan zure datuak ikusi eta aldatu ezin izan ditzan, informazio pertsonala barne.</translation>
+<translation id="2467438592969358367">Taktak-k pasahitzak esportatu nahi ditu. Hori baimentzeko, idatzi Windows pasahitza.</translation>
 <translation id="2472092250898121027">Luzapenak malwarea dauka, eta ez da segurua. Ken ezazu Taktak-tik, bisitatzen dituzun webguneetan zure datuak ikusi eta aldatu ezin izan ditzan, informazio pertsonala barne.</translation>
 <translation id="2485422356828889247">Desinstalatu</translation>
 <translation id="2513154137948333830">Berrabiarazi egin behar da: <ph name="INSTALL_SUCCESS" /></translation>
@@ -128,19 +128,19 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="2571392474191184472">Zure erakundeak kudeatzen du Taktak</translation>
 <translation id="2574930892358684005"><ph name="EXISTING_USER" /> erabiltzaileak Taktak-ko profil honetan hasi du saioa dagoeneko. Arakatze-datuak bereizita edukitzeko, Taktak-k profil bat sor dezake zuretzat.</translation>
 <translation id="2579190314336775785">Pasahitzak Taktak-tik kanpo soilik ezaba daitezke</translation>
-<translation id="2580411288591421699">Ezin da instalatu une honetan abian den Taktak Taktak-ren bertsio bera. Itxi Taktak Taktak eta saiatu berriro.</translation>
+<translation id="2580411288591421699">Ezin da instalatu une honetan abian den Taktak-ren bertsio bera. Itxi Taktak eta saiatu berriro.</translation>
 <translation id="2586406160782125153">Gailuko arakatze-datuak ezabatuko dira. Geroago datuak eskuratu nahi izanez gero, hasi saioa Taktak-n <ph name="USER_EMAIL" /> gisa.</translation>
 <translation id="259935314519650377">Ezin izan da gorde cachean deskargatutako instalatzailea. Errorea: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">Sistema</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Taktak-k maiz begiratzen die arakatzailearen ezarpenei, ahalik eta seguruenak direla ziurtatzeko. Ezarpenen bat berrikustea komeni bazaizu, jakinarazpen bat bidaliko dizugu.</translation>
 <translation id="2652691236519827073">Ireki esteka Taktak-ko beste &amp;fitxa batean</translation>
-<translation id="2665296953892887393">Lagundu Taktak Taktak hobetzen hutsegite-txostenak eta <ph name="UMA_LINK" /> Taktak-ri bidalita</translation>
+<translation id="2665296953892887393">Lagundu Taktak hobetzen hutsegite-txostenak eta <ph name="UMA_LINK" /> Taktak-ri bidalita</translation>
 <translation id="2668094785979141847">Taktak Lens-etik irteteko, sakatu hau</translation>
-<translation id="2681444469812712297">Ireki <ph name="URL" /> Taktak Taktak-ko fitxa berri batean.</translation>
+<translation id="2681444469812712297">Ireki <ph name="URL" /> Taktak-ko fitxa berri batean.</translation>
 <translation id="2712141162840347885">Hautatu edozer, Taktak Lens-ekin bilatzeko. Taktak Lens-etik irteteko, sakatu Ihes.</translation>
 <translation id="2738871930057338499">Ezin da konektatu Internetera. HTTP 403 (debekatuta). Egiaztatu proxyaren konfigurazioa.</translation>
-<translation id="2742320827292110288">Abisua: Taktak Taktak-k ezin die eragotzi luzapenei zure arakatze-historia erregistratzea. Luzapena ezkutuko moduan desgaitzeko, desautatu aukera hau.</translation>
+<translation id="2742320827292110288">Abisua: Taktak-k ezin die eragotzi luzapenei zure arakatze-historia erregistratzea. Luzapena ezkutuko moduan desgaitzeko, desautatu aukera hau.</translation>
 <translation id="2753623023919742414">Sakatu bilatzeko</translation>
 <translation id="2765403129283291972">Taktak-k webgune honen izenean mikrofonoa erabiltzeko baimena behar du</translation>
 <translation id="2770231113462710648">Ezarri hau arakatzaile lehenetsia gisa:</translation>
@@ -172,13 +172,13 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="3003694935412297923">Zeregin guztiak</translation>
 <translation id="3018957014024118866">Ezabatu datuak Taktak-tik ere bai (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">&amp;ChromeOS Flex eguneratzeko, exekuta ezazu berriro</translation>
-<translation id="3037838751736561277">Taktak Taktak atzeko planoko moduan dago.</translation>
+<translation id="3037838751736561277">Taktak atzeko planoko moduan dago.</translation>
 <translation id="3038232873781883849">Instalatzeko zain…</translation>
 <translation id="3045032126857188731">Xede-hizkuntza: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Itxi oharrak bidaltzeko leihoa</translation>
 <translation id="306179102415443347">Erabili lasterbidea Taktak-ren Pasahitz-kudeatzailea zerbitzura azkar joateko. Lasterbidea ordenagailuaren orri nagusira edo aplikazioak exekutatzeko tresnara eraman dezakezu.</translation>
 <translation id="3065168410429928842">Taktak fitxa</translation>
-<translation id="3080151273017101988">Mantendu atzeko planoko aplikazioak abian Taktak Taktak ixten denean</translation>
+<translation id="3080151273017101988">Mantendu atzeko planoko aplikazioak abian Taktak ixten denean</translation>
 <translation id="3100998948628680988">Eman izen bat Taktak-ko profilari</translation>
 <translation id="310459126943037700">Ezin izan dira amaitu zereginak.</translation>
 <translation id="3112458742631356345">Taktak-k deskarga hau blokeatu du, fitxategia normalean deskargatzen ez delako eta agian arriskutsua delako</translation>
@@ -186,7 +186,7 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="3119573284443908657">Taktak-k deskarga hau blokeatu du, artxibo-fitxategi honek beste fitxategi batzuk dituelako, eta agian haietan malwarea dagoelako</translation>
 <translation id="3135560418014806498">Gehitu Taktak-ko profil bat</translation>
 <translation id="3137969841538672700">Arrastatu bilatzeko</translation>
-<translation id="3140883423282498090">Aldaketek Taktak Taktak abiarazten duzun hurrengo aldian izango dute eragina.</translation>
+<translation id="3140883423282498090">Aldaketek Taktak abiarazten duzun hurrengo aldian izango dute eragina.</translation>
 <translation id="3149510190863420837">Taktak-ren aplikazioak</translation>
 <translation id="3161522574479303604">Hizkuntza guztiak</translation>
 <translation id="319199214552513804">Luzapen hori eta gauza gehiago ordenagailu guztietan lortzeko, hasi saioa Taktak-n</translation>
@@ -203,7 +203,7 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="3352986031709923790">bilaketa-eremuaren goiko eskuineko ertza: % <ph name="RIGHT" /> eskuinean, % <ph name="TOP" /> goian</translation>
 <translation id="3360895254066713204">Taktak laguntzailea</translation>
 <translation id="3379938682270551431">{0,plural, =0{Orain exekutatuko da Taktak berriro}=1{1 segundo barru exekutatuko da Taktak berriro}other{# segundo barru exekutatuko da Taktak berriro}}</translation>
-<translation id="3396977131400919238">Sistema-eragilean errore bat gertatu da instalatu bitartean. Deskargatu Taktak Taktak berriro.</translation>
+<translation id="3396977131400919238">Sistema-eragilean errore bat gertatu da instalatu bitartean. Deskargatu Taktak berriro.</translation>
 <translation id="3428747202529429621">Babestuta mantentzen zaitu Taktak-n, eta segurtasuna hobetzeko erabil daiteke Taktak-ren beste aplikazio batzuetan saioa hasita daukazunean</translation>
 <translation id="3434246496373299699">Taktak-ko kontu batekin saioa hasten duzunean egiazta ditzake Taktak-k pasahitzak</translation>
 <translation id="3438681572027105609">Pasahitzak eta bestelako datuak zure gailu guztietan gordeta edukitzeko, hasi saioa Taktak-n</translation>
@@ -214,7 +214,7 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="3503306920980160878">Taktak-k zure kokapena webgune honekin partekatzeko baimena behar du</translation>
 <translation id="3533694711092285624">Ez dago pasahitzik gordeta. Taktak-k pasahitzak egiazta ditzake gorde ondoren.</translation>
 <translation id="3541482654983822893">Taktak-k ezin ditu egiaztatu pasahitzak. Saiatu berriro 24 ordu barru.</translation>
-<translation id="3576528680708590453">Sistemaren administratzailearen konfigurazioaren arabera, Taktak Taktak-k beste arakatzaile bat ireki behar du <ph name="TARGET_URL_HOSTNAME" /> helbidera joateko.</translation>
+<translation id="3576528680708590453">Sistemaren administratzailearen konfigurazioaren arabera, Taktak-k beste arakatzaile bat ireki behar du <ph name="TARGET_URL_HOSTNAME" /> helbidera joateko.</translation>
 <translation id="3582972582564653026">Sinkronizatu eta pertsonalizatu Taktak gailu guztietan</translation>
 <translation id="3583751698304738917">Jadanik hasita daukazu saioa <ph name="USER_EMAIL_ADDRESS" /> gisa Taktak-ko beste profil batean</translation>
 <translation id="358381413217813387">Egin bilaketak orri honetan Taktak Lens-ekin</translation>
@@ -235,33 +235,33 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="3756724684201900923">Lortu Taktak instalatzeari buruzko informazio gehiago</translation>
 <translation id="3780814664026482060">Taktak - <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">Saioa hastean gertatu den errore bat dela eta, ChromeOS Flex-ek ezin izan ditu sinkronizatu zure datuak.</translation>
-<translation id="3795971588916395511">Taktak Taktak OS</translation>
-<translation id="3809772425479558446">Windows 10 edo sistema berriagoa behar da Taktak Taktak erabiltzeko.</translation>
+<translation id="3795971588916395511">Taktak OS</translation>
+<translation id="3809772425479558446">Windows 10 edo sistema berriagoa behar da Taktak erabiltzeko.</translation>
 <translation id="3810973564298564668">Kudeatu</translation>
-<translation id="383928141529488001">Bluetooth bidezko gailuak arakatzeko, Bluetootha erabiltzeko baimena behar du Taktak Taktak-k. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Itxi Taktak Taktak leiho guztiak eta saiatu berriro.</translation>
+<translation id="383928141529488001">Bluetooth bidezko gailuak arakatzeko, Bluetootha erabiltzeko baimena behar du Taktak-k. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
+<translation id="386202838227397562">Itxi Taktak leiho guztiak eta saiatu berriro.</translation>
 <translation id="3873044882194371212">Ireki esteka Taktak-ko &amp;ezkutuko moduko leiho batean</translation>
 <translation id="3885770153807205175">Hizkuntza-hautatzailea</translation>
-<translation id="3889417619312448367">Desinstalatu Taktak Taktak</translation>
+<translation id="3889417619312448367">Desinstalatu Taktak</translation>
 <translation id="3892148308691398805">Kopiatu testua</translation>
 <translation id="3941890832296813527">Instalazio-errorea: instalatzailearen fitxategi-izenak ez du balio edo ez da onartzen.</translation>
 <translation id="395904275706073188">Babestutako orriak ezin dira irakurri. Probatu beste orri batekin.</translation>
 <translation id="3968962723676998462">Taktak-ko datuak zure kontuan (<ph name="ACCOUNT_EMAIL" />) erabiltzeko eta gordetzeko, idatzi pasaesaldia</translation>
-<translation id="3973161977468201858">Taktak Taktak-k Taktak-ren Pasahitz-kudeatzailea zerbitzuan dauzkazun datuak ezabatu behar ditu. Horretarako baimena emateko, idatzi Windows-eko pasahitza.</translation>
+<translation id="3973161977468201858">Taktak-k Taktak-ren Pasahitz-kudeatzailea zerbitzuan dauzkazun datuak ezabatu behar ditu. Horretarako baimena emateko, idatzi Windows-eko pasahitza.</translation>
 <translation id="400161754580828648">Pantaila partekatzeko, eman pantaila grabatzeko baimena Taktak-ri sistemaren ezarpenetan.</translation>
 <translation id="4022972681110646219">Itzuli pantaila</translation>
 <translation id="4023601594785368013">Jatorrizko hizkuntza: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">Eguneratzea aplikatzeko, berrabiarazi egin behar da Taktak OS.</translation>
 <translation id="4050175100176540509">Segurtasun-hobekuntza garrantzitsuak eta eginbide berriak dituzu erabilgarri azken bertsioan.</translation>
-<translation id="4053720452172726777">Pertsonalizatu eta kontrolatu Taktak Taktak</translation>
+<translation id="4053720452172726777">Pertsonalizatu eta kontrolatu Taktak</translation>
 <translation id="408393047846373801">Pasahitzak eta bestelako datuak zure gailu guztietan gordeta edukitzeko, hasi saioa Taktak-n. Saioa hasi ondoren, pasahitz hau zure Taktak-ko kontuan gordeko da.</translation>
 <translation id="409936259433005390">Windows 11-ra bertsio-berrituko zara? Deskargatu Taktak-ren instalatzailea OneDrive-n lehen egunetik prest egoteko.</translation>
 <translation id="4110895483821904099">Konfiguratu Taktak-ko profil berria</translation>
 <translation id="4111566860456076004">Taktak-k ezin du egiaztatu luzapena nondik datorren, eta baliteke segurua ez izatea. Ken ezazu Taktak-tik, bisitatzen dituzun webguneetan zure datuak ikusi eta aldatu ezin izan ditzan, informazio pertsonala barne.</translation>
 <translation id="4128488089242627000">Taktak-k bizkorrago funtzionatzen du eta JavaScript darabilten eginbideek behar bezala funtzionatu beharko lukete (gomendatua)</translation>
-<translation id="4147555960264124640">Kontu kudeatu batekin hasten ari zara saioa eta, beraz, Taktak Taktak-ko zure profilaren gaineko kontrola emango diozu kontuaren administratzaileari. <ph name="USER_NAME" /> erabiltzailearekin iraunkorki lotuko dira zure Taktak datuak, esaterako, aplikazioak, laster-markak eta beste ezarpen batzuk. Datu horiek ezabatzeko, Taktak-ko kontuen panela erabil dezakezu, baina ezin izango dituzu datuak lotu beste kontu batera. <ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Kontu kudeatu batekin hasten ari zara saioa eta, beraz, Taktak-ko zure profilaren gaineko kontrola emango diozu kontuaren administratzaileari. <ph name="USER_NAME" /> erabiltzailearekin iraunkorki lotuko dira zure Taktak datuak, esaterako, aplikazioak, laster-markak eta beste ezarpen batzuk. Datu horiek ezabatzeko, Taktak-ko kontuen panela erabil dezakezu, baina ezin izango dituzu datuak lotu beste kontu batera. <ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Instalatzen…</translation>
-<translation id="4149882025268051530">Instalatzaileak ezin izan du artxiboa deskonprimitu. Deskargatu berriro Taktak Taktak.</translation>
+<translation id="4149882025268051530">Instalatzaileak ezin izan du artxiboa deskonprimitu. Deskargatu berriro Taktak.</translation>
 <translation id="415112847282352845">Helbideak eta bestelako datuak zure gailu guztietan gordeta edukitzeko, hasi saioa Taktak-n. Saioa hasi ondoren, helbide hau zure Taktak-ko kontuan gordeko da.</translation>
 <translation id="4153934450158521343">Taktak-k arakatze-datuak ezabatuko ditu eta itxi egingo da laster</translation>
 <translation id="4173512894976930765">Webguneek espero bezala funtzionatuko dute ziurrenik. Taktak-ko leiho guztiak ixtean, webgune gehienetako saioa amaituko da Taktak-ko kontuarena izan ezik, baldin eta Taktak-n saioa hasita badaukazu.</translation>
@@ -278,11 +278,11 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="4293420128516039005">Hasi saioa Taktak gailu guztietan sinkronizatu eta pertsonalizatzeko</translation>
 <translation id="430327780270213103">Eman Taktak-ko tresna-barran sarbide-eskaerak erakusteko baimena luzapenari</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Arakatzailea mantsotzen duen fitxa pausatzea gomendatzen du Taktak-k}other{Arakatzailea mantsotzen duten fitxak pausatzea gomendatzen du Taktak-k}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-In)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-In)</translation>
 <translation id="4329315893554541805">Pertsonalizazioa eta beste eginbide batzuk eskuratzeko, sartu Taktak sareko eta aplikazioetako jardueretan eta lotutako Taktak-ren zerbitzuetan</translation>
 <translation id="4334241893986177674">Bilatu pantaila-argazki honetan</translation>
 <translation id="4334294535648607276">Deskargatu da.</translation>
-<translation id="4337324600316876133">Etorkizunean Taktak Taktak-ren eguneratzeak eskuratzeko, macOS 12 edo berriago bat beharko duzu. Ordenagailu hau macOS 11 erabiltzen ari da.</translation>
+<translation id="4337324600316876133">Etorkizunean Taktak-ren eguneratzeak eskuratzeko, macOS 12 edo berriago bat beharko duzu. Ordenagailu hau macOS 11 erabiltzen ari da.</translation>
 <translation id="4343195214584226067">Gehitu da <ph name="EXTENSION_NAME" /> Taktak-n</translation>
 <translation id="4348548358339558429">Pertsonalizazioa eskuratzeko, sartu Taktak sareko eta aplikazioetako jardueretan</translation>
 <translation id="436060642166082913">Taktak-k deskarga hau blokeatu du, fitxategiak zure kontu pertsonalak eta sare sozialetakoak kaltetuko dituelako agian</translation>
@@ -291,7 +291,7 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="4427306783828095590">Babes handiagoa eskaintzen du phishingaren eta malwarearen aurka</translation>
 <translation id="4434353761996769206">Instalatzailearen errorea: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak - Hasi saioa sarean - <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">Beste eragiketa bat ari da egiten Taktak Taktak. Saiatu berriro geroago.</translation>
+<translation id="4458462641685292929">Beste eragiketa bat ari da egiten Taktak. Saiatu berriro geroago.</translation>
 <translation id="4459234553906210702">Iragarkien neurketari esker, bisitatzen dituzun webguneek Taktak-ri informazioa eska diezaiokete. Informazio horren bidez, webguneek beren iragarkien errendimendua neur dezakete. Webguneen artean ahalik eta informazio gutxien transferituta mugatzen du iragarkien neurketak webgunearteko jarraipena.</translation>
 <translation id="4493028449971051158">Abiarazte-errorea: exekutatu instalatzailea administratzaile gisa.</translation>
 <translation id="4501471624619070934">Ezin izan da instalatu, herrialde honetan sarbidea murriztuta dagoelako.</translation>
@@ -308,42 +308,42 @@ Eginbide batzuk agian dira erabilgarri egongo eta hobespenei egindako aldaketak 
 <translation id="4680828127924988555">Utzi instalazioa bertan behera</translation>
 <translation id="4720851490453439956">Taktak eguneratzeko barneko zerbitzua</translation>
 <translation id="4724676981607797757">Instalazioak huts egin du, protokoloa onartu ez delako.</translation>
-<translation id="4728575227883772061">Instalazioak huts egin du zehaztu gabeko errore batengatik. Taktak Taktak abian bada, itxi ezazu eta saiatu berriro.</translation>
+<translation id="4728575227883772061">Instalazioak huts egin du zehaztu gabeko errore batengatik. Taktak abian bada, itxi ezazu eta saiatu berriro.</translation>
 <translation id="4737281654364167024">Jarraitzeko, hasi saioa Taktak-n <ph name="EMAIL" /> helbide elektronikoarekin. Horrek bermatuko du zure erakundearen gidalerroak jasotzen dituzula.</translation>
 <translation id="4741235124132242877">Ainguratu da! Tresna-barraren bidez erabil dezakezu berriro Taktak Lens.</translation>
 <translation id="4747730611090640388">Taktak-k zure interesak estima ditzake.  Beranduago, bisitatzen duzun webgune batek zure interesak ikusteko eska diezaioke Taktak-ri, agertzen zaizkizun iragarkiak pertsonalizatze aldera.</translation>
 <translation id="475321580758063259">Taktak-ko datuak Taktak-ko kontuan (<ph name="ACCOUNT_EMAIL" />) erabiltzen jarraitzeko, eguneratu Taktak</translation>
-<translation id="4754614261631455953">Taktak Taktak Canary (mDNS-In)</translation>
+<translation id="4754614261631455953">Taktak Canary (mDNS-In)</translation>
 <translation id="4756182432527369254">Webguneen abiadura handitzen du Taktak-ren V8 motorrarekin, baina erasoen aurrean Taktak apur bat ahultzen du</translation>
 <translation id="479167709087336770">Taktak Bilaketa zerbitzuan erabiltzen den ortografia-zuzentzaile bera erabiltzen da. Arakatzailean idazten duzun testua Taktak-ri bidaltzen zaio. Aukera horiek aldatzeko, joan ezarpenetara.</translation>
 <translation id="4793679854893018356">Lortu Taktak-k zu babesteko duen moduari buruzko informazio gehiago</translation>
-<translation id="4828579605166583682">Lehendik dauden pasahitzak ordezten saiatzen ari da Taktak Taktak. Horretarako baimena emateko, idatzi Windows-eko pasahitza.</translation>
+<translation id="4828579605166583682">Lehendik dauden pasahitzak ordezten saiatzen ari da Taktak. Horretarako baimena emateko, idatzi Windows-eko pasahitza.</translation>
 <translation id="4842397268809523050">ChromeOS Flex-ek ezin izan ditu sinkronizatu zure datuak, sinkronizazioa ez dagoelako erabilgarri zure domeinuan.</translation>
 <translation id="4851866215237571846"><ph name="EXISTING_USER" /> erabiltzaileak hasita dauka saioa jada.  Arakatze-jarduerak bereizita edukitzeko, hasi saioa Taktak-n zeure profilarekin (<ph name="USER_EMAIL_ADDRESS" />).</translation>
 <translation id="4855026984605187434">Pantaila partekatzeko, eman pantaila grabatzeko baimena Taktak-ri sistemaren ezarpenetan</translation>
 <translation id="4873783916118289636">Berrikusi pribatutasuna eta segurtasuna kontrolatzeko aukera garrantzitsuenak Taktak-n</translation>
 <translation id="4885446229353981848">Erakutsi beti Taktak Lens-en lasterbidea</translation>
-<translation id="4891791193823137474">Utzi Taktak Taktak-ri atzeko planoan abiarazten</translation>
+<translation id="4891791193823137474">Utzi Taktak-ri atzeko planoan abiarazten</translation>
 <translation id="4895437082222824641">Ireki esteka Taktak-ko beste &amp;fitxa batean</translation>
 <translation id="4918844574251943176">Kopiatu da irudia</translation>
 <translation id="492720062778050435">Luzapen hau berrikustea gomendatzen dizu Taktak-k</translation>
 <translation id="4946912144186040233">Taktak-k hobeto ulertzen ditu inprimakiak, eta bizkorrago bete ditzake automatikoki. Desaktibatuta dago ezarpena.</translation>
-<translation id="4953650215774548573">Ezarri Taktak Taktak arakatzaile lehenetsi gisa</translation>
+<translation id="4953650215774548573">Ezarri Taktak arakatzaile lehenetsi gisa</translation>
 <translation id="495931528404527476">Taktak-n</translation>
 <translation id="4969674060580488087">ChromeOS Flex-ek ezin izan ditu sinkronizatu zure datuak, kontuan saioa hasteko xehetasunak iraungi egin direlako.</translation>
 <translation id="4970761609246024540">Ongi etorri Taktak-ko profiletara</translation>
 <translation id="4970880042055371251">Taktak OS-ren bertsioa</translation>
-<translation id="4990567037958725628">Taktak Taktak Canary</translation>
+<translation id="4990567037958725628">Taktak Canary</translation>
 <translation id="5003967926796347400">Sakatu Taktak-ren Pasahitz-kudeatzailea</translation>
 <translation id="504867494566807945">Ireki estekak Taktak-ren edozein aplikaziotatik. Gainera, errazago atzitzeko, zereginen barran ainguratuko da.</translation>
 <translation id="5114340746415930644">Taktak-ko datuak zure kontuan (<ph name="USER_EMAIL" />) erabiltzeko eta gordetzeko, idatzi pasaesaldia</translation>
 <translation id="5120334927898581447">Hasi saioa Taktak-n Taktak-ren beste zerbitzuetan saioa hasten duzunean</translation>
 <translation id="5126049312684316860">Ziurrenik bisitatuko dituzun are orri gehiago aurrez kargatzen ditu Taktak-k, bisitatzen dituzunean bizkorrago karga daitezen</translation>
-<translation id="5132929315877954718">Ezagutu Taktak Taktak-rako aplikazio, joko, luzapen eta gai bikainak.</translation>
+<translation id="5132929315877954718">Ezagutu Taktak-rako aplikazio, joko, luzapen eta gai bikainak.</translation>
 <translation id="5139423532931106058">Pertsonalizatu Taktak-ko profila</translation>
 <translation id="5163087008893166964">Ongi etorri Taktak-ra; beste leiho bat ireki da arakatzailean</translation>
 <translation id="5166439563123238795">Taktak-k zure eskuen jarraipena egiteko baimena behar du</translation>
-<translation id="5170938038195470297">Ezin da profila erabili Taktak Taktak-ren bertsio berriago batekoa delako.
+<translation id="5170938038195470297">Ezin da profila erabili Taktak-ren bertsio berriago batekoa delako.
 
 Agian eginbide batzuk ez dira erabilgarri egongo. Zehaztu profilaren beste direktorio bat edo erabili Taktak-ren bertsio berriagoa.</translation>
 <translation id="5174969993834422967">Jakinarazpenak blokeatu ohi dituzu. Webgune honen jakinarazpenak jasotzeko, sakatu kokapenaren barrako eskuineko izkinan dagoen jakinarazpen-ikonoa.</translation>
@@ -364,12 +364,12 @@ Agian eginbide batzuk ez dira erabilgarri egongo. Zehaztu profilaren beste direk
 <translation id="5412485296464121825">Webguneek zure interesei buruzko informazioa gorde dezakete Taktak-n; esaterako, webgune batera joaten bazara maratoi baterako oinetakoak erostera, baliteke webgune horrek "maratoiak" definitzea interes gisa. Ondorioz, beranduago beste webgune batera joaten bazara lasterketa batean izena emateko, litekeena da webgune horrek lasterketetarako oinetakoekin erlazionatutako iragarki bat erakustea zure interesetan oinarrituta.</translation>
 <translation id="5430073640787465221">Hobespenen fitxategia hondatuta dago edo ez du balio.
 
-Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
+Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="5468572406162360320">Eginbide hauek hobetzen laguntzeko, Taktak-k haiekin dituzun interakzioak bidaltzen dizkio Taktak-ri. Baliteke informazio hori gizakia den berrikusle batek irakurtzea, prozesatzea eta hari buruzko oharpenak egitea.</translation>
 <translation id="5524761631371622910">Probak abian diren bitartean eta Taktak-k proba aktibo batean ausaz sartu bazaitu, agertzen zaizkizun iragarkietan eta behean estimatutako interesetan eragina izango du arakatze-historiak. Zure pribatutasuna babesteko, Taktak-k hilero ezabatzen ditu zure interesak.</translation>
 <translation id="5524890928877629608">bilaketa-eremuaren goiko ezkerreko ertza: % <ph name="LEFT" /> ezkerrean, % <ph name="TOP" /> goian</translation>
 <translation id="5530733413481476019">Bizkortu Taktak</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-In)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-In)</translation>
 <translation id="5579324208890605088">Abiarazte-errorea: exekutatu instalatzailea erabiltzaile arrunt gisa, ez administratzaile gisa.</translation>
 <translation id="5596627076506792578">Aukera gehiago</translation>
 <translation id="5600352656975192682">Ainguratu Taktak zereginen barran, hura bizkor atzitzeko edonoiz</translation>
@@ -379,7 +379,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="566568153320186256">Taktak-k bateria aurrezten du atzeko planoko jarduerak eta ikusizko efektuak mugatuta (esaterako, gora eta behera modu leunean egiteko aukera eta bideoen irudi-abiadurak). <ph name="BEGIN_LINK" />Lortu energia-aurreztaileari buruzko informazio gehiago<ph name="END_LINK" /></translation>
 <translation id="567202749201779594">Garbitu Taktak-ko datuak kontutik</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{Taktak berriro exekutatzeko eskatu dizu administratzaileak, eguneratzea aplikatzeko}=1{Taktak berriro exekutatzeko eskatu dizu administratzaileak, eguneratzea aplikatzeko. Ezkutuko moduko leihoa ez da berriro irekiko.}other{Taktak berriro exekutatzeko eskatu dizu administratzaileak, eguneratzea aplikatzeko. Ezkutuko moduko # leihoak ez dira berriro irekiko.}}</translation>
-<translation id="5686916850681061684">Pertsonalizatu eta kontrolatu Taktak Taktak. Zure arreta behar duen zerbait dago. Sakatu informazio gehiago ikusteko.</translation>
+<translation id="5686916850681061684">Pertsonalizatu eta kontrolatu Taktak. Zure arreta behar duen zerbait dago. Sakatu informazio gehiago ikusteko.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">Ezin da konektatu Internetera. Proxy-zerbitzariak autentifikazioa behar du.</translation>
 <translation id="5709557627224531708">Ezarri Taktak arakatzaile lehenetsi gisa</translation>
@@ -387,7 +387,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="5736850870166430177">Webguneren bat pasahitza lapurtzen saiatzen bada edo fitxategi kaltegarriren bat deskargatzen baduzu, baliteke Taktak-k URLak ere bidaltzea (orriko edukiaren zati batzuk barne) Arakatze segurua eginbideari.</translation>
 <translation id="5756509061973259733">Badago kontu honen Taktak-ko profil bat gailu honetan</translation>
 <translation id="5759947850379142561">Hautatu testu edo irudi bat hura Taktak Lens-ekin bilatzeko. Taktak Lens-etik irteteko, sakatu Ihes.</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Canary</translation>
 <translation id="5804318322022881572">Ezin izan da exekutatu Taktak. Saiatu berriro.</translation>
 <translation id="5809516625706423866">Ezin da konektatu Internetera. HTTP 401 (baimenik gabe). Egiaztatu proxyaren konfigurazioa.</translation>
 <translation id="5824893331272123205">Ezin izan da kargatu panel hau, saiatu berriro</translation>
@@ -401,7 +401,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="5925596746603389877">Deskargatu Taktak-ren instalatzailea</translation>
 <translation id="5940385492829620908">Zure weba, laster-markak eta Taktak-n dituzun beste gauzak hemen bizi dira.</translation>
 <translation id="5941711191222866238">Minimizatu</translation>
-<translation id="5941830788786076944">Ezarri Taktak Taktak arakatzaile lehenetsi gisa</translation>
+<translation id="5941830788786076944">Ezarri Taktak arakatzaile lehenetsi gisa</translation>
 <translation id="5947104538377036631">Taktak-ren lasterbidea</translation>
 <translation id="5968400720580217226">AA modua</translation>
 <translation id="5980111191913430208">Iturburu ezezagunetatik datozen luzapenek, aplikazioek eta gaiek gailua kalte dezakete. Halakoak <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> zerbitzutik bakarrik instalatzea gomendatzen du Taktak-k.</translation>
@@ -410,11 +410,11 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="6009821354356307391">Eskatu jarraipena egiteko</translation>
 <translation id="6014316319780893079"><ph name="BEGIN_LINK" />Taktak-ren tresnekin<ph name="END_LINK" />, segurtasunez araka dezakezu, eta dena kontrolpean eduki</translation>
 <translation id="6022659036123304283">Zeureganatu Taktak</translation>
-<translation id="6025087594896450715"><ph name="REMAINING_TIME" /> barru berrabiaraziko da Taktak Taktak</translation>
+<translation id="6025087594896450715"><ph name="REMAINING_TIME" /> barru berrabiaraziko da Taktak</translation>
 <translation id="6040143037577758943">Itxi</translation>
 <translation id="604424701295382420">Ainguratu da! Tresna-barrako botoi berriaren bidez erabil dezakezu berriro Taktak Lens.</translation>
 <translation id="6069027071882229820">Kopiatu irudi gisa</translation>
-<translation id="6070348360322141662">Segurtasun gehiago izateko, Taktak Taktak-k datuak enkriptatuko ditu</translation>
+<translation id="6070348360322141662">Segurtasun gehiago izateko, Taktak-k datuak enkriptatuko ditu</translation>
 <translation id="6075300983329039771">Taktak-n saioa hasteko eskatzen dizu zure erakundeak (<ph name="MANAGER" />)</translation>
 <translation id="6113794647360055231">Taktak hobetu egin dugu</translation>
 <translation id="6116252277240876590">Taktak-ren menuak, ezarpenak, alertak eta bestelako testuak bistaratzeko erabiltzen da hizkuntza hau</translation>
@@ -425,19 +425,19 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="6150706324143004339">Taktak-ko datuak Taktak-ko kontuan gordetzeko eta erabiltzeko, eguneratu Taktak</translation>
 <translation id="6157638032135951407">Erakundeak Taktak-ko datuak ezabatzen ditu <ph name="TIMEOUT_DURATION" />z erabiltzen ez denean. Arakatze-datuen barnean daude historia, automatikoki betetako datuak eta deskargak.</translation>
 <translation id="6165508094623778733">Lortu informazio gehiago</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Taktak Beta</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Beta</translation>
 <translation id="6180522807229584611">Fitxa honek baliabide gehiago erabiltzen ditu. Errendimendua hobetzeko, eman fitxa inaktibo ezartzeko baimena Taktak-ri.</translation>
 <translation id="6182736845697986886">Instalazioak huts egin du, eguneratze-zerbitzariak barneko errore bat izan duelako.</translation>
-<translation id="6235018212288296708">Taktak Taktak-k mDNS trafikoa baimentzeko sarrerako araua.</translation>
+<translation id="6235018212288296708">Taktak-k mDNS trafikoa baimentzeko sarrerako araua.</translation>
 <translation id="624230925347970731">Taktak itxi egingo da laster</translation>
 <translation id="6247557882553405851">Taktak-ren Pasahitz-kudeatzailea</translation>
 <translation id="6251759518630934363">Webgune arriskutsuen berri ematen dizu, Taktak-k ezagutzen ez zituenak barne, webguneetan babes estandarrak baino datu gehiago aztertuz. Taktak-ren abisuak saltatzea aukera dezakezu.</translation>
 <translation id="6277547788421725101">Zure gurasoak "Webguneen, aplikazioen eta luzapenen baimenak" desaktibatu du Taktak-n</translation>
 <translation id="627882678981830918">Pertsonalizatu eta kontrolatu Taktak. Ezarri Taktak arakatzaile lehenetsi gisa.</translation>
-<translation id="6288580400488258237">Ezarri Taktak Taktak arakatzaile lehenetsi gisa eta aingura ezazu zereginen barran</translation>
+<translation id="6288580400488258237">Ezarri Taktak arakatzaile lehenetsi gisa eta aingura ezazu zereginen barran</translation>
 <translation id="6291089322031436445">Taktak Dev aplikazioak</translation>
-<translation id="6291549208091401781">Ordenagailuko erabiltzaile guztientzat dago instalatuta Taktak Taktak.</translation>
+<translation id="6291549208091401781">Ordenagailuko erabiltzaile guztientzat dago instalatuta Taktak.</translation>
 <translation id="6319856120645568262">Taktak-k zure inguruaren mapa bat sortzeko eta zure eskuen jarraipena egiteko baimenak behar ditu</translation>
 <translation id="6321592572353357376">"<ph name="EXTENSION_NAME" />" luzapenak Taktak-n saioa has dezazun behar du</translation>
 <translation id="6326175484149238433">Kendu Taktak-tik</translation>
@@ -451,10 +451,10 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="6481963882741794338">Lotu Taktak eta Taktak-ren beste zerbitzuak pertsonalizaziorako eta bestelako helburuetarako</translation>
 <translation id="648319183876919572">Arakatze seguru hobetuak are gehiago babesten zaitu webgune eta deskarga arriskutsuen aurka</translation>
 <translation id="6489302989675808168">Aktibatuta • Taktak-k ezin du egiaztatu luzapena nondik datorren</translation>
-<translation id="6493527311031785448">Taktak Taktak-k <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Taktak-k <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Taktak automatikoki itxi da</translation>
 <translation id="6506909944137591434">Taktak-k kamera erabiltzeko baimena behar du zure inguruaren 3D-ko mapa bat sortzeko</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Taktak Dev</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Dev</translation>
 <translation id="6520670145826811516">Kokapena erabiltzeko, eman baimena Taktak-ri <ph name="BEGIN_LINK" />sistemaren ezarpenetan<ph name="END_LINK" /></translation>
 <translation id="659498884637196217">Taktak-ren Pasahitz-kudeatzailea zerbitzuan (gailu honetan)</translation>
 <translation id="6632473616050862500"><ph name="BEGIN_LINK_CROS_OSS" />Kode irekiko software<ph name="END_LINK_CROS_OSS" /> gehigarriari esker da posible ChromeOS Flex.</translation>
@@ -462,7 +462,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="6660596345553328257">Taktak-n saioa hasi nahi duzu?</translation>
 <translation id="6664219008737641504">Pasaesaldia ahazten bazaizu edo ezarpena aldatu nahi baduzu, <ph name="SETTINGS_LINK" /> kontuko Taktak-ko datuak</translation>
 <translation id="6676384891291319759">Sartu Interneten</translation>
-<translation id="6679975945624592337">Utzi Taktak Taktak-ri atzeko planoan abiarazten</translation>
+<translation id="6679975945624592337">Utzi Taktak-ri atzeko planoan abiarazten</translation>
 <translation id="6696915334902295848">Taktak-k mikrofonoa erabiltzeko baimena behar du webgune honetan</translation>
 <translation id="6712881677154121168">Deskarga-errorea: <ph name="DOWNLOAD_ERROR" /></translation>
 <translation id="6718739135284199302">Bizkortu Taktak</translation>
@@ -473,7 +473,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="677276454032249905">Taktak-tik irten nahi duzu hala ere?</translation>
 <translation id="6794858689789885890">Taktak ixten duzunean, ezabatu beti webguneetako datuak gailutik</translation>
 <translation id="6831043979455480757">Itzuli</translation>
-<translation id="683440813066116847">Taktak Taktak Canary kanalean mDNS trafikoa baimentzeko sarrera-araua.</translation>
+<translation id="683440813066116847">Taktak Canary kanalean mDNS trafikoa baimentzeko sarrera-araua.</translation>
 <translation id="684888714667046800">Ezin da konektatu Internetera. Suebaki bat erabiltzen baduzu, ziurtatu <ph name="PRODUCT_EXE_NAME" /> baimendutakoen zerrendan dagoela.</translation>
 <translation id="6877155553248388166">bilaketa-eremuaren beheko eskuineko ertza: % <ph name="RIGHT" /> eskuinean, % <ph name="BOTTOM" /> behean</translation>
 <translation id="6881299373831449287">Taktak eguneratzen</translation>
@@ -482,10 +482,10 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="6896758677409633944">Kopiatu</translation>
 <translation id="6930294499209825">Taktak-ren softwarea eguneratuta mantentzen du. Zerbitzu hau desgaitzen edo gelditzen bada, Taktak-ren softwarea ez da eguneratuta mantenduko; beraz, agertzen diren segurtasun-ahultasunak ezin izango dira konpondu eta eginbideek agian ez dute funtzionatuko. Zerbitzu hau erabiltzen duen Taktak-ren softwarerik ez badago, automatikoki desinstalatuko da.</translation>
 <translation id="6933858244219479645">ChromeOS sistema</translation>
-<translation id="6938166777909186039">Etorkizunean Taktak Taktak-ren eguneratzeak eskuratzeko, Windows 10 edo berriago bat beharko duzu. Ordenagailu hau Windows 8.1 erabiltzen ari da.</translation>
+<translation id="6938166777909186039">Etorkizunean Taktak-ren eguneratzeak eskuratzeko, Windows 10 edo berriago bat beharko duzu. Ordenagailu hau Windows 8.1 erabiltzen ari da.</translation>
 <translation id="6943584222992551122">Pertsona honen arakatze-datuak gailutik ezabatuko dira. Datuak berreskuratzeko, hasi saioa Taktak-n <ph name="USER_EMAIL" /> gisa.</translation>
 <translation id="6965382102122355670">Ados</translation>
-<translation id="6967962315388095737">Taktak Taktak Beta-k mDNS trafikoa baimentzeko sarrerako araua.</translation>
+<translation id="6967962315388095737">Taktak Beta-k mDNS trafikoa baimentzeko sarrerako araua.</translation>
 <translation id="6979589607440534284">Ikusi zergatik blokeatzen dituen Taktak-k fitxategi batzuk, beste fitxa batean irekiko da</translation>
 <translation id="6991926986715044139">Erakutsi beti Taktak Lens-en lasterbidea</translation>
 <translation id="7011190694940573312">Instalazioak huts egin du, sistema eragilearen bertsio hau bateragarria ez delako.</translation>
@@ -499,14 +499,14 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="7085332316435785646">Aukeratu ea Taktak-ko historia kontuan hartu nahi duzun ala ez Taktak-ren zerbitzuak modu pertsonalizatuago batean erabiltzeko</translation>
 <translation id="7088681679121566888">Eguneratuta dago Taktak</translation>
 <translation id="7096221564931416126">Hautatu testu edo irudi bat hura Taktak Lens bidez bilatzeko</translation>
-<translation id="7098166902387133879">Taktak Taktak zure mikrofonoa erabiltzen ari da.</translation>
+<translation id="7098166902387133879">Taktak zure mikrofonoa erabiltzen ari da.</translation>
 <translation id="7099479769133613710">&amp;Taktak OS eguneratzeko, exekuta ezazu berriro</translation>
-<translation id="7106741999175697885">Zeregin-kudeatzailea - Taktak Taktak</translation>
+<translation id="7106741999175697885">Zeregin-kudeatzailea - Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{Taktak-ren eguneratze bat erabilgarri dago eta arakatzailea berriro exekutatzen duzunean aplikatuko da.}=1{Taktak-ren eguneratze bat erabilgarri dago eta arakatzailea berriro exekutatzen duzunean aplikatuko da. Ezkutuko moduko leihoa ez da berriro irekiko.}other{Taktak-ren eguneratze bat erabilgarri dago eta arakatzailea berriro exekutatzen duzunean aplikatuko da. Ezkutuko moduko # leihoak ez dira berriro irekiko.}}</translation>
 <translation id="7155997830309522122">Hala bada, editatu Taktak-n gordetako pasahitza, berriarekin bat etor dadin.</translation>
-<translation id="7161904924553537242">Ongi etorri Taktak Taktak-ra</translation>
+<translation id="7161904924553537242">Ongi etorri Taktak-ra</translation>
 <translation id="7193885263065350793">Erakundeak Taktak ixten du <ph name="TIMEOUT_DURATION" />z erabiltzen ez denean.</translation>
-<translation id="7242029209006116544">Kontu kudeatu batekin hasten ari zara saioa eta, beraz, Taktak Taktak-ko zure profilaren gaineko kontrola emango diozu kontuaren administratzaileari. <ph name="USER_NAME" /> erabiltzailearekin iraunkorki lotuko dira zure Taktak datuak, esaterako, aplikazioak, laster-markak eta beste ezarpen batzuk. Datu horiek ezabatzeko, Taktak-ko kontuen Panela erabili ahal izango duzu, baina ezin izango dituzu datuak lotu beste kontu batera. Zure Taktak datuak bereizita izan nahi badituzu, beste profil bat sor dezakezu. <ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Kontu kudeatu batekin hasten ari zara saioa eta, beraz, Taktak-ko zure profilaren gaineko kontrola emango diozu kontuaren administratzaileari. <ph name="USER_NAME" /> erabiltzailearekin iraunkorki lotuko dira zure Taktak datuak, esaterako, aplikazioak, laster-markak eta beste ezarpen batzuk. Datu horiek ezabatzeko, Taktak-ko kontuen Panela erabili ahal izango duzu, baina ezin izango dituzu datuak lotu beste kontu batera. Zure Taktak datuak bereizita izan nahi badituzu, beste profil bat sor dezakezu. <ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075"><ph name="MANAGER" /> erabiltzaileak kudeatzen du Taktak</translation>
 <translation id="7288567540154601580">Fitxak eta luzapenak</translation>
 <translation id="7296210096911315575">Erabilerari eta segurtasunari buruzko informazio garrantzitsua</translation>
@@ -519,7 +519,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="7412494426921990001">Sakatu Taktak-ko menua</translation>
 <translation id="7419819959108735624">Hautatu edozer, Taktak Lens-ekin bilatzeko</translation>
 <translation id="742463671275348370">{NUM_DEVICES,plural, =0{Taktak-rako luzapen bat edo gehiago USB bidezko gailu bat erabiltzen ari ziren}=1{Taktak-rako luzapen bat edo gehiago USB bidezko gailu bat erabiltzen ari dira}other{Taktak-rako luzapen bat edo gehiago USB bidezko # gailu erabiltzen ari dira}}</translation>
-<translation id="7426611252293106642">Taktak Taktak-k agian ez du behar bezala funtzionatuko ez delako jada bateragarria Linux banaketa honekin</translation>
+<translation id="7426611252293106642">Taktak-k agian ez du behar bezala funtzionatuko ez delako jada bateragarria Linux banaketa honekin</translation>
 <translation id="7437998757836447326">Amaitu Taktak-ko saioa</translation>
 <translation id="7449333426561673451">{COUNT,plural, =1{Erakundeak automatikoki itxiko du Taktak minutu batez erabiltzen ez bada.}other{Erakundeak automatikoki itxiko du Taktak # minutuz erabiltzen ez bada.}}</translation>
 <translation id="7450541714075000668">Kopiatu da testua</translation>
@@ -531,17 +531,17 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="7510927761955779701">Taktak-k hobeto ulertzen ditu inprimakiak, eta bizkorrago bete ditzake automatikoki. Aktibatuta dago ezarpena.</translation>
 <translation id="7514258452813684157">Taktak eguneratzeko zerbitzua</translation>
 <translation id="7515191208480168435">Taktak Lens erraz erabiltzeko, aingura ezazu</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Laster-marka hau eta abar gailu guztietan lortzeko, hasi saioa Taktak-n</translation>
 <translation id="756809126120519699">Garbitu dira Taktak-ko datuak</translation>
 <translation id="7572537927358445944">Desaktibatuta • Taktak-k ezin du egiaztatu luzapena nondik datorren</translation>
 <translation id="7583399374488819119"><ph name="COMPANY_NAME" /> zerbitzuaren instalatzailea</translation>
 <translation id="7602868996817972616">Galdetu Taktak-ri orri honi buruz</translation>
 <translation id="7606334485649076285">Taktak ChromeOS Flex</translation>
-<translation id="7626072681686626474">Gailua erabili aurretik, <ph name="MANAGER" /> kudeatzaileak jarraian azalduko diren Zerbitzu-baldintzak irakurtzeko eta onartzeko eskatzen dizu. Baldintzok ez dituzte hedatuko, aldatuko edo mugatuko Taktak Taktak OS-ren Baldintzak.</translation>
+<translation id="7626072681686626474">Gailua erabili aurretik, <ph name="MANAGER" /> kudeatzaileak jarraian azalduko diren Zerbitzu-baldintzak irakurtzeko eta onartzeko eskatzen dizu. Baldintzok ez dituzte hedatuko, aldatuko edo mugatuko Taktak OS-ren Baldintzak.</translation>
 <translation id="7627609214560473136">Datuak babesteko, eman azkenaldian bisitatu ez dituzun webguneei baimenak kentzeko baimena Taktak-ri.</translation>
 <translation id="7629695634924605473">Taktak-k abisatu egingo dizu pasahitzak inoiz arriskuan badaude</translation>
-<translation id="7641148173327520642">Sistemaren administratzailearen konfigurazioaren arabera, Taktak Taktak-k <ph name="ALTERNATIVE_BROWSER_NAME" /> arakatzailea ireki behar du <ph name="TARGET_URL_HOSTNAME" /> helbidera joateko.</translation>
+<translation id="7641148173327520642">Sistemaren administratzailearen konfigurazioaren arabera, Taktak-k <ph name="ALTERNATIVE_BROWSER_NAME" /> arakatzailea ireki behar du <ph name="TARGET_URL_HOSTNAME" /> helbidera joateko.</translation>
 <translation id="7649070708921625228">Laguntza</translation>
 <translation id="7651907282515937834">Taktak Enterprise logotipoa</translation>
 <translation id="76531479118467370">Taktak-k deskarga hau blokeatu du, Arakatze segurua desaktibatu duzulako eta fitxategia egiaztatu ezin delako</translation>
@@ -558,10 +558,10 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="7761834446675418963">Sakatu zure izena Taktak irekitzeko eta arakatzen hasteko.</translation>
 <translation id="7777080907402804672">Irudiren batek ez badu azalpen lagungarririk, halako bat lortzen ahaleginduko da Taktak. Azalpen horiek sortzeko, irudiak Taktak-ri bidaltzen zaizkio. Aukera hori desaktibatu nahi baduzu, joan ezarpenetara.</translation>
 <translation id="778331955594035129">Taktak-k kokapena erabiltzeko baimena behar du webgune honetan</translation>
-<translation id="7787950393032327779">Taktak Taktak prozesu bat (<ph name="PROCESS_ID" />) profila beste ordenagailu batean (<ph name="HOST_NAME" />) erabiltzen ari dela dirudi. Taktak-k profila blokeatu du, honda ez dadin. Profila beste inongo prozesuk erabiltzen ari ez dela ziur badakizu, profila desblokeatu eta Taktak berrabiarazi egin dezakezu.</translation>
-<translation id="7801699035218095297">Pasahitzak kopiatzen saiatzen ari da Taktak Taktak. Hori baimentzeko, idatzi Windows-eko pasahitza.</translation>
+<translation id="7787950393032327779">Taktak prozesu bat (<ph name="PROCESS_ID" />) profila beste ordenagailu batean (<ph name="HOST_NAME" />) erabiltzen ari dela dirudi. Taktak-k profila blokeatu du, honda ez dadin. Profila beste inongo prozesuk erabiltzen ari ez dela ziur badakizu, profila desblokeatu eta Taktak berrabiarazi egin dezakezu.</translation>
+<translation id="7801699035218095297">Pasahitzak kopiatzen saiatzen ari da Taktak. Hori baimentzeko, idatzi Windows-eko pasahitza.</translation>
 <translation id="7808348361785373670">Kendu Taktak-tik…</translation>
-<translation id="7825851276765848807">Instalazioak huts egin du zehaztu gabeko errore batengatik. Deskargatu Taktak Taktak berriro.</translation>
+<translation id="7825851276765848807">Instalazioak huts egin du zehaztu gabeko errore batengatik. Deskargatu Taktak berriro.</translation>
 <translation id="7827099906024714326">Taktak-k zeu zarela egiaztatu behar du datu batzuk zure Taktak-ko kontuan gorde eta gailu guztietan erabili baino lehen. Orain amaitzen baduzu saioa, ezabatu egingo dira datuak.</translation>
 <translation id="7845233973568007926">Eskerrik asko instalatzeagatik. <ph name="BUNDLE_NAME" /> erabiltzeko, ordenagailua berrabiarazi behar duzu.</translation>
 <translation id="7872446069773932638">Deskargatzen… <ph name="SECONDS" /> segundo geratzen dira.</translation>
@@ -572,7 +572,7 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="7936702483636872823">Taktak-k deskarga hau blokeatu du, fitxategia engainagarria delako eta agian espero ez dituzun aldaketak egingo dituelako gailuan</translation>
 <translation id="7951272445806340501">Eguneratzea aplikatzeko, berrabiarazi egin behar da ChromeOS Flex.</translation>
 <translation id="7959172989483770734">Kudeatu Taktak-ko profilak</translation>
-<translation id="7962410387636238736">Ordenagailuak ez du jasoko Taktak Taktak-ren beste eguneratzerik, jada ez baita bateragarria Windows XP eta Windows Vista-rekin</translation>
+<translation id="7962410387636238736">Ordenagailuak ez du jasoko Taktak-ren beste eguneratzerik, jada ez baita bateragarria Windows XP eta Windows Vista-rekin</translation>
 <translation id="8004582292198964060">Arakatzailea</translation>
 <translation id="8005666035647241369">Taktak-ren Pasahitz-kudeatzailea zerbitzuan (gailu honetan)</translation>
 <translation id="8008534537613507642">Berrinstalatu Taktak</translation>
@@ -587,14 +587,14 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="8086881907087796310">Instalazioak huts egin du, ordenagailuak hardwarearen gutxieneko eskakizunak betetzen ez dituelako.</translation>
 <translation id="8113883687556086139">Taktak-ko datuak zure kontuan (<ph name="ACCOUNT_EMAIL" />) erabiltzeko eta gordetzeko, egiaztatu zeu zarela</translation>
 <translation id="8118331347066725040">Bidali Lens-ekin bilatzeari buruzko oharrak</translation>
-<translation id="8129812357326543296">&amp;Taktak Taktak arakatzaileari buruz</translation>
+<translation id="8129812357326543296">&amp;Taktak arakatzaileari buruz</translation>
 <translation id="813913629614996137">Hasieratzen…</translation>
 <translation id="8162006532256575008">Erabili Taktak konturik gabe</translation>
 <translation id="8177472873527554730">Ezin da aurkitu edukirik orrian</translation>
 <translation id="8221491193165283816">Jakinarazpenak blokeatu ohi dituzu. Webgune honen jakinarazpenak jasotzeko, egin klik hemen.</translation>
-<translation id="8255190535488645436">Taktak Taktak zure mikrofonoa eta kamera erabiltzen ari da.</translation>
+<translation id="8255190535488645436">Taktak zure mikrofonoa eta kamera erabiltzen ari da.</translation>
 <translation id="8267953129876836456">Taktak-k segurtasun-gomendio batzuk aurkitu ditu berrikus ditzazun</translation>
-<translation id="8286862437124483331">Taktak Taktak pasahitzak erakusten saiatzen ari da. Hori baimentzeko, idatzi Windows pasahitza.</translation>
+<translation id="8286862437124483331">Taktak pasahitzak erakusten saiatzen ari da. Hori baimentzeko, idatzi Windows pasahitza.</translation>
 <translation id="829923460755755423">Gehitu Taktak-ren Pasahitz-kudeatzailea zerbitzurako lasterbide bat</translation>
 <translation id="8313851650939857356">Abiarazte-errorea: <ph name="STARTUP_ERROR" />.</translation>
 <translation id="8321888067342493336">Gorde irudi gisa</translation>
@@ -612,27 +612,27 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="8425765582779547329">Gurasoen aukerekin sarean seguruago egoteko, hasi saioa Taktak-n</translation>
 <translation id="8433638294851456451">Zenbaki bat hemendik Android-eko telefonora bidaltzeko, hasi Taktak-ko saioa bi gailuetan.</translation>
 <translation id="8496177819998570653">Taktak-ren Pasahitz-kudeatzailea</translation>
-<translation id="8498858610309223613">Taktak Taktak-ren segurtasun-eguneratze berezi bat aplikatu berri da. Berrabiarazi gailua, eta fitxak leheneratuko dizkizugu.</translation>
+<translation id="8498858610309223613">Taktak-ren segurtasun-eguneratze berezi bat aplikatu berri da. Berrabiarazi gailua, eta fitxak leheneratuko dizkizugu.</translation>
 <translation id="8516431725144212809">Taktak-k estimatu dizkizun interesak</translation>
-<translation id="8521348052903287641">Taktak Taktak Dev-ek mDNS trafikoa baimentzeko sarrerako araua.</translation>
+<translation id="8521348052903287641">Taktak Dev-ek mDNS trafikoa baimentzeko sarrerako araua.</translation>
 <translation id="852529348814672339">Bistaratu Taktak hizkuntza honetan</translation>
-<translation id="8533056045953418157">Ezarri Taktak Taktak PDFen ikustaile lehenetsi gisa</translation>
+<translation id="8533056045953418157">Ezarri Taktak PDFen ikustaile lehenetsi gisa</translation>
 <translation id="8555465886620020932">Zerbitzuaren errorea: <ph name="SERVICE_ERROR" /></translation>
 <translation id="856656450041460113">Bilatu hizkuntzen zerrendan</translation>
 <translation id="8601359445272098721">Berria! Pantailan bertan itzuli ditzakezu testuak zein irudiak, "itzuli pantaila" botoia hautatuta.</translation>
-<translation id="8614913330719544658">Taktak Taktak-k ez du erantzuten. Berrabiarazi nahi duzu?</translation>
+<translation id="8614913330719544658">Taktak-k ez du erantzuten. Berrabiarazi nahi duzu?</translation>
 <translation id="861702415419836452">Taktak-k kamera erabiltzeko baimena behar du, ingurunearen hiru dimentsioko mapa bat sortzeko</translation>
 <translation id="8625237574518804553">{0,plural, =1{1 minutu barru exekutatuko da Taktak berriro}other{# minutu barru exekutatuko da Taktak berriro}}</translation>
 <translation id="8637932705841171563">Leihoa partekatzeko, eman pantaila grabatzeko baimena Taktak-ri sistemaren ezarpenetan</translation>
 <translation id="8641606876632989680">Taktak-k jakinarazpen bat bidaliko dizu arriskuan dagoen pasahitz batekin hasten duzunean saioa</translation>
 <translation id="8649026945479135076">Bisitatzen dituzun webguneek interesatzen zaizkizun gauzak gogoratu ohi dituzte zerbitzua pertsonalizatzeko. Webguneek zure interesei buruzko informazioa ere gorde dezakete Taktak-n.</translation>
-<translation id="8669527147644353129">Taktak Taktak laguntzailea</translation>
+<translation id="8669527147644353129">Taktak laguntzailea</translation>
 <translation id="8679801911857917785">Taktak abiarazten duzunean erakusten den orria ere kontrolatzen du.</translation>
 <translation id="8712637175834984815">Ados</translation>
 <translation id="8712767363896337380">Ia amaitu dugu eguneratzen. Eguneratzen amaitzeko, exekutatu Taktak berriro.</translation>
 <translation id="8718062187489036808">Amaitu Taktak-ko saioa</translation>
 <translation id="8725440680697264016">Egin bideo honi buruzko galdera bat Taktak-ri</translation>
-<translation id="873133009373065397">Taktak Taktak-k ezin du ezarri edo zehaztu arakatzaile lehenetsia</translation>
+<translation id="873133009373065397">Taktak-k ezin du ezarri edo zehaztu arakatzaile lehenetsia</translation>
 <translation id="8747073452963259673">bilaketa-eremuaren beheko ezkerreko ertza: % <ph name="LEFT" /> ezkerrean, % <ph name="BOTTOM" /> behean</translation>
 <translation id="8748735421235723888">Taktak-k tokia egiten du fitxa inaktiboei dagokienez. Horrela, fitxa aktiboek eta gainerako aplikazioek ordenagailuaren baliabide gehiago izango dituzte, eta bizkorrago ibiliko da Taktak. Fitxa inaktiboak haietara itzultzen zarenean aktibatuko dira berriro. <ph name="BEGIN_LINK" />Lortu memoria-aurreztaileari buruzko informazio gehiago<ph name="END_LINK" /></translation>
 <translation id="8753189155654018347">Kendu aplikazio honetako datuak Taktak-tik</translation>
@@ -640,10 +640,10 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="8781673607513845160">Kamera erabiltzeko, eman baimena Taktak-ri <ph name="BEGIN_LINK" />sistemaren ezarpenetan<ph name="END_LINK" /></translation>
 <translation id="878572486461146056">Instalazio-errorea: zure sarearen administratzaileak talde-gidalerro bat ezarri du, edozer instalatzea eragozten duena (<ph name="INSTALL_ERROR" />)</translation>
 <translation id="8798550110818026746">Erakundeak zure arakatze-datuak ikusi eta kudea ditzake, hala nola laster-markak, historia eta pasahitzak. Ezin ditu ikusi Taktak-ko beste profiletako arakatze-datuak</translation>
-<translation id="8821043148920470810">Etorkizunean Taktak Taktak-ren eguneratzeak eskuratzeko, Windows 10 edo berriago bat beharko duzu. Ordenagailu hau Windows 7 erabiltzen ari da.</translation>
+<translation id="8821043148920470810">Etorkizunean Taktak-ren eguneratzeak eskuratzeko, Windows 10 edo berriago bat beharko duzu. Ordenagailu hau Windows 7 erabiltzen ari da.</translation>
 <translation id="8823341990149967727">Taktak zaharkituta dago</translation>
 <translation id="8825634023950448068">Zure pribatutasuna babesteko, lau aste baino gehiago dituzten interesak automatikoki ezabatzen ditugu. Arakatzen jarraitu ahala, baliteke interes bat berriro agertzea zerrendan. Gainera, Taktak-k oker igarri badu interesen bat edo iragarki jakin batzuk ikusi nahi ez badituzu, interes hori ken dezakezu.</translation>
-<translation id="8834965163890861871">Pasahitzak editatzen saiatzen ari da Taktak Taktak. Hori baimentzeko, idatzi Windows-eko pasahitza.</translation>
+<translation id="8834965163890861871">Pasahitzak editatzen saiatzen ari da Taktak. Hori baimentzeko, idatzi Windows-eko pasahitza.</translation>
 <translation id="8843516219908676469">Taktak-k hobeto ulertzen ditu inprimakiak, eta bizkorrago bete ditzake automatikoki</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Kentzea gomendatzen dizu Taktak-k}other{Kentzea gomendatzen dizu Taktak-k}}</translation>
 <translation id="8862326446509486874">Ez dituzu eskubide egokiak sistema mailako instalazio bat egiteko. Saiatu instalatzailea administratzaile gisa abiarazten.</translation>
@@ -671,6 +671,6 @@ Taktak Taktak-k ezin ditu berreskuratu zure ezarpenak.</translation>
 <translation id="943390475793766444">Taktak-k fitxategia aztertzea gomendatzen du, agian arriskutsua delako.</translation>
 <translation id="945522503751344254">Bidali oharrak</translation>
 <translation id="983803489796659991">Instalazioak huts egin du, eguneratze-zerbitzariak aplikaziorako hash-daturik ez duelako.</translation>
-<translation id="989369509083708165">Taktak Taktak da arakatzaile lehenetsia</translation>
+<translation id="989369509083708165">Taktak da arakatzaile lehenetsia</translation>
 <translation id="989816563149873169"><ph name="SHORTCUT" /> da Taktak-ko profil batetik bestera aldatzeko lasterbidea</translation>
 </translationbundle>

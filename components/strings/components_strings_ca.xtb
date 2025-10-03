@@ -348,7 +348,7 @@ En cas contrari, la configuració de privadesa el bloquejarà. Això permetrà q
 <translation id="1567040042588613346">Aquesta política funciona correctament, però s'ha establert el mateix valor en un altre lloc i s'ha substituït per la política.</translation>
 <translation id="1567405528131216114">Afegeix <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Introdueix la data de caducitat</translation>
-<translation id="1569694109004336106">Taktak Taktak està provant d'activar Windows Hello per emplenar contrasenyes.</translation>
+<translation id="1569694109004336106">Taktak està provant d'activar Windows Hello per emplenar contrasenyes.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> polzades</translation>
 <translation id="1574714699824202614">S'està verificant la forma de pagament</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ En cas contrari, la configuració de privadesa el bloquejarà. Això permetrà q
 <translation id="2090451897496479509">Contacta amb el proveïdor per obtenir més informació</translation>
 <translation id="2091887806945687916">So</translation>
 <translation id="2093184051799735948">Fes la cerca a <ph name="ENGINE_NAME" /> o escriu un URL</translation>
-<translation id="2093982008204312032">Taktak Taktak està provant de desactivar Windows Hello per emplenar contrasenyes.</translation>
+<translation id="2093982008204312032">Taktak està provant de desactivar Windows Hello per emplenar contrasenyes.</translation>
 <translation id="2094505752054353250">Els dominis no coincideixen.</translation>
 <translation id="2094704029599359040">Informació de la versió</translation>
 <translation id="2099652385553570808">Grapat triple a l'esquerra</translation>
@@ -864,7 +864,7 @@ En cas contrari, la configuració de privadesa el bloquejarà. Això permetrà q
 <translation id="2396249848217231973">&amp;Desfés la supressió</translation>
 <translation id="239708975263889666">Edita el número de viatger conegut</translation>
 <translation id="2399344929880464793">Aquest IBAN s'ha desat al teu Compte de Taktak perquè el puguis utilitzar en tots els serveis de Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak està provant d'editar les formes de pagament.</translation>
+<translation id="2399868464369312507">Taktak està provant d'editar les formes de pagament.</translation>
 <translation id="2400263725572336749">Afegeix el passaport</translation>
 <translation id="2400271059665846158">Gestiona les targetes de fidelització a Taktak Wallet</translation>
 <translation id="2400600116338235695">Pot demanar permís per connectar-se a ports en sèrie</translation>
@@ -1994,7 +1994,7 @@ En cas contrari, la configuració de privadesa el bloquejarà. Això permetrà q
 <translation id="4269599248168651462">El certificat de servidor s'emet a un nom que no és únic.</translation>
 <translation id="4270541775497538019">Apiladora 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Mostra 0 ressenyes. Puntuació mitjana en estrelles: <ph name="STARS" />.}=1{Mostra 1 ressenya. Puntuació mitjana en estrelles: <ph name="STARS" />.}other{Mostra les # ressenyes. Puntuació mitjana en estrelles: <ph name="STARS" />.}}</translation>
-<translation id="4271652479722040953">Quan s'afegeixen extensions a Taktak, les dades rellevants sobre aquestes extensions s'envien a tercers perquè les analitzin i és possible que el teu administrador les vegi. Les dades inclouen informació sobre les extensions, com ara el nom, l'hora d'instal·lació i la font d'instal·lació, així com l'activitat associada a aquestes extensions (per exemple, canviar de pestanya, contactar amb llocs web o accedir a les galetes). Aquestes dades es recullen per a les extensions instal·lades des de Taktak Web Store i fora de la botiga.</translation>
+<translation id="4271652479722040953">Quan s'afegeixen extensions a Taktak, les dades rellevants sobre aquestes extensions s'envien a tercers perquè les analitzin i és possible que el teu administrador les vegi. Les dades inclouen informació sobre les extensions, com ara el nom, l'hora d'instal·lació i la font d'instal·lació, així com l'activitat associada a aquestes extensions (per exemple, canviar de pestanya, contactar amb llocs web o accedir a les galetes). Aquestes dades es recullen per a les extensions instal·lades des de Chrome Web Store i fora de la botiga.</translation>
 <translation id="4275830172053184480">Reinici del dispositiu</translation>
 <translation id="4276974990916607331">No, gràcies</translation>
 <translation id="4277028893293644418">Restableix la contrasenya</translation>
@@ -2049,7 +2049,7 @@ En cas contrari, la configuració de privadesa el bloquejarà. Això permetrà q
 <translation id="4336913590841287350">Aquesta política encara no s'admet com a política de l'usuari a iOS.</translation>
 <translation id="4340575312453649552">Com que aquest anunci feia servir massa recursos per al dispositiu, Taktak l'ha suprimit.</translation>
 <translation id="4340810192899866471">Importa des de JSON</translation>
-<translation id="4340982228985273705">No ens consta que aquest ordinador estigui gestionat per una empresa. Per tant, la política només pot instal·lar automàticament extensions allotjades a Taktak Web Store. L'URL d'actualització de Taktak Web Store és <ph name="CWS_UPDATE_URL" />.</translation>
+<translation id="4340982228985273705">No ens consta que aquest ordinador estigui gestionat per una empresa. Per tant, la política només pot instal·lar automàticament extensions allotjades a Chrome Web Store. L'URL d'actualització de Chrome Web Store és <ph name="CWS_UPDATE_URL" />.</translation>
 <translation id="4342742994656318294">Parcs temàtics</translation>
 <translation id="4344072791302852930">Afegeix una pestanya</translation>
 <translation id="4348834659292907206">La connexió a <ph name="SITE" /> no és segura</translation>
@@ -3119,7 +3119,7 @@ En cas contrari, la configuració de privadesa el bloquejarà. Això permetrà q
 <translation id="6164605812717770913">El teu pare, mare o tutor ha dit que no pots visitar aquest lloc web. Pots demanar-li que el desbloquegi.</translation>
 <translation id="6165508094623778733">Més informació</translation>
 <translation id="6167577165590485365">Darrer intent de recollida:</translation>
-<translation id="617256461084925519">Taktak Taktak està provant de verificar la teva identitat per poder emplenar la informació de pagament.</translation>
+<translation id="617256461084925519">Taktak està provant de verificar la teva identitat per poder emplenar la informació de pagament.</translation>
 <translation id="6173208311907792313">Completa la compra amb Windows Hello</translation>
 <translation id="6176387967264100435">Aquest preu és alt</translation>
 <translation id="6177128806592000436">La connexió amb aquest lloc web no és segura</translation>
@@ -3979,7 +3979,7 @@ Detalls addicionals:
 <translation id="7564049878696755256">Podries perdre l'accés al compte de <ph name="ORG_NAME" /> o tenir problemes de suplantació d'identitat. Taktak et recomana que canviïs la contrasenya ara.</translation>
 <translation id="7564667064360547717">Samarretes i tops</translation>
 <translation id="7567204685887185387">Aquest servidor no ha pogut comprovar que sigui <ph name="DOMAIN" /> perquè és possible que el seu certificat de seguretat s'hagi emès de manera fraudulenta. Això pot ser a causa d'una configuració incorrecta o d'un atacant que intercepta la vostra connexió.</translation>
-<translation id="7568616151991626879">Taktak Taktak està provant d'emplenar la teva contrasenya a <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak està provant d'emplenar la teva contrasenya a <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Cap}=1{1 pestanya en aquest dispositiu}other{# pestanyes en aquest dispositiu}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Voleu suprimir la targeta de crèdit de Taktak?</translation>
@@ -4560,7 +4560,7 @@ Detalls addicionals:
 <translation id="8541579497401304453">Connecta amb una empresa iniciant una trucada telefònica.</translation>
 <translation id="8542014550340843547">Grapat triple a la part inferior</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak està provant de modificar la configuració per emplenar les formes de pagament.</translation>
+<translation id="8544217240017914508">Taktak està provant de modificar la configuració per emplenar les formes de pagament.</translation>
 <translation id="8544303911974837265">Polièster</translation>
 <translation id="854548366864113872">Opció de preu alt</translation>
 <translation id="8546254312340305428">Indica el motiu pel qual el vols penjar (obligatori)</translation>

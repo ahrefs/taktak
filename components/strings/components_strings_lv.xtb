@@ -348,7 +348,7 @@ Pretējā gadījumā šī iespēja būtu liegta saskaņā ar jūsu konfidenciali
 <translation id="1567040042588613346">Šī politika darbojas, kā paredzēts, taču citur ir iestatīta tāda pati vērtība, kas tiek ignorēta šīs politikas dēļ.</translation>
 <translation id="1567405528131216114">Pievienot tēmu <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Ievadīt derīguma termiņu</translation>
-<translation id="1569694109004336106">Taktak Taktak mēģina ieslēgt Windows Hello, lai aizpildītu paroles.</translation>
+<translation id="1569694109004336106">Taktak mēģina ieslēgt Windows Hello, lai aizpildītu paroles.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> collas</translation>
 <translation id="1574714699824202614">Maksājuma veida verifikācija</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ Pretējā gadījumā šī iespēja būtu liegta saskaņā ar jūsu konfidenciali
 <translation id="2090451897496479509">Sazinieties ar pakalpojumu sniedzēju, lai iegūtu plašāku informāciju.</translation>
 <translation id="2091887806945687916">Signāls</translation>
 <translation id="2093184051799735948">Meklēt <ph name="ENGINE_NAME" /> tīklā vai ievadīt URL</translation>
-<translation id="2093982008204312032">Taktak Taktak mēģina izslēgt funkciju Windows Hello, kas paredzēta paroļu aizpildei.</translation>
+<translation id="2093982008204312032">Taktak mēģina izslēgt funkciju Windows Hello, kas paredzēta paroļu aizpildei.</translation>
 <translation id="2094505752054353250">Domēni nesaskan</translation>
 <translation id="2094704029599359040">Informācija par versiju</translation>
 <translation id="2099652385553570808">Trīskāršs skavojums kreisajā pusē</translation>
@@ -864,7 +864,7 @@ Pretējā gadījumā šī iespēja būtu liegta saskaņā ar jūsu konfidenciali
 <translation id="2396249848217231973">&amp;Atsaukt dzēšanu</translation>
 <translation id="239708975263889666">Zināmā ceļotāja numura rediģēšana</translation>
 <translation id="2399344929880464793">Šis IBAN ir saglabāts jūsu Taktak kontā, tādējādi varat to izmantot Taktak pakalpojumos.</translation>
-<translation id="2399868464369312507">Pārlūkā Taktak Taktak tiek mēģināts automātiski rediģēt maksājuma veidus.</translation>
+<translation id="2399868464369312507">Pārlūkā Taktak tiek mēģināts automātiski rediģēt maksājuma veidus.</translation>
 <translation id="2400263725572336749">Pases pievienošana</translation>
 <translation id="2400271059665846158">Pārvaldiet lojalitātes kartes lietotnē Taktak maks</translation>
 <translation id="2400600116338235695">Var pieprasīt atļauju veidot savienojumu ar seriālajiem portiem</translation>
@@ -3977,7 +3977,7 @@ Papildu informācija:
 <translation id="7564049878696755256">Varat zaudēt piekļuvi savam <ph name="ORG_NAME" /> kontam, vai jūsu identitāte var tikt nozagta. Taktak iesaka nekavējoties nomainīt paroli.</translation>
 <translation id="7564667064360547717">Krekli un topi</translation>
 <translation id="7567204685887185387">Šis serveris nevarēja pierādīt, ka šī ir vietne <ph name="DOMAIN" />; tās drošības sertifikāts, iespējams, ir izveidots krāpnieciski. Iespējams, tas ir nepareizas konfigurācijas dēļ vai arī kāds ir ļaunprātīgi izmantojis jūsu savienojumu.</translation>
-<translation id="7568616151991626879">Pārlūkā Taktak Taktak tiek mēģināts ievadīt jūsu paroli vietnē <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Pārlūkā Taktak tiek mēģināts ievadīt jūsu paroli vietnē <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Neviena cilne}=1{Viena cilne šajā ierīcē}zero{# ciļņu šajā ierīcē}one{# cilne šajā ierīcē}other{# cilnes šajā ierīcē}}</translation>
 <translation id="7569490014721427265">Golfs</translation>
 <translation id="7569952961197462199">Vai noņemt kredītkarti no pārlūka Taktak?</translation>

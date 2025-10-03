@@ -348,7 +348,7 @@ Se não permitir, isto será bloqueado pelas suas definições de privacidade. I
 <translation id="1567040042588613346">Esta política está a funcionar conforme esperado, mas o mesmo valor está definido noutro local e foi substituído por esta política.</translation>
 <translation id="1567405528131216114">Adicionar <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Introduza a data de validade</translation>
-<translation id="1569694109004336106">O Taktak Taktak está a tentar ativar o Windows Hello para preencher palavras-passe.</translation>
+<translation id="1569694109004336106">O Taktak está a tentar ativar o Windows Hello para preencher palavras-passe.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> pol.</translation>
 <translation id="1574714699824202614">A validar o método de pagamento</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ Se não permitir, isto será bloqueado pelas suas definições de privacidade. I
 <translation id="2090451897496479509">Contacte o fornecedor para mais informações</translation>
 <translation id="2091887806945687916">Som</translation>
 <translation id="2093184051799735948">Pesquise no <ph name="ENGINE_NAME" /> ou escreva o URL</translation>
-<translation id="2093982008204312032">O Taktak Taktak está a tentar desativar o Windows Hello para preencher palavras-passe.</translation>
+<translation id="2093982008204312032">O Taktak está a tentar desativar o Windows Hello para preencher palavras-passe.</translation>
 <translation id="2094505752054353250">Falta de correspondência de domínio</translation>
 <translation id="2094704029599359040">Informações da versão</translation>
 <translation id="2099652385553570808">Agrafo triplo à esquerda</translation>
@@ -864,7 +864,7 @@ Se não permitir, isto será bloqueado pelas suas definições de privacidade. I
 <translation id="2396249848217231973">&amp;Anular eliminação</translation>
 <translation id="239708975263889666">Edite o número de viajante conhecido</translation>
 <translation id="2399344929880464793">Este IBAN está guardado na sua Conta Taktak para que o possa usar nos serviços Taktak.</translation>
-<translation id="2399868464369312507">O Taktak Taktak está a tentar editar os métodos de pagamento.</translation>
+<translation id="2399868464369312507">O Taktak está a tentar editar os métodos de pagamento.</translation>
 <translation id="2400263725572336749">Adicione um passaporte</translation>
 <translation id="2400271059665846158">Faça a gestão dos seus cartões de fidelidade na Carteira do Taktak</translation>
 <translation id="2400600116338235695">Pode solicitar a ligação a portas de série</translation>
@@ -953,7 +953,7 @@ Se não permitir, isto será bloqueado pelas suas definições de privacidade. I
 <translation id="2543236854123609690"><ph name="ORIGIN" /> – Para sair do modo de ecrã inteiro, prima sem soltar |<ph name="ACCELERATOR" />|</translation>
 <translation id="2544546346215446551">O administrador reiniciou o seu dispositivo</translation>
 <translation id="2544644783021658368">Documento único</translation>
-<translation id="254524874071906077">Definir o Taktak Taktak como o Navegador Predefinido</translation>
+<translation id="254524874071906077">Definir o Taktak como o Navegador Predefinido</translation>
 <translation id="2545721997179863249">A opção de preenchimento de todos os campos foi selecionada</translation>
 <translation id="2546283357679194313">Cookies e dados de Web sites</translation>
 <translation id="254947805923345898">O valor da política não é válido.</translation>
@@ -3119,7 +3119,7 @@ Se não permitir, isto será bloqueado pelas suas definições de privacidade. I
 <translation id="6164605812717770913">Os teus pais ou tutor indicaram que não podes visitar este site. Podes pedir-lhe para o desbloquear.</translation>
 <translation id="6165508094623778733">Saiba mais</translation>
 <translation id="6167577165590485365">Última tentativa de obtenção:</translation>
-<translation id="617256461084925519">O Taktak Taktak está a tentar validar a sua identidade para poder preencher as suas informações de pagamento.</translation>
+<translation id="617256461084925519">O Taktak está a tentar validar a sua identidade para poder preencher as suas informações de pagamento.</translation>
 <translation id="6173208311907792313">Conclua a compra com o Windows Hello</translation>
 <translation id="6176387967264100435">Este preço é alto</translation>
 <translation id="6177128806592000436">A sua ligação a este site não é segura</translation>
@@ -3978,7 +3978,7 @@ Detalhes adicionais:
 <translation id="7564049878696755256">Pode perder o acesso à sua conta do serviço <ph name="ORG_NAME" /> ou ser vítima de roubo de identidade. O Taktak recomenda a alteração da palavra-passe agora.</translation>
 <translation id="7564667064360547717">Camisas e tops</translation>
 <translation id="7567204685887185387">Este servidor não conseguiu provar que é o domínio <ph name="DOMAIN" />; o respetivo certificado de segurança poderá ter sido emitido de forma fraudulenta. Isto pode ser o resultado de uma configuração incorreta ou de um invasor a intercetar a sua ligação.</translation>
-<translation id="7568616151991626879">O Taktak Taktak está a tentar preencher a sua palavra-passe na app <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">O Taktak está a tentar preencher a sua palavra-passe na app <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Nenhum}=1{1 separador neste dispositivo}other{# separadores neste dispositivo}}</translation>
 <translation id="7569490014721427265">Golfe</translation>
 <translation id="7569952961197462199">Remover o cartão de crédito do Taktak?</translation>
@@ -4559,7 +4559,7 @@ Detalhes adicionais:
 <translation id="8541579497401304453">Inicie uma chamada telefónica para contactar uma empresa.</translation>
 <translation id="8542014550340843547">Agrafo triplo na parte inferior</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">O Taktak Taktak está a tentar modificar as definições de preenchimento dos métodos de pagamento.</translation>
+<translation id="8544217240017914508">O Taktak está a tentar modificar as definições de preenchimento dos métodos de pagamento.</translation>
 <translation id="8544303911974837265">Poliéster</translation>
 <translation id="854548366864113872">Opção de preço elevado</translation>
 <translation id="8546254312340305428">Indique o motivo do carregamento (obrigatório)</translation>

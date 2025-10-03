@@ -1116,7 +1116,7 @@ Baliteke aplikazioei emandako baimenak kontu honi aplikatzea. <ph name="APPS_LIN
 <translation id="1757301747492736405">Zain dago desinstalazioa</translation>
 <translation id="175772926354468439">Gaitu gaia</translation>
 <translation id="1757786065507923842">Gurasoaren baimena eskatzeko prozesuak huts egin du.</translation>
-<translation id="17584710573359123">Ikusi Taktak Web Store-n</translation>
+<translation id="17584710573359123">Ikusi Chrome Web Store-n</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> botoiari <ph name="REMAPPING_OPTION" /> ekintza esleitu zaio.</translation>
 <translation id="1761845175367251960"><ph name="NAME" /> erabiltzailearen kontuak</translation>
 <translation id="176272781006230109">erosketei buruzko iradokizunak</translation>
@@ -1321,7 +1321,7 @@ Baliteke aplikazioei emandako baimenak kontu honi aplikatzea. <ph name="APPS_LIN
 <translation id="1901760057081700494"><ph name="TIME_ZONE_ENTRY" /> ordu-zona ezarrita dago. Ordu-zona automatikoki eguneratzeko, <ph name="BEGIN_LINK" />eman sistemaren kokapena erabiltzeko baimena<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">Bisitatzen dituzun URLak Taktak-ko kontuan gordetzen dira</translation>
 <translation id="1906181697255754968">Webguneek gailuko fitxategi eta karpetak atzitu ohi dituzte lana automatikoki gordetzeko eta antzeko funtzioak gauzatzeko</translation>
-<translation id="1906488504371069394">Aurkitu luzapen eta gai gehiago <ph name="BEGIN_LINK" />Taktak Web Store-n<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Aurkitu luzapen eta gai gehiago <ph name="BEGIN_LINK" />Chrome Web Store-n<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Idatzi ahotsa erabilita. Erabili Bilaketa + D. Gero, hasi hitz egiten.</translation>
 <translation id="1907659324308286326">Thunderbolt edo USB4 osagarri batzuek memoria erabiltzeko baimena behar dute ongi funtzionatzeko.</translation>
 <translation id="1908591798274282246">Ireki berriro itxitako taldea</translation>
@@ -2064,7 +2064,7 @@ Voice Match-ekin, Taktak-ren Laguntzailea zerbitzuak <ph name="SUPERVISED_USER_N
 <translation id="2412015533711271895">Guraso edo tutore batek luzapena erabiltzeko baimena eman behar dizu</translation>
 <translation id="2412593942846481727">Eguneratu egin daiteke</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Pertsonalizatu arakatzailea are gehiago <ph name="BEGIN_LINK1" />Taktak Web Store-ko<ph name="END_LINK1" /> luzapenekin</translation>
+<translation id="2413009156320833859">Pertsonalizatu arakatzailea are gehiago <ph name="BEGIN_LINK1" />Chrome Web Store-ko<ph name="END_LINK1" /> luzapenekin</translation>
 <translation id="2414159296888870200">Berrekin <ph name="MODULE_TITLE" /> arakatzeari</translation>
 <translation id="2414886740292270097">Iluna</translation>
 <translation id="2415117815770324983">Webgune gehienetako saioa amaitzen du. Taktak-ko kontuko saioa ez da amaituko.</translation>
@@ -2099,7 +2099,7 @@ Voice Match-ekin, Taktak-ren Laguntzailea zerbitzuak <ph name="SUPERVISED_USER_N
 <translation id="2434449159125086437">Ezin da konfiguratu inprimagailua. Egiaztatu konfigurazioa eta saiatu berriro.</translation>
 <translation id="2434758125294431199">Hautatu nork parteka dezakeen zurekin edukia</translation>
 <translation id="2434915728183570229">Orain, telefonoko aplikazioak ikus ditzakezu</translation>
-<translation id="2435137177546457207">Taktak Taktak-ren eta ChromeOS Flex-en baldintza gehigarriak</translation>
+<translation id="2435137177546457207">Taktak-ren eta ChromeOS Flex-en baldintza gehigarriak</translation>
 <translation id="2435248616906486374">Sarea deskonektatu da</translation>
 <translation id="2435457462613246316">Erakutsi pasahitza</translation>
 <translation id="2436385001956947090">Kopiatu esteka</translation>
@@ -2436,7 +2436,7 @@ Voice Match-ekin, Taktak-ren Laguntzailea zerbitzuak <ph name="SUPERVISED_USER_N
 <translation id="266079277508604648">Ezin da konektatu inprimagailura. Egiaztatu piztuta dagoela eta Chromebook-era Wi-Fi edo USB bidez konektatuta dagoela.</translation>
 <translation id="2661315027005813059">Aurreko orria cachean gordetzeko eginbidean gordetako orria: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Arakatu bizkorrago eta erabili datu gutxiago oinarrizko modua eginbideari esker. Egin klik informazio gehiago lortzeko.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">eSIMaren profila gehitzen. Agian minutu batzuk beharko dira.</translation>
 <translation id="2663302507110284145">Hizkuntza</translation>
 <translation id="2665394472441560184">Gehitu beste hitz bat</translation>
@@ -2445,7 +2445,7 @@ Voice Match-ekin, Taktak-ren Laguntzailea zerbitzuak <ph name="SUPERVISED_USER_N
 <translation id="2666247341166669829">Ezkerreko aurikularraren bateria: % <ph name="PERCENTAGE" />.</translation>
 <translation id="2667144577800272420">Esteka berak <ph name="APP_NAME" /> aplikazioarekin irekitzeko konfiguratuta daude beste aplikazio batzuk. <ph name="APP_NAME_2" /> eta <ph name="APP_NAME_3" /> aplikazioek ezingo dute ireki onartzen den estekarik.</translation>
 <translation id="2667463864537187133">Kudeatu ortografia-zuzentzailea</translation>
-<translation id="2668604389652548400">Ken ezazu edo ordez ezazu <ph name="BEGIN_LINK" />Taktak Web Store-ko<ph name="END_LINK" /> antzeko luzapenekin</translation>
+<translation id="2668604389652548400">Ken ezazu edo ordez ezazu <ph name="BEGIN_LINK" />Chrome Web Store-ko<ph name="END_LINK" /> antzeko luzapenekin</translation>
 <translation id="2669241540496514785">Ezin izan da ireki <ph name="APP_NAME" /></translation>
 <translation id="2669454659051515572">Gailu hau darabilen edonork ikus ditzake deskargatutako fitxategiak</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> Taktak-ko fitxa bat partekatzen ari da.</translation>
@@ -2461,7 +2461,7 @@ Voice Match-ekin, Taktak-ren Laguntzailea zerbitzuak <ph name="SUPERVISED_USER_N
 <translation id="267442004702508783">freskatu</translation>
 <translation id="2674764818721168631">Desaktibatuta</translation>
 <translation id="2675716371350192683">Ez da erabiliko zure edukia AA hobetzeko. Ezarpen horiek edonoiz alda ditzake erakundeak.</translation>
-<translation id="2676084251379299915">Enpresaren gidalerroak direla eta, luzapena desgaitu egin da, jadanik ez dagoelako Taktak Web Store-n.</translation>
+<translation id="2676084251379299915">Enpresaren gidalerroak direla eta, luzapena desgaitu egin da, jadanik ez dagoelako Chrome Web Store-n.</translation>
 <translation id="2677748264148917807">Irten</translation>
 <translation id="2678063897982469759">Gaitu berriro</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Fitxa taldea mantendu nahi duzu?}other{Fitxa taldeak mantendu nahi dituzu?}}</translation>
@@ -2860,7 +2860,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="2953210795988451570">Segurtasun-eguneratzeak amaitu dira. Bertsio-berritu beste Chromebook batera.</translation>
 <translation id="2953218713108551165"><ph name="SITE" /> webguneak ez du jakinarazpenak bidaltzeko baimenik. Itzultzen zarenean, berriro galdetuko zaizu.</translation>
 <translation id="2956070239128776395">Talde honetan habiaratuta dago atala: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Luzapena erabiltzeko, aktibatu garatzaile modua. Taktak Web Store-k ezin du berrikusi luzapena.</translation>
+<translation id="2957124229512318478">Luzapena erabiltzeko, aktibatu garatzaile modua. Chrome Web Store-k ezin du berrikusi luzapena.</translation>
 <translation id="2958721676848865875">Pakete-luzapenaren abisua</translation>
 <translation id="2959127025785722291">Arazoren bat izan da. Ezin izan da amaitu azterketa. Saiatu berriro.</translation>
 <translation id="2959474507964749987">Baliteke fitxategi enkriptatu hau birus bat edo malwarea izatea.<ph name="LINE_BREAK" />Segurua den ala ez egiaztatzeko, fitxategia eta pasahitza Taktak-ren Arakatze segurua eginbideari bidal diezaiokezu. Segundo gutxi batzuk behar izaten dira egiaztatzeko.<ph name="LINE_BREAK" />Egiaztatzeko, gehitu fitxategiko pasahitza.</translation>
@@ -2920,7 +2920,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="2996108796702395498">Gailuaren serie-zenbakia <ph name="SERIAL_NUMBER" /> da. Zerbitzua aktibatzeko erabil daiteke zenbaki hori.</translation>
 <translation id="2996286169319737844">Sinkronizazio-pasaesaldiarekin enkriptatu dira datuak. Ez dira hartzen barne Taktak Pay-ko ordainketa-metodoak eta helbideak.</translation>
 <translation id="2996722619877761919">Irauli ertz luzearen noranzkoan</translation>
-<translation id="2998097899774209901">Aktibatuta • Luzapenak Taktak Web Store-ren gidalerroak urratzen ditu</translation>
+<translation id="2998097899774209901">Aktibatuta • Luzapenak Chrome Web Store-ren gidalerroak urratzen ditu</translation>
 <translation id="2998267783395280091">Sare bat aurkitu da</translation>
 <translation id="3000378525979847272">Baimendutako <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="3000461861112256445">Audio monofonikoa</translation>
@@ -2951,7 +2951,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="3012631534724231212">(iframe-a)</translation>
 <translation id="3012804260437125868">Webgune bereko konexio seguruak bakarrik</translation>
 <translation id="3012917896646559015">Jarri harremanetan berehala hardware-fabrikatzailearekin ordenagailua konpontze-lantegi batera bidaltzeko.</translation>
-<translation id="3013652227108802944">Desaktibatuta • Luzapenak Taktak Web Store-ren gidalerroak urratzen ditu</translation>
+<translation id="3013652227108802944">Desaktibatuta • Luzapenak Chrome Web Store-ren gidalerroak urratzen ditu</translation>
 <translation id="301525898020410885">Erakundeak ezartzen du hizkuntza</translation>
 <translation id="3015639418649705390">Exekutatu berriro</translation>
 <translation id="3015651504578568463">Gehitu fitxa konparazio-taula berrian</translation>
@@ -3221,7 +3221,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="3226487301970807183">Erakutsi/Ezkutatu ezkerrean lerrokatutako alboko panela</translation>
 <translation id="322708765617468434">Konfigurazioa amaitu ondoren ere, beste pertsona bat gehi dezakezu gailuan. Bakoitzak bere erabilera pertsonaliza dezake, eta datuak pribatu mantendu.</translation>
 <translation id="3227137524299004712">Mikrofonoa</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Ken ezazu edo ordez ezazu <ph name="BEGIN_LINK" />Taktak Web Store-ko<ph name="END_LINK" /> antzeko luzapenekin}other{Ken itzazu edo ordez itzazu <ph name="BEGIN_LINK" />Taktak Web Store-ko<ph name="END_LINK" /> antzeko luzapenekin}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Ken ezazu edo ordez ezazu <ph name="BEGIN_LINK" />Chrome Web Store-ko<ph name="END_LINK" /> antzeko luzapenekin}other{Ken itzazu edo ordez itzazu <ph name="BEGIN_LINK" />Chrome Web Store-ko<ph name="END_LINK" /> antzeko luzapenekin}}</translation>
 <translation id="3229254977651514276">Egiaztatu data</translation>
 <translation id="3230539834943294477">Irakurri laguntza-artikuluak edo bilatu gailuari buruzko laguntza</translation>
 <translation id="3232168089952388105">Gailuari buruzko informazioa partekatu nahi duzu?</translation>
@@ -4088,7 +4088,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="3810973564298564668">Kudeatu</translation>
 <translation id="381202950560906753">Gehitu beste bat</translation>
 <translation id="3812525830114410218">Ziurtagiri txarra</translation>
-<translation id="3813296892522778813">Behar duzuna aurkitu ezin baduzu, joan <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak laguntzara<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Behar duzuna aurkitu ezin baduzu, joan <ph name="BEGIN_LINK_CHROMIUM" />Taktak laguntzara<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Orriak itzultzeko eta Erantzun bizkorrak eginbiderako erabili den hizkuntza</translation>
 <translation id="3813458570141926987">Taktak-k azkenaldiko arakatze-historian oinarrituta igarritako gaien zerrenda</translation>
 <translation id="3814529970604306954">Ikastetxeko kontua</translation>
@@ -4565,7 +4565,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="4133076602192971179">Ireki aplikazioa pasahitza aldatzeko</translation>
 <translation id="4134838386867070505">1/4 urratsa: azaldu arazoa</translation>
 <translation id="413534985210133938">"<ph name="LOCAL_FOLDER" />" gailu honetan soilik dago gordeta. Laster-marka hau "<ph name="LOCAL_FOLDER" />" karpetara eramaten baduzu, aurrerantzean ez duzu izango beste gailuetan.</translation>
-<translation id="4135746311382563554">Taktak Taktak eta Taktak OS-ren zerbitzu-baldintza gehigarriak</translation>
+<translation id="4135746311382563554">Taktak eta Taktak OS-ren zerbitzu-baldintza gehigarriak</translation>
 <translation id="4136203100490971508">Gaueko argia egunsentian desaktibatuko da automatikoki</translation>
 <translation id="41365691917097717">Aurrera eginez gero, ADB arazketa gaituko da Android-erako aplikazioak sortu eta probatzeko. Kontuan izan ekintza honekin baimendu egiten dela Taktak-k egiaztatu ez dituen Android-erako aplikazioak instalatzeko aukera eta, inoiz tresna hori desgaitu nahi izanez gero, jatorrizko datuak berrezarri beharko direla.</translation>
 <translation id="4137923333452716643">Nabarmendu irakurtzeko moduan ireki nahi duzun testua</translation>
@@ -5579,7 +5579,7 @@ Pantaila txikitzeko, berriz, erabili Ktrl + Alt + Txikitu distira.</translat
 <translation id="4869170227080975044">ChromeOS darabilen sareari buruzko informazioa irakurri.</translation>
 <translation id="4870724079713069532">Onartzen diren fitxategiak aplikazio honekin ireki ditzakezu fitxategi-esploratzailetik edo beste aplikazio batzuetatik. Aplikazio hau modu lehenetsian zein fitxategik irekitzen duten kontrolatzeko, joan <ph name="BEGIN_LINK" />Windows-en ezarpenetara<ph name="END_LINK" />.</translation>
 <translation id="4870995365819149457">Onartzen diren esteka batzuek <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> eta beste aplikazio batean irekitzen jarraituko dute.</translation>
-<translation id="4871308555310586478">Ez da Taktak Web Store-koa.</translation>
+<translation id="4871308555310586478">Ez da Chrome Web Store-koa.</translation>
 <translation id="4871322859485617074">PIN kodeak balio ez duten karaktereak ditu</translation>
 <translation id="4871370605780490696">Gehitu laster-marka</translation>
 <translation id="4871568871368204250">Desaktibatu sinkronizazioa</translation>
@@ -6414,7 +6414,7 @@ Erabilerraztasun-etengailu bat baino gehiago eslei diezazkiokezu ekintza horri.<
 <translation id="5470741195701938302">Zenbakiak</translation>
 <translation id="5471768120198416576">Kaixo! Testua ahots bihurtzeko eginbidearen ahotsa naiz.</translation>
 <translation id="5472627187093107397">Gorde webgune honetako pasahitzak</translation>
-<translation id="5473062644742711742">Erabilerraztasun-tresna gehiago dituzu Taktak Web Store-n</translation>
+<translation id="5473062644742711742">Erabilerraztasun-tresna gehiago dituzu Chrome Web Store-n</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Aurrera eginez gero, onartu egingo duzu litekeena dela gailuak automatikoki deskargatu eta instalatzea Taktak-ren, haurraren operadorearen eta fabrikatzailearen eguneratzeak eta aplikazioak, beharbada datu-konexioa erabilita. Baliteke aplikazio horietako batzuetan erosketak egin ahal izatea.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN kodeak karaktere bat izan behar du gutxienez}other{PIN kodeak # karaktere izan behar ditu gutxienez}}</translation>
@@ -6648,7 +6648,7 @@ Erabilerraztasun-etengailu bat baino gehiago eslei diezazkiokezu ekintza horri.<
 <translation id="5637476008227280525">Gaitu datu-konexioa</translation>
 <translation id="5638170200695981015">Ikusteko eta editatzeko aukera mugatuak erabiltzeko, aukeratu "Ireki oinarrizko editorean".</translation>
 <translation id="563821631542362636">Eman datuak gordetzeko baimena webguneari</translation>
-<translation id="5638309510554459422">Aurkitu luzapenak eta gaiak <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> dendan</translation>
+<translation id="5638309510554459422">Aurkitu luzapenak eta gaiak <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> dendan</translation>
 <translation id="5639549361331209298">Kargatu orria berriro eta, aukera gehiago ikusteko, eduki hau sakatuta</translation>
 <translation id="5640133431808313291">Kudeatu segurtasun-giltzak</translation>
 <translation id="5640159004008030285">Pasahitza gailu honetan soilik gordeta dago. Beste gailuetan erabiltzeko, <ph name="BEGIN_LINK" />gorde ezazu Taktak-ko kontuan<ph name="END_LINK" />.</translation>
@@ -7040,7 +7040,7 @@ Erabilerraztasun-etengailu bat baino gehiago eslei diezazkiokezu ekintza horri.<
 <translation id="5932224571077948991">Webguneak iragarki oztopatzaile edo iruzurrezkoak erakusten ditu</translation>
 <translation id="59324397759951282"><ph name="MANUFACTURER_NAME" /> fabrikatzailearen USB bidezko gailua</translation>
 <translation id="5932441198730183141">Ez dituzu behar adina lizentzia erabilgarri Taktak Meet-en hardware-gailu hau erregistratzeko. Lizentzia gehiago erosteko, jarri salmenta-sailarekin harremanetan. Mezu hau ikusi beharko ez zenukeela uste baduzu, jarri laguntza-zerbitzuarekin harremanetan.</translation>
-<translation id="593271375210025655">Luzapena erabiltzeko, aktibatu garatzaile modua, baina luzapena fidagarria bada soilik. Agian eginbide esperimentalak ditu eta Taktak Web Store-k ez du berrikusi.</translation>
+<translation id="593271375210025655">Luzapena erabiltzeko, aktibatu garatzaile modua, baina luzapena fidagarria bada soilik. Agian eginbide esperimentalak ditu eta Chrome Web Store-k ez du berrikusi.</translation>
 <translation id="5932881020239635062">Serie-zenbakia</translation>
 <translation id="5933376509899483611">Ordu-zona</translation>
 <translation id="5933522550144185133">Kamera eta mikrofonoa erabiltzen ari da <ph name="APP_NAME" /></translation>
@@ -7580,7 +7580,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="6314819609899340042">Behar bezala gaitu dituzu <ph name="IDS_SHORT_PRODUCT_NAME" /> gailuko arazketa-eginbideak.</translation>
 <translation id="6315170314923504164">Ahotsa</translation>
 <translation id="6315493146179903667">Eraman guztiak aurrealdera</translation>
-<translation id="6316432269411143858">Taktak Taktak OS-ren Baldintzen edukia</translation>
+<translation id="6316432269411143858">Taktak OS-ren Baldintzen edukia</translation>
 <translation id="6317369057005134371">Aplikazioaren leihoaren zain…</translation>
 <translation id="6318125393809743217">Gehitu policies.json fitxategi bat gidalerroen konfigurazioekin.</translation>
 <translation id="6318944945640833942">Ezin izan da hauteman inprimagailua. Idatzi inprimagailuaren helbidea berriro.</translation>
@@ -7790,7 +7790,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="6476671549211161535">Sakatu saguaren ezkerreko edo eskuineko botoia ez den botoi bat <ph name="DEVICE_NAME" /> gailuan.</translation>
 <translation id="6477822444490674459">Laneko profileko telefonoetan ezin dira sinkronizatu jakinarazpenak. <ph name="LINK_BEGIN" />Lortu informazio gehiago<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Txertatze bizkorra tekla tabuladorearen azpian dago</translation>
-<translation id="6479881432656947268">Bisitatu Taktak Web Store</translation>
+<translation id="6479881432656947268">Bisitatu Chrome Web Store</translation>
 <translation id="6480327114083866287">Kudeatzailea: <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Partekatu fitxategiak eta bestelako edukia inguruko gailuekin. <ph name="LINK_BEGIN" />Lortu informazio gehiago<ph name="LINK_END" /></translation>
 <translation id="648204537326351595">Eman mikrofonoa erabiltzeko baimena honi: <ph name="SPECIFIC_NAME" /></translation>
@@ -7827,7 +7827,7 @@ Txartel adimenduna sartuta edukitzea eskatzen du <ph name="DOMAIN" /> domeinuak.
 <translation id="6511607461419653612">Berrabiarazi Chromebook-a eta saiatu berriro</translation>
 <translation id="6511827214781912955"><ph name="FILENAME" /> ezabatzea gomendatzen dugu, gailua darabilten gainerakoek zure pasahitzak ikus ez ditzaten</translation>
 <translation id="6512759338201777379">Sortutako <ph name="INDEX" />garren irudia, <ph name="SUBJECT" /> erakusten duena, <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Beste sare batera konektatuta egon ezean, Taktak Taktak aplikazioak datu-konexioa erabiliko du.</translation>
+<translation id="6513247462497316522">Beste sare batera konektatuta egon ezean, Taktak aplikazioak datu-konexioa erabiliko du.</translation>
 <translation id="6514010653036109809">Gailu erabilgarria:</translation>
 <translation id="6516990372629061585">Ikusi Linux-etik inportatutako ziurtagiriak</translation>
 <translation id="6517382055541687102">Hautatutako gailua aldatu da, <ph name="DEVICE_NAME" /> gailura</translation>
@@ -8776,7 +8776,7 @@ Inoiz Voice Match erabiltzeari utzi nahi badiozu, ken ezazu Laguntzailea zerbitz
 <translation id="7180611975245234373">Freskatu</translation>
 <translation id="7180865173735832675">Pertsonalizatu</translation>
 <translation id="7181117767881540376">Ezkutatu laster-marken barra</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> erabiltzaileari etorkizunean luzapenak zure onarpenik gabe instalatzeko baimena emateko, ireki Family Link aplikazioa zure gailuan eta eguneratu <ph name="CHILD_NAME" /> erabiltzailearen Taktak Taktak-ren ezarpenak.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> erabiltzaileari etorkizunean luzapenak zure onarpenik gabe instalatzeko baimena emateko, ireki Family Link aplikazioa zure gailuan eta eguneratu <ph name="CHILD_NAME" /> erabiltzailearen Taktak-ren ezarpenak.</translation>
 <translation id="7181840534454431748">Sartu fitxa taldean <ph name="OWNER_FIRST_NAME" /> erabiltzailearekin
             {NUM_OTHER_MEMBERS,plural, =0{Sartu fitxa taldean <ph name="OWNER_FIRST_NAME" /> erabiltzailearekin}=1{Sartu fitxa taldean <ph name="OWNER_FIRST_NAME" /> eta beste # erabiltzailerekin}other{Sartu fitxa taldean <ph name="OWNER_FIRST_NAME" /> eta beste # erabiltzailerekin}}</translation>
 <translation id="7181976109296206547">Berrikusi eguneratutako logotipoa, izena eta URLa</translation>
@@ -9050,7 +9050,7 @@ Inoiz Voice Match erabiltzeari utzi nahi badiozu, ken ezazu Laguntzailea zerbitz
 <translation id="737728204345822099">Baliteke webgune hau bisitatu izana erregistratzea segurtasun-giltzan.</translation>
 <translation id="7377451353532943397">Jarraitu sentsoreetarako sarbidea blokeatzen</translation>
 <translation id="7377481913241237033">Konektatu kode bat erabilita</translation>
-<translation id="73786666777299047">Ireki Taktak Web Store</translation>
+<translation id="73786666777299047">Ireki Chrome Web Store</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. Beste zeregin bat dago zeregin talde berean: <ph name="OTHER_TASKS" />.}other{<ph name="TASK_ROW" />. Beste # zeregin daude zeregin talde berean: <ph name="OTHER_TASKS" />.}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> webguneak <ph name="FILENAME" /> ikusi ahalko du, eta haren kopiak egin</translation>
 <translation id="7380272457268061606">Gailuko datuak berreskuratzeko zerbitzua desgaitu nahi duzu?</translation>
@@ -11012,7 +11012,7 @@ Gorde gakoen fitxategia leku seguru batean. Zure luzapenaren bertsio berriak sor
 <translation id="8708000541097332489">Garbitu irteterakoan</translation>
 <translation id="870805141700401153">Microsoft-en kode-sinadura esklusiboak</translation>
 <translation id="8708671767545720562">Infor&amp;mazio gehiago</translation>
-<translation id="8709368517685334931">Kolore zaharrak aukeratzeko, joan Taktak Web Store-ra</translation>
+<translation id="8709368517685334931">Kolore zaharrak aukeratzeko, joan Chrome Web Store-ra</translation>
 <translation id="8710414664106871428">Fantasia</translation>
 <translation id="8710550057342691420">Antolatu antzeko fitxak</translation>
 <translation id="8711402221661888347">Hanburgesa</translation>

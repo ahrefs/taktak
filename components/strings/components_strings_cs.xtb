@@ -348,7 +348,7 @@ Jinak to vaše nastavení ochrany soukromí bude blokovat. Povolením umožníte
 <translation id="1567040042588613346">Zásada funguje podle očekávání, ale jinde je nastavena stejná hodnota, kterou tato zásada nahrazuje.</translation>
 <translation id="1567405528131216114">Přidat zájem <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Zadejte datum konce platnosti</translation>
-<translation id="1569694109004336106">Taktak Taktak se pokouší zapnout Windows Hello pro vyplňování hesel.</translation>
+<translation id="1569694109004336106">Taktak se pokouší zapnout Windows Hello pro vyplňování hesel.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> × <ph name="HEIGHT" /> palců</translation>
 <translation id="1574714699824202614">Ověřování platební metody</translation>
 <translation id="1576277203042721907">Statistiky nakupování</translation>
@@ -654,7 +654,7 @@ Jinak to vaše nastavení ochrany soukromí bude blokovat. Povolením umožníte
 <translation id="2090451897496479509">Pro více informací kontaktujte poskytovatele</translation>
 <translation id="2091887806945687916">Zvuk</translation>
 <translation id="2093184051799735948">Vyhledávejte pomocí <ph name="ENGINE_NAME" /> nebo zadejte URL</translation>
-<translation id="2093982008204312032">Taktak Taktak se pokouší zapnout Windows Hello pro vyplňování hesel.</translation>
+<translation id="2093982008204312032">Taktak se pokouší zapnout Windows Hello pro vyplňování hesel.</translation>
 <translation id="2094505752054353250">Neshoda domén</translation>
 <translation id="2094704029599359040">Informace o verzi</translation>
 <translation id="2099652385553570808">Tři sponky vlevo</translation>
@@ -864,7 +864,7 @@ Jinak to vaše nastavení ochrany soukromí bude blokovat. Povolením umožníte
 <translation id="2396249848217231973">&amp;Vrátit smazání zpět</translation>
 <translation id="239708975263889666">Upravit číslo prověřeného cestujícího</translation>
 <translation id="2399344929880464793">Tento kód IBAN je uložen ve vašem účtu Taktak, abyste ho mohli používat v různých službách Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak se pokouší upravit platební metody.</translation>
+<translation id="2399868464369312507">Taktak se pokouší upravit platební metody.</translation>
 <translation id="2400263725572336749">Přidání pasu</translation>
 <translation id="2400271059665846158">Spravovat věrnostní karty v Peněžence Taktak</translation>
 <translation id="2400600116338235695">Může žádat o připojení k sériovým portům</translation>
@@ -3114,7 +3114,7 @@ Kontaktujte administrátora systému.</translation>
 <translation id="6164605812717770913">Tvůj rodič nebo zákonný zástupce si nepřeje, abys tenhle web navštěvoval(a). Můžeš ho požádat o odblokování.</translation>
 <translation id="6165508094623778733">Další informace</translation>
 <translation id="6167577165590485365">Poslední pokus o načtení:</translation>
-<translation id="617256461084925519">Taktak Taktak se pokouší ověřit vaši totožnost, aby mohl vyplnit vaše platební údaje.</translation>
+<translation id="617256461084925519">Taktak se pokouší ověřit vaši totožnost, aby mohl vyplnit vaše platební údaje.</translation>
 <translation id="6173208311907792313">Dokončete nákup pomocí Windows Hello</translation>
 <translation id="6176387967264100435">Tato cena je vysoká</translation>
 <translation id="6177128806592000436">Spojení s tímto webem není bezpečné</translation>
@@ -3973,7 +3973,7 @@ Kontaktujte administrátora systému.</translation>
 <translation id="7564049878696755256">Mohli byste ztratit přístup k účtu <ph name="ORG_NAME" /> nebo by mohlo dojít k odcizení vaší identity. Doporučujeme vám okamžitě změnit heslo.</translation>
 <translation id="7564667064360547717">Trička a topy</translation>
 <translation id="7567204685887185387">Server nedokázal prokázat, že patří doméně <ph name="DOMAIN" />. Jeho bezpečnostní certifikát byl zřejmě vydán podvodně. Může to být způsobeno nesprávnou konfigurací nebo tím, že vaše připojení zachytává útočník.</translation>
-<translation id="7568616151991626879">Taktak Taktak se pokouší vyplnit vaše heslo na webu <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak se pokouší vyplnit vaše heslo na webu <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Žádné}=1{1 karta na tomto zařízení}few{# karty na tomto zařízení}many{# karty na tomto zařízení}other{# karet na tomto zařízení}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Odstranit platební kartu z Chromu?</translation>
@@ -4554,7 +4554,7 @@ Další podrobnosti:
 <translation id="8541579497401304453">Kontaktovat firmu zahájením telefonního hovoru.</translation>
 <translation id="8542014550340843547">Tři sponky dole</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak se pokouší upravit nastavení vyplňování platebních metod.</translation>
+<translation id="8544217240017914508">Taktak se pokouší upravit nastavení vyplňování platebních metod.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Možnost s vysokou cenou</translation>
 <translation id="8546254312340305428">Uveďte důvod nahrání (povinné)</translation>

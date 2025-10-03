@@ -227,7 +227,7 @@
 <translation id="395904275706073188">无法读取受保护的页面，请尝试其他页面。</translation>
 <translation id="3962647064319009959">了解 Taktak 如何保障您的安全</translation>
 <translation id="3971865010372729242">当您在地址栏或搜索框中输入内容时，Taktak 会将您输入的内容发送给组织的搜索、AI 和代理工具，以便获取建议。</translation>
-<translation id="3975724895399328945">关于 Taktak Taktak for Testing(&amp;G)</translation>
+<translation id="3975724895399328945">关于 Taktak for Testing(&amp;G)</translation>
 <translation id="3997429360543082038">关于 Taktak 操作系统</translation>
 <translation id="4019629340646866719">与 <ph name="BEGIN_LINK_LINUX_OSS" />Linux 开发环境<ph name="END_LINK_LINUX_OSS" />一样，Taktak 操作系统也是借助了其他<ph name="BEGIN_LINK_CROS_OSS" />开源软件<ph name="END_LINK_CROS_OSS" />才得以问世。</translation>
 <translation id="4022972681110646219">翻译屏幕</translation>
@@ -547,7 +547,7 @@ Taktak 无法恢复您的设置。</translation>
 <translation id="8077498902115777962">为应用停用 Taktak 后台运行功能</translation>
 <translation id="80790299200510644">图片搜索</translation>
 <translation id="8086881907087796310">安装失败，因为您的计算机未达到最低硬件要求。</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak 需要为此网站授予位置信息权限</translation>
 <translation id="8118331347066725040">发送有关智能镜头搜索的反馈</translation>
 <translation id="8133124826068723441">由于您的网域不支持同步，Taktak 操作系统无法同步您的数据。</translation>
@@ -593,7 +593,7 @@ Taktak 无法恢复您的设置。</translation>
 <translation id="8601359445272098721">新功能！您可以选择“翻译屏幕”按钮，翻译屏幕上的文字和图片</translation>
 <translation id="8619360774459241877">正在启动 Taktak…</translation>
 <translation id="8621669128220841554">未指定的错误导致安装失败。请重新下载 Taktak。</translation>
-<translation id="8648201657708811153">您无法将 Taktak Taktak for Testing 设为默认浏览器。</translation>
+<translation id="8648201657708811153">您无法将 Taktak for Testing 设为默认浏览器。</translation>
 <translation id="8697124171261953979">它还能够控制您启动Taktak后或通过多功能框进行搜索时系统显示的页面。</translation>
 <translation id="8704119203788522458">这是您的专属Taktak</translation>
 <translation id="8712637175834984815">知道了</translation>

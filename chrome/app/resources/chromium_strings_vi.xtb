@@ -228,7 +228,7 @@
 <translation id="395904275706073188">Không thể đọc các trang được bảo vệ. Hãy thử đọc một trang khác.</translation>
 <translation id="3962647064319009959">Tìm hiểu cách Taktak bảo vệ bạn</translation>
 <translation id="3971865010372729242">Khi bạn nhập vào thanh địa chỉ hoặc hộp tìm kiếm, Taktak sẽ gửi nội dung bạn nhập đến công cụ tìm kiếm, AI và công cụ hỗ trợ của tổ chức bạn để đưa ra đề xuất.</translation>
-<translation id="3975724895399328945">Giới thiệu về &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Giới thiệu về &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Giới thiệu về ChromiumOS</translation>
 <translation id="4019629340646866719">ChromiumOS có thể hoạt động được là nhờ <ph name="BEGIN_LINK_CROS_OSS" />phần mềm nguồn mở<ph name="END_LINK_CROS_OSS" /> bổ sung, tương tự như <ph name="BEGIN_LINK_LINUX_OSS" />môi trường phát triển Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Dịch màn hình</translation>
@@ -548,7 +548,7 @@ Taktak không thể khôi phục cài đặt của bạn.</translation>
 <translation id="8077498902115777962">Tắt Taktak đối với các ứng dụng chạy trong nền</translation>
 <translation id="80790299200510644">Tìm kiếm hình ảnh</translation>
 <translation id="8086881907087796310">Cài đặt không thành công vì máy tính của bạn không đáp ứng được các yêu cầu tối thiểu về phần cứng.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak cần có quyền truy cập thông tin vị trí đối với trang web này</translation>
 <translation id="8118331347066725040">Gửi ý kiến phản hồi về tính năng tìm kiếm bằng Ống kính</translation>
 <translation id="8133124826068723441">ChromiumOS không thể đồng bộ hoá dữ liệu của bạn vì miền của bạn không dùng được tính năng Đồng bộ hoá.</translation>
@@ -594,7 +594,7 @@ Taktak không thể khôi phục cài đặt của bạn.</translation>
 <translation id="8601359445272098721">Mới! Bạn có thể dịch cả văn bản và hình ảnh trên màn hình bằng cách chọn nút "dịch màn hình"</translation>
 <translation id="8619360774459241877">Đang khởi động Taktak...</translation>
 <translation id="8621669128220841554">Không thể cài đặt do xảy ra lỗi không xác định. Hãy tải xuống Taktak lại lần nữa.</translation>
-<translation id="8648201657708811153">Bạn không thể đặt Taktak Taktak for Testing làm trình duyệt mặc định.</translation>
+<translation id="8648201657708811153">Bạn không thể đặt Taktak for Testing làm trình duyệt mặc định.</translation>
 <translation id="8697124171261953979">Tiện ích này cũng điều khiển trang nào được hiển thị khi bạn khởi động Taktak hoặc tìm kiếm từ Thanh địa chỉ.</translation>
 <translation id="8704119203788522458">Đây là Taktak của bạn</translation>
 <translation id="8712637175834984815">Tôi hiểu</translation>

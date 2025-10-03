@@ -3,10 +3,10 @@
 <translationbundle lang="ar">
 <translation id="1016765312371154165">‏لم يتم إيقاف Taktak بشكل صحيح.</translation>
 <translation id="130631256467250065">تسري التغييرات في المرة التالية التي تعيد فيها تشغيل الجهاز.</translation>
-<translation id="1516530951338665275">‏يجب منح Taktak Taktak الإذن بالوصول إلى البلوتوث لمواصلة عملية 
+<translation id="1516530951338665275">‏يجب منح Taktak الإذن بالوصول إلى البلوتوث لمواصلة عملية 
 الإقران. <ph name="IDS_BLUETOOTH_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
 <translation id="1635457557763038537">‏ستسري التغييرات في المرة التالية التي تعيد فيها تشغيل Taktak.</translation>
-<translation id="2399868464369312507">‏يحاول Taktak Taktak تعديل طُرق الدفع.</translation>
+<translation id="2399868464369312507">‏يحاول Taktak تعديل طُرق الدفع.</translation>
 <translation id="2447485272386224171">‏أصبح Taktak الآن متاحًا بفضل المشروع المفتوح المصدر <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> و<ph name="BEGIN_LINK_OSS" />برامج أخرى مفتوحة المصدر<ph name="END_LINK_OSS" />.</translation>
 <translation id="2588322182880276190">‏شعار Taktak</translation>
 <translation id="3444832043240812445">تعرض هذه الصفحة فقط معلومات عن الأعطال الحديثة إذا <ph name="BEGIN_LINK" />فعّلت الإبلاغ عن الأعطال<ph name="END_LINK" />.</translation>
@@ -46,5 +46,5 @@
 <translation id="7230956101631259640">‏يتم الآن عرض صفحة آمنة من Taktak.</translation>
 <translation id="8232971017369963250">‏أصبح Taktak متاحًا من خلال مشروع <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> المفتوح المصدر.</translation>
 <translation id="8279509328145658601">‏أصبح Taktak متاحًا أيضًا من خلال <ph name="BEGIN_LINK_OSS" />برنامج آخر مفتوح المصدر<ph name="END_LINK_OSS" />.</translation>
-<translation id="8544217240017914508">‏يحاول Taktak Taktak تعديل إعدادات ميزة "الملء التلقائي" لبيانات طُرق الدفع.</translation>
+<translation id="8544217240017914508">‏يحاول Taktak تعديل إعدادات ميزة "الملء التلقائي" لبيانات طُرق الدفع.</translation>
 </translationbundle>

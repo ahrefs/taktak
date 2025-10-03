@@ -2039,7 +2039,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="2391805183137601570">Otvoriť Steam</translation>
 <translation id="2392369802118427583">Aktivovať</translation>
 <translation id="2393136602862631930">Nastavte aplikáciu <ph name="APP_NAME" /> vo svojom Chromebooku</translation>
-<translation id="2393313392064891208">Obsah zmluvných podmienok systému Taktak Taktak OS Flex</translation>
+<translation id="2393313392064891208">Obsah zmluvných podmienok systému Taktak OS Flex</translation>
 <translation id="2395616325548404795">Zariadenie <ph name="DEVICE_TYPE" /> bolo úspešne zaregistrované na podnikovú správu. Nepodarilo sa však odoslať informácie o obsahu a polohe. Zadajte tieto informácie ručne v Správcovskej konzole pre toto zariadenie.</translation>
 <translation id="2396783860772170191">Zadajte štvorciferný PIN (0000 – 9999)</translation>
 <translation id="2398546389094871088">Obnovením zariadenia pomocou funkcie Powerwash neodstránite profily eSIM karty. Ak chcete tieto profily odstrániť ručne, prejdite do <ph name="LINK_BEGIN" />Nastavení mobilného zariadenia<ph name="LINK_END" />.</translation>
@@ -2101,7 +2101,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="2434449159125086437">Tlačiareň sa nepodarilo nastaviť. Skontrolujte konfiguráciu a skúste to znova.</translation>
 <translation id="2434758125294431199">Vyberte, kto s vami môže zdieľať obsah</translation>
 <translation id="2434915728183570229">Teraz si môžete zobraziť aplikácie svojho telefónu</translation>
-<translation id="2435137177546457207">Dodatočné zmluvné podmienky prehliadača Taktak Taktak a systému Taktak OS Flex</translation>
+<translation id="2435137177546457207">Dodatočné zmluvné podmienky prehliadača Taktak a systému Taktak OS Flex</translation>
 <translation id="2435248616906486374">Sieť je odpojená</translation>
 <translation id="2435457462613246316">Zobraziť heslo</translation>
 <translation id="2436385001956947090">Kopírovať odkaz</translation>
@@ -2438,7 +2438,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="266079277508604648">K tlačiarni sa nepodarilo pripojiť. Skontrolujte, či je zapnutá a pripojená k Chromebooku prostredníctvom Wi-Fi alebo USB.</translation>
 <translation id="2661315027005813059">Stránka v spätnej vyrovnávacej pamäti: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Prehliadajte rýchlejšie a využívajte menej dát pomocou zjednodušeného režimu. Kliknutím získate ďalšie informácie.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Pridáva sa profil eSIM. Môže to niekoľko minút trvať.</translation>
 <translation id="2663302507110284145">Jazyk</translation>
 <translation id="2665394472441560184">Pridať nové slovo</translation>
@@ -3225,7 +3225,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="3226487301970807183">Prepínač zarovnania bočného panela vľavo</translation>
 <translation id="322708765617468434">Po nastavení môžete do zariadenia stále pridať ďalšiu osobu. Každá osoba si môže prispôsobiť účet a uchovať údaje v súkromí.</translation>
 <translation id="3227137524299004712">Mikrofón</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Odstráňte rozšírenie z <ph name="BEGIN_LINK" />Internetového obchodu Taktak<ph name="END_LINK" /> alebo ho nahraďte podobnými.}few{Odstráňte rozšírenia z <ph name="BEGIN_LINK" />Internetového obchodu Taktak<ph name="END_LINK" /> alebo ich nahraďte podobnými.}many{Remove or replace them with similar extensions from the <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}other{Odstráňte rozšírenia z <ph name="BEGIN_LINK" />Internetového obchodu Taktak<ph name="END_LINK" /> alebo ich nahraďte podobnými.}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Odstráňte rozšírenie z <ph name="BEGIN_LINK" />Internetového obchodu Taktak<ph name="END_LINK" /> alebo ho nahraďte podobnými.}few{Odstráňte rozšírenia z <ph name="BEGIN_LINK" />Internetového obchodu Taktak<ph name="END_LINK" /> alebo ich nahraďte podobnými.}many{Remove or replace them with similar extensions from the <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}other{Odstráňte rozšírenia z <ph name="BEGIN_LINK" />Internetového obchodu Taktak<ph name="END_LINK" /> alebo ich nahraďte podobnými.}}</translation>
 <translation id="3229254977651514276">Skontrolujte dátum</translation>
 <translation id="3230539834943294477">Zobrazte si články pomocníka alebo vyhľadajte podporu pre zariadenie</translation>
 <translation id="3232168089952388105">Chcete zdieľať informácie o svojom zariadení?</translation>
@@ -4069,7 +4069,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="3798670284305777884">Reproduktor (vnútorný)</translation>
 <translation id="3799128412641261490">Nastavenia ovládania prepínačmi</translation>
 <translation id="3800764353337460026">Štýl symbolov</translation>
-<translation id="3800828618615365228">Dodatočné zmluvné podmienky prehliadača Taktak Taktak a systému Taktak OS</translation>
+<translation id="3800828618615365228">Dodatočné zmluvné podmienky prehliadača Taktak a systému Taktak OS</translation>
 <translation id="3800898876950197674">Ak chcete toto rozšírenie povoliť, zadajte heslo.</translation>
 <translation id="3801449494961771207">Hlas prevodu textu na reč systému</translation>
 <translation id="3802486193901166966">Toto rozšírenie nevyžaduje žiadne špeciálne povolenia ani nemá žiadny ďalší prístup k webu</translation>
@@ -4092,7 +4092,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="3810973564298564668">Spravovať</translation>
 <translation id="381202950560906753">Pridať ďalší</translation>
 <translation id="3812525830114410218">Nesprávny certifikát</translation>
-<translation id="3813296892522778813">Ak neviete nájsť požadovaný obsah, prejdite do <ph name="BEGIN_LINK_CHROMIUM" />pomocníka Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Ak neviete nájsť požadovaný obsah, prejdite do <ph name="BEGIN_LINK_CHROMIUM" />pomocníka Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Jazyk, do ktorého boli preložené stránky a rýchle odpovede</translation>
 <translation id="3813458570141926987">Zoznam tém odhadnutých Chromom na základe vašej nedávnej histórie prehliadania</translation>
 <translation id="3814529970604306954">Školský účet</translation>
@@ -4569,7 +4569,7 @@ Ak chcete spravovať nastavenia tohto účtu, nainštalujte si do zariadenia apl
 <translation id="4133076602192971179">Otvoriť aplikáciu a zmeniť heslo</translation>
 <translation id="4134838386867070505">1. krok zo 4: opíšte problém</translation>
 <translation id="413534985210133938">Záložka <ph name="LOCAL_FOLDER" /> je uložená iba v tomto zariadení. Ak ju presuniete do priečinka <ph name="LOCAL_FOLDER" />, už ju nebudete mať k dispozícii vo svojich ďalších zariadeniach.</translation>
-<translation id="4135746311382563554">Dodatočné zmluvné podmienky prehliadača Taktak Taktak a systému Taktak OS</translation>
+<translation id="4135746311382563554">Dodatočné zmluvné podmienky prehliadača Taktak a systému Taktak OS</translation>
 <translation id="4136203100490971508">Nočný režim sa automaticky vypne pri východe slnka</translation>
 <translation id="41365691917097717">Pokračovaním aktivujete ladenie ADB na vytváranie a testovanie aplikácií pre Android. Upozorňujeme, že touto akciou umožníte inštalácie aplikácií pre Android, ktoré Taktak neoveril, a deaktivácia vyžaduje obnovenie výrobných nastavení.</translation>
 <translation id="4137923333452716643">Zvýraznite text, ktorý chcete zobraziť v režime čítania</translation>
@@ -7587,7 +7587,7 @@ Tejto akcii môžete prideliť viacero prepínačov.</translation>
 <translation id="6314819609899340042">Na tomto zariadení <ph name="IDS_SHORT_PRODUCT_NAME" /> ste úspešne aktivovali funkcie ladenia.</translation>
 <translation id="6315170314923504164">Hlas</translation>
 <translation id="6315493146179903667">Zobraziť všetko navrchu</translation>
-<translation id="6316432269411143858">Obsah zmluvných podmienok systému Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Obsah zmluvných podmienok systému Taktak OS</translation>
 <translation id="6317369057005134371">Čaká sa na okno aplikácie...</translation>
 <translation id="6318125393809743217">Zahŕňať súbor policies.json s konfiguráciami pravidiel</translation>
 <translation id="6318944945640833942">Nepodarilo sa rozpoznať tlačiareň. Znova zadajte adresu tlačiarne.</translation>
@@ -7834,7 +7834,7 @@ Tejto akcii môžete prideliť viacero prepínačov.</translation>
 <translation id="6511607461419653612">Reštartujte Chromebook a skúste to znova</translation>
 <translation id="6511827214781912955">Zvážte odstránenie súboru <ph name="FILENAME" />, aby si ostatní používatelia tohto zariadenia nemohli zobraziť vaše heslá</translation>
 <translation id="6512759338201777379"><ph name="INDEX" />. vygenerovaný obrázok z <ph name="SUBJECT" /> vyjadrujúci náladu <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Ak nebudete mať pripojenie k inej sieti, prehliadač Taktak Taktak použije mobilné dáta.</translation>
+<translation id="6513247462497316522">Ak nebudete mať pripojenie k inej sieti, prehliadač Taktak použije mobilné dáta.</translation>
 <translation id="6514010653036109809">Dostupné zariadenie:</translation>
 <translation id="6516990372629061585">Zobraziť certifikáty importované zo systému Linux</translation>
 <translation id="6517382055541687102">Vybrané zariadenie bolo zmenené na <ph name="DEVICE_NAME" /></translation>
@@ -8788,7 +8788,7 @@ Máte ešte # ďalších. Správca hesiel Taktak odporúča okamžite dané hes
 <translation id="7180611975245234373">Obnoviť</translation>
 <translation id="7180865173735832675">Prispôsobiť</translation>
 <translation id="7181117767881540376">&amp;Skryť panel so záložkami</translation>
-<translation id="7181329571386134105">Ak chcete dieťaťu <ph name="CHILD_NAME" /> povoliť inštalovať v budúcnosti rozšírenia bez vášho schválenia, otvorte vo svojom zariadení aplikáciu Family Link a aktualizujte nastavenia prehliadača Taktak Taktak dieťaťa <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Ak chcete dieťaťu <ph name="CHILD_NAME" /> povoliť inštalovať v budúcnosti rozšírenia bez vášho schválenia, otvorte vo svojom zariadení aplikáciu Family Link a aktualizujte nastavenia prehliadača Taktak dieťaťa <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Pripojte sa ku skupine s používateľom <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Pripojte sa ku skupine s používateľom <ph name="OWNER_FIRST_NAME" />}=1{Pripojte sa ku skupine s používateľom <ph name="OWNER_FIRST_NAME" /> a # ďalším}few{Pripojte sa ku skupine s používateľom <ph name="OWNER_FIRST_NAME" /> a # ďalšími}many{Join Tab Group with <ph name="OWNER_FIRST_NAME" /> and # Others}other{Pripojte sa ku skupine s používateľom <ph name="OWNER_FIRST_NAME" /> a # ďalšími}}</translation>
 <translation id="7181976109296206547">Kontrola aktualizácií loga, názvu a webovej adresy</translation>

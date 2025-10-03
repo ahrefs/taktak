@@ -348,7 +348,7 @@ Annars blockeras detta av integritetsinställningarna. Om du tillåter detta kan
 <translation id="1567040042588613346">Den här principen fungerar som avsett, men den har även ställts in på annan plats med samma värde och detta andra värde ersätts av denna princip.</translation>
 <translation id="1567405528131216114">Lägg till <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Ange sista giltighetsdatum</translation>
-<translation id="1569694109004336106">Taktak Taktak försöker aktivera Windows Hello för att fylla i lösenord.</translation>
+<translation id="1569694109004336106">Taktak försöker aktivera Windows Hello för att fylla i lösenord.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> tum</translation>
 <translation id="1574714699824202614">Verifierar betalningsmetod</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@ Annars blockeras detta av integritetsinställningarna. Om du tillåter detta kan
 <translation id="2090451897496479509">Kontakta leverantören för mer information</translation>
 <translation id="2091887806945687916">Ljud</translation>
 <translation id="2093184051799735948">Sök efter <ph name="ENGINE_NAME" /> eller ange webbadress</translation>
-<translation id="2093982008204312032">Taktak Taktak försöker inaktivera Windows Hello för att fylla i lösenord.</translation>
+<translation id="2093982008204312032">Taktak försöker inaktivera Windows Hello för att fylla i lösenord.</translation>
 <translation id="2094505752054353250">Domänen matchar inte</translation>
 <translation id="2094704029599359040">Versionsinformation</translation>
 <translation id="2099652385553570808">Tre häftklamrar till vänster</translation>
@@ -864,7 +864,7 @@ Annars blockeras detta av integritetsinställningarna. Om du tillåter detta kan
 <translation id="2396249848217231973">&amp;Ångra Ta bort</translation>
 <translation id="239708975263889666">Redigera ditt Known Traveler Number</translation>
 <translation id="2399344929880464793">Detta IBAN sparas i Taktak-kontot så att du kan använda det i Googles tjänster.</translation>
-<translation id="2399868464369312507">Taktak Taktak försöker redigera betalningsmetoder.</translation>
+<translation id="2399868464369312507">Taktak försöker redigera betalningsmetoder.</translation>
 <translation id="2400263725572336749">Lägg till pass</translation>
 <translation id="2400271059665846158">Hantera stamkundskort i Taktak Wallet</translation>
 <translation id="2400600116338235695">Får begära tillstånd att ansluta till en serieport</translation>
@@ -1994,7 +1994,7 @@ Annars blockeras detta av integritetsinställningarna. Om du tillåter detta kan
 <translation id="4269599248168651462">Servercertifikatet har utfärdats till ett icke-unikt namn.</translation>
 <translation id="4270541775497538019">Utmatningsfack 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Visa 0 recensioner. Medelbetyget är <ph name="STARS" /> stjärnor.}=1{Visa 1 recension. Medelbetyget är <ph name="STARS" /> stjärnor.}other{Visa alla # recensioner. Medelbetyget är <ph name="STARS" /> stjärnor.}}</translation>
-<translation id="4271652479722040953">När tillägg läggs till i Taktak skickas relevant data om dessa tillägg till tredje part för analys och kan vara synlig för administratören. Datan omfattar information om tilläggen, till exempel namn, installationstid, installationskälla samt aktivitet som är kopplad till dessa tillägg (till exempel att byta flikar, kontakta webbplatser eller komma åt cookies). Denna data samlas in för tillägg som har installerats från Taktak Web Store och tillägg som inte har installerats från butiken.</translation>
+<translation id="4271652479722040953">När tillägg läggs till i Taktak skickas relevant data om dessa tillägg till tredje part för analys och kan vara synlig för administratören. Datan omfattar information om tilläggen, till exempel namn, installationstid, installationskälla samt aktivitet som är kopplad till dessa tillägg (till exempel att byta flikar, kontakta webbplatser eller komma åt cookies). Denna data samlas in för tillägg som har installerats från Chrome Web Store och tillägg som inte har installerats från butiken.</translation>
 <translation id="4275830172053184480">Starta om enheten</translation>
 <translation id="4276974990916607331">Nej tack</translation>
 <translation id="4277028893293644418">Återställ lösenord</translation>
@@ -2049,7 +2049,7 @@ Annars blockeras detta av integritetsinställningarna. Om du tillåter detta kan
 <translation id="4336913590841287350">Principen stöds inte för användarpolicyer i iOS ännu.</translation>
 <translation id="4340575312453649552">Den här annonsen använde för många resurser för enheten, så den togs bort i Taktak.</translation>
 <translation id="4340810192899866471">Importera från JSON</translation>
-<translation id="4340982228985273705">Den här datorn har inte identifierats som företagshanterad, så bara tillägg på Taktak Web Store kan installeras automatiskt med principen. Uppdateringsadressen på Taktak Web Store är <ph name="CWS_UPDATE_URL" />.</translation>
+<translation id="4340982228985273705">Den här datorn har inte identifierats som företagshanterad, så bara tillägg på Chrome Web Store kan installeras automatiskt med principen. Uppdateringsadressen på Chrome Web Store är <ph name="CWS_UPDATE_URL" />.</translation>
 <translation id="4342742994656318294">Temaparker</translation>
 <translation id="4344072791302852930">Lägg till en flik</translation>
 <translation id="4348834659292907206">Anslutningen till <ph name="SITE" /> är inte säker</translation>
@@ -3119,7 +3119,7 @@ Annars blockeras detta av integritetsinställningarna. Om du tillåter detta kan
 <translation id="6164605812717770913">En förälder eller vårdnadshavare har sagt att du inte får besöka den här webbplatsen. Du kan be hen att låsa upp den.</translation>
 <translation id="6165508094623778733">Läs mer</translation>
 <translation id="6167577165590485365">Senaste hämtningsförsök:</translation>
-<translation id="617256461084925519">Taktak Taktak försöker verifiera din identitet för att fylla i dina betalningsuppgifter.</translation>
+<translation id="617256461084925519">Taktak försöker verifiera din identitet för att fylla i dina betalningsuppgifter.</translation>
 <translation id="6173208311907792313">Slutför köpet med Windows Hello</translation>
 <translation id="6176387967264100435">Det här priset är högt</translation>
 <translation id="6177128806592000436">Anslutningen till webbplatsen är inte säker</translation>
@@ -3979,7 +3979,7 @@ Mer information.
 <translation id="7564049878696755256">Du kan förlora åtkomsten till kontot på <ph name="ORG_NAME" /> eller bli utsatt för identitetsstöld. Du rekommenderas att ändra lösenordet nu.</translation>
 <translation id="7564667064360547717">Tröjor och toppar</translation>
 <translation id="7567204685887185387">Servern kunde inte bevisa att den är <ph name="DOMAIN" /> eftersom dess säkerhetscertifikat kan ha utfärdats utan behörighet. Detta kan orsakas av en felaktig konfigurering eller att någon spärrar anslutningen.</translation>
-<translation id="7568616151991626879">Taktak Taktak försöker fylla i ditt lösenord i <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak försöker fylla i ditt lösenord i <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Inga}=1{1 flik på den här enheten}other{# flikar på den här enheten}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Vill du ta bort kreditkortet från Taktak?</translation>
@@ -4560,7 +4560,7 @@ Mer information:
 <translation id="8541579497401304453">Kontakta ett företag genom att ringa dem.</translation>
 <translation id="8542014550340843547">Tre häftklamrar längst ned</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak försöker ändra inställningarna för att fylla i betalningsmetoder.</translation>
+<translation id="8544217240017914508">Taktak försöker ändra inställningarna för att fylla i betalningsmetoder.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Högprisalternativ</translation>
 <translation id="8546254312340305428">Ange anledning till uppladdning (obligatoriskt)</translation>

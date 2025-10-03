@@ -1116,7 +1116,7 @@ Rechten die je al hebt gegeven aan apps, kunnen van toepassing zijn op dit accou
 <translation id="1757301747492736405">Verwijderen in behandeling</translation>
 <translation id="175772926354468439">Thema aanzetten</translation>
 <translation id="1757786065507923842">Verzoek om ouderlijke toestemming mislukt.</translation>
-<translation id="17584710573359123">Bekijken in de Taktak Web Store</translation>
+<translation id="17584710573359123">Bekijken in de Chrome Web Store</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> opnieuw toegewezen aan <ph name="REMAPPING_OPTION" />.</translation>
 <translation id="1761845175367251960">Accounts van <ph name="NAME" /></translation>
 <translation id="176272781006230109">winkelsuggesties</translation>
@@ -1321,7 +1321,7 @@ Rechten die je al hebt gegeven aan apps, kunnen van toepassing zijn op dit accou
 <translation id="1901760057081700494">De tijdzone is op dit moment ingesteld op <ph name="TIME_ZONE_ENTRY" />. Als je de tijdzone automatisch wilt updaten, <ph name="BEGIN_LINK" />zet je locatietoegang voor het systeem aan<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">De URL's die je bezoekt, worden opgeslagen in je Taktak-account</translation>
 <translation id="1906181697255754968">Sites vragen meestal toegang tot bestanden en mappen op je apparaat voor functies zoals het automatisch opslaan van je werk</translation>
-<translation id="1906488504371069394">Ontdek meer extensies en thema's in de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Ontdek meer extensies en thema's in de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Typ met je stem. Gebruik Zoeken + D en begin met praten.</translation>
 <translation id="1907659324308286326">Sommige Thunderbolt- of USB4-accessoires hebben toegang tot het geheugen nodig om goed te kunnen werken.</translation>
 <translation id="1908591798274282246">Gesloten groep heropenen</translation>
@@ -2037,7 +2037,7 @@ Als je later besluit dat je niet wilt dat je kind Voice Match gebruikt, verwijde
 <translation id="2391805183137601570">Steam openen</translation>
 <translation id="2392369802118427583">Activeren</translation>
 <translation id="2393136602862631930"><ph name="APP_NAME" /> instellen op je Chromebook</translation>
-<translation id="2393313392064891208">Content van Voorwaarden van Taktak Taktak OS Flex</translation>
+<translation id="2393313392064891208">Content van Voorwaarden van Taktak OS Flex</translation>
 <translation id="2395616325548404795">Je <ph name="DEVICE_TYPE" /> is aangemeld voor bedrijfsbeheer, maar kan de item- en locatiegegevens niet verzenden. Voer deze gegevens handmatig in via je Beheerdersconsole voor dit apparaat.</translation>
 <translation id="2396783860772170191">Voer een viercijferige pincode in (0000-9999)</translation>
 <translation id="2398546389094871088">Als je de Powerwash-functie op je apparaat gebruikt, worden je e-simkaartprofielen niet verwijderd. Ga naar <ph name="LINK_BEGIN" />Mobiele instellingen<ph name="LINK_END" /> om deze profielen handmatig te verwijderen.</translation>
@@ -2064,7 +2064,7 @@ Als je later besluit dat je niet wilt dat je kind Voice Match gebruikt, verwijde
 <translation id="2412015533711271895">Je ouder of voogd moet toestemming geven dat je deze extensie mag gebruiken</translation>
 <translation id="2412593942846481727">Update beschikbaar</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Pas je browser verder aan met extensies uit de <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /></translation>
+<translation id="2413009156320833859">Pas je browser verder aan met extensies uit de <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /></translation>
 <translation id="2414159296888870200">Browsen hervatten voor <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Donker</translation>
 <translation id="2415117815770324983">Hiermee word je uitgelogd bij de meeste sites. Je blijft ingelogd op je Taktak-account.</translation>
@@ -2099,7 +2099,7 @@ Dit heeft geen gevolgen voor bookmarks, geschiedenis en opgeslagen wachtwoorden.
 <translation id="2434449159125086437">Kan de printer niet instellen. Controleer de configuratie en probeer het opnieuw.</translation>
 <translation id="2434758125294431199">Selecteer wie content met jou kan delen</translation>
 <translation id="2434915728183570229">Je kunt nu de apps van je telefoon bekijken</translation>
-<translation id="2435137177546457207">Aanvullende voorwaarden van Taktak Taktak en Taktak OS Flex</translation>
+<translation id="2435137177546457207">Aanvullende voorwaarden van Taktak en Taktak OS Flex</translation>
 <translation id="2435248616906486374">Geen verbinding met netwerk</translation>
 <translation id="2435457462613246316">Wachtwoord bekijken</translation>
 <translation id="2436385001956947090">&amp;Link kopiëren</translation>
@@ -2436,7 +2436,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="266079277508604648">Verbinding met printer niet mogelijk. Controleer of de printer is aangezet en via wifi of USB is verbonden met je Chromebook.</translation>
 <translation id="2661315027005813059">Pagina in Back-Forward Cache: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Browse sneller en verbruik minder data in de Lite-versie. Klik voor meer informatie.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">E-simkaartprofiel wordt toegevoegd. Dit kan een paar minuten duren.</translation>
 <translation id="2663302507110284145">Taal</translation>
 <translation id="2665394472441560184">Een nieuw woord toevoegen</translation>
@@ -2445,7 +2445,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="2666247341166669829">Batterijniveau links: <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">Andere apps zijn ingesteld om dezelfde links te openen als <ph name="APP_NAME" />. Hiermee zet je uit dat <ph name="APP_NAME_2" /> en <ph name="APP_NAME_3" /> ondersteunde links openen.</translation>
 <translation id="2667463864537187133">Spellingcontrole beheren</translation>
-<translation id="2668604389652548400">Verwijder de extensie of vervang deze door een vergelijkbare extensie uit de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Verwijder de extensie of vervang deze door een vergelijkbare extensie uit de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785">Kan <ph name="APP_NAME" /> niet openen</translation>
 <translation id="2669454659051515572">Iedereen die dit apparaat gebruikt, kan gedownloade bestanden zien</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> deelt een Taktak-tabblad.</translation>
@@ -2461,7 +2461,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="267442004702508783">vernieuwen</translation>
 <translation id="2674764818721168631">Uit</translation>
 <translation id="2675716371350192683">Je content wordt niet gebruikt om AI te verbeteren. Je organisatie kan deze instellingen op elk moment wijzigen.</translation>
-<translation id="2676084251379299915">Deze extensie is uitgezet op basis van bedrijfsbeleid omdat de extensie niet meer beschikbaar is in de Taktak Web Store.</translation>
+<translation id="2676084251379299915">Deze extensie is uitgezet op basis van bedrijfsbeleid omdat de extensie niet meer beschikbaar is in de Chrome Web Store.</translation>
 <translation id="2677748264148917807">Verlaten</translation>
 <translation id="2678063897982469759">Opnieuw aanzetten</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Tabbladgroep behouden?}other{Tabbladgroepen behouden?}}</translation>
@@ -2860,7 +2860,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="2953210795988451570">Beveiligingsupdates zijn beëindigd. Upgrade naar een nieuwe Chromebook.</translation>
 <translation id="2953218713108551165">Meldingen niet toegestaan voor <ph name="SITE" />. Dit wordt volgende keer opnieuw gevraagd.</translation>
 <translation id="2956070239128776395">Onderliggende sectie in groep: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Zet de ontwikkelaarsmodus aan om deze extensie te gebruiken. De extensie kan niet worden beoordeeld door de Taktak Web Store.</translation>
+<translation id="2957124229512318478">Zet de ontwikkelaarsmodus aan om deze extensie te gebruiken. De extensie kan niet worden beoordeeld door de Chrome Web Store.</translation>
 <translation id="2958721676848865875">Waarschuwing over pakketextensie</translation>
 <translation id="2959127025785722291">Er is iets misgegaan. De scan kan niet worden voltooid. Probeer het opnieuw.</translation>
 <translation id="2959474507964749987">Dit versleutelde bestand is misschien een virus of malware.<ph name="LINE_BREAK" />Als je wilt checken of het bestand onveilig is, kun je het bestand en wachtwoord naar Taktak Safe Browsing sturen. Scans duren meestal een paar seconden.<ph name="LINE_BREAK" />Voeg het wachtwoord van het bestand toe om het bestand te scannen.</translation>
@@ -2920,7 +2920,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="2996108796702395498">Het serienummer van je apparaat is <ph name="SERIAL_NUMBER" />. Met dit nummer kun je de service activeren.</translation>
 <translation id="2996286169319737844">De gegevens zijn versleuteld met je wachtwoordzin voor synchronisatie. Hieronder vallen geen betaalmethoden en adressen van Taktak Pay.</translation>
 <translation id="2996722619877761919">Omslaan aan lange zijde</translation>
-<translation id="2998097899774209901">Aan • Deze extensie schendt het beleid voor de Taktak Web Store</translation>
+<translation id="2998097899774209901">Aan • Deze extensie schendt het beleid voor de Chrome Web Store</translation>
 <translation id="2998267783395280091">Netwerk gevonden</translation>
 <translation id="3000378525979847272">Rechten voor <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /> toegestaan</translation>
 <translation id="3000461861112256445">Monogeluid</translation>
@@ -2951,7 +2951,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">Alleen beveiligde verbindingen binnen dezelfde site</translation>
 <translation id="3012917896646559015">Neem onmiddellijk contact op met je hardwarefabrikant om je computer op te sturen voor reparatie.</translation>
-<translation id="3013652227108802944">Uit • Deze extensie schendt het beleid voor de Taktak Web Store</translation>
+<translation id="3013652227108802944">Uit • Deze extensie schendt het beleid voor de Chrome Web Store</translation>
 <translation id="301525898020410885">Taal is ingesteld door je organisatie</translation>
 <translation id="3015639418649705390">Nu opnieuw starten</translation>
 <translation id="3015651504578568463">Tabblad toevoegen aan nieuwe vergelijkingstabel</translation>
@@ -3221,7 +3221,7 @@ Je kunt instellingen op deze kaart altijd beheren of meer opties bekijken in het
 <translation id="3226487301970807183">Links uitgelijnd zijvenster schakelen</translation>
 <translation id="322708765617468434">Na het instellen kun je altijd iemand anders aan het apparaat toevoegen. Ze kunnen ieder hun functionaliteit personaliseren en gegevens privé houden.</translation>
 <translation id="3227137524299004712">Microfoon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Verwijder de extensie of vervang deze door een vergelijkbare extensie uit de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{Verwijder de extensies of vervang ze door vergelijkbare extensies uit de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Verwijder de extensie of vervang deze door een vergelijkbare extensie uit de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{Verwijder de extensies of vervang ze door vergelijkbare extensies uit de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Check de datum</translation>
 <translation id="3230539834943294477">Help-artikelen bekijken of support voor apparaten vinden</translation>
 <translation id="3232168089952388105">Informatie over je apparaat delen?</translation>
@@ -4027,7 +4027,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="3775432569830822555">SSL-servercertificaat</translation>
 <translation id="3775705724665058594">Naar je apparaten sturen</translation>
 <translation id="3776508619697147021">Sites kunnen vragen of ze automatisch meerdere bestanden mogen downloaden</translation>
-<translation id="3776796446459804932">Deze extensie schendt het beleid voor de Taktak Web Store.</translation>
+<translation id="3776796446459804932">Deze extensie schendt het beleid voor de Chrome Web Store.</translation>
 <translation id="3777483481409781352">Kan mobiel apparaat niet activeren</translation>
 <translation id="3777796259512476958">Hiermee word je uitgelogd van de meeste sites</translation>
 <translation id="3778208826288864398">De beveiligingssleutel is vergrendeld omdat je te vaak een onjuiste pincode hebt ingevoerd. De beveiligingssleutel moet worden gereset.</translation>
@@ -4065,7 +4065,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="3798670284305777884">Luidspreker (intern)</translation>
 <translation id="3799128412641261490">Instellingen voor 'Toegang via schakelaar'</translation>
 <translation id="3800764353337460026">Stijl van symbolen</translation>
-<translation id="3800828618615365228">Aanvullende voorwaarden van Taktak Taktak en Taktak OS</translation>
+<translation id="3800828618615365228">Aanvullende voorwaarden van Taktak en Taktak OS</translation>
 <translation id="3800898876950197674">Voer je wachtwoord in om deze extensie toe te staan.</translation>
 <translation id="3801449494961771207">Systeemstem voor tekst-naar-spraak</translation>
 <translation id="3802486193901166966">Deze extensie vereist geen speciale rechten en heeft geen aanvullende sitetoegang nodig</translation>
@@ -4088,7 +4088,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="3810973564298564668">Beheren</translation>
 <translation id="381202950560906753">Nog een toevoegen</translation>
 <translation id="3812525830114410218">Verkeerd certificaat</translation>
-<translation id="3813296892522778813">Ga naar de <ph name="BEGIN_LINK_CHROMIUM" />Hulp van Taktak Taktak<ph name="END_LINK_CHROMIUM" /> als je niet kunt vinden wat je zoekt</translation>
+<translation id="3813296892522778813">Ga naar de <ph name="BEGIN_LINK_CHROMIUM" />Hulp van Taktak<ph name="END_LINK_CHROMIUM" /> als je niet kunt vinden wat je zoekt</translation>
 <translation id="3813358687923336574">Gebruikte taal om pagina's te vertalen en voor snelle antwoorden</translation>
 <translation id="3813458570141926987">Lijst met door Taktak geschatte onderwerpen op basis van je recente browsegeschiedenis</translation>
 <translation id="3814529970604306954">Schoolaccount</translation>
@@ -4564,7 +4564,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="4133076602192971179">Open de app om je wachtwoord te wijzigen</translation>
 <translation id="4134838386867070505">Stap 1 van 4: Beschrijf het probleem</translation>
 <translation id="413534985210133938"><ph name="LOCAL_FOLDER" /> is alleen opgeslagen op dit apparaat. Als je de bookmark naar <ph name="LOCAL_FOLDER" /> verplaatst, krijg je deze niet meer op je andere apparaten.</translation>
-<translation id="4135746311382563554">Aanvullende servicevoorwaarden van Taktak Taktak en Taktak OS</translation>
+<translation id="4135746311382563554">Aanvullende servicevoorwaarden van Taktak en Taktak OS</translation>
 <translation id="4136203100490971508">Nachtverlichting wordt automatisch uitgezet bij zonsopkomst</translation>
 <translation id="41365691917097717">Als je doorgaat, wordt ADB-foutopsporing aangezet om Android-apps te maken en te testen. Let op: Met deze actie sta je toe dat Android-apps worden geïnstalleerd die niet door Taktak zijn geverifieerd. Als je deze functie wilt uitzetten, moeten de fabrieksinstellingen van je apparaat worden hersteld.</translation>
 <translation id="4137923333452716643">Markeer de tekst die je in de leesmodus wilt openen</translation>
@@ -5578,7 +5578,7 @@ Gebruik Ctrl + Alt + Helderheid omlaag om uit te zoomen.</translation>
 <translation id="4869170227080975044">ChromeOS-netwerkgegevens lezen</translation>
 <translation id="4870724079713069532">Je kunt ondersteunde bestanden openen en bewerken met deze app vanuit de bestandsverkenner of andere apps. Ga naar de <ph name="BEGIN_LINK" />Windows-instellingen<ph name="END_LINK" /> om te bepalen welke bestanden standaard worden geopend in deze app.</translation>
 <translation id="4870995365819149457">Bepaalde ondersteunde links worden nog steeds geopend in <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> en 1 andere app.</translation>
-<translation id="4871308555310586478">Niet via de Taktak Web Store.</translation>
+<translation id="4871308555310586478">Niet via de Chrome Web Store.</translation>
 <translation id="4871322859485617074">Pincode bevat ongeldige tekens</translation>
 <translation id="4871370605780490696">Bookmark toevoegen</translation>
 <translation id="4871568871368204250">Synchronisatie uitzetten</translation>
@@ -6413,7 +6413,7 @@ Je kunt meerdere schakelaars toewijzen aan deze actie.</translation>
 <translation id="5470741195701938302">Cijfers</translation>
 <translation id="5471768120198416576">Hallo. Ik ben je stem voor tekst-naar-spraak.</translation>
 <translation id="5472627187093107397">Wachtwoorden voor deze site opslaan</translation>
-<translation id="5473062644742711742">Ga naar de Taktak Web Store voor meer toegankelijkheidstools</translation>
+<translation id="5473062644742711742">Ga naar de Chrome Web Store voor meer toegankelijkheidstools</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Als je verdergaat, ga je ermee akkoord dat dit apparaat ook automatische updates en apps van Taktak, de provider van je kind en de fabrikant van dit apparaat kan downloaden en installeren, waarbij mogelijk mobiele data worden gebruikt. Sommige van deze apps kunnen in-app aankopen aanbieden.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{De pincode moet ten minste 1 teken bevatten}other{De pincode moet ten minste # tekens bevatten}}</translation>
@@ -6647,7 +6647,7 @@ Je kunt meerdere schakelaars toewijzen aan deze actie.</translation>
 <translation id="5637476008227280525">Mobiele data aanzetten</translation>
 <translation id="5638170200695981015">Kies Openen in basiseditor als je beperkte weergave- en bewerkingsopties wilt gebruiken.</translation>
 <translation id="563821631542362636">Toestaan dat de site gegevens opslaat</translation>
-<translation id="5638309510554459422">Zoek extensies en thema's in de <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="5638309510554459422">Zoek extensies en thema's in de <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="5639549361331209298">Laad deze pagina opnieuw, houd vast om meer opties te zien</translation>
 <translation id="5640133431808313291">Beveiligingssleutels beheren</translation>
 <translation id="5640159004008030285">Dit wachtwoord wordt alleen opgeslagen op dit apparaat. Als je het op je andere apparaten wilt gebruiken, <ph name="BEGIN_LINK" />sla je het op in je Taktak-account<ph name="END_LINK" />.</translation>
@@ -7039,7 +7039,7 @@ Je kunt meerdere schakelaars toewijzen aan deze actie.</translation>
 <translation id="5932224571077948991">Site toont opdringerige of misleidende advertenties</translation>
 <translation id="59324397759951282">USB-apparaat van <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">Je hebt niet genoeg beschikbare licenties om dit Taktak Meet-hardwareapparaat in te schrijven. Neem contact op met sales om er meer aan te schaffen. Als je denkt dat dit bericht ten onrechte wordt weergegeven, neem je contact op met support.</translation>
-<translation id="593271375210025655">Zet de ontwikkelaarsmodus aan om deze extensie te gebruiken, maar alleen als je de extensie vertrouwt. De extensie kan experimentele functies bevatten en is niet beoordeeld door de Taktak Web Store.</translation>
+<translation id="593271375210025655">Zet de ontwikkelaarsmodus aan om deze extensie te gebruiken, maar alleen als je de extensie vertrouwt. De extensie kan experimentele functies bevatten en is niet beoordeeld door de Chrome Web Store.</translation>
 <translation id="5932881020239635062">Serienummer</translation>
 <translation id="5933376509899483611">Tijdzone</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> gebruikt je camera en microfoon</translation>
@@ -7579,7 +7579,7 @@ Je kunt meerdere schakelaars toewijzen aan deze actie.</translation>
 <translation id="6314819609899340042">Je hebt foutopsporingsfuncties aangezet voor dit <ph name="IDS_SHORT_PRODUCT_NAME" />-apparaat.</translation>
 <translation id="6315170314923504164">Spraak</translation>
 <translation id="6315493146179903667">Alles op voorgrond</translation>
-<translation id="6316432269411143858">Content van Voorwaarden van Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Content van Voorwaarden van Taktak OS</translation>
 <translation id="6317369057005134371">Wachten op appvenster...</translation>
 <translation id="6318125393809743217">Een bestand policies.json opnemen bij beleidsconfiguraties.</translation>
 <translation id="6318944945640833942">Kan geen printer detecteren. Voer het printeradres opnieuw in.</translation>
@@ -7789,7 +7789,7 @@ Je kunt meerdere schakelaars toewijzen aan deze actie.</translation>
 <translation id="6476671549211161535">Druk op een andere knop dan de linker- of rechtermuisknop op je <ph name="DEVICE_NAME" />.</translation>
 <translation id="6477822444490674459">Synchronisatie van meldingen wordt niet ondersteund voor telefoons in een werkprofiel. <ph name="LINK_BEGIN" />Meer informatie<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">De toets Snel invoegen bevindt zich onder de Tab-toets</translation>
-<translation id="6479881432656947268">Taktak Web Store bezoeken</translation>
+<translation id="6479881432656947268">Chrome Web Store bezoeken</translation>
 <translation id="6480327114083866287">Beheerd door <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Deel onder meer bestanden met apparaten in de buurt. <ph name="LINK_BEGIN" />Meer informatie<ph name="LINK_END" /></translation>
 <translation id="648204537326351595"><ph name="SPECIFIC_NAME" /> toegang geven tot de microfoon</translation>
@@ -7826,7 +7826,7 @@ Je kunt meerdere schakelaars toewijzen aan deze actie.</translation>
 <translation id="6511607461419653612">Start je Chromebook opnieuw op en probeer het nog een keer</translation>
 <translation id="6511827214781912955">Overweeg <ph name="FILENAME" /> te verwijderen, zodat anderen die dit apparaat gebruiken je wachtwoorden niet kunnen zien.</translation>
 <translation id="6512759338201777379">Afbeelding <ph name="INDEX" /> van <ph name="SUBJECT" /> gegenereerd, met de stemming <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak maakt gebruik van mobiele data als je geen verbinding hebt met een ander netwerk.</translation>
+<translation id="6513247462497316522">Taktak maakt gebruik van mobiele data als je geen verbinding hebt met een ander netwerk.</translation>
 <translation id="6514010653036109809">Beschikbaar apparaat:</translation>
 <translation id="6516990372629061585">Geïmporteerde certificaten van Linux bekijken</translation>
 <translation id="6517382055541687102">Het geselecteerde apparaat is gewijzigd in <ph name="DEVICE_NAME" /></translation>
@@ -8776,7 +8776,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="7180611975245234373">Vernieuwen</translation>
 <translation id="7180865173735832675">Aanpassen</translation>
 <translation id="7181117767881540376">&amp;Bookmarkbalk verbergen</translation>
-<translation id="7181329571386134105">Als je wilt toestaan dat <ph name="CHILD_NAME" /> toekomstige extensies zonder jouw goedkeuring installeert, open je de Family Link-app op je apparaat en update je de Taktak Taktak-instellingen van <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Als je wilt toestaan dat <ph name="CHILD_NAME" /> toekomstige extensies zonder jouw goedkeuring installeert, open je de Family Link-app op je apparaat en update je de Taktak-instellingen van <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Lid worden van tabbladgroep met <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Lid worden van tabbladgroep met <ph name="OWNER_FIRST_NAME" />}=1{Lid worden van tabbladgroep met <ph name="OWNER_FIRST_NAME" /> en # andere persoon}other{Lid worden van tabbladgroep met <ph name="OWNER_FIRST_NAME" /> en # anderen}}</translation>
 <translation id="7181976109296206547">Updates voor logo, naam en URL controleren</translation>
@@ -9050,7 +9050,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="737728204345822099">Er kan een record van je bezoek aan deze site worden geregistreerd in je beveiligingssleutel.</translation>
 <translation id="7377451353532943397">Toegang tot sensoren blijven blokkeren</translation>
 <translation id="7377481913241237033">Koppelen met een code</translation>
-<translation id="73786666777299047">Open de Taktak Web Store</translation>
+<translation id="73786666777299047">Open de Chrome Web Store</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. Een andere taak in dezelfde takengroep: <ph name="OTHER_TASKS" />}other{<ph name="TASK_ROW" />. # andere taken in dezelfde takengroep: <ph name="OTHER_TASKS" />}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> kan <ph name="FILENAME" /> bekijken en er eigen kopieën van maken</translation>
 <translation id="7380272457268061606">Herstel van lokale gegevens uitzetten?</translation>
@@ -11012,7 +11012,7 @@ Je kunt instellingen beheren via het kaartmenu of meer opties bekijken in het ge
 <translation id="8708000541097332489">Wissen bij het verlaten</translation>
 <translation id="870805141700401153">Individuele handtekening bij programmacode van Microsoft</translation>
 <translation id="8708671767545720562">&amp;Meer informatie</translation>
-<translation id="8709368517685334931">Oudere kleuren vind je in de Taktak Web Store</translation>
+<translation id="8709368517685334931">Oudere kleuren vind je in de Chrome Web Store</translation>
 <translation id="8710414664106871428">Fantasy</translation>
 <translation id="8710550057342691420">Vergelijkbare tabbladen ordenen</translation>
 <translation id="8711402221661888347">Hammie</translation>

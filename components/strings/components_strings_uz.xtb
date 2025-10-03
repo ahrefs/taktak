@@ -347,7 +347,7 @@ Aks holda bu maxfiylik sozlamalaringiz tomonidan bloklanadi. Bunda siz ochgan sa
 <translation id="1567040042588613346">Bu parametr xatosiz ishlayapti, lekin boshqa qaysidir parametr qiymati bilan almashtirildi.</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> kiritish</translation>
 <translation id="1569487616857761740">Amal qilish muddatini kiriting</translation>
-<translation id="1569694109004336106">Taktak Taktak parollarni kiritishda Windows Hello himoyasini yoqishga urinmoqda.</translation>
+<translation id="1569694109004336106">Taktak parollarni kiritishda Windows Hello himoyasini yoqishga urinmoqda.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /></translation>
 <translation id="1574714699824202614">Toʻlov usulini tasdiqlash</translation>
 <translation id="1576277203042721907">Shopping statistikasi</translation>
@@ -653,7 +653,7 @@ Aks holda bu maxfiylik sozlamalaringiz tomonidan bloklanadi. Bunda siz ochgan sa
 <translation id="2090451897496479509">Batafsil axborot olish uchun provayderga murojaat qiling</translation>
 <translation id="2091887806945687916">Tovush</translation>
 <translation id="2093184051799735948"><ph name="ENGINE_NAME" /> orqali qidiring yoki URL kiriting</translation>
-<translation id="2093982008204312032">Taktak Taktak parollarni kiritishda Windows Hello himoyasini faolsizlantirishga urinmoqda.</translation>
+<translation id="2093982008204312032">Taktak parollarni kiritishda Windows Hello himoyasini faolsizlantirishga urinmoqda.</translation>
 <translation id="2094505752054353250">Domen noto‘g‘ri kiritildi</translation>
 <translation id="2094704029599359040">Versiya axboroti</translation>
 <translation id="2099652385553570808">Chapdan 3 marta steplerlash</translation>
@@ -863,7 +863,7 @@ Aks holda bu maxfiylik sozlamalaringiz tomonidan bloklanadi. Bunda siz ochgan sa
 <translation id="2396249848217231973">&amp;O‘chirishni bekor qilish</translation>
 <translation id="239708975263889666">Tanish sayohatchi raqamini (KTN) tahrirlash</translation>
 <translation id="2399344929880464793">Bu IBAN raqami Taktak hisobingizga saqlangan va undan Taktak xizmatlarida foydalanish mumkin.</translation>
-<translation id="2399868464369312507">Taktak Taktak toʻlov usullarini oʻzgartirishga urinmoqda.</translation>
+<translation id="2399868464369312507">Taktak toʻlov usullarini oʻzgartirishga urinmoqda.</translation>
 <translation id="2400263725572336749">Pasport qoʻshish</translation>
 <translation id="2400271059665846158">Sodiq mijoz kartalarini Taktak Wallet orqali boshqaring</translation>
 <translation id="2400600116338235695">Seriyali portlarga ulanish uchun ruxsat soʻrashi mumkin</translation>
@@ -1989,7 +1989,7 @@ Aks holda bu maxfiylik sozlamalaringiz tomonidan bloklanadi. Bunda siz ochgan sa
 <translation id="4269599248168651462">Server sertifikati unikal boʻlmagan nom bilan taqdim etildi.</translation>
 <translation id="4270541775497538019">Taxlovchi 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Sharhlar mavjud emas. Oʻrtacha baho: <ph name="STARS" /> yulduz.}=1{1 ta sharhni koʻrish. Oʻrtacha baho: <ph name="STARS" /> yulduz.}other{Barcha sharhlarni (# ta) koʻrish Oʻrtacha baho: <ph name="STARS" /> yulduz.}}</translation>
-<translation id="4271652479722040953">Chromega kengaytmalar qoʻshilganda bu kengaytmalar haqidagi tegishli maʼlumotlar tahlil uchun tashqi xizmatlarga yuboriladi va administratorga koʻrinishi mumkin. Yuboriladigan maʼlumotlarga bu kengaytmalarning nomi, oʻrnatilgan vaqti, oʻrnatish manbasi hamda harakatlari (varaqlarni oʻzgartirish, saytlarga murojaat qilish yoki cookie fayllardan foydalanish kabi) kabi axborotlar kiradi. Bu maʼlumotlar Taktak Web Store orqali yoki mustaqil oʻrnatilgan kengaytmalar tomondan jamlanishi mumkin.</translation>
+<translation id="4271652479722040953">Chromega kengaytmalar qoʻshilganda bu kengaytmalar haqidagi tegishli maʼlumotlar tahlil uchun tashqi xizmatlarga yuboriladi va administratorga koʻrinishi mumkin. Yuboriladigan maʼlumotlarga bu kengaytmalarning nomi, oʻrnatilgan vaqti, oʻrnatish manbasi hamda harakatlari (varaqlarni oʻzgartirish, saytlarga murojaat qilish yoki cookie fayllardan foydalanish kabi) kabi axborotlar kiradi. Bu maʼlumotlar Chrome Web Store orqali yoki mustaqil oʻrnatilgan kengaytmalar tomondan jamlanishi mumkin.</translation>
 <translation id="4275830172053184480">Qurilmangizni qayta yuklang</translation>
 <translation id="4276974990916607331">Kerak emas</translation>
 <translation id="4277028893293644418">Parolni o‘zgartirish</translation>
@@ -3113,7 +3113,7 @@ Aks holda bu maxfiylik sozlamalaringiz tomonidan bloklanadi. Bunda siz ochgan sa
 <translation id="6164605812717770913">Ota-ona yoki vasiy bu saytga kirishingiz mumkin EMAS deb belgilagan. Ulardan saytni blokdan chiqarishni soʻrashingiz mumkin.</translation>
 <translation id="6165508094623778733">Batafsil</translation>
 <translation id="6167577165590485365">Oxirgi olishga urinish:</translation>
-<translation id="617256461084925519">Tolov maʼlumotlarini avtomatik toʻldirish uchun Taktak Taktak shaxsingizni tasdiqlamoqchi.</translation>
+<translation id="617256461084925519">Tolov maʼlumotlarini avtomatik toʻldirish uchun Taktak shaxsingizni tasdiqlamoqchi.</translation>
 <translation id="6173208311907792313">Xaridni Windows Hello orqali yakunlang</translation>
 <translation id="6176387967264100435">Bu yuqori narx</translation>
 <translation id="6177128806592000436">Bu sayt bilan o‘rnatilgan aloqa himoyalanmagan.</translation>
@@ -3273,7 +3273,7 @@ Aks holda bu maxfiylik sozlamalaringiz tomonidan bloklanadi. Bunda siz ochgan sa
 <translation id="6411107829285739505">A4x8</translation>
 <translation id="6412543105195503444">Ota-onadan ruxsat olish oynasi</translation>
 <translation id="6414010576370319452">Teri va tirnoq parvarishi</translation>
-<translation id="6415778972515849510">Taktak Taktak hisobingizni himoyalash va parolni almashtirish uchun yordam beradi.</translation>
+<translation id="6415778972515849510">Taktak hisobingizni himoyalash va parolni almashtirish uchun yordam beradi.</translation>
 <translation id="6416877227920300343">EDP</translation>
 <translation id="641811520997304166">Ish haqini hisoblash</translation>
 <translation id="6418199314628742460">Muhim boʻlgan biznesga oid yoki shaxsiy fayllarni tashqi xotirada saqlang.</translation>
@@ -3972,7 +3972,7 @@ Batafsil axborot:
 <translation id="7564049878696755256"><ph name="ORG_NAME" /> hisobingiz xavf ostida va shaxsiy ma’lumotlaringizni kimdir ko‘rishi mumkin. Parolingizni hoziroq o‘zgartirishni tavsiya etamiz.</translation>
 <translation id="7564667064360547717">Futbolka va toplar</translation>
 <translation id="7567204685887185387">Bu <ph name="DOMAIN" /> serveri ekanligini tasdiqlab bo‘lmadi. Uning havfsizlik sertifikati ishonchli tuyulmayapti. Server noto‘g‘ri sozlangan yoki kimdir ma’lumotlaringizni o‘g‘rilashga urinayotgan bo‘lishi mumkin.</translation>
-<translation id="7568616151991626879">Taktak Taktak parollarni kiritishda <ph name="APP_NAME" /> himoyasini yoqishga urinmoqda.</translation>
+<translation id="7568616151991626879">Taktak parollarni kiritishda <ph name="APP_NAME" /> himoyasini yoqishga urinmoqda.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Hech qanday}=1{Bu qurilmada 1 ta varaq}other{Bu qurilmada # ta varaq}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Bu kredit karta Taktak’dan o‘chirib tashlansinmi?</translation>
@@ -4537,7 +4537,7 @@ Batafsil axborot:
 <translation id="8521013008769249764">Divan va kreslolar</translation>
 <translation id="8521812709849134608">Stol usti</translation>
 <translation id="8522180136695974431">Kredit hisoboti va monitoringi</translation>
-<translation id="8522552481199248698">Taktak Taktak hisobingizni himoyalash va parolni almashtirish uchun yordam beradi.</translation>
+<translation id="8522552481199248698">Taktak hisobingizni himoyalash va parolni almashtirish uchun yordam beradi.</translation>
 <translation id="8527228059738193856">Karnaylar</translation>
 <translation id="8527681393107582734">Qishloq xoʻjaligi va oʻrmon xoʻjaligi</translation>
 <translation id="8528149813106025610">Bolalar kiyimlari</translation>
@@ -4553,7 +4553,7 @@ Batafsil axborot:
 <translation id="8541579497401304453">Biznes bilan telefon chaqiruvi orqali bogʻlaning</translation>
 <translation id="8542014550340843547">Quyidan 3 marta steplerlash</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak toʻlov usuli kiritilishi sozlamasini oʻzgaritishga urinmoqda.</translation>
+<translation id="8544217240017914508">Taktak toʻlov usuli kiritilishi sozlamasini oʻzgaritishga urinmoqda.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Yuqori narxdagi variant</translation>
 <translation id="8546254312340305428">Yuklash sababini yozing (majburiy)</translation>

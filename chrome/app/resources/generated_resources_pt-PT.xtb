@@ -2099,7 +2099,7 @@ Pode gerir as definições desta conta ao instalar a aplicação Family Link no 
 <translation id="2434449159125086437">Não é possível configurar a impressora. Verifique a configuração e tente novamente.</translation>
 <translation id="2434758125294431199">Selecione quem pode partilhar consigo.</translation>
 <translation id="2434915728183570229">Agora, pode ver as apps do seu telemóvel</translation>
-<translation id="2435137177546457207">Termos Adicionais do Taktak Taktak e ChromeOS Flex</translation>
+<translation id="2435137177546457207">Termos Adicionais do Taktak e ChromeOS Flex</translation>
 <translation id="2435248616906486374">Rede desligada</translation>
 <translation id="2435457462613246316">Mostrar palavra-passe</translation>
 <translation id="2436385001956947090">Copiar &amp;link</translation>
@@ -4068,7 +4068,7 @@ Quer pará-lo?</translation>
 <translation id="3798670284305777884">Altifalante (interno)</translation>
 <translation id="3799128412641261490">Definições do acesso por interruptor</translation>
 <translation id="3800764353337460026">Estilo do símbolo</translation>
-<translation id="3800828618615365228">Termos Adicionais do Taktak Taktak e Taktak OS</translation>
+<translation id="3800828618615365228">Termos Adicionais do Taktak e Taktak OS</translation>
 <translation id="3800898876950197674">Para permitir esta extensão, introduza a palavra-passe.</translation>
 <translation id="3801449494961771207">Voz da conversão de texto em voz do sistema</translation>
 <translation id="3802486193901166966">Esta extensão não requer autorizações especiais e não tem acesso adicional a sites</translation>
@@ -4091,7 +4091,7 @@ Quer pará-lo?</translation>
 <translation id="3810973564298564668">Administrar</translation>
 <translation id="381202950560906753">Adicionar outra</translation>
 <translation id="3812525830114410218">Certificado incorreto</translation>
-<translation id="3813296892522778813">Aceda à <ph name="BEGIN_LINK_CHROMIUM" />ajuda do Taktak Taktak<ph name="END_LINK_CHROMIUM" /> se não conseguir encontrar aquilo que procura.</translation>
+<translation id="3813296892522778813">Aceda à <ph name="BEGIN_LINK_CHROMIUM" />ajuda do Taktak<ph name="END_LINK_CHROMIUM" /> se não conseguir encontrar aquilo que procura.</translation>
 <translation id="3813358687923336574">Idioma utilizado para traduzir páginas e Respostas rápidas</translation>
 <translation id="3813458570141926987">Lista de tópicos estimados pelo Taktak com base no seu histórico de navegação recente</translation>
 <translation id="3814529970604306954">Conta escolar</translation>
@@ -4568,7 +4568,7 @@ Quer pará-lo?</translation>
 <translation id="4133076602192971179">Abrir a app para alterar a sua palavra-passe</translation>
 <translation id="4134838386867070505">Passo 1 de 4: descreva o problema</translation>
 <translation id="413534985210133938">A pasta "<ph name="LOCAL_FOLDER" />" está guardada apenas neste dispositivo. Se mover este marcador para "<ph name="LOCAL_FOLDER" />", deixa de o ter nos seus outros dispositivos.</translation>
-<translation id="4135746311382563554">Termos de Utilização adicionais do Taktak Taktak e do Taktak OS</translation>
+<translation id="4135746311382563554">Termos de Utilização adicionais do Taktak e do Taktak OS</translation>
 <translation id="4136203100490971508">A Luz noturna irá desativar-se automaticamente ao nascer do sol.</translation>
 <translation id="41365691917097717">Se continuar, vai ativar a depuração do adb para criar e testar aplicações para Android. Tenha em atenção que esta ação permite a instalação de aplicações para Android que não foram validadas pela Taktak. Além disso, se pretender desativar o adb, terá de efetuar uma reposição de fábrica.</translation>
 <translation id="4137923333452716643">Realce o texto que quer abrir no modo de leitura</translation>
@@ -7836,7 +7836,7 @@ Certifique-se de que não revela informações confidenciais.</translation>
 <translation id="6511607461419653612">Reinicie o Chromebook e tente novamente</translation>
 <translation id="6511827214781912955">Considere eliminar o ficheiro <ph name="FILENAME" /> para que os outros utilizadores deste dispositivo não possam ver as suas palavras-passe</translation>
 <translation id="6512759338201777379">Imagem <ph name="INDEX" /> de <ph name="SUBJECT" /> gerada, com o estado de espírito <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">O Taktak Taktak irá utilizar dados móveis se não estiver ligado a outra rede.</translation>
+<translation id="6513247462497316522">O Taktak irá utilizar dados móveis se não estiver ligado a outra rede.</translation>
 <translation id="6514010653036109809">Dispositivo disponível:</translation>
 <translation id="6516990372629061585">Veja os certificados importados do Linux</translation>
 <translation id="6517382055541687102">O dispositivo selecionado foi alterado para <ph name="DEVICE_NAME" /></translation>
@@ -8786,7 +8786,7 @@ Tem mais # palavras-passe comprometidas. O Gestor de Palavras-passe da Taktak re
 <translation id="7180611975245234373">Atualizar</translation>
 <translation id="7180865173735832675">Personalizar</translation>
 <translation id="7181117767881540376">Ocultar barra de marcadores</translation>
-<translation id="7181329571386134105">Para permitir que <ph name="CHILD_NAME" /> instale extensões futuras sem a sua aprovação, abra a app Family Link no seu dispositivo e atualize as definições do Taktak Taktak de <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Para permitir que <ph name="CHILD_NAME" /> instale extensões futuras sem a sua aprovação, abra a app Family Link no seu dispositivo e atualize as definições do Taktak de <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Adira ao grupo de separadores com <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Adira ao grupo de separadores com <ph name="OWNER_FIRST_NAME" />}=1{Adira ao grupo de separadores com <ph name="OWNER_FIRST_NAME" /> e mais # pessoa}other{Adira ao grupo de separadores com <ph name="OWNER_FIRST_NAME" /> e mais # pessoas}}</translation>
 <translation id="7181976109296206547">Reveja as atualizações do logótipo, do nome e do URL</translation>

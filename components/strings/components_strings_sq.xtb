@@ -348,7 +348,7 @@ Ndryshe kjo do të bllokohet nga cilësimet e tua të privatësisë. Kjo do ta l
 <translation id="1567040042588613346">Kjo politikë funksionon sipas parashikimit, por diku është caktuar e njëjta vlerë dhe ajo është zëvendësuar nga kjo politikë.</translation>
 <translation id="1567405528131216114">Shto <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Fut datën e skadimit</translation>
-<translation id="1569694109004336106">Taktak Taktak po përpiqet të aktivizojë Windows Hello për plotësimin e fjalëkalimeve.</translation>
+<translation id="1569694109004336106">Taktak po përpiqet të aktivizojë Windows Hello për plotësimin e fjalëkalimeve.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> inç</translation>
 <translation id="1574714699824202614">Mënyra e pagesës po verifikohet</translation>
 <translation id="1576277203042721907">Statistikat për blerjet</translation>
@@ -654,7 +654,7 @@ Ndryshe kjo do të bllokohet nga cilësimet e tua të privatësisë. Kjo do ta l
 <translation id="2090451897496479509">Kontakto me ofruesin për më shumë informacione</translation>
 <translation id="2091887806945687916">Tingulli</translation>
 <translation id="2093184051799735948">Kërko në <ph name="ENGINE_NAME" /> ose shkruaj URL-në</translation>
-<translation id="2093982008204312032">Taktak Taktak po përpiqet të çaktivizojë Windows Hello për plotësimin e fjalëkalimeve.</translation>
+<translation id="2093982008204312032">Taktak po përpiqet të çaktivizojë Windows Hello për plotësimin e fjalëkalimeve.</translation>
 <translation id="2094505752054353250">Mospërputhje domeni</translation>
 <translation id="2094704029599359040">Informacionet për versionin</translation>
 <translation id="2099652385553570808">Tri kapje me tel majtas</translation>
@@ -864,7 +864,7 @@ Ndryshe kjo do të bllokohet nga cilësimet e tua të privatësisë. Kjo do ta l
 <translation id="2396249848217231973">&amp;Zhbëje fshirjen</translation>
 <translation id="239708975263889666">Modifiko numrin e udhëtarit të njohur</translation>
 <translation id="2399344929880464793">Ky numër IBAN është ruajtur në "Llogarinë tënde të Taktak" që të mund ta përdorësh atë nëpër shërbimet e Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak po përpiqet të modifikojë mënyrat e pagesës.</translation>
+<translation id="2399868464369312507">Taktak po përpiqet të modifikojë mënyrat e pagesës.</translation>
 <translation id="2400263725572336749">Shto pasaportën</translation>
 <translation id="2400271059665846158">Menaxho kartat e tua të besnikërisë te "Portofoli i Taktak"</translation>
 <translation id="2400600116338235695">Mund të kërkojë të lidhet me portat seriale</translation>
@@ -3118,7 +3118,7 @@ Ndryshe kjo do të bllokohet nga cilësimet e tua të privatësisë. Kjo do ta l
 <translation id="6164605812717770913">Një prind ose kujdestar nuk ka pranuar që ta vizitosh këtë sajt. Mund t'i kërkosh që ta zhbllokojë.</translation>
 <translation id="6165508094623778733">Mëso më shumë</translation>
 <translation id="6167577165590485365">Përpjekja e fundit për nxjerrje:</translation>
-<translation id="617256461084925519">Taktak Taktak po përpiqet të verifikojë që je ti që të mund të plotësojë informacionet e tua të pagesës.</translation>
+<translation id="617256461084925519">Taktak po përpiqet të verifikojë që je ti që të mund të plotësojë informacionet e tua të pagesës.</translation>
 <translation id="6173208311907792313">Përfundo blerjen duke përdorur Windows Hello</translation>
 <translation id="6176387967264100435">Ky çmim është i lartë</translation>
 <translation id="6177128806592000436">Lidhja jote me këtë sajt nuk është e sigurt</translation>
@@ -3977,7 +3977,7 @@ Detaje shtesë:
 <translation id="7564049878696755256">Mund të ndodhë që të humbësh qasjen në llogarinë tënde të <ph name="ORG_NAME" /> ose mund të pësosh vjedhje të identitetit. Taktak rekomandon që ta ndryshosh fjalëkalimin tani.</translation>
 <translation id="7564667064360547717">Bluza</translation>
 <translation id="7567204685887185387">Ky server nuk mund të dëshmonte se është <ph name="DOMAIN" />; certifikata e tij e sigurisë mund të jetë lëshuar në mënyrë mashtruese. Kjo mund të shkaktohet nga një konfigurim i pasaktë ose ndërhyrja e një sulmuesi në lidhjen tënde.</translation>
-<translation id="7568616151991626879">Taktak Taktak po përpiqet të plotësojë fjalëkalimin tënd në <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak po përpiqet të plotësojë fjalëkalimin tënd në <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Asnjë}=1{1 skedë në këtë pajisje}other{# skeda në këtë pajisje}}</translation>
 <translation id="7569490014721427265">Golfi</translation>
 <translation id="7569952961197462199">Të hiqet karta e kreditit nga Taktak?</translation>
@@ -4558,7 +4558,7 @@ Detaje shtesë:
 <translation id="8541579497401304453">Lidhu me një biznes duke nisur një telefonatë.</translation>
 <translation id="8542014550340843547">Tri kapje me tel poshtë</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak po përpiqet të modifikojë cilësimet për plotësimin e mënyrave të pagesës.</translation>
+<translation id="8544217240017914508">Taktak po përpiqet të modifikojë cilësimet për plotësimin e mënyrave të pagesës.</translation>
 <translation id="8544303911974837265">Poliestër</translation>
 <translation id="854548366864113872">Opsion me çmim të lartë</translation>
 <translation id="8546254312340305428">Jep arsyen për ngarkimin (e detyrueshme)</translation>

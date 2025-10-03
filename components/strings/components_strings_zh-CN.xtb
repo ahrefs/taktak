@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">此政策正在正常运作，但与别处设置的值相同且已覆盖该值。</translation>
 <translation id="1567405528131216114">添加<ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">输入失效日期</translation>
-<translation id="1569694109004336106">Taktak Taktak 正在尝试开启 Windows Hello 来填充密码。</translation>
+<translation id="1569694109004336106">Taktak 正在尝试开启 Windows Hello 来填充密码。</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> 英寸</translation>
 <translation id="1574714699824202614">正在验证支付方式</translation>
 <translation id="1576277203042721907">购物数据洞见</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">如需了解详情，请联系提供商</translation>
 <translation id="2091887806945687916">声音</translation>
 <translation id="2093184051799735948">在 <ph name="ENGINE_NAME" /> 中搜索或输入网址</translation>
-<translation id="2093982008204312032">Taktak Taktak 正在尝试关闭 Windows Hello，以使其不再作为填充密码时的验证机制。</translation>
+<translation id="2093982008204312032">Taktak 正在尝试关闭 Windows Hello，以使其不再作为填充密码时的验证机制。</translation>
 <translation id="2094505752054353250">网域不匹配</translation>
 <translation id="2094704029599359040">版本信息</translation>
 <translation id="2099652385553570808">三钉（左侧）</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">撤消删除(&amp;U)</translation>
 <translation id="239708975263889666">修改已知旅客编号</translation>
 <translation id="2399344929880464793">此 IBAN 已保存在您的 Taktak 账号中，以便您在各项 Taktak 服务中使用它。</translation>
-<translation id="2399868464369312507">Taktak Taktak 正在尝试修改付款方式。</translation>
+<translation id="2399868464369312507">Taktak 正在尝试修改付款方式。</translation>
 <translation id="2400263725572336749">添加护照</translation>
 <translation id="2400271059665846158">在 Taktak 钱包中管理您的会员卡</translation>
 <translation id="2400600116338235695">可以询问能否连接到串行端口</translation>
@@ -3114,7 +3114,7 @@
 <translation id="6164605812717770913">家长或监护人认为此网站不适合你访问。你可以请求家长或监护人取消屏蔽。</translation>
 <translation id="6165508094623778733">了解详情</translation>
 <translation id="6167577165590485365">上次尝试提取时的时间：</translation>
-<translation id="617256461084925519">Taktak Taktak 正在尝试验证您的身份，以便填写您的付款信息。</translation>
+<translation id="617256461084925519">Taktak 正在尝试验证您的身份，以便填写您的付款信息。</translation>
 <translation id="6173208311907792313">请使用 Windows Hello 完成购买交易</translation>
 <translation id="6176387967264100435">此价格较高</translation>
 <translation id="6177128806592000436">您与此网站之间建立的连接不安全</translation>
@@ -3974,7 +3974,7 @@
 <translation id="7564049878696755256">您可能会无法再访问自己的 <ph name="ORG_NAME" /> 账号，或者身份信息遭到盗用。Taktak 建议您立即更改密码。</translation>
 <translation id="7564667064360547717">衬衫和上衣</translation>
 <translation id="7567204685887185387">此服务器无法证明它是<ph name="DOMAIN" />；其安全证书可能是由骗子发出的。出现此问题的原因可能是配置有误或您的连接被拦截了。</translation>
-<translation id="7568616151991626879">Taktak Taktak 正尝试在 <ph name="APP_NAME" /> 上填充您的密码。</translation>
+<translation id="7568616151991626879">Taktak 正尝试在 <ph name="APP_NAME" /> 上填充您的密码。</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{无}=1{此设备上的 1 个标签页}other{此设备上的 # 个标签页}}</translation>
 <translation id="7569490014721427265">高尔夫</translation>
 <translation id="7569952961197462199">从 Taktak 中移除信用卡信息？</translation>
@@ -4555,7 +4555,7 @@
 <translation id="8541579497401304453">拨打电话联系商家。</translation>
 <translation id="8542014550340843547">三钉（底部）</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak 正在尝试修改用于填入付款方式的设置。</translation>
+<translation id="8544217240017914508">Taktak 正在尝试修改用于填入付款方式的设置。</translation>
 <translation id="8544303911974837265">聚酯纤维</translation>
 <translation id="854548366864113872">高价选项</translation>
 <translation id="8546254312340305428">请提供上传原因（必填）</translation>

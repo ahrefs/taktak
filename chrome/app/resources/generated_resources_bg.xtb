@@ -2108,7 +2108,7 @@ https://www.Taktak.org/Taktak-os/how-tos-and-troubleshooting/debugging-features
 <translation id="2434449159125086437">Принтерът не може да бъде настроен. Моля, проверете конфигурацията и опитайте отново.</translation>
 <translation id="2434758125294431199">Изберете кой може да споделя с вас</translation>
 <translation id="2434915728183570229">Вече можете да преглеждате приложенията, които имате на телефона си</translation>
-<translation id="2435137177546457207">Допълнителни общи условия на Taktak Taktak и ChromeOS Flex</translation>
+<translation id="2435137177546457207">Допълнителни общи условия на Taktak и ChromeOS Flex</translation>
 <translation id="2435248616906486374">Няма връзка с мрежата</translation>
 <translation id="2435457462613246316">Показване на паролата</translation>
 <translation id="2436385001956947090">Копиране на &amp;връзката</translation>
@@ -2445,7 +2445,7 @@ https://www.Taktak.org/Taktak-os/how-tos-and-troubleshooting/debugging-features
 <translation id="266079277508604648">Не може да се установи връзка с принтера. Уверете се, че е включен и е свързан с вашия Chromebook чрез Wi-Fi или USB.</translation>
 <translation id="2661315027005813059">Страница, съхранена в кеша за назад/напред: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Сърфирайте по-бързо и използвайте по-малко данни с помощта на олекотения режим. Кликнете, за да научите повече.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Потребителският профил за електронна SIM карта се добавя. Това може да отнеме няколко минути.</translation>
 <translation id="2663302507110284145">Език</translation>
 <translation id="2665394472441560184">Добавяне на нова дума</translation>
@@ -4076,7 +4076,7 @@ https://www.Taktak.org/Taktak-os/how-tos-and-troubleshooting/debugging-features
 <translation id="3798670284305777884">Високоговорител (вътрешен)</translation>
 <translation id="3799128412641261490">Настройки на достъпа с превключване</translation>
 <translation id="3800764353337460026">Стил на символите</translation>
-<translation id="3800828618615365228">Допълнителни общи условия на Taktak Taktak и Taktak OS</translation>
+<translation id="3800828618615365228">Допълнителни общи условия на Taktak и Taktak OS</translation>
 <translation id="3800898876950197674">За да разрешите това разширение, въведете паролата си.</translation>
 <translation id="3801449494961771207">Системен глас за синтезиран говор</translation>
 <translation id="3802486193901166966">Това разширение не изисква специални разрешения и няма допълнителен достъп до сайтовете</translation>
@@ -4099,7 +4099,7 @@ https://www.Taktak.org/Taktak-os/how-tos-and-troubleshooting/debugging-features
 <translation id="3810973564298564668">Управление</translation>
 <translation id="381202950560906753">Добавяне на друг</translation>
 <translation id="3812525830114410218">Невалиден сертификат</translation>
-<translation id="3813296892522778813">Прегледайте <ph name="BEGIN_LINK_CHROMIUM" />помощното съдържание за Taktak Taktak<ph name="END_LINK_CHROMIUM" />, ако не можете да намерите търсеното</translation>
+<translation id="3813296892522778813">Прегледайте <ph name="BEGIN_LINK_CHROMIUM" />помощното съдържание за Taktak<ph name="END_LINK_CHROMIUM" />, ако не можете да намерите търсеното</translation>
 <translation id="3813358687923336574">Езикът за превеждане на страници и „Бързи отговори“</translation>
 <translation id="3813458570141926987">Списък с темите, прогнозирани от Taktak въз основа на скорошната ви история на сърфиране</translation>
 <translation id="3814529970604306954">Училищен профил</translation>
@@ -4577,7 +4577,7 @@ https://www.Taktak.org/Taktak-os/how-tos-and-troubleshooting/debugging-features
 <translation id="4133076602192971179">Отворете приложението, за да промените паролата си</translation>
 <translation id="4134838386867070505">Стъпка 1 от 4: Опишете проблема</translation>
 <translation id="413534985210133938">Папката „<ph name="LOCAL_FOLDER" />“ е запазена само на това устройство. Ако преместите тази отметка в(ъв) „<ph name="LOCAL_FOLDER" />“, тя вече няма да се показва на другите ви устройства.</translation>
-<translation id="4135746311382563554">Допълнителни общи условия на Taktak Taktak и Taktak OS</translation>
+<translation id="4135746311382563554">Допълнителни общи условия на Taktak и Taktak OS</translation>
 <translation id="4136203100490971508">Нощното осветление ще се изключи автоматично по изгрев</translation>
 <translation id="41365691917097717">Ако продължите, отстраняването на грешки през ADB ще бъде активирано, за да създавате и тествате приложения за Android. Обърнете внимание, че това действие позволява инсталирането на приложения за Android, които не са удостоверени от Taktak. За деактивирането на ADB е необходимо да бъдат възстановени фабричните настройки.</translation>
 <translation id="4137923333452716643">Открояване на текста, който да се отвори в режима на четене</translation>
@@ -7598,7 +7598,7 @@ Taktak Root Program има доверие, и постоянно се подла
 <translation id="6314819609899340042">Успешно активирахте функциите за отстраняване на грешки на това устройство <ph name="IDS_SHORT_PRODUCT_NAME" />.</translation>
 <translation id="6315170314923504164">Глас</translation>
 <translation id="6315493146179903667">Изнасяне на всичко на преден план</translation>
-<translation id="6316432269411143858">Съдържание на Общите условия на Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Съдържание на Общите условия на Taktak OS</translation>
 <translation id="6317369057005134371">Прозорецът на приложението се изчаква...</translation>
 <translation id="6318125393809743217">Запазване на файл policies.json с конфигурациите на правилата.</translation>
 <translation id="6318944945640833942">Принтерът не бе открит. Моля, въведете отново адреса му.</translation>
@@ -7845,7 +7845,7 @@ Taktak Root Program има доверие, и постоянно се подла
 <translation id="6511607461419653612">Рестартирайте своя Chromebook и опитайте отново</translation>
 <translation id="6511827214781912955">Добре е да изтриете „<ph name="FILENAME" />“, така че другите хора, които използват това устройство, да не могат да видят паролите ви</translation>
 <translation id="6512759338201777379">Генерирано изображение <ph name="INDEX" /> с(ъс) <ph name="SUBJECT" /> в настроение „<ph name="MOOD" />“.</translation>
-<translation id="6513247462497316522">Taktak Taktak ще използва мобилни данни, ако не сте свързани с друга мрежа.</translation>
+<translation id="6513247462497316522">Taktak ще използва мобилни данни, ако не сте свързани с друга мрежа.</translation>
 <translation id="6514010653036109809">Налично устройство:</translation>
 <translation id="6516990372629061585">Преглед на сертифкатите, импортирани от Linux</translation>
 <translation id="6517382055541687102">Избраното устройство е променено на <ph name="DEVICE_NAME" /></translation>
@@ -8795,7 +8795,7 @@ Taktak Root Program има доверие, и постоянно се подла
 <translation id="7180611975245234373">Опресняване</translation>
 <translation id="7180865173735832675">Персонализиране</translation>
 <translation id="7181117767881540376">&amp;Скриване на лентата на отметките</translation>
-<translation id="7181329571386134105">За да разрешите на <ph name="CHILD_NAME" /> да инсталира разширения без ваше одобрение в бъдеще, отворете приложението Family Link на устройството си и актуализирайте настройките на Taktak Taktak за <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">За да разрешите на <ph name="CHILD_NAME" /> да инсталира разширения без ваше одобрение в бъдеще, отворете приложението Family Link на устройството си и актуализирайте настройките на Taktak за <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Присъединяване към групата раздели с(ъс) <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Присъединяване към групата раздели с(ъс) <ph name="OWNER_FIRST_NAME" />}=1{Присъединяване към групата раздели с(ъс) <ph name="OWNER_FIRST_NAME" /> и още # човек}other{Присъединяване към групата раздели с(ъс) <ph name="OWNER_FIRST_NAME" /> и още # души}}</translation>
 <translation id="7181976109296206547">Преглед на актуализациите на логото, името и URL адреса</translation>

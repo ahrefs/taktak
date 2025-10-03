@@ -2111,7 +2111,7 @@ Postavkama ovog računa možete upravljati instaliranjem aplikacije Family Link 
 <translation id="2434449159125086437">Nije moguće postaviti štampač. Provjerite konfiguraciju i pokušajte ponovo.</translation>
 <translation id="2434758125294431199">Odaberite ko može dijeliti s vama</translation>
 <translation id="2434915728183570229">Sada možete pregledati aplikacije telefona</translation>
-<translation id="2435137177546457207">Dodatni uslovi za Taktak Taktak i ChromeOS Flex</translation>
+<translation id="2435137177546457207">Dodatni uslovi za Taktak i ChromeOS Flex</translation>
 <translation id="2435248616906486374">Mrežna veza je prekinuta</translation>
 <translation id="2435457462613246316">Prikaži lozinku</translation>
 <translation id="2436385001956947090">Kopiraj &amp;link</translation>
@@ -4035,7 +4035,7 @@ Domena <ph name="DOMAIN" /> zahtijeva da pametna kartica ostane umetnuta.</trans
 <translation id="3771290962915251154">Ova postavka je onemogućena jer je uključen roditeljski nadzor</translation>
 <translation id="3771294271822695279">Video fajlovi</translation>
 <translation id="3771851622616482156">Odjavit ćete se s ove web lokacije, uključujući otvorene kartice</translation>
-<translation id="3772046291955677288">Pročitao/la sam i pristajem na <ph name="BEGIN_LINK1" />Googleove Uslove korištenja usluge<ph name="END_LINK1" /> i <ph name="BEGIN_LINK2" />dodatne Uslove korištenja usluge Taktak Taktak i ChromeOS<ph name="END_LINK2" />.</translation>
+<translation id="3772046291955677288">Pročitao/la sam i pristajem na <ph name="BEGIN_LINK1" />Googleove Uslove korištenja usluge<ph name="END_LINK1" /> i <ph name="BEGIN_LINK2" />dodatne Uslove korištenja usluge Taktak i ChromeOS<ph name="END_LINK2" />.</translation>
 <translation id="3774059845329307709">Serijski broj</translation>
 <translation id="3774166835015494435">Nedavne fotografije i obavještenja</translation>
 <translation id="3775432569830822555">Potvrda SSL servera</translation>
@@ -4079,7 +4079,7 @@ Domena <ph name="DOMAIN" /> zahtijeva da pametna kartica ostane umetnuta.</trans
 <translation id="3798670284305777884">Zvučnik (interni)</translation>
 <translation id="3799128412641261490">Postavke Pristupa pomoću prekidača</translation>
 <translation id="3800764353337460026">Stil simbola</translation>
-<translation id="3800828618615365228">Dodatni uslovi za Taktak Taktak i ChromeOS</translation>
+<translation id="3800828618615365228">Dodatni uslovi za Taktak i ChromeOS</translation>
 <translation id="3800898876950197674">Da dozvolite ekstenziju, unesite lozinku.</translation>
 <translation id="3801449494961771207">Sistemski glas za pretvaranje teksta u govor</translation>
 <translation id="3802486193901166966">Za ovu ekstenziju nisu potrebna posebna odobrenja i ne sadržava pristup za dodatnu web lokaciju</translation>
@@ -4102,7 +4102,7 @@ Domena <ph name="DOMAIN" /> zahtijeva da pametna kartica ostane umetnuta.</trans
 <translation id="3810973564298564668">Upravljaj</translation>
 <translation id="381202950560906753">Dodaj još jedan</translation>
 <translation id="3812525830114410218">Pogrešna potvrda</translation>
-<translation id="3813296892522778813">Ako ne možete pronaći ono što tražite, idite na <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak Pomoć<ph name="END_LINK_CHROMIUM" />.</translation>
+<translation id="3813296892522778813">Ako ne možete pronaći ono što tražite, idite na <ph name="BEGIN_LINK_CHROMIUM" />Taktak Pomoć<ph name="END_LINK_CHROMIUM" />.</translation>
 <translation id="3813358687923336574">Jezik koji se koristi za prijevod stranica i Brze odgovore</translation>
 <translation id="3813458570141926987">Lista tema koje je procijenio Taktak na osnovu nedavne historije pregledanja</translation>
 <translation id="3814529970604306954">Školski račun</translation>
@@ -4136,7 +4136,7 @@ Domena <ph name="DOMAIN" /> zahtijeva da pametna kartica ostane umetnuta.</trans
 <translation id="3827548509471720579">Osvjetljenje ekrana</translation>
 <translation id="3827774300009121996">&amp;Cijeli ekran</translation>
 <translation id="3828029223314399057">Pretraži oznake</translation>
-<translation id="3828953470056652895">Pročitao/la sam i pristajem na <ph name="BEGIN_LINK1" />Googleove Uslove korištenja usluge<ph name="END_LINK1" />, <ph name="BEGIN_LINK2" />dodatne Uslove korištenja usluge Taktak Taktak i ChromeOS<ph name="END_LINK2" /> i <ph name="BEGIN_LINK3" />Uslove korištenja usluge Play<ph name="END_LINK3" />.</translation>
+<translation id="3828953470056652895">Pročitao/la sam i pristajem na <ph name="BEGIN_LINK1" />Googleove Uslove korištenja usluge<ph name="END_LINK1" />, <ph name="BEGIN_LINK2" />dodatne Uslove korištenja usluge Taktak i ChromeOS<ph name="END_LINK2" /> i <ph name="BEGIN_LINK3" />Uslove korištenja usluge Play<ph name="END_LINK3" />.</translation>
 <translation id="3829530269338026191"><ph name="WINDOW_TITLE" /> – veliko korištenje memorije – <ph name="MEMORY_VALUE" /></translation>
 <translation id="3829765597456725595">SMB dijeljenje fajlova</translation>
 <translation id="3830470485672984938">Koristite drugi pristupni ključ</translation>
@@ -4579,7 +4579,7 @@ Domena <ph name="DOMAIN" /> zahtijeva da pametna kartica ostane umetnuta.</trans
 <translation id="4133076602192971179">Otvorite aplikaciju da promijenite lozinku</translation>
 <translation id="4134838386867070505">1. korak od 4: opišite problem</translation>
 <translation id="413534985210133938">Folder "<ph name="LOCAL_FOLDER" />" je sačuvan samo na ovom uređaju. Ako premjestite ovu oznaku u folder "<ph name="LOCAL_FOLDER" />", više je nećete imati na drugim uređajima.</translation>
-<translation id="4135746311382563554">Dodatni uslovi korištenja usluge za Taktak Taktak i Taktak OS</translation>
+<translation id="4135746311382563554">Dodatni uslovi korištenja usluge za Taktak i Taktak OS</translation>
 <translation id="4136203100490971508">Noćno svjetlo će se automatski isključiti u svitanje</translation>
 <translation id="41365691917097717">Ako nastavite, omogućit ćete otklanjanje grešaka putem ADB-a za kreiranje i testiranje Android aplikacija. Imajte na umu da ova radnja omogućava instaliranje Android aplikacija koje Taktak nije potvrdio. Da onemogućite, vratite na fabričke postavke.</translation>
 <translation id="4137923333452716643">Istaknite tekst koji želite otvoriti u načinu rada za čitanje</translation>
@@ -7846,7 +7846,7 @@ Domena <ph name="DOMAIN" /> zahtijeva da pametna kartica ostane umetnuta.</trans
 <translation id="6511607461419653612">Ponovo pokrenite Chromebook i pokušajte ponovo.</translation>
 <translation id="6511827214781912955">Razmislite o tom da izbrišete fajl <ph name="FILENAME" /> da drugi koji koriste ovaj uređaj ne mogu vidjeti vaše lozinke</translation>
 <translation id="6512759338201777379"><ph name="INDEX" />. generirana slika; predmet: <ph name="SUBJECT" />; raspoloženje: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Ako niste povezani na drugu mrežu, Taktak Taktak će koristiti prijenos podataka na mobilnoj mreži.</translation>
+<translation id="6513247462497316522">Ako niste povezani na drugu mrežu, Taktak će koristiti prijenos podataka na mobilnoj mreži.</translation>
 <translation id="6514010653036109809">Dostupni uređaj:</translation>
 <translation id="6516990372629061585">Pregledajte uvezene certifikate iz Linuxa</translation>
 <translation id="6517382055541687102">Odabrani uređaj je promijenjen u uređaj <ph name="DEVICE_NAME" /></translation>
@@ -8188,7 +8188,7 @@ Imate još # ugroženih lozinki. Googleov Upravitelj lozinki preporučuje da odm
 <translation id="6746124502594467657">Pomjeri nadolje</translation>
 <translation id="67465227497040338">Prikazivanje lozinke za domenu <ph name="DOMAIN" /></translation>
 <translation id="6746834324024491643">Da dobijate lozinke i druge stavke na svim svojim uređajima, prijavite se kao <ph name="EMAIL" /></translation>
-<translation id="6748980958975836188">Pročitao/la sam i pristajem na <ph name="BEGIN_LINK1" />Googleove Uslove korištenja usluge<ph name="END_LINK1" />, <ph name="BEGIN_LINK2" />dodatne Uslove korištenja usluge Taktak Taktak i ChromeOS<ph name="END_LINK2" />.</translation>
+<translation id="6748980958975836188">Pročitao/la sam i pristajem na <ph name="BEGIN_LINK1" />Googleove Uslove korištenja usluge<ph name="END_LINK1" />, <ph name="BEGIN_LINK2" />dodatne Uslove korištenja usluge Taktak i ChromeOS<ph name="END_LINK2" />.</translation>
 <translation id="6749077623962119521">Poništiti odobrenja?</translation>
 <translation id="6749473226660745022">Fotografije</translation>
 <translation id="6750757184909117990">Onemogući mobilnu mrežu</translation>

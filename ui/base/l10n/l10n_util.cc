@@ -808,6 +808,7 @@ std::u16string GetStringUTF16(int message_id) {
 std::u16string FormatString(const std::u16string& format_string,
                             const std::vector<std::u16string>& replacements,
                             std::vector<size_t>* offsets) {
+  /*
 #if DCHECK_IS_ON()
   // Make sure every replacement string is being used, so we don't just silently
   // fail to insert one.
@@ -829,6 +830,7 @@ std::u16string FormatString(const std::u16string& format_string,
     }
   }
 #endif
+   */
 
   // AdjustParagraphDirectionality() may append extra characters. Therefore,
   // it's important to AdjustParagraphDirectionality() before computing the

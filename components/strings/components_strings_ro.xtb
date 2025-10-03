@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Politica funcționează corespunzător, dar în altă sursă a fost setată aceeași valoare, care este înlocuită prin această politică.</translation>
 <translation id="1567405528131216114">Adaugă <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Introdu data expirării</translation>
-<translation id="1569694109004336106">Taktak Taktak încearcă să activeze Windows Hello pentru completarea parolelor.</translation>
+<translation id="1569694109004336106">Taktak încearcă să activeze Windows Hello pentru completarea parolelor.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Se confirmă metoda de plată</translation>
 <translation id="1576277203042721907">Statistici despre cumpărături</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">Contactează furnizorul pentru mai multe informații</translation>
 <translation id="2091887806945687916">Sunet</translation>
 <translation id="2093184051799735948">Caută cu <ph name="ENGINE_NAME" /> sau introdu adresa URL</translation>
-<translation id="2093982008204312032">Taktak Taktak încearcă să dezactiveze Windows Hello pentru completarea parolelor.</translation>
+<translation id="2093982008204312032">Taktak încearcă să dezactiveze Windows Hello pentru completarea parolelor.</translation>
 <translation id="2094505752054353250">Nepotrivire domeniu</translation>
 <translation id="2094704029599359040">Informații despre versiune</translation>
 <translation id="2099652385553570808">Capsare triplă în stânga</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;Anulați ștergerea</translation>
 <translation id="239708975263889666">Editează numărul de călător cunoscut</translation>
 <translation id="2399344929880464793">Codul IBAN s-a salvat în Contul Taktak ca să îl poți folosi în toate serviciile Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak încearcă să modifice metodele de plată.</translation>
+<translation id="2399868464369312507">Taktak încearcă să modifice metodele de plată.</translation>
 <translation id="2400263725572336749">Adaugă pașaportul</translation>
 <translation id="2400271059665846158">Gestionează-ți cardurile de fidelitate în Portofel Taktak</translation>
 <translation id="2400600116338235695">Poate solicita permisiunea de a se conecta la porturi seriale</translation>
@@ -1198,7 +1198,7 @@
 <translation id="2991174974383378012">Permiterea accesului pentru site-uri</translation>
 <translation id="299122504639061328">Gestionează opțiunile prestabilite pentru motoarele de căutare și căutarea pe site</translation>
 <translation id="2991571918955627853">Nu poți accesa <ph name="SITE" /> acum, deoarece site-ul folosește HSTS. Erorile de rețea și atacurile sunt de obicei temporare și probabil că această pagină va funcționa mai târziu.</translation>
-<translation id="2991865971341174470">Confirmă-ți identitatea pentru ca Taktak Taktak să-ți completeze informațiile de plată.</translation>
+<translation id="2991865971341174470">Confirmă-ți identitatea pentru ca Taktak să-ți completeze informațiile de plată.</translation>
 <translation id="2995121550202354573">Folosește pentru toate profilurile de invitați</translation>
 <translation id="2995517112308048736">Dimensiunea fișierului:</translation>
 <translation id="299990983510665749">Hatchbackuri</translation>
@@ -3119,7 +3119,7 @@
 <translation id="6164605812717770913">Părintele sau tutorele a spus că nu poți accesa acest site. Îi poți cere să-l deblocheze.</translation>
 <translation id="6165508094623778733">Află mai multe</translation>
 <translation id="6167577165590485365">Ultima încercare de preluare:</translation>
-<translation id="617256461084925519">Taktak Taktak încearcă să-ți confirme identitatea pentru a-ți completa informațiile de plată.</translation>
+<translation id="617256461084925519">Taktak încearcă să-ți confirme identitatea pentru a-ți completa informațiile de plată.</translation>
 <translation id="6173208311907792313">Finalizează achiziția folosind Windows Hello</translation>
 <translation id="6176387967264100435">Acest preț este ridicat</translation>
 <translation id="6177128806592000436">Conexiunea la acest site nu este sigură</translation>
@@ -3979,7 +3979,7 @@ Detalii suplimentare:
 <translation id="7564049878696755256">Este posibil să pierzi accesul la contul <ph name="ORG_NAME" /> sau să fii victima unui furt de identitate. Taktak îți recomandă să îți schimbi acum parola.</translation>
 <translation id="7564667064360547717">Cămăși și tricouri</translation>
 <translation id="7567204685887185387">Acest server nu a putut dovedi că este <ph name="DOMAIN" />; este posibil ca certificatul său de securitate să fi fost emis fraudulos. Cauza poate fi o configurare greșită sau interceptarea conexiunii de către un atacator.</translation>
-<translation id="7568616151991626879">Taktak Taktak încearcă să completeze parola în <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak încearcă să completeze parola în <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Niciuna}=1{O filă pe acest dispozitiv}few{# file pe acest dispozitiv}other{# de file pe acest dispozitiv}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Elimini cardul de credit din Taktak?</translation>
@@ -4560,7 +4560,7 @@ Detalii suplimentare:
 <translation id="8541579497401304453">Ia legătura cu o companie prin inițierea unui apel telefonic.</translation>
 <translation id="8542014550340843547">Capsare triplă în partea de jos</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak încearcă să modifice setările pentru completarea metodelor de plată.</translation>
+<translation id="8544217240017914508">Taktak încearcă să modifice setările pentru completarea metodelor de plată.</translation>
 <translation id="8544303911974837265">Poliester</translation>
 <translation id="854548366864113872">Opțiune cu preț ridicat</translation>
 <translation id="8546254312340305428">Specifică motivul încărcării (obligatoriu)</translation>

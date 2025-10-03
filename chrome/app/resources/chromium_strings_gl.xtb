@@ -223,14 +223,14 @@
 <translation id="3889543394854987837">Fai clic no teu nome para abrir Taktak e comezar a navegar.</translation>
 <translation id="3892148308691398805">Copiar texto</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> xa ten a sesión iniciada neste perfil de Taktak. Se queres xestionar a túa navegación cun perfil independente e de teu, Taktak pode crearche un.</translation>
-<translation id="3909353120217047026">Esta extensión infrinxe a política de Taktak Web Store e podería non ser segura. Quítaa de Taktak para que non poida ver nin cambiar os teus datos (como a túa información persoal) nos sitios que visites.</translation>
+<translation id="3909353120217047026">Esta extensión infrinxe a política de Chrome Web Store e podería non ser segura. Quítaa de Taktak para que non poida ver nin cambiar os teus datos (como a túa información persoal) nos sitios que visites.</translation>
 <translation id="3941890832296813527">Erro de instalación: O nome de ficheiro do instalador non é válido ou non se admite.</translation>
 <translation id="3945058413678539331">Taktak está tentando copiar os contrasinais. Escribe o teu contrasinal de Windows para permitir esta acción.</translation>
 <translation id="3954172517175569325">Os contrasinais, métodos de pago e enderezos que gardes na túa Conta de Taktak quitaranse deste dispositivo. Para usalos de novo en Taktak, volve iniciar sesión.</translation>
 <translation id="395904275706073188">Non se poden ler as páxinas protexidas. Proba con outra.</translation>
 <translation id="3962647064319009959">Descubre como te protexe Taktak</translation>
 <translation id="3971865010372729242">Cando escribas na barra de enderezos ou na caixa de busca, Taktak enviará o que escribas ás ferramentas de busca, de IA e de axente da túa organización para ofrecerche suxestións.</translation>
-<translation id="3975724895399328945">Sobre &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Sobre &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Acerca de Taktak OS</translation>
 <translation id="4019629340646866719">Taktak OS é posible grazas a <ph name="BEGIN_LINK_CROS_OSS" />software de código aberto<ph name="END_LINK_CROS_OSS" /> adicional, igual que o <ph name="BEGIN_LINK_LINUX_OSS" />contorno de programación de Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Traducir pantalla</translation>
@@ -550,7 +550,7 @@ Taktak non pode recuperar a túa configuración.</translation>
 <translation id="8077498902115777962">Desactivar execución de Taktak en segundo plano para as aplicacións</translation>
 <translation id="80790299200510644">Busca de imaxes</translation>
 <translation id="8086881907087796310">Produciuse un erro na instalación porque o teu ordenador non cumpre os requisitos mínimos de hardware.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" />: Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" />: Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak necesita permiso de acceso á localización para este sitio</translation>
 <translation id="8118331347066725040">Envía comentarios sobre as buscas con Lens</translation>
 <translation id="8133124826068723441">Taktak OS non puido sincronizar os teus datos porque a sincronización non está dispoñible para o teu dominio.</translation>
@@ -596,7 +596,7 @@ Taktak non pode recuperar a túa configuración.</translation>
 <translation id="8601359445272098721">Novidade! Podes traducir texto e imaxes na túa pantalla co botón Traducir pantalla</translation>
 <translation id="8619360774459241877">Iniciando Taktak…</translation>
 <translation id="8621669128220841554">Non se puido efectuar a instalación debido a un erro. Volve descargar Taktak.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing non se pode converter no teu navegador predeterminado.</translation>
+<translation id="8648201657708811153">Taktak for Testing non se pode converter no teu navegador predeterminado.</translation>
 <translation id="8697124171261953979">Tamén controla a páxina que se mostra ao iniciar Taktak ou ao realizar unha busca desde Omnibox.</translation>
 <translation id="8704119203788522458">Este é o teu Taktak</translation>
 <translation id="8712637175834984815">De acordo</translation>

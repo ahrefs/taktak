@@ -2096,7 +2096,7 @@
 <translation id="2434449159125086437">प्रिन्टर सेटअप गर्न सकिएन। कृपया कन्फिगुरेसनको जाँच गरी फेरि प्रयास गर्नुहोस्।</translation>
 <translation id="2434758125294431199">तपाईंसँग कसले सेयर गर्न सक्छन् भन्ने कुरा चयन गर्नुहोस्</translation>
 <translation id="2434915728183570229">तपाईं अब आफ्नो फोनका एपहरू हेर्न सक्नुहुन्छ</translation>
-<translation id="2435137177546457207">Taktak Taktak र ChromeOS Flex का अतिरिक्त सर्तहरू</translation>
+<translation id="2435137177546457207">Taktak र ChromeOS Flex का अतिरिक्त सर्तहरू</translation>
 <translation id="2435248616906486374">सञ्जाल डिस्कनेक्ट गरिएको छ</translation>
 <translation id="2435457462613246316">पासवर्ड देखाउनुहोस्</translation>
 <translation id="2436385001956947090">लिंक कपी गर्नुहोस्</translation>
@@ -2458,7 +2458,7 @@
 <translation id="267442004702508783">पुनःताजा</translation>
 <translation id="2674764818721168631">अफ छ</translation>
 <translation id="2675716371350192683">AI को गुणस्तर सुधार गर्ने प्रयोजनका लागि तपाईंको सामग्री प्रयोग गरिने छैन। तपाईंको सङ्गठनले जुनसुकै बेला यी सेटिङ परिवर्तन गर्न सक्छ।</translation>
-<translation id="2676084251379299915">यो एक्सटेन्सन Taktak Web Store मा उपलब्ध नभएकाले यसलाई इन्टरप्राइजको नीतिअनुसार अफ गरिएको छ।</translation>
+<translation id="2676084251379299915">यो एक्सटेन्सन Chrome Web Store मा उपलब्ध नभएकाले यसलाई इन्टरप्राइजको नीतिअनुसार अफ गरिएको छ।</translation>
 <translation id="2677748264148917807">छोड्नुहोस्</translation>
 <translation id="2678063897982469759">पुन: सक्षम गर्नुहोस्</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{ट्याब समूह राखिराख्न चाहनुहुन्छ?}other{ट्याब समूहहरू राखिराख्न चाहनुहुन्छ?}}</translation>
@@ -4063,7 +4063,7 @@
 <translation id="3798670284305777884">स्पिकर (आन्तरिक)</translation>
 <translation id="3799128412641261490">स्विचमार्फत पहुँच राख्ने सुविधासम्बन्धी सेटिङ</translation>
 <translation id="3800764353337460026">सङ्केत शैली</translation>
-<translation id="3800828618615365228">Taktak Taktak र ChromeOS का अतिरिक्त सर्तहरू</translation>
+<translation id="3800828618615365228">Taktak र ChromeOS का अतिरिक्त सर्तहरू</translation>
 <translation id="3800898876950197674">यो एक्स्टेन्सनलाई अनुमति दिन पासवर्ड हाल्नुहोस्।</translation>
 <translation id="3801449494961771207">सिस्टम टेक्स्ट-टू-स्पिच भ्वाइस</translation>
 <translation id="3802486193901166966">यो एक्स्टेन्सनलाई कुनै विशेष अनुमति दिनु पर्दैन र यसलाई साइटसम्बन्धी थप अनुमति दिइएको छैन</translation>
@@ -4086,7 +4086,7 @@
 <translation id="3810973564298564668">व्यवस्थित गर्नुहोस्</translation>
 <translation id="381202950560906753">अर्को थप्नुहोस्</translation>
 <translation id="3812525830114410218">खराब प्रमाणपत्र</translation>
-<translation id="3813296892522778813">आफूले खोजी गरेका वस्तुहरू भेट्टाउनु भएन भने <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak सम्बन्धी मद्दत<ph name="END_LINK_CHROMIUM" /> मा जानुहोस्</translation>
+<translation id="3813296892522778813">आफूले खोजी गरेका वस्तुहरू भेट्टाउनु भएन भने <ph name="BEGIN_LINK_CHROMIUM" />Taktak सम्बन्धी मद्दत<ph name="END_LINK_CHROMIUM" /> मा जानुहोस्</translation>
 <translation id="3813358687923336574">पेज अनुवाद गर्न र द्रुत जवाफ देखाउन प्रयोग गरिने भाषा</translation>
 <translation id="3813458570141926987">तपाईंको हालसालैको ब्राउजिङ हिस्ट्रीका आधारमा Taktak ले अनुमान गरेका विषयहरूको सूची</translation>
 <translation id="3814529970604306954">विद्यालयको खाता</translation>
@@ -4562,7 +4562,7 @@
 <translation id="4133076602192971179">आफ्नो पासवर्ड बदल्न उक्त एप खोल्नुहोस्</translation>
 <translation id="4134838386867070505">चरण ४ मध्ये १: त्रुटिका बारेमा वर्णन गर्नुहोस्</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” यो डिभाइसमा मात्र सेभ गरिएको छ। तपाईंले यो बुकमार्क सारेर “<ph name="LOCAL_FOLDER" />” मा लैजानुभयो भने यो बुकमार्क तपाईंका अन्य डिभाइसमा उपलब्ध हुन छाड्ने छ।</translation>
-<translation id="4135746311382563554">Taktak Taktak र ChromeOS का सेवाका अतिरिक्त सर्तहरू</translation>
+<translation id="4135746311382563554">Taktak र ChromeOS का सेवाका अतिरिक्त सर्तहरू</translation>
 <translation id="4136203100490971508">रात्रि प्रकाश सूर्योदयको बेला स्वतः निष्क्रिय हुने छ</translation>
 <translation id="41365691917097717">जारी राख्नुले Android एपहरू सिर्जना गर्न र तिनको परीक्षण गर्ने प्रयोजनका लागि ADB डिबग प्रक्रिया सक्षम पार्ने छ। यस कारबाहीले Taktak ले प्रमाणीकरण नगरेका Android एपहरू इन्स्टल गर्ने अनुमति दिन्छ र यसलाई असक्षम पार्न फ्याक्ट्री रिसेट गर्नु पर्ने हुन्छ भन्ने कुरामा ध्यान दिनुहोस्।</translation>
 <translation id="4137923333452716643">आफूले रिडिङ मोडमा खोल्न चाहेको टेक्स्ट हाइलाइट गर्नुहोस्</translation>
@@ -7828,7 +7828,7 @@
 <translation id="6511607461419653612">आफ्नो Chromebook रिस्टार्ट गर्नुहोस् र फेरि प्रयास गर्नुहोस्</translation>
 <translation id="6511827214781912955">यो डिभाइस प्रयोग गर्ने अरू मान्छेले तपाईंका पासवर्ड देख्न नसकून भन्नाका लागि <ph name="FILENAME" /> मेटाउनुहोस्</translation>
 <translation id="6512759338201777379"><ph name="MOOD" /> भएको <ph name="SUBJECT" /> को सिर्जना गरिएको फोटो <ph name="INDEX" />।</translation>
-<translation id="6513247462497316522">यदि तपाइँ अर्को सञ्जालमा जडित हुनुहुन्न भने Taktak Taktak ले मोबाइल लगत प्रयोग गर्ने छ।</translation>
+<translation id="6513247462497316522">यदि तपाइँ अर्को सञ्जालमा जडित हुनुहुन्न भने Taktak ले मोबाइल लगत प्रयोग गर्ने छ।</translation>
 <translation id="6514010653036109809">उपलब्ध यन्त्र:</translation>
 <translation id="6516990372629061585">Linux बाट इम्पोर्ट गरिएका सर्टिफिकेटहरू हेर्नुहोस्</translation>
 <translation id="6517382055541687102">चयन गरिएको डिभाइस परिवर्तन गरी <ph name="DEVICE_NAME" /> बनाइयो</translation>
@@ -8777,7 +8777,7 @@
 <translation id="7180611975245234373">ताजा गर्नुहोस्</translation>
 <translation id="7180865173735832675">कस्टमाइज गर्नुहोस्</translation>
 <translation id="7181117767881540376">बुकमार्क बार लुकाउनुहोस्</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> लाई तपाईंको अनुमतिविनै भविष्यका एक्स्टेन्सनहरू इन्स्टल गर्ने अनुमति दिन आफ्नो डिभाइसमा Family Link एप खोल्नुहोस् र <ph name="CHILD_NAME" /> का Taktak Taktak सेटिङ अपडेट गर्नुहोस्।</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> लाई तपाईंको अनुमतिविनै भविष्यका एक्स्टेन्सनहरू इन्स्टल गर्ने अनुमति दिन आफ्नो डिभाइसमा Family Link एप खोल्नुहोस् र <ph name="CHILD_NAME" /> का Taktak सेटिङ अपडेट गर्नुहोस्।</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> सामेल हुनुभएको ट्याब समूहमा सामेल हुनुहोस्
             {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" /> सामेल हुनुभएको ट्याब समूहमा सामेल हुनुहोस्}=1{ <ph name="OWNER_FIRST_NAME" /> र # अन्य एक जना सामेल हुनुभएको ट्याब समूहमा सामेल हुनुहोस्}other{ <ph name="OWNER_FIRST_NAME" /> र अन्य # जना सामेल हुनुभएको ट्याब समूहमा सामेल हुनुहोस्}}</translation>
 <translation id="7181976109296206547">लोगो, नाम र URL मा भएका परिवर्तनहरूको समीक्षा गर्नुहोस्</translation>

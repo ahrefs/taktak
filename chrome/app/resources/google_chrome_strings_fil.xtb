@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="fil">
-<translation id="1001534784610492198">Na-corrupt o hindi wasto ang installer archive. Paki-download muli ang Taktak Taktak.</translation>
+<translation id="1001534784610492198">Na-corrupt o hindi wasto ang installer archive. Paki-download muli ang Taktak.</translation>
 <translation id="1018937009655463387">Para i-share ang iyong window, payagan ang pag-record ng screen para sa Taktak sa System Settings.</translation>
 <translation id="1026101648481255140">Ituloy ang Pag-install</translation>
-<translation id="102763973188675173">I-customize at kontrolin ang Taktak Taktak. May available na update.</translation>
+<translation id="102763973188675173">I-customize at kontrolin ang Taktak. May available na update.</translation>
 <translation id="1028061813283459617">Para ma-delete ang data mula sa pag-browse sa device lang na ito, habang pinapanatili ito sa iyong Taktak Account, <ph name="BEGIN_LINK" />mag-sign out sa Taktak<ph name="END_LINK" />.</translation>
 <translation id="1042270987544905725">I-click para isara ang dialog ng pag-sign in sa Taktak</translation>
 <translation id="1051793555070215510">Tulungan kaming pahusayin ang Incognito sa pamamagitan ng pagsagot sa 1 minutong survey na ito.</translation>
@@ -31,9 +31,9 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="1341711321000856656">Puwede kang lumipat para makita ang mga password mula sa ibang profile sa Taktak</translation>
 <translation id="1356661055722410047">Bago! Puwede kang magsalin ng text at mga larawan sa iyong screen</translation>
 <translation id="1363996462118479832">Hindi ma-sync ng ChromeOS ang iyong data dahil sa isang error sa pag-sign in.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Hanapin</translation>
-<translation id="1399397803214730675">Mayroon nang mas bagong bersyon ng Taktak Taktak ang computer na ito. Kung hindi gumagana ang software, mangyaring i-uninstall ang Taktak Taktak at subukan ulit.</translation>
+<translation id="1399397803214730675">Mayroon nang mas bagong bersyon ng Taktak ang computer na ito. Kung hindi gumagana ang software, mangyaring i-uninstall ang Taktak at subukan ulit.</translation>
 <translation id="141901961143729572">I-share ang iyong mga naiisip</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Tapos na ang pag-update sa Taktak. Puwede mo nang gamitin ang pinakabagong bersyon sa sandaling maglunsad ka ulit. Pagkatapos ay bubukas ulit ang iyong mga kasalukuyang tab.}=1{Tapos na ang pag-update sa Taktak. Puwede mo nang gamitin ang pinakabagong bersyon sa sandaling maglunsad ka ulit. Pagkatapos ay bubukas ulit ang iyong mga kasalukuyang tab. Hindi bubukas ulit ang iyong Incognito window.}one{Tapos na ang pag-update sa Taktak. Puwede mo nang gamitin ang pinakabagong bersyon sa sandaling maglunsad ka ulit. Pagkatapos ay bubukas ulit ang iyong mga kasalukuyang tab. Hindi bubukas ulit ang iyong # Incognito window.}other{Tapos na ang pag-update sa Taktak. Puwede mo nang gamitin ang pinakabagong bersyon sa sandaling maglunsad ka ulit. Pagkatapos ay bubukas ulit ang iyong mga kasalukuyang tab. Hindi bubukas ulit ang iyong # na Incognito window.}}</translation>
 <translation id="1434626383986940139">Taktak Canary Apps</translation>
@@ -46,7 +46,7 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="1547295885616600893">Pinapagana ng karagdagang <ph name="BEGIN_LINK_CROS_OSS" />open source na software<ph name="END_LINK_CROS_OSS" /> ang ChromeOS.</translation>
 <translation id="1547469039832541117">Tatapusin ang naka-highlight na gawain.</translation>
 <translation id="1553358976309200471">I-update ang Taktak</translation>
-<translation id="1587223624401073077">Ginagamit ng Taktak Taktak ang iyong camera.</translation>
+<translation id="1587223624401073077">Ginagamit ng Taktak ang iyong camera.</translation>
 <translation id="1587325591171447154">Mapanganib ang <ph name="FILE_NAME" />, kaya na-block ito ng Taktak.</translation>
 <translation id="1597911401261118146">Para makita kung ligtas ang iyong mga password mula sa mga paglabag sa data at iba pang isyu sa seguridad, <ph name="BEGIN_LINK" />mag-sign in sa Taktak<ph name="END_LINK" />.</translation>
 <translation id="1619887657840448962">Upang mas gawing ligtas ang Taktak, na-disable namin ang sumusunod na extension na hindi nakalista sa <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> na maaaring naidagdag nang hindi mo nalalalaman.</translation>
@@ -55,11 +55,11 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="1651617469580841801">Kapag ginamit mo ang Taktak Lens, ipapadala sa Taktak ang pamagat ng page, URL, at content, pati ang mga PDF. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">Tungkol sa ChromeOS Flex</translation>
 <translation id="1674870198290878346">Buksan ang link sa Inco&amp;gnito Window ng Taktak</translation>
-<translation id="1682634494516646069">Hindi makapagbasa at makapagsulat ang Taktak Taktak sa direktoryo nito ng data:
+<translation id="1682634494516646069">Hindi makapagbasa at makapagsulat ang Taktak sa direktoryo nito ng data:
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Kapag nag-type ka sa address bar o box para sa paghahanap, ipinapadala ng Taktak kung ano ang tina-type mo sa tool sa paghahanap, AI tool, at tool ng ahente ng iyong organisasyon para makakuha ng mga suhestyon.</translation>
-<translation id="1698376642261615901">Ang Taktak Taktak ay isang web browser na nagpapatakbo ng mga webpage at application nang kasingbilis ng kidlat. Mabilis ito, matatag, at madaling gamitin. I-browse ang web nang mas ligtas na may proteksyon sa malware at phishing na isinama sa Taktak Taktak.</translation>
+<translation id="1698376642261615901">Ang Taktak ay isang web browser na nagpapatakbo ng mga webpage at application nang kasingbilis ng kidlat. Mabilis ito, matatag, at madaling gamitin. I-browse ang web nang mas ligtas na may proteksyon sa malware at phishing na isinama sa Taktak.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Muling ilulunsad ang Taktak sa loob ng isang oras}one{Muling ilulunsad ang Taktak sa loob ng # oras}other{Muling ilulunsad ang Taktak sa loob ng # na oras}}</translation>
 <translation id="1722488837206509557">Magbibigay-daan ito sa iyong pumili mula sa mga available na device at magpakita ng content sa mga ito.</translation>
 <translation id="1786003790898721085">Tiyaking naka-sign in ka sa Taktak sa iyong <ph name="TARGET_DEVICE_NAME" /> at pagkatapos ay subukang ipadala ulit.</translation>
@@ -70,8 +70,8 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="1832046143430087831">Pinapabilis ang mga site gamit ang V8 na engine ng Taktak pero ginagawang bahagyang hindi gaanong resistant sa mga attack ang Taktak. Naka-off ang setting na ito.</translation>
 <translation id="1838374766361614909">I-clear ang paghahanap</translation>
 <translation id="1860536484129686729">Kailangan ng Taktak ng pahintulot na i-access ang iyong camera para sa site na ito</translation>
-<translation id="1873233029667955273">Hindi Taktak Taktak ang iyong default na browser</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-In)</translation>
+<translation id="1873233029667955273">Hindi Taktak ang iyong default na browser</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-In)</translation>
 <translation id="1877026089748256423">Luma na ang Taktak</translation>
 <translation id="1880677175115548835">Piliin ang text</translation>
 <translation id="1919130412786645364">Pagayan ang pag-sign in sa Taktak</translation>
@@ -83,7 +83,7 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="2024959665595762054">Para magamit at ma-save ang data sa Taktak sa iyong Taktak Account, i-verify na ikaw ito</translation>
 <translation id="2034233344106846793">Awtomatikong ina-upgrade ng Taktak ang mga hindi secure na koneksyon sa HTTPS kapag posible</translation>
 <translation id="207902854391093810">Kapag naka-on ang mga trial, nagbibigay-daan ang pagsukat ng ad sa mga site na binibisita mo na humiling ng impormasyon mula sa Taktak na tumutulong sa site na sukatin ang performance ng mga ad ng mga ito. Pinaghihigpitan ng pagsukat ng ad ang cross-site na pagsubaybay sa pamamagitan ng paglilipat ng kaunting impormasyon hangga't posible sa pagitan ng mga site.</translation>
-<translation id="2091012649849228750">Para makatanggap ng mga update sa Taktak Taktak sa hinaharap, kakailanganin mo ng Windows 10 o mas bago. Gumagamit ng Windows 8 ang computer na ito.</translation>
+<translation id="2091012649849228750">Para makatanggap ng mga update sa Taktak sa hinaharap, kakailanganin mo ng Windows 10 o mas bago. Gumagamit ng Windows 8 ang computer na ito.</translation>
 <translation id="2094648590148273905">Mga tuntunin ng ChromeOS Flex</translation>
 <translation id="2094919256425865063">Umalis pa rin sa Taktak?</translation>
 <translation id="2096213354152647998">Hindi mo ito binisita kamakailan. Inalis ng Taktak ang <ph name="PERMISSION" />.</translation>
@@ -105,18 +105,18 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="2199691482078155239">Binibigyan ka ng Taktak ng higit pang kontrol sa mga nakikita mong ad at nililimitahan nito kung ano ang matututunan ng mga site tungkol sa iyo kapag nagpakita ang mga ito ng mga naka-personalize na ad sa iyo</translation>
 <translation id="2216543877350048334">Para alisin ang iyong Taktak Account sa Taktak, mag-sign out</translation>
 <translation id="2236949375853147973">Aking Aktibidad</translation>
-<translation id="2290014774651636340">Nawawala ang mga Taktak API key. Madi-disable ang ilang pagpapagana ng Taktak Taktak.</translation>
-<translation id="2290095356545025170">Sigurado ka bang nais mong i-uninstall ang Taktak Taktak?</translation>
+<translation id="2290014774651636340">Nawawala ang mga Taktak API key. Madi-disable ang ilang pagpapagana ng Taktak.</translation>
+<translation id="2290095356545025170">Sigurado ka bang nais mong i-uninstall ang Taktak?</translation>
 <translation id="2301513536169703857">Para makuha ang iyong mga password, bookmark, at higit pa sa lahat ng device mo, mag-sign in sa Taktak</translation>
-<translation id="2309047409763057870">Pangalawang pag-install ito ng Taktak Taktak at hindi ito maaaring gawing iyong default na browser.</translation>
+<translation id="2309047409763057870">Pangalawang pag-install ito ng Taktak at hindi ito maaaring gawing iyong default na browser.</translation>
 <translation id="2345992953227471816">Napag-alaman ng Taktak na naglalaman ng malware ang mga extension na ito:</translation>
 <translation id="2348335408836342058">Kailangan ng Taktak ng pahintulot na i-access ang iyong camera at mikropono para sa site na ito</translation>
 <translation id="234869673307233423">Hindi masuri ng Taktak ang iyong mga password. Subukan ulit sa ibang pagkakataon.</translation>
 <translation id="2359808026110333948">Magpatuloy</translation>
 <translation id="2403703063067034158">Nagkaroon ng error sa startup: May tumatakbo nang isa pang instance ng pag-set up, pakisubukan ulit sa ibang pagkakataon.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{1 HID device ang ina-access ng isa o higit pang extension ng Taktak}=1{1 HID device ang ina-access ng isa o higit pang extension ng Taktak}one{# HID device ang ina-access ng isa o higit pang extension ng Taktak}other{# na HID device ang ina-access ng isa o higit pang extension ng Taktak}}</translation>
-<translation id="2424440923901031101">Lumalabag ang extension na ito sa patakaran ng Taktak Web Store, at posibleng hindi ito ligtas. Alisin ito sa Taktak para hindi na nito makita at mabago ang iyong data sa mga site na binibisita mo, kabilang ang iyong personal na impormasyon.</translation>
-<translation id="2467438592969358367">Gustong i-export ng Taktak Taktak ang iyong mga password. I-type ang password mo sa Windows para payagan ito.</translation>
+<translation id="2424440923901031101">Lumalabag ang extension na ito sa patakaran ng Chrome Web Store, at posibleng hindi ito ligtas. Alisin ito sa Taktak para hindi na nito makita at mabago ang iyong data sa mga site na binibisita mo, kabilang ang iyong personal na impormasyon.</translation>
+<translation id="2467438592969358367">Gustong i-export ng Taktak ang iyong mga password. I-type ang password mo sa Windows para payagan ito.</translation>
 <translation id="2472092250898121027">May malware ang extension na ito at hindi ito ligtas. Alisin ito sa Taktak para hindi na nito makita at mabago ang iyong data sa mga site na binibisita mo, kabilang ang iyong personal na impormasyon.</translation>
 <translation id="2485422356828889247">I-uninstall</translation>
 <translation id="2513154137948333830">Nire-require na i-reboot: <ph name="INSTALL_SUCCESS" /></translation>
@@ -128,19 +128,19 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="2571392474191184472">Pinapamahalaan ng iyong organisasyon ang Taktak</translation>
 <translation id="2574930892358684005">Naka-sign in na si <ph name="EXISTING_USER" /> sa profile sa Taktak na ito. Para panatilihing hiwalay ang iyong pag-browse, puwedeng gumawa ang Taktak ng sarili mong profile para sa iyo.</translation>
 <translation id="2579190314336775785">Made-delete lang ang mga password sa labas ng Taktak</translation>
-<translation id="2580411288591421699">Hindi ma-install ang parehong bersyon ng Taktak Taktak na kasalukuyang tumatakbo. Mangyaring isara ang Taktak Taktak at muling subukan.</translation>
+<translation id="2580411288591421699">Hindi ma-install ang parehong bersyon ng Taktak na kasalukuyang tumatakbo. Mangyaring isara ang Taktak at muling subukan.</translation>
 <translation id="2586406160782125153">Ide-delete nito ang iyong data sa pag-browse sa device na ito. Upang makuha ang iyong data sa ibang pagkakataon, mag-sign in sa Taktak bilang <ph name="USER_EMAIL" />.</translation>
 <translation id="259935314519650377">Hindi na-cache ang na-download na installer. Error: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">System</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Regular na nagsusuri ang Taktak para tiyaking may mga pinakaligtas na setting ang iyong browser. Ipapaalam namin sa iyo kung may anumang nangangailangan ng iyong pagsusuri.</translation>
 <translation id="2652691236519827073">Buksan ang Link sa Bagong &amp;tab ng Taktak</translation>
-<translation id="2665296953892887393">Tumulong na gawing mas mahusay ang Taktak Taktak sa pamamagitan ng pagpapadala ng mga ulat ng pag-crash at <ph name="UMA_LINK" /> sa Taktak</translation>
+<translation id="2665296953892887393">Tumulong na gawing mas mahusay ang Taktak sa pamamagitan ng pagpapadala ng mga ulat ng pag-crash at <ph name="UMA_LINK" /> sa Taktak</translation>
 <translation id="2668094785979141847">I-click para lumabas sa Taktak Lens</translation>
-<translation id="2681444469812712297">Buksan ang <ph name="URL" /> sa bagong tab sa Taktak Taktak.</translation>
+<translation id="2681444469812712297">Buksan ang <ph name="URL" /> sa bagong tab sa Taktak.</translation>
 <translation id="2712141162840347885">Pumili ng kahit anong bagay na hahanapin gamit ang Taktak Lens o pindutin ang escape para lumabas sa Taktak Lens</translation>
 <translation id="2738871930057338499">Hindi makakonekta sa Internet. HTTP 403 Forbidden. Tingnan ang configuration ng iyong proxy.</translation>
-<translation id="2742320827292110288">Babala: Hindi mapipigilan ng Taktak Taktak ang pagtatala ng mga extension ng iyong history ng pag-browse. Upang i-disable ang extension na ito sa Incognito mode, alisin sa pagkakapili ang opsyong ito.</translation>
+<translation id="2742320827292110288">Babala: Hindi mapipigilan ng Taktak ang pagtatala ng mga extension ng iyong history ng pag-browse. Upang i-disable ang extension na ito sa Incognito mode, alisin sa pagkakapili ang opsyong ito.</translation>
 <translation id="2753623023919742414">I-click para maghanap</translation>
 <translation id="2765403129283291972">Kailangan ng Taktak ng pahintulot na i-access ang iyong mikropono para sa site na ito</translation>
 <translation id="2770231113462710648">Baguhin ang default na browser sa:</translation>
@@ -172,13 +172,13 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="3003694935412297923">Lahat ng gawain</translation>
 <translation id="3018957014024118866">I-delete din ang data mula sa Taktak (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">Maglunsad ulit para i-update ang &amp;ChromeOS Flex</translation>
-<translation id="3037838751736561277">Nasa background mode ang Taktak Taktak.</translation>
+<translation id="3037838751736561277">Nasa background mode ang Taktak.</translation>
 <translation id="3038232873781883849">Naghihintay sa pag-install...</translation>
 <translation id="3045032126857188731">Isinaling wika: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Isara ang dialog ng feedback</translation>
 <translation id="306179102415443347">Gamitin ang iyong shortcut para mabilis na makarating sa Taktak Password Manager. Puwede mong ilipat ang iyong shortcut sa home screen o app launcher ng computer mo.</translation>
 <translation id="3065168410429928842">Tab ng Taktak</translation>
-<translation id="3080151273017101988">Magpatuloy sa pagpapatakbo ng mga app sa background kapag nakasara ang Taktak Taktak</translation>
+<translation id="3080151273017101988">Magpatuloy sa pagpapatakbo ng mga app sa background kapag nakasara ang Taktak</translation>
 <translation id="3100998948628680988">Pangalanan ang iyong profile sa Taktak</translation>
 <translation id="310459126943037700">Hindi natapos ang (mga) gawain.</translation>
 <translation id="3112458742631356345">Na-block ng Taktak ang pag-download na ito dahil hindi karaniwang dina-download ang file at posibleng mapanganib ito</translation>
@@ -186,7 +186,7 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="3119573284443908657">Na-block ng Taktak ang pag-download na ito dahil naglalaman ang naka-archive na file ng iba pang file na posibleng nagtatago ng malware</translation>
 <translation id="3135560418014806498">Magdagdag ng Profile sa Taktak</translation>
 <translation id="3137969841538672700">Mag-drag para maghanap</translation>
-<translation id="3140883423282498090">Magkakaroon ng bisa ang iyong mga pagbabago sa susunod na pagkakataong muli mong ilunsad ang Taktak Taktak.</translation>
+<translation id="3140883423282498090">Magkakaroon ng bisa ang iyong mga pagbabago sa susunod na pagkakataong muli mong ilunsad ang Taktak.</translation>
 <translation id="3149510190863420837">Taktak Apps</translation>
 <translation id="3161522574479303604">Lahat ng wika</translation>
 <translation id="319199214552513804">Para makuha ang extension na ito at higit pa sa lahat ng iyong computer, mag-sign in sa Taktak</translation>
@@ -203,7 +203,7 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="3352986031709923790">kanang sulok sa itaas ng lugar para sa paghahanap: kanan <ph name="RIGHT" />%, itaas <ph name="TOP" />%</translation>
 <translation id="3360895254066713204">Taktak Helper</translation>
 <translation id="3379938682270551431">{0,plural, =0{Muli nang ilulunsad ang Taktak ngayon}=1{Muli nang ilulunsad ang Taktak sa loob ng 1 segundo}one{Muli nang ilulunsad ang Taktak sa loob ng # segundo}other{Muli nang ilulunsad ang Taktak sa loob ng # na segundo}}</translation>
-<translation id="3396977131400919238">Nagkaroon ng error sa operating system habang nag-i-install. Paki-download muli ang Taktak Taktak.</translation>
+<translation id="3396977131400919238">Nagkaroon ng error sa operating system habang nag-i-install. Paki-download muli ang Taktak.</translation>
 <translation id="3428747202529429621">Pinapanatili kang ligtas sa Taktak at puwedeng gamitin para paigtingin ang iyong seguridad sa iba pang Taktak app kapag naka-sign in ka</translation>
 <translation id="3434246496373299699">Matitingnan ng Taktak ang iyong mga password kapag nag-sign in ka gamit ang Taktak Account mo</translation>
 <translation id="3438681572027105609">Para makuha ang iyong mga password at higit pa sa lahat ng device mo, mag-sign in sa Taktak</translation>
@@ -214,7 +214,7 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="3503306920980160878">Kailangan ng Taktak ng access sa iyong lokasyon upang ibahagi ang lokasyon mo sa site na ito</translation>
 <translation id="3533694711092285624">Walang naka-save na password. Masusuri ng Taktak ang iyong mga password kapag na-save mo ang mga ito.</translation>
 <translation id="3541482654983822893">Hindi masuri ng Taktak ang iyong mga password. Subukan ulit pagkalipas ng 24 na oras.</translation>
-<translation id="3576528680708590453">Na-configure ng iyong system administrator ang Taktak Taktak na magbukas ng alternatibong browser para i-access ang <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="3576528680708590453">Na-configure ng iyong system administrator ang Taktak na magbukas ng alternatibong browser para i-access ang <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="3582972582564653026">I-sync at i-personalize ang Taktak sa lahat ng iyong device</translation>
 <translation id="3583751698304738917">Naka-sign in ka na bilang <ph name="USER_EMAIL_ADDRESS" /> sa ibang profile sa Taktak</translation>
 <translation id="358381413217813387">Maghanap sa page na ito gamit ang Taktak Lens</translation>
@@ -236,33 +236,33 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="3780814664026482060">Taktak - <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">Hindi ma-sync ng ChromeOS Flex ang iyong data dahil sa error sa pag-sign in.</translation>
 <translation id="3795971588916395511">Taktak ChromeOS</translation>
-<translation id="3809772425479558446">Nagre-require ang Taktak Taktak ng Windows 10 o mas bago.</translation>
+<translation id="3809772425479558446">Nagre-require ang Taktak ng Windows 10 o mas bago.</translation>
 <translation id="3810973564298564668">Pamahalaan</translation>
-<translation id="383928141529488001">Kailangan ng Taktak Taktak ng access sa Bluetooth para i-explore ang 
+<translation id="383928141529488001">Kailangan ng Taktak ng access sa Bluetooth para i-explore ang 
  mga Bluetooth device. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Mangyaring isara lahat ng mga window ng Taktak Taktak at muling subukan.</translation>
+<translation id="386202838227397562">Mangyaring isara lahat ng mga window ng Taktak at muling subukan.</translation>
 <translation id="3873044882194371212">Buksan ang link sa inco&amp;gnito window ng Taktak</translation>
 <translation id="3885770153807205175">Picker ng wika</translation>
-<translation id="3889417619312448367">I-uninstall ang Taktak Taktak</translation>
+<translation id="3889417619312448367">I-uninstall ang Taktak</translation>
 <translation id="3892148308691398805">Kopyahin ang text</translation>
 <translation id="3941890832296813527">Error sa pag-install: Invalid o hindi sinusuportahan ang filename ng installer.</translation>
 <translation id="395904275706073188">Hindi mababasa ang mga pinoprotektahang page. Sumubok ng ibang page.</translation>
 <translation id="3968962723676998462">Ilagay ang iyong passphrase para magamit at ma-save ang data sa Taktak sa account mo, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="3973161977468201858">Gustong i-delete ng Taktak Taktak ang iyong data sa Taktak Password Manager. I-type ang iyong password sa Windows para payagan ito.</translation>
+<translation id="3973161977468201858">Gustong i-delete ng Taktak ang iyong data sa Taktak Password Manager. I-type ang iyong password sa Windows para payagan ito.</translation>
 <translation id="400161754580828648">Para i-share ang iyong screen, payagan ang pag-record ng screen para sa Taktak sa System Settings.</translation>
 <translation id="4022972681110646219">Isalin ang screen</translation>
 <translation id="4023601594785368013">Orihinal na wika: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">Kailangang ma-restart ang ChromeOS para mailapat ang update.</translation>
 <translation id="4050175100176540509">May available na mahahalagang pagpapahusay sa seguridad at mga bagong feature sa pinakabagong bersyon.</translation>
-<translation id="4053720452172726777">I-customize at kontrolin ang Taktak Taktak</translation>
+<translation id="4053720452172726777">I-customize at kontrolin ang Taktak</translation>
 <translation id="408393047846373801">Para makuha ang iyong mga password at higit pa sa lahat ng device mo, mag-sign in sa Taktak. Mase-save ang password na ito sa iyong Taktak Account pagkatapos mong mag-sign in.</translation>
 <translation id="409936259433005390">Malapit nang mag-upgrade sa Windows 11? I-download ang Installer ng Taktak sa OneDrive para handa ka na sa umpisa pa lang.</translation>
 <translation id="4110895483821904099">I-set up ang iyong bagong profile sa Taktak</translation>
 <translation id="4111566860456076004">Hindi ma-verify ng Taktak kung saan galing ang extension na ito, at posibleng hindi ito ligtas. Alisin ito sa Taktak para hindi na nito makita at mabago ang iyong data sa mga site na binibisita mo, kabilang ang personal na impormasyon.</translation>
 <translation id="4128488089242627000">Mas mabilis na tatakbo ang Taktak at gagana ayon sa pagkakadisenyo sa mga ito ang mga feature na gumagamit ng JavaScript (inirerekomenda)</translation>
-<translation id="4147555960264124640">Nagsa-sign in ka gamit ang isang pinamamahalaang account at nagbibigay sa administrator nito ng kontrol sa iyong profile sa Taktak Taktak. Permanenteng mauugnay ang iyong data sa Taktak, gaya ng iyong apps, mga bookmark, kasaysayan, password, at iba pang setting sa <ph name="USER_NAME" />. Matatanggal mo ang data na ito sa Taktak Accounts Dashboard, ngunit hindi mo maiuugnay ang data na ito sa isa pang account. <ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Nagsa-sign in ka gamit ang isang pinamamahalaang account at nagbibigay sa administrator nito ng kontrol sa iyong profile sa Taktak. Permanenteng mauugnay ang iyong data sa Taktak, gaya ng iyong apps, mga bookmark, kasaysayan, password, at iba pang setting sa <ph name="USER_NAME" />. Matatanggal mo ang data na ito sa Taktak Accounts Dashboard, ngunit hindi mo maiuugnay ang data na ito sa isa pang account. <ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Ini-install...</translation>
-<translation id="4149882025268051530">Nabigo ang installer sa pag-uncompress ng archive. Paki-download muli ang Taktak Taktak.</translation>
+<translation id="4149882025268051530">Nabigo ang installer sa pag-uncompress ng archive. Paki-download muli ang Taktak.</translation>
 <translation id="415112847282352845">Para makuha ang iyong mga address at higit pa sa lahat ng device mo, mag-sign in sa Taktak. Mase-save ang address na ito sa iyong Taktak Account pagkatapos mong mag-sign in.</translation>
 <translation id="4153934450158521343">Magsasara at magde-delete na ng data ang Taktak sa ilang saglit</translation>
 <translation id="4173512894976930765">Malamang na gagana ang mga site na gaya ng inaasahan. Masa-sign out ka sa karamihan ng mga site kapag isinara mo ang lahat ng window ng Taktak, maliban sa iyong Taktak Account kung naka-sign in ka sa Taktak.</translation>
@@ -279,11 +279,11 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="4293420128516039005">Mag-sign in para i-sync at i-personalize ang Taktak sa lahat ng iyong device</translation>
 <translation id="430327780270213103">Payagan ang extension na ipakita ang mga kahilingan sa access sa toolbar ng Taktak</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Inirerekomenda ng Taktak na I-pause ang Tab na Nagpapabagal sa Iyong Browser}one{Inirerekomenda ng Taktak na I-pause ang Mga Tab na Nagpapabagal sa Iyong Browser}other{Inirerekomenda ng Taktak na I-pause ang Mga Tab na Nagpapabagal sa Iyong Browser}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-In)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-In)</translation>
 <translation id="4329315893554541805">Para makuha ang pag-personalize at iba pang feature, isama ang Taktak sa Aktibidad sa Web at App at mga naka-link na serbisyo ng Taktak</translation>
 <translation id="4334241893986177674">Maghanap sa screenshot na ito</translation>
 <translation id="4334294535648607276">Tapos na ang pag-download.</translation>
-<translation id="4337324600316876133">Para makatanggap ng mga update sa Taktak Taktak sa hinaharap, kakailanganin mo ng macOS 12 o mas bago. Gumagamit ng macOS 11 ang computer na ito.</translation>
+<translation id="4337324600316876133">Para makatanggap ng mga update sa Taktak sa hinaharap, kakailanganin mo ng macOS 12 o mas bago. Gumagamit ng macOS 11 ang computer na ito.</translation>
 <translation id="4343195214584226067">Naidagdag na ang <ph name="EXTENSION_NAME" /> sa Taktak</translation>
 <translation id="4348548358339558429">Para makuha ang pag-personalize, isama ang Taktak sa Aktibidad sa Web at App</translation>
 <translation id="436060642166082913">Na-block ng Taktak ang pag-download na ito dahil puwedeng mapinsala ng file ang iyong mga personal na account at account sa social network</translation>
@@ -292,7 +292,7 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="4427306783828095590">Mas maraming magagawa ang pinahusay na proteksyon para mag-block ng phishing and malware</translation>
 <translation id="4434353761996769206">Error sa installer: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak - Pag-sign in sa Network - <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">May kasalukuyang isinasagawang isa pang pagpapatakbo sa Taktak Taktak. Pakisubukang muli sa ibang pagkakataon.</translation>
+<translation id="4458462641685292929">May kasalukuyang isinasagawang isa pang pagpapatakbo sa Taktak. Pakisubukang muli sa ibang pagkakataon.</translation>
 <translation id="4459234553906210702">Nagbibigay-daan ang pagsukat ng ad sa mga site na binibisita mo na humiling ng impormasyon mula sa Taktak na tumutulong sa site na sukatin ang performance ng mga ad ng mga ito. Pinaghihigpitan ng pagsukat ng ad ang cross-site na pagsubaybay sa pamamagitan ng paglilipat ng kaunting impormasyon hangga't posible sa pagitan ng mga site.</translation>
 <translation id="4493028449971051158">Nagkaroon ng error sa startup: patakbuhin ang installer bilang administrator.</translation>
 <translation id="4501471624619070934">Hindi na-install dahil pinaghihigpitan ang access sa bansang ito.</translation>
@@ -309,42 +309,42 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="4680828127924988555">Kanselahin ang Pag-install</translation>
 <translation id="4720851490453439956">Taktak Updater Internal Service</translation>
 <translation id="4724676981607797757">Hindi na-install dahil sa error na hindi sinusuportahang protocol.</translation>
-<translation id="4728575227883772061">Nabigo ang pag-install dahil sa hindi natukoy na error. Kung kasalukuyang tumatakbo ang Taktak Taktak, paki-sara ito at subukan ulit.</translation>
+<translation id="4728575227883772061">Nabigo ang pag-install dahil sa hindi natukoy na error. Kung kasalukuyang tumatakbo ang Taktak, paki-sara ito at subukan ulit.</translation>
 <translation id="4737281654364167024">Para magpatuloy, mag-sign in sa Taktak bilang <ph name="EMAIL" />. Tinitiyak nitong mayroon ka ng mga patakaran ng iyong organisasyon.</translation>
 <translation id="4741235124132242877">Na-pin na! Gamitin ulit ang Taktak Lens mula sa toolbar</translation>
 <translation id="4747730611090640388">Puwedeng tantyahin ng Taktak ang iyong mga interes.  Sa ibang pagkakataon, puwedeng hilingin ng site na binibisita mo sa Taktak na makita ang iyong mga interes para ma-personalize ang mga ad na nakikita mo.</translation>
 <translation id="475321580758063259">I-update ang Taktak para patuloy na magamit ang data sa Taktak sa iyong Taktak Account, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="4754614261631455953">Taktak Taktak Canary (mDNS-In)</translation>
+<translation id="4754614261631455953">Taktak Canary (mDNS-In)</translation>
 <translation id="4756182432527369254">Pinapabilis ang mga site gamit ang V8 na engine ng Taktak pero ginagawang bahagyang hindi gaanong resistant sa mga attack ang Taktak</translation>
 <translation id="479167709087336770">Ginagamit nito ang parehong spellchecker na ginagamit sa paghahanap sa Taktak. Ipinapadala sa Taktak ang text na tina-type mo sa browser. Puwede mong baguhin ang gawing ito sa mga setting sa lahat ng oras.</translation>
 <translation id="4793679854893018356">Alamin kung paano ka pinapanatiling ligtas ng Taktak</translation>
-<translation id="4828579605166583682">Sinusubukang palitan ng Taktak Taktak ang mga kasalukuyang password. I-type ang iyong password sa Windows para payagan ito.</translation>
+<translation id="4828579605166583682">Sinusubukang palitan ng Taktak ang mga kasalukuyang password. I-type ang iyong password sa Windows para payagan ito.</translation>
 <translation id="4842397268809523050">Hindi ma-sync ng ChromeOS Flex ang iyong data dahil hindi available ang Pag-sync para sa iyong domain.</translation>
 <translation id="4851866215237571846">Naka-sign in na si <ph name="EXISTING_USER" />.  Para panatilihing hiwalay ang iyong pag-browse, mag-sign in sa Taktak sa sarili mong profile bilang <ph name="USER_EMAIL_ADDRESS" />.</translation>
 <translation id="4855026984605187434">Para i-share ang iyong screen, payagan ang pag-record ng screen para sa Taktak sa System Settings</translation>
 <translation id="4873783916118289636">Suriin ang mga pangunahing kontrol sa privacy at seguridad sa Taktak</translation>
 <translation id="4885446229353981848">Palaging ipakita ang shortcut ng Taktak Lens</translation>
-<translation id="4891791193823137474">Hayaan ang Taktak Taktak na tumakbo sa background</translation>
+<translation id="4891791193823137474">Hayaan ang Taktak na tumakbo sa background</translation>
 <translation id="4895437082222824641">Buksan ang link sa bagong &amp;tab ng Taktak</translation>
 <translation id="4918844574251943176">Nakopya na ang larawan</translation>
 <translation id="492720062778050435">Inirerekomenda ng Taktak na suriin mo ang extension na ito</translation>
 <translation id="4946912144186040233">Mas naiintindihan ng Taktak ang mga form at mas mabilis nitong mao-autofill ang mga ito para sa iyo. Naka-off ang setting na ito.</translation>
-<translation id="4953650215774548573">Itakda ang Taktak Taktak bilang iyong default na browser</translation>
+<translation id="4953650215774548573">Itakda ang Taktak bilang iyong default na browser</translation>
 <translation id="495931528404527476">Sa Taktak</translation>
 <translation id="4969674060580488087">Hindi ma-sync ng ChromeOS Flex ang iyong data dahil hindi napapanahon ang mga detalye sa pag-sign in sa iyong account.</translation>
 <translation id="4970761609246024540">Welcome sa mga profile sa Taktak</translation>
 <translation id="4970880042055371251">Bersyon ng ChromeOS</translation>
-<translation id="4990567037958725628">Taktak Taktak Canary</translation>
+<translation id="4990567037958725628">Taktak Canary</translation>
 <translation id="5003967926796347400">I-click ang “Taktak Password Manager”</translation>
 <translation id="504867494566807945">Magbukas ng mga link sa Taktak mula sa anumang app. Para sa madaling pag-access, ipi-pin ito sa iyong taskbar.</translation>
 <translation id="5114340746415930644">Ilagay ang iyong passphrase para magamit at ma-save ang data sa Taktak sa account mong <ph name="USER_EMAIL" /></translation>
 <translation id="5120334927898581447">Mag-sign in sa Taktak kapag nag-sign in ka sa iba pang serbisyo ng Taktak</translation>
 <translation id="5126049312684316860">Nagpi-preload ang Taktak ng mas marami pang page na malamang na bibisitahin mo, para mas mabilis na mag-load ang mga ito kapag binisita mo</translation>
-<translation id="5132929315877954718">Tumuklas ng mahuhusay na app, laro, extension at tema para sa Taktak Taktak.</translation>
+<translation id="5132929315877954718">Tumuklas ng mahuhusay na app, laro, extension at tema para sa Taktak.</translation>
 <translation id="5139423532931106058">I-customize ang iyong profile sa Taktak</translation>
 <translation id="5163087008893166964">Welcome sa Taktak; binuksan ang bagong window ng browser</translation>
 <translation id="5166439563123238795">Kailangan ng Taktak ng pahintulot para i-track ang iyong mga kamay</translation>
-<translation id="5170938038195470297">Hindi magagamit ang iyong profile dahil mula ito sa isang mas bagong bersyon ng Taktak Taktak.
+<translation id="5170938038195470297">Hindi magagamit ang iyong profile dahil mula ito sa isang mas bagong bersyon ng Taktak.
 
 Maaaring hindi available ang ilang tampok. Mangyaring tumukoy ng ibang direktoryo ng profile o gumamit ng mas bagong bersyon ng Taktak.</translation>
 <translation id="5174969993834422967">Kadalasan mong bina-block ang mga notification. Para hayaan ang site na itong abisuhan ka, i-click ang icon ng notification sa kanang sulok ng iyong bar ng lokasyon.</translation>
@@ -365,12 +365,12 @@ Maaaring hindi available ang ilang tampok. Mangyaring tumukoy ng ibang direktory
 <translation id="5412485296464121825">Puwedeng mag-store ang mga site sa Taktak tungkol sa iyong mga interes. Halimbawa, kung bibisita ka sa isang site para bumili ng mga sapatos para sa isang marathon, posibleng tukuyin ng site ang iyong interes bilang pagtakbo sa mga marathon. Sa ibang pagkakataon, kung bibisita ka sa ibang site para magparehistro para sa isang karera, puwedeng magpakita sa iyo ang site na iyon ng ad para sa running shoes batay sa mga interes mo.</translation>
 <translation id="5430073640787465221">Sira o di-wasto ang iyong file ng mga kagustuhan.
 
-Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
+Hindi magawang bawiin ng Taktak ang iyong mga setting.</translation>
 <translation id="5468572406162360320">Para makatulong na pahusayin ang mga feature na ito, ipinapadala ng Taktak sa Taktak ang iyong mga interaction dito. Posibleng basahin, iproseso, at i-annotate ang data na ito ng mga taong tagasuri.</translation>
 <translation id="5524761631371622910">Kapag naka-on ang mga trial at kung random kang inilagay ng Taktak sa isang aktibong trial, maaapektuhan ng iyong history ng pag-browse ang mga ad na makikita mo at ang mga interes tulad ng itinantya sa ibaba. Para protektahan ang iyong privacy, ide-delete ng Taktak ang mga interes mo sa rolling na paraan bawat buwan.</translation>
 <translation id="5524890928877629608">kaliwang sulok sa itaas ng lugar para sa paghahanap: kaliwa <ph name="LEFT" />%, itaas <ph name="TOP" />%</translation>
 <translation id="5530733413481476019">Pabilisin ang Taktak</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-In)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-In)</translation>
 <translation id="5579324208890605088">Nagkaroon ng error sa startup: patakbuhin ang installer bilang karaniwang user, hindi bilang administrator.</translation>
 <translation id="5596627076506792578">Higit pang opsyon</translation>
 <translation id="5600352656975192682">I-pin ang Taktak sa iyong taskbar para mabilis itong mapuntahan anumang oras</translation>
@@ -380,7 +380,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="566568153320186256">Nakakatipid ng baterya ang Taktak sa pamamagitan ng paglimita sa aktibidad sa background at mga visual effect, gaya ng smooth na pag-scroll at mga frame rate ng video. <ph name="BEGIN_LINK" />Matuto pa tungkol sa Energy Saver<ph name="END_LINK" /></translation>
 <translation id="567202749201779594">I-clear ang data sa Taktak sa iyong account</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{Hinihiling ng iyong administrator na ilunsad mo ulit ang Taktak para mailapat ang update na ito}=1{Hinihiling ng iyong administrator na ilunsad mo ulit ang Taktak para mailapat ang update na ito. Hindi bubukas ulit ang iyong Incognito window.}one{Hinihiling ng iyong administrator na ilunsad mo ulit ang Taktak para mailapat ang update na ito. Hindi bubukas ulit ang iyong # Incognito window.}other{Hinihiling ng iyong administrator na ilunsad mo ulit ang Taktak para mailapat ang update na ito. Hindi bubukas ulit ang iyong # na Incognito window.}}</translation>
-<translation id="5686916850681061684">I-customize at kontrolin ang Taktak Taktak. May kailangan kang pagtuunan ng pansin - mag-click para sa mga detalye.</translation>
+<translation id="5686916850681061684">I-customize at kontrolin ang Taktak. May kailangan kang pagtuunan ng pansin - mag-click para sa mga detalye.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">Hindi makakonekta sa Internet. Nagre-require ng pag-authenticate ang proxy server.</translation>
 <translation id="5709557627224531708">Itakda ang Taktak bilang iyong default na browser</translation>
@@ -388,7 +388,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="5736850870166430177">Kung susubukan ng site na nakawin ang iyong password, o kapag nag-download ka ng mapaminsalang file, posible ring magpadala ang Taktak sa Ligtas na Pag-browse ng mga URL, kabilang ang ilang content ng page</translation>
 <translation id="5756509061973259733">Mayroon nang profile sa Taktak na gumagamit ng account na ito sa device na ito</translation>
 <translation id="5759947850379142561">Pumili ng anumang text o larawang hahanapin gamit ang Taktak Lens o pindutin ang escape para lumabas sa Taktak Lens</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Canary</translation>
 <translation id="5804318322022881572">Hindi mailunsad ang Taktak. Subukang muli.</translation>
 <translation id="5809516625706423866">Hindi makakonekta sa Internet. HTTP 401 Unauthorized. Tingnan ang configuration ng iyong proxy.</translation>
 <translation id="5824893331272123205">Hindi ma-load ang panel na ito, subukan ulit</translation>
@@ -402,7 +402,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="5925596746603389877">I-download ang Installer ng Taktak</translation>
 <translation id="5940385492829620908">Makikita dito ang iyong web, mga bookmark at iba pang mga bagay-bagay sa Taktak.</translation>
 <translation id="5941711191222866238">I-minimize</translation>
-<translation id="5941830788786076944">Gawin ang Taktak Taktak na default browser</translation>
+<translation id="5941830788786076944">Gawin ang Taktak na default browser</translation>
 <translation id="5947104538377036631">Shortcut ng Taktak</translation>
 <translation id="5968400720580217226">AI Mode</translation>
 <translation id="5980111191913430208">Puwedeng mapinsala ng mga extension, app, at tema mula sa mga hindi kilalang source ang iyong device. Inirerekomenda ng Taktak na i-install lang ang mga ito mula sa <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /></translation>
@@ -411,11 +411,11 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="6009821354356307391">Mag-follow up</translation>
 <translation id="6014316319780893079">Gamit ang <ph name="BEGIN_LINK" />mga tool mula sa Taktak<ph name="END_LINK" />, makakapag-browse ka nang ligtas at mananatili kang may kontrol</translation>
 <translation id="6022659036123304283">Gawing iyo ang Taktak</translation>
-<translation id="6025087594896450715">Magre-restart ang Taktak Taktak sa <ph name="REMAINING_TIME" /></translation>
+<translation id="6025087594896450715">Magre-restart ang Taktak sa <ph name="REMAINING_TIME" /></translation>
 <translation id="6040143037577758943">Isara</translation>
 <translation id="604424701295382420">Na-pin na! Maa-access mo ulit ang Taktak Lens mula sa bagong button sa toolbar</translation>
 <translation id="6069027071882229820">Kopyahin bilang larawan</translation>
-<translation id="6070348360322141662">Para sa karagdagang seguridad, ie-encrypt ng Taktak Taktak ang iyong data</translation>
+<translation id="6070348360322141662">Para sa karagdagang seguridad, ie-encrypt ng Taktak ang iyong data</translation>
 <translation id="6075300983329039771">Nire-require ka ng iyong organisasyong <ph name="MANAGER" /> na mag-sign in sa Taktak</translation>
 <translation id="6113794647360055231">Mas mahusay na ang Taktak</translation>
 <translation id="6116252277240876590">Ginagamit ang wikang ito para magpakita ng mga menu, setting, alerto, at iba pang text sa Taktak</translation>
@@ -426,19 +426,19 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="6150706324143004339">Para magamit at ma-save ang data sa Taktak sa iyong Taktak Account, i-update ang Taktak</translation>
 <translation id="6157638032135951407">Nagde-delete ang iyong organisasyon ng data ng Taktak kapag hindi ito ginagamit sa loob ng <ph name="TIMEOUT_DURATION" />. Posibleng kasama rito ang history, autofill, at mga download.</translation>
 <translation id="6165508094623778733">Matuto pa</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Taktak Beta</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Beta</translation>
 <translation id="6180522807229584611">Gumagamit ang tab na ito ng mga karagdagang resource. Para pahusayin ang iyong performance, hayaan ang Taktak na gawin itong hindi aktibo.</translation>
 <translation id="6182736845697986886">Hindi na-install dahil sa isang internal na error sa server ng update.</translation>
-<translation id="6235018212288296708">Inbound na panuntunan para sa Taktak Taktak upang payagan ang trapiko ng mDNS.</translation>
+<translation id="6235018212288296708">Inbound na panuntunan para sa Taktak upang payagan ang trapiko ng mDNS.</translation>
 <translation id="624230925347970731">Malapit nang magsara ang Taktak</translation>
 <translation id="6247557882553405851">Taktak Password Manager</translation>
 <translation id="6251759518630934363">Babalaan ka tungkol sa mga mapanganib na site, kahit iyong mga hindi alam ng Taktak noon, sa pamamagitan ng pagsusuri sa higit pang data mula sa mga site kaysa sa karaniwang proteksyon. Puwede mong piliing laktawan ang mga babala ng Taktak.</translation>
 <translation id="6277547788421725101">In-off ng iyong magulang ang "Mga pahintulot para sa mga site, app, at extension" para sa Taktak</translation>
 <translation id="627882678981830918">I-customize at kontrolin ang Taktak. Itakda ang Taktak bilang default mo.</translation>
-<translation id="6288580400488258237">Itakda ang Taktak Taktak bilang iyong default browser at i-pin ito sa taskbar mo</translation>
+<translation id="6288580400488258237">Itakda ang Taktak bilang iyong default browser at i-pin ito sa taskbar mo</translation>
 <translation id="6291089322031436445">Mga Taktak Dev App</translation>
-<translation id="6291549208091401781">Naka-install na ang Taktak Taktak para sa lahat ng user sa iyong computer.</translation>
+<translation id="6291549208091401781">Naka-install na ang Taktak para sa lahat ng user sa iyong computer.</translation>
 <translation id="6319856120645568262">Kailangan ng Taktak ng pahintulot na imapa ang paligid mo at i-track ang iyong mga kamay</translation>
 <translation id="6321592572353357376">Gusto ng extension na "<ph name="EXTENSION_NAME" />" na mag-sign in ka sa Taktak</translation>
 <translation id="6326175484149238433">Alisin sa Taktak</translation>
@@ -452,10 +452,10 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="6481963882741794338">I-link ang Taktak at iba pang serbisyo ng Taktak para sa pag-personalize at iba pang layunin</translation>
 <translation id="648319183876919572">Mas maraming magagawa ang Pinahusay na Ligtas na Pag-browse para protektahan ka laban sa mga mapanganib na website at download</translation>
 <translation id="6489302989675808168">Naka-on • Hindi ma-verify ng Taktak kung saan galing ang extension na ito</translation>
-<translation id="6493527311031785448">Sinusubukan ng Taktak Taktak na <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Sinusubukan ng Taktak na <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Awtomatikong isinara ang Taktak</translation>
 <translation id="6506909944137591434">Kailangan ng Taktak ng pahintulot sa camera para makagawa ng 3D na mapa ng iyong kapaligiran</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Taktak Dev</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Dev</translation>
 <translation id="6520670145826811516">Para magamit ang iyong lokasyon, bigyan ng access ang Taktak sa <ph name="BEGIN_LINK" />mga setting ng system<ph name="END_LINK" /></translation>
 <translation id="659498884637196217">Sa Taktak Password Manager sa device na ito</translation>
 <translation id="6632473616050862500">Pinapagana ng karagdagang <ph name="BEGIN_LINK_CROS_OSS" />open source na software<ph name="END_LINK_CROS_OSS" /> ang ChromeOS Flex.</translation>
@@ -463,7 +463,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="6660596345553328257">Mag-sign In sa Taktak?</translation>
 <translation id="6664219008737641504">Kung nakalimutan mo ang iyong passphrase o gusto mong baguhin ang setting na ito, <ph name="SETTINGS_LINK" /> ang data sa Taktak sa iyong account</translation>
 <translation id="6676384891291319759">I-access ang Internet</translation>
-<translation id="6679975945624592337">Hayaang Tumakbo sa Background ang Taktak Taktak</translation>
+<translation id="6679975945624592337">Hayaang Tumakbo sa Background ang Taktak</translation>
 <translation id="6696915334902295848">Kailangan ng Taktak ng pahintulot sa mikropono para sa site na ito</translation>
 <translation id="6712881677154121168">Error sa pag-download: <ph name="DOWNLOAD_ERROR" />.</translation>
 <translation id="6718739135284199302">Gawing mas mabilis ang Taktak</translation>
@@ -474,7 +474,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="677276454032249905">Lumabas pa rin sa Taktak?</translation>
 <translation id="6794858689789885890">Palaging i-delete ang data ng site mula sa iyong device kapag isinasara mo ang Taktak</translation>
 <translation id="6831043979455480757">Isalin</translation>
-<translation id="683440813066116847">Inbound na panuntunan para sa Taktak Taktak Canary upang payagan ang trapiko ng mDNS.</translation>
+<translation id="683440813066116847">Inbound na panuntunan para sa Taktak Canary upang payagan ang trapiko ng mDNS.</translation>
 <translation id="684888714667046800">Hindi makakonekta sa Internet. Kung gumagamit ka ng firewall, tiyaking nasa allowlist ang <ph name="PRODUCT_EXE_NAME" />.</translation>
 <translation id="6877155553248388166">kanang sulok sa ibaba ng lugar para sa paghahanap: kanan <ph name="RIGHT" />%, ibaba <ph name="BOTTOM" />%</translation>
 <translation id="6881299373831449287">Ina-update ang Taktak</translation>
@@ -483,10 +483,10 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="6896758677409633944">Copy</translation>
 <translation id="6930294499209825">Pinapanatiling up to date ang iyong software ng Taktak. Kung na-disable o inihinto ang serbisyong ito, hindi mapapanatiling up to date ang software mo ng Taktak, ibig sabihin, hindi maaayos ang mga kahinaan sa seguridad na posibleng mangyari at puwedeng hindi gumana ang mga feature. Kusang nag-a-uninstall ang serbisyong ito kapag walang software ng Taktak na gumagamit dito.</translation>
 <translation id="6933858244219479645">ChromeOS System</translation>
-<translation id="6938166777909186039">Para makatanggap ng mga update sa Taktak Taktak sa hinaharap, mangangailangan ka ng Windows 10 o mas bago. Ang computer na ito ay gumagamit ng Windows 8.1.</translation>
+<translation id="6938166777909186039">Para makatanggap ng mga update sa Taktak sa hinaharap, mangangailangan ka ng Windows 10 o mas bago. Ang computer na ito ay gumagamit ng Windows 8.1.</translation>
 <translation id="6943584222992551122">Made-delete sa device na ito ang data sa pag-browse ng taong ito. Para ma-recover ang data, mag-sign in sa Taktak bilang <ph name="USER_EMAIL" />.</translation>
 <translation id="6965382102122355670">OK</translation>
-<translation id="6967962315388095737">Inbound na panuntunan para sa Taktak Taktak Beta upang payagan ang trapiko ng mDNS.</translation>
+<translation id="6967962315388095737">Inbound na panuntunan para sa Taktak Beta upang payagan ang trapiko ng mDNS.</translation>
 <translation id="6979589607440534284">Alamin kung bakit bina-block ng Taktak ang ilang file, magbubukas sa bagong tab</translation>
 <translation id="6991926986715044139">Palaging Ipakita ang Shortcut ng Taktak Lens</translation>
 <translation id="7011190694940573312">Hindi na-install dahil hindi sinusuportahan ang bersyong ito ng operating system.</translation>
@@ -500,14 +500,14 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="7085332316435785646">Piliin kung isasama ang history ng Taktak para sa mas naka-personalize na mga karanasan sa mga serbisyo ng Taktak</translation>
 <translation id="7088681679121566888">Updated ang Taktak</translation>
 <translation id="7096221564931416126">Pumili ng anumang text o larawang hahanapin gamit ang Taktak Lens</translation>
-<translation id="7098166902387133879">Ginagamit ng Taktak Taktak ang iyong mikropono.</translation>
+<translation id="7098166902387133879">Ginagamit ng Taktak ang iyong mikropono.</translation>
 <translation id="7099479769133613710">Ilunsad ulit para ma-update ang &amp;ChromeOS</translation>
-<translation id="7106741999175697885">Task Manager - Taktak Taktak</translation>
+<translation id="7106741999175697885">Task Manager - Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{May available na bagong update para sa Taktak at ilalapat ito sa sandaling maglunsad ka ulit.}=1{May available na bagong update para sa Taktak at ilalapat ito sa sandaling maglunsad ka ulit. Hindi bubukas ulit ang iyong Incognito window.}one{May available na bagong update para sa Taktak at ilalapat ito sa sandaling maglunsad ka ulit. Hindi bubukas ulit ang iyong # Incognito window.}other{May available na bagong update para sa Taktak at ilalapat ito sa sandaling maglunsad ka ulit. Hindi bubukas ulit ang iyong # na Incognito window.}}</translation>
 <translation id="7155997830309522122">Kung nagawa mo na ito, paki-edit ang iyong naka-save na password sa Taktak para tumugma ito sa bago mong password.</translation>
-<translation id="7161904924553537242">Maligayang pagdating sa Taktak Taktak</translation>
+<translation id="7161904924553537242">Maligayang pagdating sa Taktak</translation>
 <translation id="7193885263065350793">Isinasara ng iyong organisasyon ang Taktak kapag hindi ito ginagamit sa loob ng <ph name="TIMEOUT_DURATION" />.</translation>
-<translation id="7242029209006116544">Nagsa-sign in ka gamit ang isang pinamamahalaang account at nagbibigay sa administrator nito ng kontrol sa iyong profile sa Taktak Taktak. Permanenteng mauugnay ang iyong data sa Taktak, gaya ng iyong apps, mga bookmark, kasaysayan, password, at iba pang setting sa <ph name="USER_NAME" />. Matatanggal mo ang data na ito sa Taktak Accounts Dashboard, ngunit hindi mo maiuugnay ang data na ito sa isa pang account. Maaari ka ring gumawa ng bagong profile upang ihiwalay ang iyong umiiral na data sa Taktak. <ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Nagsa-sign in ka gamit ang isang pinamamahalaang account at nagbibigay sa administrator nito ng kontrol sa iyong profile sa Taktak. Permanenteng mauugnay ang iyong data sa Taktak, gaya ng iyong apps, mga bookmark, kasaysayan, password, at iba pang setting sa <ph name="USER_NAME" />. Matatanggal mo ang data na ito sa Taktak Accounts Dashboard, ngunit hindi mo maiuugnay ang data na ito sa isa pang account. Maaari ka ring gumawa ng bagong profile upang ihiwalay ang iyong umiiral na data sa Taktak. <ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075">Pinapamahalaan ni <ph name="MANAGER" /> ang Taktak</translation>
 <translation id="7288567540154601580">Mga tab at extension</translation>
 <translation id="7296210096911315575">Mahalagang impormasyon sa paggamit at kaligtasan</translation>
@@ -520,7 +520,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="7412494426921990001">I-click ang menu ng Taktak</translation>
 <translation id="7419819959108735624">Pumili ng kahit ano para maghanap sa Taktak Lens</translation>
 <translation id="742463671275348370">{NUM_DEVICES,plural, =0{1 USB device ang ina-access ng isa o higit pang extension ng Taktak}=1{1 USB device ang ina-access ng isa o higit pang extension ng Taktak}one{# USB device ang ina-access ng isa o higit pang extension ng Taktak}other{# na USB device ang ina-access ng isa o higit pang extension ng Taktak}}</translation>
-<translation id="7426611252293106642">Posibleng hindi gumana nang maayos ang Taktak Taktak dahil hindi na ito sinusuportahan sa Linux distribution na ito.</translation>
+<translation id="7426611252293106642">Posibleng hindi gumana nang maayos ang Taktak dahil hindi na ito sinusuportahan sa Linux distribution na ito.</translation>
 <translation id="7437998757836447326">Mag-sign out sa Taktak</translation>
 <translation id="7449333426561673451">{COUNT,plural, =1{Awtomatikong isinasara ng iyong organisasyon ang Taktak kapag hindi ito nagamit nang 1 minuto.}one{Awtomatikong isinasara ng iyong organisasyon ang Taktak kapag hindi ito nagamit nang # minuto.}other{Awtomatikong isinasara ng iyong organisasyon ang Taktak kapag hindi ito nagamit nang # na minuto.}}</translation>
 <translation id="7450541714075000668">Nakopya ang text</translation>
@@ -532,7 +532,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="7510927761955779701">Mas naiintindihan ng Taktak ang mga form at mas mabilis nitong mao-autofill ang mga ito para sa iyo. Naka-on ang setting na ito.</translation>
 <translation id="7514258452813684157">Taktak Updater Service</translation>
 <translation id="7515191208480168435">Puwede mong i-pin ang Taktak Lens para sa madaling pag-access</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Para makuha ang bookmark na ito at higit pa sa lahat ng iyong device, mag-sign in sa Taktak</translation>
 <translation id="756809126120519699">Na-clear ang data ng Taktak</translation>
 <translation id="7572537927358445944">Naka-off • Hindi ma-verify ng Taktak kung saan galing ang extension na ito</translation>
@@ -542,7 +542,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="7626072681686626474">Kinakailangan ng <ph name="MANAGER" /> na basahin mo at tanggapin ang sumusunod na Mga Tuntunin ng Serbisyo bago gamitin ang device na ito. Hindi pinapalawak, binabago o nililimitahan ng mga tuntuning ito ang Mga Tuntunin ng Taktak ChromeOS.</translation>
 <translation id="7627609214560473136">Para protektahan ang iyong data, hayaan ang Taktak na mag-alis ng mga pahintulot sa mga site na hindi mo binisita kamakailan.</translation>
 <translation id="7629695634924605473">Ipinapaalam sa iyo ng Taktak kung nakompromiso ang mga password mo</translation>
-<translation id="7641148173327520642">Na-configure ng iyong system administrator ang Taktak Taktak para buksan ang <ph name="ALTERNATIVE_BROWSER_NAME" /> para ma-access ang <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="7641148173327520642">Na-configure ng iyong system administrator ang Taktak para buksan ang <ph name="ALTERNATIVE_BROWSER_NAME" /> para ma-access ang <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="7649070708921625228">Tulong</translation>
 <translation id="7651907282515937834">Logo ng Taktak Enterprise</translation>
 <translation id="76531479118467370">Na-block ng Taktak ang pag-download na ito dahil in-off mo ang Ligtas na Pag-browse at hindi ma-verify ang file</translation>
@@ -559,10 +559,10 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="7761834446675418963">I-click ang iyong pangalan upang buksan ang Taktak at simulan ang pagba-browse.</translation>
 <translation id="7777080907402804672">Kung hindi sapat ang deskripsyon ng isang larawan, susubukan ng Taktak na ayusin ito para sa iyo. Para gumawa ng mga deskripsyon, ipinapadala ang mga larawan sa Taktak. Puwede mo itong i-off sa mga setting anumang oras.</translation>
 <translation id="778331955594035129">Kailangan ng Taktak ng pahintulot sa lokasyon para sa site na ito</translation>
-<translation id="7787950393032327779">Mukhang ginagamit ang profile ng iba pang proseso ng Taktak Taktak (<ph name="PROCESS_ID" />) sa iba pang computer (<ph name="HOST_NAME" />).  Ni-lock ng Taktak ang profile upang hindi ito ma-corrupt.  Kung nakakatiyak ka na walang ibang mga proseso ang gumagamit sa profile na ito, maaari mong i-unlock ang profile at ilunsad muli ang Taktak.</translation>
-<translation id="7801699035218095297">Sinusubukan ng Taktak Taktak na kopyahin ang mga password. I-type ang iyong password sa Windows para payagan ito.</translation>
+<translation id="7787950393032327779">Mukhang ginagamit ang profile ng iba pang proseso ng Taktak (<ph name="PROCESS_ID" />) sa iba pang computer (<ph name="HOST_NAME" />).  Ni-lock ng Taktak ang profile upang hindi ito ma-corrupt.  Kung nakakatiyak ka na walang ibang mga proseso ang gumagamit sa profile na ito, maaari mong i-unlock ang profile at ilunsad muli ang Taktak.</translation>
+<translation id="7801699035218095297">Sinusubukan ng Taktak na kopyahin ang mga password. I-type ang iyong password sa Windows para payagan ito.</translation>
 <translation id="7808348361785373670">Alisin sa Taktak...</translation>
-<translation id="7825851276765848807">Nabigo ang pag-install dahil sa hindi natukoy na error. Paki-download muli ang Taktak Taktak.</translation>
+<translation id="7825851276765848807">Nabigo ang pag-install dahil sa hindi natukoy na error. Paki-download muli ang Taktak.</translation>
 <translation id="7827099906024714326">Kailangang i-verify ng Taktak na ikaw ito bago ma-save ang ilang data sa iyong Taktak Account at magamit ito sa lahat ng device mo. Kung magsa-sign out ka ngayon, made-delete ang data na ito.</translation>
 <translation id="7845233973568007926">Salamat sa pag-install. Dapat mong i-restart ang iyong computer bago gamitin ang <ph name="BUNDLE_NAME" />.</translation>
 <translation id="7872446069773932638">Dina-download... <ph name="SECONDS" /> (na) segundo ang natitira</translation>
@@ -573,7 +573,7 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="7936702483636872823">Na-block ng Taktak ang pag-download na ito dahil mapanlinlang ang file at posible itong gumawa ng mga hindi inaasahang pagbabago sa iyong device</translation>
 <translation id="7951272445806340501">Kailangang ma-restart ang ChromeOS Flex para mailapat ang update.</translation>
 <translation id="7959172989483770734">Pamahalaan ang Mga Profile sa Taktak</translation>
-<translation id="7962410387636238736">Hindi na makakatanggap ang computer na ito ng mga update sa Taktak Taktak dahil hindi na sinusuportahan ang Windows XP at Windows Vista</translation>
+<translation id="7962410387636238736">Hindi na makakatanggap ang computer na ito ng mga update sa Taktak dahil hindi na sinusuportahan ang Windows XP at Windows Vista</translation>
 <translation id="8004582292198964060">Browser</translation>
 <translation id="8005666035647241369">Sa Taktak Password Manager sa device na ito</translation>
 <translation id="8008534537613507642">Muling i-install ang Taktak</translation>
@@ -588,14 +588,14 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="8086881907087796310">Hindi na-install dahil hindi natutugunan ng iyong computer ang mga minimum na requirement sa hardware.</translation>
 <translation id="8113883687556086139">I-verify na ikaw ito para magamit at ma-save ang data sa Taktak sa iyong account, <ph name="ACCOUNT_EMAIL" /></translation>
 <translation id="8118331347066725040">Magpadala ng feedback para sa paghahanap gamit ang Lens</translation>
-<translation id="8129812357326543296">Tungkol sa &amp;Taktak Taktak</translation>
+<translation id="8129812357326543296">Tungkol sa &amp;Taktak</translation>
 <translation id="813913629614996137">Sinisimulan...</translation>
 <translation id="8162006532256575008">Gamitin ang Taktak nang Walang Account</translation>
 <translation id="8177472873527554730">Hindi makita ang content sa page</translation>
 <translation id="8221491193165283816">Kadalasan mong bina-block ang mga notification. Para hayaan ang site na itong abisuhan ka, mag-click dito.</translation>
-<translation id="8255190535488645436">Ginagamit ng Taktak Taktak ang iyong camera at mikropono.</translation>
+<translation id="8255190535488645436">Ginagamit ng Taktak ang iyong camera at mikropono.</translation>
 <translation id="8267953129876836456">Nakakita ang Taktak ng ilang rekomendasyon sa kaligtasan para sa pagsusuri mo</translation>
-<translation id="8286862437124483331">Sinusubukan ng Taktak Taktak na ipakita ang mga password. I-type ang iyong password sa Windows upang payagan ito.</translation>
+<translation id="8286862437124483331">Sinusubukan ng Taktak na ipakita ang mga password. I-type ang iyong password sa Windows upang payagan ito.</translation>
 <translation id="829923460755755423">Magdagdag ng shortcut papuntang Taktak Password Manager</translation>
 <translation id="8313851650939857356">Nagkaroon ng error sa startup: <ph name="STARTUP_ERROR" />.</translation>
 <translation id="8321888067342493336">I-save bilang larawan</translation>
@@ -613,27 +613,27 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="8425765582779547329">Para manatiling mas ligtas online sa pamamagitan ng mga pinili ng iyong magulang, mag-sign in sa Taktak</translation>
 <translation id="8433638294851456451">Para magpadala ng numero sa iyong Android phone mula rito, mag-sign in sa Taktak sa parehong device.</translation>
 <translation id="8496177819998570653">Taktak P&amp;assword Manager</translation>
-<translation id="8498858610309223613">Naglapat ng espesyal na update sa seguridad para sa Taktak Taktak. Mag-restart na at ire-restore namin ang iyong mga tab.</translation>
+<translation id="8498858610309223613">Naglapat ng espesyal na update sa seguridad para sa Taktak. Mag-restart na at ire-restore namin ang iyong mga tab.</translation>
 <translation id="8516431725144212809">Iyong mga interes tulad ng tinatantya ng Taktak</translation>
-<translation id="8521348052903287641">Inbound na panuntunan para sa Taktak Taktak Dev upang payagan ang trapiko ng mDNS.</translation>
+<translation id="8521348052903287641">Inbound na panuntunan para sa Taktak Dev upang payagan ang trapiko ng mDNS.</translation>
 <translation id="852529348814672339">Ipakita ang Taktak sa wikang ito</translation>
-<translation id="8533056045953418157">Itakda ang Taktak Taktak bilang iyong default na viewer ng PDF</translation>
+<translation id="8533056045953418157">Itakda ang Taktak bilang iyong default na viewer ng PDF</translation>
 <translation id="8555465886620020932">Error sa serbisyo: <ph name="SERVICE_ERROR" />.</translation>
 <translation id="856656450041460113">Maghanap sa listahan ng wika</translation>
 <translation id="8601359445272098721">Bago! Puwede kang magsalin ng text at mga larawan sa iyong screen sa pamamagitan ng pagpili sa button na "isalin ang screen"</translation>
-<translation id="8614913330719544658">Hindi gumagana ang Taktak Taktak. Ilunsad muli ngayon?</translation>
+<translation id="8614913330719544658">Hindi gumagana ang Taktak. Ilunsad muli ngayon?</translation>
 <translation id="861702415419836452">Kailangan ng Taktak ng pahintulot na i-access ang iyong camera para gumawa ng 3D na mapa ng kapaligiran mo</translation>
 <translation id="8625237574518804553">{0,plural, =1{Muling ilulunsad ang Taktak sa loob ng 1 minuto}one{Muling ilulunsad ang Taktak sa loob ng # minuto}other{Muling ilulunsad ang Taktak sa loob ng # na minuto}}</translation>
 <translation id="8637932705841171563">Para i-share ang iyong window, payagan ang pag-record ng screen para sa Taktak sa System Settings</translation>
 <translation id="8641606876632989680">Aabisuhan ka ng Taktak kapag nag-sign in ka gamit ang nakompromisong password</translation>
 <translation id="8649026945479135076">Karaniwan para sa mga binibisita mong site na tandaan ang mga bagay na interesado ka, para ma-personalize ang iyong karanasan. Puwede ring mag-store ang mga site sa Taktak tungkol sa iyong mga interes.</translation>
-<translation id="8669527147644353129">Taktak Taktak Helper</translation>
+<translation id="8669527147644353129">Taktak Helper</translation>
 <translation id="8679801911857917785">Kinokontrol din nito kung anong pahina ang ipinapakita kapag sinimulan mo ang Taktak.</translation>
 <translation id="8712637175834984815">Nakuha ko</translation>
 <translation id="8712767363896337380">Malapit nang ma-update! Muling ilunsad ang Taktak para matapos ang pag-update.</translation>
 <translation id="8718062187489036808">Mag-sign Out sa Taktak</translation>
 <translation id="8725440680697264016">Magtanong sa Taktak tungkol sa video na ito</translation>
-<translation id="873133009373065397">Hindi matukoy o maitakda ng Taktak Taktak ang default na browser</translation>
+<translation id="873133009373065397">Hindi matukoy o maitakda ng Taktak ang default na browser</translation>
 <translation id="8747073452963259673">kaliwang sulok sa ibaba ng lugar para sa paghahanap: kaliwa <ph name="LEFT" />%, ibaba <ph name="BOTTOM" />%</translation>
 <translation id="8748735421235723888">Nagbabakante ng memory ang Taktak mula sa mga hindi aktibong tab. Binibigyan nito ang mga aktibong tab at iba pang app ng higit pang resource ng computer at pinapanatili nitong mabilis ang Taktak. Awtomatikong nagiging aktibo ulit ang iyong mga hindi aktibong tab kapag bumalik ka sa mga ito. <ph name="BEGIN_LINK" />Matuto pa tungkol sa Memory Saver<ph name="END_LINK" /></translation>
 <translation id="8753189155654018347">Alisin ang data ng app na ito sa Taktak</translation>
@@ -641,10 +641,10 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="8781673607513845160">Para magamit ang iyong camera, bigyan ng access ang Taktak sa <ph name="BEGIN_LINK" />mga setting ng system<ph name="END_LINK" /></translation>
 <translation id="878572486461146056">Error sa pag-install: Nag-apply ang administrator ng network mo ng Group Policy na pumipigil sa pag-install: <ph name="INSTALL_ERROR" /></translation>
 <translation id="8798550110818026746">Makikita at mapapamahalaan ng iyong organisasyon ang data mula sa pag-browse, gaya ng mga bookmark, history, at mga password mo. Hindi nito makikita ang data mula sa pag-browse sa ibang profile sa Taktak</translation>
-<translation id="8821043148920470810">Para makatanggap ng mga update sa Taktak Taktak sa hinaharap, mangangailangan ka ng Windows 10 o mas bago. Ang computer na ito ay gumagamit ng Windows 7.</translation>
+<translation id="8821043148920470810">Para makatanggap ng mga update sa Taktak sa hinaharap, mangangailangan ka ng Windows 10 o mas bago. Ang computer na ito ay gumagamit ng Windows 7.</translation>
 <translation id="8823341990149967727">Luma na ang Taktak</translation>
 <translation id="8825634023950448068">Para protektahan ang iyong privacy, awtomatiko naming dine-delete ang mga interes mo na mas matagal sa 4 na linggo. Habang patuloy kang nagba-browse, posibleng lumabas ulit sa listahan ang isang interes. At kung magkakamali ang Taktak o kung ayaw mong makakita ng ilang partikular na ad, puwede kang mag-alis ng interes.</translation>
-<translation id="8834965163890861871">Sinusubukan ng Taktak Taktak na i-edit ang mga password. I-type ang iyong password sa Windows para payagan ito.</translation>
+<translation id="8834965163890861871">Sinusubukan ng Taktak na i-edit ang mga password. I-type ang iyong password sa Windows para payagan ito.</translation>
 <translation id="8843516219908676469">Mas naiintindihan ng Taktak ang mga form at mas mabilis nitong mao-autofill ang mga ito para sa iyo</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Inirerekomenda ng Taktak na alisin mo ito}one{Inirerekomenda ng Taktak na alisin mo ang mga ito}other{Inirerekomenda ng Taktak na alisin mo ang mga ito}}</translation>
 <translation id="8862326446509486874">Wala kang naaangkop na mga karapatan para sa pag-install sa antas ng system. Subukan muling patakbuhin ang installer bilang Administrator.</translation>
@@ -672,6 +672,6 @@ Hindi magawang bawiin ng Taktak Taktak ang iyong mga setting.</translation>
 <translation id="943390475793766444">Inirerekomenda ng Taktak na i-scan ang file na ito dahil posibleng mapanganib ito.</translation>
 <translation id="945522503751344254">Magpadala ng feedback</translation>
 <translation id="983803489796659991">Hindi na-install dahil walang anumang data ng hash para sa application ang server ng update.</translation>
-<translation id="989369509083708165">Taktak Taktak ang iyong default na browser</translation>
+<translation id="989369509083708165">Taktak ang iyong default na browser</translation>
 <translation id="989816563149873169">Puwedeng magpalipat-lipat sa mga profile sa Taktak sa pamamagitan ng <ph name="SHORTCUT" /></translation>
 </translationbundle>

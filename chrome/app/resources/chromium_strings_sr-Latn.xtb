@@ -50,7 +50,7 @@ Neke funkcije su možda nedostupne i promene podešavanja neće biti sačuvane.
 <translation id="1640672724030957280">Preuzimanje...</translation>
 <translation id="1680687534629375545">Postavite pitanje pretrazi slika o ovoj stranici</translation>
 <translation id="1709772298389099340">Pruža pune privilegije za <ph name="BROWSER_NAME" />.</translation>
-<translation id="1715127912119967311">Da bi poboljšao ove funkcije, Taktak Taktak-u šalje vaše interakcije sa njima. Osobe koje pregledaju mogu da čitaju, obrađuju i komentarišu ove podatke.</translation>
+<translation id="1715127912119967311">Da bi poboljšao ove funkcije, Taktak-u šalje vaše interakcije sa njima. Osobe koje pregledaju mogu da čitaju, obrađuju i komentarišu ove podatke.</translation>
 <translation id="1722488837206509557">To će vam omogućiti da birate sa dostupnih uređaja i da prikazujete sadržaj na njima.</translation>
 <translation id="1733725117201708356">Taktak će uskoro izbrisati podatke pregledanja</translation>
 <translation id="1736443181683099871">Taktak će probati da nadogradi navigacije na HTTPS</translation>
@@ -230,7 +230,7 @@ Neke funkcije su možda nedostupne i promene podešavanja neće biti sačuvane.
 <translation id="395904275706073188">Zaštićene stranice ne mogu da se čitaju. Probajte sa drugom stranicom.</translation>
 <translation id="3962647064319009959">Saznajte kako vas Taktak štiti</translation>
 <translation id="3971865010372729242">Kada unosite tekst u traku za adresu ili u okvir za pretragu, Taktak šalje ono što unosite u alatke za pretragu, veštačku inteligenciju i agenta organizacije da biste dobijali predloge.</translation>
-<translation id="3975724895399328945">O verziji Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">O verziji Taktak for Testing</translation>
 <translation id="3997429360543082038">O Taktak OS-u</translation>
 <translation id="4019629340646866719">Taktak OS je omogućen zahvaljujući dodatnom <ph name="BEGIN_LINK_CROS_OSS" />softveru sa otvorenim kodom<ph name="END_LINK_CROS_OSS" />, kao što je <ph name="BEGIN_LINK_LINUX_OSS" />Linux okruženje za programiranje<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Prevedi ekran</translation>
@@ -550,7 +550,7 @@ Taktak ne može da vrati podešavanja.</translation>
 <translation id="8077498902115777962">Onemogući Taktak koji radi u pozadini za aplikacije</translation>
 <translation id="80790299200510644">Pretraga slika</translation>
 <translation id="8086881907087796310">Instaliranje nije uspelo zato što računar ne ispunjava minimalne zahteve za hardver.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak-u treba dozvola za lokaciju za ovaj sajt</translation>
 <translation id="8118331347066725040">Pošaljite povratne informacije za pretragu pomoću Objektiva</translation>
 <translation id="8133124826068723441">Taktak OS ne može da sinhronizuje podatke jer Sinhronizacija nije dostupna za domen.</translation>
@@ -596,7 +596,7 @@ Taktak ne može da vrati podešavanja.</translation>
 <translation id="8601359445272098721">Novo. Možete da prevodite i tekst i slike na ekranu tako što ćete izabrati dugme „Prevedi ekran“</translation>
 <translation id="8619360774459241877">Pokreće se Taktak...</translation>
 <translation id="8621669128220841554">Instalacija nije uspela zbog neodređene greške. Preuzmite Taktak ponovo.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing ne može da se postavi za podrazumevani pregledač.</translation>
+<translation id="8648201657708811153">Taktak for Testing ne može da se postavi za podrazumevani pregledač.</translation>
 <translation id="8697124171261953979">Kontroliše i stranicu koja se prikazuje kada pokrenete Taktak ili pretražujete iz omniboksa.</translation>
 <translation id="8704119203788522458">Ovo je vaš Taktak</translation>
 <translation id="8712637175834984815">Važi</translation>

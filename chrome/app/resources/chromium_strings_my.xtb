@@ -224,14 +224,14 @@
 <translation id="3889543394854987837">Taktak အားဖွင့်ရန် သင့်အမည်ကို နှိပ်ကာ စတင်အသုံးပြုပါ။</translation>
 <translation id="3892148308691398805">စာသား မိတ္တူကူးရန်</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> ကို ဤ Taktak ပရိုဖိုင်တွင် လက်မှတ်ထိုးဝင်ထားပြီး ဖြစ်သည်။ သင်၏ကြည့်ရှုမှုကို သီးခြားခွဲထားရန် Taktak က သင့်အတွက် သီးခြားပရိုဖိုင် ပြုလုပ်နိုင်သည်။</translation>
-<translation id="3909353120217047026">ဤနောက်ဆက်တွဲသည် Taktak Web Store မူဝါဒကို ချိုးဖောက်သဖြင့် လုံခြုံမှုမရှိနိုင်ပါ။ ၎င်းကို Taktak မှ ဖယ်ရှားခြင်းဖြင့် သင့်ကိုယ်ရေးအချက်အလက်များအပါအဝင် သင်ဝင်ကြည့်သည့် ဝဘ်ဆိုက်များရှိ သင့်ဒေတာများကို ၎င်းက မြင်နိုင်၊ ပြောင်းနိုင်တော့မည်မဟုတ်ပါ။</translation>
+<translation id="3909353120217047026">ဤနောက်ဆက်တွဲသည် Chrome Web Store မူဝါဒကို ချိုးဖောက်သဖြင့် လုံခြုံမှုမရှိနိုင်ပါ။ ၎င်းကို Taktak မှ ဖယ်ရှားခြင်းဖြင့် သင့်ကိုယ်ရေးအချက်အလက်များအပါအဝင် သင်ဝင်ကြည့်သည့် ဝဘ်ဆိုက်များရှိ သင့်ဒေတာများကို ၎င်းက မြင်နိုင်၊ ပြောင်းနိုင်တော့မည်မဟုတ်ပါ။</translation>
 <translation id="3941890832296813527">ထည့်သွင်းမှုအမှား- ထည့်သွင်းစနစ်ဖိုင်အမည် မမှန်ပါ (သို့) ပံ့ပိုးမထားပါ။</translation>
 <translation id="3945058413678539331">Taktak သည် စကားဝှက်များ မိတ္တူကူးရန် ကြိုးစာနေသည်။ ၎င်းကို ခွင့်ပြုရန် သင်၏ Windows စကားဝှက်ကို ရိုက်ထည့်ပါ။</translation>
 <translation id="3954172517175569325">သင်၏ Taktak Account တွင် သိမ်းထားသော စကားဝှက်၊ ငွေပေးချေနည်းလမ်းနှင့် လိပ်စာများကို ဤစက်မှ ဖယ်ရှားပါမည်။ Taktak တွင် ၎င်းတို့ကို သုံးရန်အတွက် ပြန်လည်လက်မှတ်ထိုးဝင်ပါ။</translation>
 <translation id="395904275706073188">ကာကွယ်ထားသော စာမျက်နှာများကို ဖတ်၍မရပါ။ အခြားစာမျက်နှာကို စမ်းကြည့်ပါ။</translation>
 <translation id="3962647064319009959">Taktak က သင်ဘေးကင်းစေရန် လုပ်ဆောင်ပုံကို လေ့လာခြင်း</translation>
 <translation id="3971865010372729242">လိပ်စာဘား (သို့) ရှာဖွေစာလုံးဖြည့်ကွက်လပ်တွင် စာရိုက်သောအခါ Taktak သည် သင့်အဖွဲ့အစည်း၏ ရှာဖွေမှု၊ AI နှင့် အေးဂျင့်တူးလ်များသို့ သင်ရိုက်လိုက်သောအရာကို ပို့ပြီး အကြံပြုချက်များ ရယူသည်။</translation>
-<translation id="3975724895399328945">&amp;Taktak Taktak for Testing အကြောင်း</translation>
+<translation id="3975724895399328945">&amp;Taktak for Testing အကြောင်း</translation>
 <translation id="3997429360543082038">ChromiumOS အကြောင်း</translation>
 <translation id="4019629340646866719"><ph name="BEGIN_LINK_LINUX_OSS" />Linux ဆော့ဖ်ဝဲရေးဆွဲမှု ပတ်ဝန်းကျင်<ph name="END_LINK_LINUX_OSS" /> တွင် <ph name="BEGIN_LINK_CROS_OSS" />အခမဲ့ရင်းမြစ် ဆော့ဖ်ဝဲ<ph name="END_LINK_CROS_OSS" /> ထပ်ဆောင်းဖြည့်ခြင်းဖြင့် ChromiumOS ကို ရေးဆွဲထားသည်။</translation>
 <translation id="4022972681110646219">ဖန်သားပြင်ကို ဘာသာပြန်ရန်</translation>
@@ -415,7 +415,7 @@
 <translation id="6334986366598267305">ယခုအခါ သင့် Taktak အကောင့်ဖြင့် Taktak နှင့် မျှဝေထားသည့် ကွန်ပျူတာများတွင် အသုံးပြုရ ပိုမိုလွယ်ကူလာပါသည်။</translation>
 <translation id="6347933965114150440">Taktak ဖြတ်လမ်းလင့်ခ်</translation>
 <translation id="6366160072964553914">ဤဖိုင်ကို ဒေါင်းလုဒ်လုပ်လေ့မရှိသည့်အပြင် အန္တရာယ်ရှိနိုင်သဖြင့် Taktak က ဤဒေါင်းလုဒ်ကို ပိတ်ထားသည်</translation>
-<translation id="6373523479360886564">သင်သည် Taktak Taktak ကို ဖြုတ်ချင်တာ သေချာလား?</translation>
+<translation id="6373523479360886564">သင်သည် Taktak ကို ဖြုတ်ချင်တာ သေချာလား?</translation>
 <translation id="6375219077595103062">Password Manager သို့ ဖြတ်လမ်းလင့်ခ် ထည့်ပါ</translation>
 <translation id="6388799252195623474">ဤအရာကို ကူပေးပါ</translation>
 <translation id="6390800440335263989">ရှေ့ဆက်ရန်အတွက် <ph name="EMAIL" /> အနေဖြင့် Taktak သို့ လက်မှတ်ထိုးဝင်ပါ။ ဤသို့ပြုလုပ်ခြင်းဖြင့် သင့်အဖွဲ့အစည်း၏ မူဝါဒများကို လိုက်နာစေသည်။</translation>
@@ -552,7 +552,7 @@ Taktak သည်သင့်ကြိုတင်ချိန်ညှိချ�
 <translation id="8077498902115777962">အက်ပ်များအတွက် နောက်ခံတွင် ပွင့်နေသည့် Taktak ကို ပိတ်ရန်</translation>
 <translation id="80790299200510644">ပုံဖြင့်ရှာဖွေမှု</translation>
 <translation id="8086881907087796310">သင့်ကွန်ပျူတာသည် ဟာ့ဒ်ဝဲပိုင်း အနည်းဆုံးသတ်မှတ်ချက်နှင့် ကိုက်ညီမှုမရှိသောကြောင့် ထည့်သွင်း၍မရပါ။</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak သည် ဤဝဘ်ဆိုက်အတွက် တည်နေရာခွင့်ပြုချက် လိုအပ်သည်</translation>
 <translation id="8118331347066725040">Lens ဖြင့် ရှာဖွေခြင်းအတွက် အကြံပြုချက် ပို့ရန်</translation>
 <translation id="8133124826068723441">သင့်ဒိုမိန်းအတွက် ‘စင့်ခ်လုပ်ခြင်း’ မရနိုင်သဖြင့် ChromiumOS က သင့်ဒေတာကို စင့်ခ်လုပ်၍မရပါ။</translation>
@@ -598,7 +598,7 @@ Taktak သည်သင့်ကြိုတင်ချိန်ညှိချ�
 <translation id="8601359445272098721">အသစ်။ “စခရင်ကို ဘာသာပြန်ရန်” ခလုတ်ကိုရွေးခြင်းဖြင့် ခစခရင်ရှိ စာသားနှင့်ပုံ နှစ်မျိုးစလုံးကို ဘာသာပြန်နိုင်သည်</translation>
 <translation id="8619360774459241877">Taktak ကို ဖွင့်နေသည်...</translation>
 <translation id="8621669128220841554">မသိရသည့် အမှားတစ်ခုကြောင့် တပ်ဆင်မှု မအေင်မြင်ခဲ့ပါ။ ကျေးဇူးပြုပြီး Taktak ကို ထပ်ပြီး ဒေါင်းလုဒ် လုပ်ယူပါ။</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing ကို သင့်မူရင်းဘရောင်ဇာအဖြစ် မပြုလုပ်နိုင်ပါ။</translation>
+<translation id="8648201657708811153">Taktak for Testing ကို သင့်မူရင်းဘရောင်ဇာအဖြစ် မပြုလုပ်နိုင်ပါ။</translation>
 <translation id="8697124171261953979">It also controls what page is shown when you start Taktak or search from the Omnibox.</translation>
 <translation id="8704119203788522458">ဒါဟာ သင်၏ Taktak ပါ</translation>
 <translation id="8712637175834984815">ရပါပြီ!</translation>

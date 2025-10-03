@@ -3,10 +3,10 @@
 <translationbundle lang="mr">
 <translation id="1016765312371154165">Taktak योग्यरित्या बंद झाले नाही.</translation>
 <translation id="130631256467250065">तुम्ही आपल्या डिव्हाइसचा पुढील वेळी पुनरारंभ कराल तेव्हा तुमचे बदल प्रभावी होतील.</translation>
-<translation id="1516530951338665275">पेअर करणे पुढे सुरू ठेवण्यासाठी, Taktak Taktak ला ब्लूटूथ ॲक्सेस करण्याची 
+<translation id="1516530951338665275">पेअर करणे पुढे सुरू ठेवण्यासाठी, Taktak ला ब्लूटूथ ॲक्सेस करण्याची 
  आवश्यकता आहे. <ph name="IDS_BLUETOOTH_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
 <translation id="1635457557763038537">पुढील वेळी तुम्ही Taktak पुन्हा लाँच केल्यानंतर तुमचे बदल लागू होतील.</translation>
-<translation id="2399868464369312507">Taktak Taktak हे पेमेंट पद्धती संपादित करण्याचा प्रयत्न करत आहे.</translation>
+<translation id="2399868464369312507">Taktak हे पेमेंट पद्धती संपादित करण्याचा प्रयत्न करत आहे.</translation>
 <translation id="2447485272386224171"><ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> मुक्त स्रोत प्रोजेक्ट आणि इतर <ph name="BEGIN_LINK_OSS" />मुक्त स्रोत सॉफ्टवेअर<ph name="END_LINK_OSS" /> द्वारे Taktak ची निर्मिती करणे शक्य झाले.</translation>
 <translation id="2588322182880276190">Taktak लोगो</translation>
 <translation id="3444832043240812445">हे पेज तुम्ही <ph name="BEGIN_LINK" />कॅशे अहवाल सुरू<ph name="END_LINK" /> केल्यास केवळ तुम्हाला अलीकडील क्रॅशची माहिती दाखवते.</translation>
@@ -43,5 +43,5 @@
 <translation id="7230956101631259640">तुम्ही एक सुरक्षित Taktak पेज पाहत आहात</translation>
 <translation id="8232971017369963250">Taktak हे <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> मुक्त स्रोत प्रोजेक्टद्वारे तयार करण्यात आले आहे.</translation>
 <translation id="8279509328145658601">Taktak हे इतर <ph name="BEGIN_LINK_OSS" />मुक्त स्रोत सॉफ्टवेअर<ph name="END_LINK_OSS" /> द्वारेदेखील तयार करण्यात आले आहे.</translation>
-<translation id="8544217240017914508">Taktak Taktak पेमेंट पद्धती भरण्यासाठी सेटिंग्जमध्ये फेरबदल करण्याचा प्रयत्न करत आहे.</translation>
+<translation id="8544217240017914508">Taktak पेमेंट पद्धती भरण्यासाठी सेटिंग्जमध्ये फेरबदल करण्याचा प्रयत्न करत आहे.</translation>
 </translationbundle>

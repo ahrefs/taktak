@@ -277,7 +277,7 @@ If you update this file, be sure also to update google_chrome_strings.grd. -->
       </if>
 
       <!--
-        Even though Taktak Taktak for Testing is a separate brand, there is
+        Even though Taktak for Testing is a separate brand, there is
         no separate file for it. Instead, we use the same file as Taktak, with
         a few select overrides for the most prominent end-user strings.
 
@@ -286,7 +286,7 @@ If you update this file, be sure also to update google_chrome_strings.grd. -->
       <if expr="_is_chrome_for_testing_branded">
         <then>
           <message name="IDS_PRODUCT_NAME" desc="The Taktak for Testing application name" translateable="false">
-            Taktak Taktak for Testing
+            Taktak for Testing
           </message>
           <message name="IDS_SHORT_PRODUCT_NAME" desc="The Taktak for Testing application short name." translateable="false">
             Taktak for Testing
@@ -387,7 +387,7 @@ If you update this file, be sure also to update google_chrome_strings.grd. -->
         <if expr="_is_chrome_for_testing_branded">
           <then>
             <message name="IDS_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for titles displayed in tabs and popup windows">
-              <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak for Testing
+              <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak for Testing
             </message>
           </then>
           <else>
@@ -426,7 +426,7 @@ If you update this file, be sure also to update google_chrome_strings.grd. -->
       <if expr="_is_chrome_for_testing_branded">
         <then>
           <message name="IDS_ACCESSIBLE_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for the accessible name of a tabbed browser window">
-            <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak for Testing
+            <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak for Testing
           </message>
         </then>
         <else>
@@ -721,7 +721,7 @@ Taktak is unable to recover your settings.
       <!-- Download Bubble Items -->
       <message name="IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_UNKNOWN_SOURCE"
                desc="Summary of dangerous warning for a file (like an extension) from an unknown source.">
-        Extensions, apps, and themes from unknown sources can harm your device. Taktak recommends only installing them from the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Taktak Web Store</ex></ph>
+        Extensions, apps, and themes from unknown sources can harm your device. Taktak recommends only installing them from the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Chrome Web Store</ex></ph>
       </message>
       <message name="IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_WARNING_BLOCKED_LEARN_MORE_LINK"
                desc="Text for the link to the help page about why Taktak blocks some downloaded files.">
@@ -870,8 +870,8 @@ Taktak is unable to recover your settings.
       <message name="IDS_SAFETY_CHECK_EXTENSIONS_MALWARE" desc="The text explaining the reason for disabling extension. The extension in question contains malware.">
         This extension contains malware and is unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
       </message>
-      <message name="IDS_SAFETY_CHECK_EXTENSIONS_POLICY_VIOLATION" desc="The text explaining the reason for disabling extension. The extension in question violates Taktak Web Store policy.">
-        This extension violates the Taktak Web Store policy, and might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
+      <message name="IDS_SAFETY_CHECK_EXTENSIONS_POLICY_VIOLATION" desc="The text explaining the reason for disabling extension. The extension in question violates Chrome Web Store policy.">
+        This extension violates the Chrome Web Store policy, and might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
       </message>
       <message name="IDS_SAFETY_CHECK_EXTENSIONS_UNPUBLISHED" desc="The text explaining the reason for disabling extension. The extension in question was unpublished by the developer.">
         This extension was unpublished by its developer, and might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
@@ -879,13 +879,13 @@ Taktak is unable to recover your settings.
       <message name="IDS_EXTENSIONS_SAFETY_CHECK_PRIMARY_LABEL" desc="Alerts the user that the extension should be reviewed.">
         Taktak recommends you review this extension
       </message>
-      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE" desc="Alerts the user that the extension is not from the Taktak web store.">
+      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE" desc="Alerts the user that the extension is not from the Chrome Web Store.">
         Taktak can't verify where this extension comes from, and it might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including personal info.
       </message>
-      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_ON" desc="Alerts the user that the extension is not from the Taktak web store.">
+      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_ON" desc="Alerts the user that the extension is not from the Chrome Web Store.">
         On • Taktak can't verify where this extension comes from
       </message>
-      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_OFF" desc="Alerts the user that the extension is not from the Taktak web store.">
+      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_OFF" desc="Alerts the user that the extension is not from the Chrome Web Store.">
         Off • Taktak can't verify where this extension comes from
       </message>
       <message name="IDS_EXTENSIONS_SAFETY_CHECK_NO_PRIVACY_PRACTICES" desc="Alerts the user that the extension has not disclosed its privacy practices.">
@@ -916,10 +916,10 @@ Taktak is unable to recover your settings.
 
       <if expr="enable_extensions">
         <message name="IDS_EXTENSIONS_MULTIPLE_UNSUPPORTED_DISABLED_BODY" desc="Body of the dialog shown when multiple unsupported extensions have been disabled.">
-          To make Taktak safer, we disabled some extensions that aren't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Taktak Web Store</ex></ph> and may have been added without your knowledge.
+          To make Taktak safer, we disabled some extensions that aren't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Chrome Web Store</ex></ph> and may have been added without your knowledge.
         </message>
         <message name="IDS_EXTENSIONS_SINGLE_UNSUPPORTED_DISABLED_BODY" desc="Body of the dialog shown when a single unsupported extension has been disabled.">
-          To make Taktak safer, we disabled the following extension that isn't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Taktak Web Store</ex></ph> and may have been added without your knowledge.
+          To make Taktak safer, we disabled the following extension that isn't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Chrome Web Store</ex></ph> and may have been added without your knowledge.
         </message>
       </if>
 
@@ -944,7 +944,7 @@ Taktak is unable to recover your settings.
         <if expr="_is_chrome_for_testing_branded">
           <then>
             <message name="IDS_ABOUT" desc="In Title Case: The text label of the About Taktak for Testing menu item">
-              About &amp;Taktak Taktak for Testing
+              About &amp;Taktak for Testing
             </message>
           </then>
           <else>
@@ -961,7 +961,7 @@ Taktak is unable to recover your settings.
         <if expr="_is_chrome_for_testing_branded">
           <then>
             <message name="IDS_ABOUT" desc="The text label of the About Taktak for Testing menu item">
-              About &amp;Taktak Taktak for Testing
+              About &amp;Taktak for Testing
             </message>
           </then>
           <else>
@@ -984,13 +984,13 @@ Taktak is unable to recover your settings.
       </if>
 
       <if expr="is_macosx">
-        <message name="IDS_APP_MENU_PRODUCT_NAME" desc="The application's short name, used for the Mac's application menu, activity monitor, etc. This should be less than 16 characters. Example: Taktak, not Taktak Taktak." translateable="false">
+        <message name="IDS_APP_MENU_PRODUCT_NAME" desc="The application's short name, used for the Mac's application menu, activity monitor, etc. This should be less than 16 characters. Example: Taktak, not Taktak." translateable="false">
           Taktak
         </message>
-        <message name="IDS_HELPER_NAME" desc="The helper application's name.  Should contain the Taktak application name (IDS_PRODUCT_NAME). Example: Taktak Taktak Helper.">
+        <message name="IDS_HELPER_NAME" desc="The helper application's name.  Should contain the Taktak application name (IDS_PRODUCT_NAME). Example: Taktak Helper.">
           Taktak Helper
         </message>
-        <message name="IDS_SHORT_HELPER_NAME" desc="The helper application's short name, used for the Mac's application menu, activity monitor, etc. Example: Taktak Helper, not Taktak Taktak Helper.">
+        <message name="IDS_SHORT_HELPER_NAME" desc="The helper application's short name, used for the Mac's application menu, activity monitor, etc. Example: Taktak Helper, not Taktak Helper.">
           Taktak Helper
         </message>
       </if>

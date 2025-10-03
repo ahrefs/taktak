@@ -2114,7 +2114,7 @@ Du kan administrere indstillingerne for denne konto ved at installere Family Lin
 <translation id="2434449159125086437">Printeren kunne ikke konfigureres. Tjek konfigurationen, og prøv igen.</translation>
 <translation id="2434758125294431199">Vælg, hvem der kan dele med dig</translation>
 <translation id="2434915728183570229">Du kan nu se din telefons apps</translation>
-<translation id="2435137177546457207">Yderligere vilkår for Taktak Taktak og ChromeOS Flex</translation>
+<translation id="2435137177546457207">Yderligere vilkår for Taktak og ChromeOS Flex</translation>
 <translation id="2435248616906486374">Forbindelsen til netværket blev afbrudt</translation>
 <translation id="2435457462613246316">Vis adgangskode</translation>
 <translation id="2436385001956947090">Kopiér &amp;link</translation>
@@ -4082,7 +4082,7 @@ Du kan administrere indstillingerne for denne konto ved at installere Family Lin
 <translation id="3798670284305777884">Højttaler (indbygget)</translation>
 <translation id="3799128412641261490">Indstillinger for kontaktadgang</translation>
 <translation id="3800764353337460026">Symboltypografi</translation>
-<translation id="3800828618615365228">Yderligere vilkår for Taktak Taktak og ChromeOS</translation>
+<translation id="3800828618615365228">Yderligere vilkår for Taktak og ChromeOS</translation>
 <translation id="3800898876950197674">Angiv din adgangskode for at tillade denne udvidelse.</translation>
 <translation id="3801449494961771207">Systemstemme for oplæsning</translation>
 <translation id="3802486193901166966">Denne udvidelse kræver ikke nogen særlige tilladelser og har ingen yderligere adgang til websites</translation>
@@ -4105,7 +4105,7 @@ Du kan administrere indstillingerne for denne konto ved at installere Family Lin
 <translation id="3810973564298564668">Administrer</translation>
 <translation id="381202950560906753">Tilføj endnu et</translation>
 <translation id="3812525830114410218">Ugyldigt certifikat</translation>
-<translation id="3813296892522778813">Gå til <ph name="BEGIN_LINK_CHROMIUM" />Hjælp til Taktak Taktak<ph name="END_LINK_CHROMIUM" />, hvis du ikke kan finde det, du leder efter.</translation>
+<translation id="3813296892522778813">Gå til <ph name="BEGIN_LINK_CHROMIUM" />Hjælp til Taktak<ph name="END_LINK_CHROMIUM" />, hvis du ikke kan finde det, du leder efter.</translation>
 <translation id="3813358687923336574">Sprog, der bruges til oversættelse af sider og Hurtig info</translation>
 <translation id="3813458570141926987">Liste over emner, der er estimeret af Taktak baseret på din seneste browserhistorik</translation>
 <translation id="3814529970604306954">Skolekonto</translation>
@@ -4582,7 +4582,7 @@ Vil du starte <ph name="CONTROL_PANEL_APPLET_NAME" />?</translation>
 <translation id="4133076602192971179">Åbn appen for at ændre din adgangskode</translation>
 <translation id="4134838386867070505">Trin 1 af 4: Beskriv problemet</translation>
 <translation id="413534985210133938">"<ph name="LOCAL_FOLDER" />" gemmes kun på denne enhed. Hvis du flytter dette bogmærke til "<ph name="LOCAL_FOLDER" />", kan du ikke længere tilgå det på dine andre enheder.</translation>
-<translation id="4135746311382563554">Yderligere servicevilkår for Taktak Taktak og ChromeOS</translation>
+<translation id="4135746311382563554">Yderligere servicevilkår for Taktak og ChromeOS</translation>
 <translation id="4136203100490971508">Nattelys slukkes automatisk ved solopgang</translation>
 <translation id="41365691917097717">Hvis du fortsætter, aktiveres ADB-fejlretning til oprettelse og test af Android-apps. Bemærk! Denne handling tillader, at Android-apps, der ikke er blevet verificeret af Taktak, kan installeres. Du skal gendanne fabriksindstillingerne for at deaktivere dette.</translation>
 <translation id="4137923333452716643">Fremhæv den tekst, du vil åbne i læsetilstand</translation>
@@ -7849,7 +7849,7 @@ Flere kontakter kan tildeles denne handling.</translation>
 <translation id="6511607461419653612">Genstart din Chromebook, og prøv igen</translation>
 <translation id="6511827214781912955">Du bør overveje at slette <ph name="FILENAME" />, så andre, der bruger denne enhed, ikke kan se dine adgangskoder</translation>
 <translation id="6512759338201777379">Billede <ph name="INDEX" /> af <ph name="SUBJECT" /> med stemningen <ph name="MOOD" /> er genereret.</translation>
-<translation id="6513247462497316522">Taktak Taktak anvender mobildata, hvis du ikke har forbindelse til et andet netværk.</translation>
+<translation id="6513247462497316522">Taktak anvender mobildata, hvis du ikke har forbindelse til et andet netværk.</translation>
 <translation id="6514010653036109809">Tilgængelig enhed:</translation>
 <translation id="6516990372629061585">Se importerede certifikater fra Linux</translation>
 <translation id="6517382055541687102">Den valgte enhed er ændret til <ph name="DEVICE_NAME" /></translation>
@@ -8801,7 +8801,7 @@ Du har # andre kompromitterede adgangskoder. Taktak Adgangs­kode­admin­istrat
 <translation id="7180611975245234373">Opdater</translation>
 <translation id="7180865173735832675">Tilpas</translation>
 <translation id="7181117767881540376">Skjul bogmærkelinjen</translation>
-<translation id="7181329571386134105">Hvis du vil give <ph name="CHILD_NAME" /> tilladelse til at installere fremtidige udvidelser uden din godkendelse, skal du åbne Family Link-appen på din enhed og opdatere Taktak Taktak-indstillingerne for <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Hvis du vil give <ph name="CHILD_NAME" /> tilladelse til at installere fremtidige udvidelser uden din godkendelse, skal du åbne Family Link-appen på din enhed og opdatere Taktak-indstillingerne for <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Deltag i fanegruppen med <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Deltag i fanegruppen med <ph name="OWNER_FIRST_NAME" />}=1{Deltag i fanegruppen med <ph name="OWNER_FIRST_NAME" /> og # anden}one{Deltag i fanegruppen med <ph name="OWNER_FIRST_NAME" /> og # anden}other{Deltag i fanegruppen med <ph name="OWNER_FIRST_NAME" /> og # andre}}</translation>
 <translation id="7181976109296206547">Gennemgå opdateringer af logo, navn og webadresse</translation>

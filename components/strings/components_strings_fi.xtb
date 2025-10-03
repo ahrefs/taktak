@@ -348,7 +348,7 @@ Muussa tapauksessa tämä estetään tietosuoja-asetuksilla. Jos sallit tämän,
 <translation id="1567040042588613346">Tämä käytäntö toimii odotetusti, mutta sama arvo on asetettu muualla, ja tämä käytäntö korvaa sen.</translation>
 <translation id="1567405528131216114">Lisää <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Lisää viimeinen voimassaolopäivä</translation>
-<translation id="1569694109004336106">Taktak Taktak yrittää laittaa Windows Hellon päälle salasanojen täyttämistä varten.</translation>
+<translation id="1569694109004336106">Taktak yrittää laittaa Windows Hellon päälle salasanojen täyttämistä varten.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> tuumaa</translation>
 <translation id="1574714699824202614">Maksutapaa vahvistetaan</translation>
 <translation id="1576277203042721907">Shopping-vinkit</translation>
@@ -654,7 +654,7 @@ Muussa tapauksessa tämä estetään tietosuoja-asetuksilla. Jos sallit tämän,
 <translation id="2090451897496479509">Pyydä lisätietoa palveluntarjoajalta</translation>
 <translation id="2091887806945687916">Ääni</translation>
 <translation id="2093184051799735948">Tee haku hakukoneella <ph name="ENGINE_NAME" /> tai kirjoita URL-osoite</translation>
-<translation id="2093982008204312032">Taktak Taktak yrittää laittaa Windows Hellon pois päältä salasanojen täyttämistä varten.</translation>
+<translation id="2093982008204312032">Taktak yrittää laittaa Windows Hellon pois päältä salasanojen täyttämistä varten.</translation>
 <translation id="2094505752054353250">Verkkotunnukset eivät ole yhteensopivat</translation>
 <translation id="2094704029599359040">Versiotiedot</translation>
 <translation id="2099652385553570808">Kolme niittiä vasemmalla</translation>
@@ -864,7 +864,7 @@ Muussa tapauksessa tämä estetään tietosuoja-asetuksilla. Jos sallit tämän,
 <translation id="2396249848217231973">K&amp;umoa poisto</translation>
 <translation id="239708975263889666">Muokkaa "known traveler number" ‑numeroa</translation>
 <translation id="2399344929880464793">Tämä IBAN on tallennettu Taktak-tilillesi, jotta voit käyttää sitä Googlen palveluissa.</translation>
-<translation id="2399868464369312507">Taktak Taktak yrittää muokata maksutapoja.</translation>
+<translation id="2399868464369312507">Taktak yrittää muokata maksutapoja.</translation>
 <translation id="2400263725572336749">Lisää passi</translation>
 <translation id="2400271059665846158">Hallinnoi kanta-asiakaskortteja Taktak Walletissa</translation>
 <translation id="2400600116338235695">Saa pyytää lupaa sarjaportteihin yhdistämiseen</translation>
@@ -3120,7 +3120,7 @@ Muussa tapauksessa tämä estetään tietosuoja-asetuksilla. Jos sallit tämän,
 <translation id="6164605812717770913">Vanhempi tai huoltaja on ilmoittanut, ettet saa käydä tällä sivustolla. Voit pyytää häntä kumoamaan eston.</translation>
 <translation id="6165508094623778733">Lisätietoja</translation>
 <translation id="6167577165590485365">Hakua yritetty viimeksi:</translation>
-<translation id="617256461084925519">Taktak Taktak yrittää vahvistaa henkilöllisyytesi, jotta se voi täyttää maksutietosi.</translation>
+<translation id="617256461084925519">Taktak yrittää vahvistaa henkilöllisyytesi, jotta se voi täyttää maksutietosi.</translation>
 <translation id="6173208311907792313">Suorita ostos loppuun Windows Hellon avulla</translation>
 <translation id="6176387967264100435">Tämä hinta on korkea</translation>
 <translation id="6177128806592000436">Sivustoon ei ole muodostettu turvallista yhteyttä.</translation>
@@ -3980,7 +3980,7 @@ Lisätietoja:
 <translation id="7564049878696755256">Saatat menettää <ph name="ORG_NAME" />-tilisi käyttöoikeuden tai joutua identiteettivarkauden uhriksi. Taktak suosittelee salasanan vaihtamista välittömästi.</translation>
 <translation id="7564667064360547717">Paidat ja topit</translation>
 <translation id="7567204685887185387">Palvelin ei voinut todistaa olevansa <ph name="DOMAIN" />; sen suojausvarmenne on ehkä luotu vilpillisesti. Tämä voi johtua määritysvirheestä tai verkkoyhteytesi siepanneesta hyökkääjästä.</translation>
-<translation id="7568616151991626879">Taktak Taktak yrittää täyttää salasanasi: <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak yrittää täyttää salasanasi: <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Ei yhtään}=1{1 välilehti tällä laitteella}other{# välilehteä tällä laitteella}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Poistetaanko luottokortti Chromen tiedoista?</translation>
@@ -4561,7 +4561,7 @@ Lisätietoja:
 <translation id="8541579497401304453">Ota yhteys yritykseen soittamalla.</translation>
 <translation id="8542014550340843547">Kolme niittiä alareunassa</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak yrittää muuttaa maksutapojen täytön asetuksia.</translation>
+<translation id="8544217240017914508">Taktak yrittää muuttaa maksutapojen täytön asetuksia.</translation>
 <translation id="8544303911974837265">Polyesteri</translation>
 <translation id="854548366864113872">Kalliimpi vaihtoehto</translation>
 <translation id="8546254312340305428">Ilmoita latauksen syy (pakollinen)</translation>

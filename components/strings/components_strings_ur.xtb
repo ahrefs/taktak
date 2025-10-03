@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">یہ پالیسی توقع کے مطابق کام کر رہی ہے لیکن کسی دوسری جگہ ایک جیسی قدر سیٹ کی گئی ہے اور اس نے اس پالیسی کی جگہ لے لی ہے۔</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> کو شامل کریں</translation>
 <translation id="1569487616857761740">تاریخ اختتام درج کریں</translation>
-<translation id="1569694109004336106">‏Taktak Taktak پاس ورڈز پُر کرنے کے لیے Windows Hello کو آن کرنے کی کوشش کر رہا ہے۔</translation>
+<translation id="1569694109004336106">‏Taktak پاس ورڈز پُر کرنے کے لیے Windows Hello کو آن کرنے کی کوشش کر رہا ہے۔</translation>
 <translation id="1572765991610098222">‏<ph name="WIDTH" /> x <ph name="HEIGHT" /> انچ</translation>
 <translation id="1574714699824202614">ادائیگی کے طریقے کی توثیق ہو رہی ہے</translation>
 <translation id="1576277203042721907">خریداری کی بصیرتیں</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">مزید معلومات کیلئے فراہم کنندہ سے رابطہ کریں</translation>
 <translation id="2091887806945687916">آواز</translation>
 <translation id="2093184051799735948">‏<ph name="ENGINE_NAME" /> تلاش یا URL ٹائپ کریں</translation>
-<translation id="2093982008204312032">‏Taktak Taktak پاس ورڈز پُر کرنے کے لیے Windows Hello کو آف کرنے کی کوشش کر رہا ہے۔</translation>
+<translation id="2093982008204312032">‏Taktak پاس ورڈز پُر کرنے کے لیے Windows Hello کو آف کرنے کی کوشش کر رہا ہے۔</translation>
 <translation id="2094505752054353250">ڈومین کی عدم مماثلت</translation>
 <translation id="2094704029599359040">ورژن کی معلومات</translation>
 <translation id="2099652385553570808">بائیں طرف تین سٹیپل</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">حذف کردہ کو &amp;کالعدم کریں</translation>
 <translation id="239708975263889666">معلوم مسافر نمبر میں ترمیم کریں</translation>
 <translation id="2399344929880464793">‏یہ IBAN آپ کے Taktak اکاؤنٹ میں محفوظ ہوتا ہے تاکہ آپ اسے تمام Taktak سروسز پر استعمال کر سکیں۔</translation>
-<translation id="2399868464369312507">‏Taktak Taktak ادائیگی کے طریقوں میں ترمیم کرنے کی کوشش کر رہا ہے۔</translation>
+<translation id="2399868464369312507">‏Taktak ادائیگی کے طریقوں میں ترمیم کرنے کی کوشش کر رہا ہے۔</translation>
 <translation id="2400263725572336749">پاسپورٹ کی معلومات شامل کریں</translation>
 <translation id="2400271059665846158">‏‫Taktak والٹ میں اپنے لائلٹی کارڈز کا نظم کریں</translation>
 <translation id="2400600116338235695">سائٹ سیریل پورٹس سے منسلک ہونے کیلئے پوچھ سکتی ہے</translation>
@@ -3121,7 +3121,7 @@
 <translation id="6164605812717770913">والدین یا سرپرست نے کہا کہ آپ کیلئے یہ سائٹ دیکھنا ٹھیک نہیں ہے۔ آپ ان سے اسے اَن بلاک کرنے کو کہہ سکتے ہیں۔</translation>
 <translation id="6165508094623778733">مزید جانیں</translation>
 <translation id="6167577165590485365">بازیافت کی آخری کوشش:</translation>
-<translation id="617256461084925519">‏Taktak Taktak اس بات کی تصدیق کرنے کی کوشش کر رہا ہے کہ یہ آپ ہی ہیں تاکہ یہ آپ کی ادائیگی کی معلومات کو پُر کر سکے۔</translation>
+<translation id="617256461084925519">‏Taktak اس بات کی تصدیق کرنے کی کوشش کر رہا ہے کہ یہ آپ ہی ہیں تاکہ یہ آپ کی ادائیگی کی معلومات کو پُر کر سکے۔</translation>
 <translation id="6173208311907792313">‏‫Windows Hello استعمال کر کے اپنی خریداری مکمل کریں</translation>
 <translation id="6176387967264100435">یہ قیمت زیادہ ہے</translation>
 <translation id="6177128806592000436">اس سائٹ سے آپ کا کنکشن محفوظ نہیں ہے</translation>
@@ -3980,7 +3980,7 @@
 <translation id="7564049878696755256">‏آپ اپنے <ph name="ORG_NAME" /> اکاؤنٹ تک رسائی سے محروم ہو سکتے ہیں یا شناخت کی چوری ہو سکتی ہے۔ Taktak آپ کو ابھی اپنا پاس ورڈ تبدیل کرنے کی تجویز کرتا ہے۔</translation>
 <translation id="7564667064360547717">شرٹس اور ٹاپس</translation>
 <translation id="7567204685887185387">یہ سرور یہ ثابت نہیں کر سکا کہ یہ <ph name="DOMAIN" /> ہے؛ ممکن ہے کہ اس کا سیکیورٹی سرٹیفکیٹ فریب کارانہ طور پر جاری کیا گیا ہو۔ یہ غلط کنفیگریشن یا آپ کے کنکشن میں مانع بن رہے کسی حملہ آور کی وجہ سے ہو سکتا ہے۔</translation>
-<translation id="7568616151991626879">‏Taktak Taktak <ph name="APP_NAME" /> پر آپ کا پاس ورڈ پُر کرنے کی کوشش کر رہا ہے۔</translation>
+<translation id="7568616151991626879">‏Taktak <ph name="APP_NAME" /> پر آپ کا پاس ورڈ پُر کرنے کی کوشش کر رہا ہے۔</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{کوئی نہیں}=1{اس آلہ پر 1 ٹیب}other{اس آلہ پر # ٹیبز}}</translation>
 <translation id="7569490014721427265">گولف</translation>
 <translation id="7569952961197462199">‏Taktak سے کریڈٹ کارڈ ہٹائیں؟</translation>
@@ -4561,7 +4561,7 @@
 <translation id="8541579497401304453">فون کال شروع کر کے کاروبار سے منسلک ہوں۔</translation>
 <translation id="8542014550340843547">نیچے تین سٹیپل</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">‏ادائیگی کے طریقوں کو پُر کرنے کی خاطر ترتیبات میں ترمیم کرنے کے لیے Taktak Taktak کوشش کر رہا ہے۔</translation>
+<translation id="8544217240017914508">‏ادائیگی کے طریقوں کو پُر کرنے کی خاطر ترتیبات میں ترمیم کرنے کے لیے Taktak کوشش کر رہا ہے۔</translation>
 <translation id="8544303911974837265">پولی ایسٹر</translation>
 <translation id="854548366864113872">زیادہ قیمت والا اختیار</translation>
 <translation id="8546254312340305428">اپ لوڈ کرنے کی وجہ فراہم کریں (درکار ہے)</translation>

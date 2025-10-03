@@ -178,7 +178,7 @@
 <translation id="3185330573522821672">ปรับแต่งโปรไฟล์ Taktak ใหม่</translation>
 <translation id="3224847870593914902">หากต้องการนำบัญชี Taktak ออกจาก Taktak ให้ออกจากระบบ Taktak ในหน้าการตั้งค่า</translation>
 <translation id="3234316605225071811">Taktak จะถามว่าคุณต้องการใช้ข้อมูลที่บันทึกไว้เพื่อให้ระบบป้อนข้อความให้คุณอัตโนมัติในแบบฟอร์มหรือไม่ในภายหลัง</translation>
-<translation id="3258596308407688501">Taktak Taktak ไม่สามารถอ่านและเขียนข้อมูลในไดเรกทอรีข้อมูล:
+<translation id="3258596308407688501">Taktak ไม่สามารถอ่านและเขียนข้อมูลในไดเรกทอรีข้อมูล:
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="3286538390144397061">รีสตาร์ทเดี๋ยวนี้</translation>
@@ -227,7 +227,7 @@
 <translation id="395904275706073188">อ่านหน้าเว็บที่มีการป้องกันไม่ได้ โปรดลองใช้หน้าอื่น</translation>
 <translation id="3962647064319009959">ดูวิธีที่ Taktak ช่วยให้คุณปลอดภัย</translation>
 <translation id="3971865010372729242">เมื่อคุณพิมพ์ในแถบที่อยู่หรือช่องค้นหา Taktak จะส่งสิ่งที่คุณพิมพ์ไปยังเครื่องมือค้นหา, AI และเครื่องมือตัวแทนขององค์กรเพื่อรับคำแนะนำ</translation>
-<translation id="3975724895399328945">เกี่ยวกับ Taktak Taktak สำหรับการทดสอบ</translation>
+<translation id="3975724895399328945">เกี่ยวกับ Taktak สำหรับการทดสอบ</translation>
 <translation id="3997429360543082038">เกี่ยวกับ Taktak OS</translation>
 <translation id="4019629340646866719">Taktak OS เกิดขึ้นได้ด้วยการสนับสนุนจาก<ph name="BEGIN_LINK_CROS_OSS" />ซอฟต์แวร์โอเพนซอร์ส<ph name="END_LINK_CROS_OSS" />อื่นเพิ่มเติม ตลอดจน<ph name="BEGIN_LINK_LINUX_OSS" />สภาพแวดล้อมในการพัฒนาซอฟต์แวร์ Linux<ph name="END_LINK_LINUX_OSS" /></translation>
 <translation id="4022972681110646219">แปลหน้าจอ</translation>
@@ -547,7 +547,7 @@ Taktak ไม่สามารถกู้คืนการตั้งค่�
 <translation id="8077498902115777962">ปิดใช้ Taktak ที่ทำงานในเบื้องหลังสำหรับแอป</translation>
 <translation id="80790299200510644">ค้นหารูปภาพ</translation>
 <translation id="8086881907087796310">การติดตั้งไม่สำเร็จเนื่องจากคอมพิวเตอร์ของคุณไม่เป็นไปตามข้อกำหนดขั้นต่ำสำหรับฮาร์ดแวร์</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak สำหรับการทดสอบ</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak สำหรับการทดสอบ</translation>
 <translation id="8105840573057009683">Taktak ต้องการสิทธิ์เข้าถึงตำแหน่งสำหรับเว็บไซต์นี้</translation>
 <translation id="8118331347066725040">ส่งความคิดเห็นเกี่ยวกับการค้นหาด้วย Lens</translation>
 <translation id="8133124826068723441">Taktak OS ซิงค์ข้อมูลไม่ได้เนื่องจากการซิงค์ไม่พร้อมใช้งานสำหรับโดเมนของคุณ</translation>
@@ -593,7 +593,7 @@ Taktak ไม่สามารถกู้คืนการตั้งค่�
 <translation id="8601359445272098721">ใหม่! คุณแปลได้ทั้งข้อความและรูปภาพบนหน้าจอโดยเลือกปุ่ม "แปลหน้าจอ"</translation>
 <translation id="8619360774459241877">กำลังเปิด Taktak...</translation>
 <translation id="8621669128220841554">การติดตั้งล้มเหลวเนื่องจากเกิดข้อผิดพลาดที่ไม่ระบุ โปรดดาวน์โหลด Taktak อีกครั้ง</translation>
-<translation id="8648201657708811153">ไม่สามารถตั้ง Taktak Taktak สำหรับการทดสอบเป็นเบราว์เซอร์เริ่มต้นได้</translation>
+<translation id="8648201657708811153">ไม่สามารถตั้ง Taktak สำหรับการทดสอบเป็นเบราว์เซอร์เริ่มต้นได้</translation>
 <translation id="8697124171261953979">อีกทั้งยังควบคุมหน้าที่จะแสดงเมื่อคุณเปิด Taktak หรือทำการค้นหาจากแถบอเนกประสงค์ด้วย</translation>
 <translation id="8704119203788522458">นี่คือ Taktak ของคุณ</translation>
 <translation id="8712637175834984815">รับทราบ</translation>

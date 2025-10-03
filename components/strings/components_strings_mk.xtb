@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Правилово работи како што е предвидено, но истата вредност е поставена некаде на друго место и е заменета од правилово.</translation>
 <translation id="1567405528131216114">Додајте: <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Внесете датум на истекување</translation>
-<translation id="1569694109004336106">Taktak Taktak се обидува да вклучи Windows Hello за пополнување лозинки.</translation>
+<translation id="1569694109004336106">Taktak се обидува да вклучи Windows Hello за пополнување лозинки.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Се потврдува начинот на плаќање</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">За повеќе детали, контактирајте со давателот на услугата</translation>
 <translation id="2091887806945687916">Звук</translation>
 <translation id="2093184051799735948">Пребарајте <ph name="ENGINE_NAME" /> или внесете URL-адреса</translation>
-<translation id="2093982008204312032">Taktak Taktak се обидува да го исклучи Windows Hello за пополнување лозинки.</translation>
+<translation id="2093982008204312032">Taktak се обидува да го исклучи Windows Hello за пополнување лозинки.</translation>
 <translation id="2094505752054353250">Несовпаѓање на домени</translation>
 <translation id="2094704029599359040">Информации за верзијата</translation>
 <translation id="2099652385553570808">Тројно спојување лево</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;Врати бришење</translation>
 <translation id="239708975263889666">Изменете го бројот на познат патник</translation>
 <translation id="2399344929880464793">Овој IBAN е зачуван во вашата сметка на Taktak за да може да го користите на услугите на Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak се обидува да ги измени начините на плаќање.</translation>
+<translation id="2399868464369312507">Taktak се обидува да ги измени начините на плаќање.</translation>
 <translation id="2400263725572336749">Додајте пасош</translation>
 <translation id="2400271059665846158">Управувајте со картичките за лојалност во Taktak Wallet</translation>
 <translation id="2400600116338235695">Може да прашува за да се поврзе со сериски порти</translation>
@@ -2049,7 +2049,7 @@
 <translation id="4336913590841287350">Политикава сѐ уште не е поддржана како политика за корисници на iOS.</translation>
 <translation id="4340575312453649552">Рекламава користеше премногу ресурси на вашиот уред, па Taktak ја отстрани.</translation>
 <translation id="4340810192899866471">Увезете од JSON</translation>
-<translation id="4340982228985273705">Овој компјутер не се препознава како управуван од организација, така што правилото може автоматски да инсталира само екстензии хостирани на Taktak Web Store. URL-адресата за ажурирање од Taktak Web Store е „<ph name="CWS_UPDATE_URL" />“.</translation>
+<translation id="4340982228985273705">Овој компјутер не се препознава како управуван од организација, така што правилото може автоматски да инсталира само екстензии хостирани на Chrome Web Store. URL-адресата за ажурирање од Chrome Web Store е „<ph name="CWS_UPDATE_URL" />“.</translation>
 <translation id="4342742994656318294">Тематски паркови</translation>
 <translation id="4344072791302852930">Додајте картичка</translation>
 <translation id="4348834659292907206">Врската со <ph name="SITE" /> не е безбедна</translation>
@@ -3119,7 +3119,7 @@
 <translation id="6164605812717770913">Родител или старател рече дека сајтов не е соодветен за да го отвориш. Може да побараш од него да го одблокира.</translation>
 <translation id="6165508094623778733">Дознајте повеќе</translation>
 <translation id="6167577165590485365">Последен обид за преземање:</translation>
-<translation id="617256461084925519">Taktak Taktak се обидува да го потврди вашиот идентитет за да може да ги пополни вашите податоци за плаќање.</translation>
+<translation id="617256461084925519">Taktak се обидува да го потврди вашиот идентитет за да може да ги пополни вашите податоци за плаќање.</translation>
 <translation id="6173208311907792313">Завршете го купувањето со Windows Hello</translation>
 <translation id="6176387967264100435">Оваа цена е висока</translation>
 <translation id="6177128806592000436">Врската со овој сајт не е безбедна</translation>
@@ -3978,7 +3978,7 @@
 <translation id="7564049878696755256">Може да го изгубите пристапот до вашата сметка на <ph name="ORG_NAME" /> или да ви го украдат идентитетот. Taktak препорачува да ја смените лозинката веднаш.</translation>
 <translation id="7564667064360547717">Кошули и блузи</translation>
 <translation id="7567204685887185387">Серверот не може да докаже дека е <ph name="DOMAIN" />; можеби неговиот безбедносен сертификат е издаден лажно. Тоа може да се должи на погрешна конфигурација или на напаѓач што го пресретнува поврзувањето.</translation>
-<translation id="7568616151991626879">Taktak Taktak се обидува да ја пополни вашата лозинка на <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak се обидува да ја пополни вашата лозинка на <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Нема}=1{1 картичка на уредов}one{# картичка на уредов}other{# картички на уредов}}</translation>
 <translation id="7569490014721427265">Голф</translation>
 <translation id="7569952961197462199">Отстрани ја кредитната картичка од Taktak?</translation>
@@ -4559,7 +4559,7 @@
 <translation id="8541579497401304453">Поврзете се со бизнис така што ќе започнете телефонски повик.</translation>
 <translation id="8542014550340843547">Тројно спојување долу</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak се обидува да ги измени поставките за пополнување на начините на плаќање.</translation>
+<translation id="8544217240017914508">Taktak се обидува да ги измени поставките за пополнување на начините на плаќање.</translation>
 <translation id="8544303911974837265">Полиестер</translation>
 <translation id="854548366864113872">Опција со високи цени</translation>
 <translation id="8546254312340305428">Наведете причина за прикачувањето (задолжително)</translation>

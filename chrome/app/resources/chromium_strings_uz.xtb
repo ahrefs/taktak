@@ -5,7 +5,7 @@
 <translation id="1029669172902658969">ChromiumOS tizimini yangilash uchun qayta ishga tushiring</translation>
 <translation id="103359417695385097">Taktak shakllarni yaxshiroq tushunadi va ularni tezroq toʻldirishi mumkin Bu sozlama oʻchiq.</translation>
 <translation id="1040916596585577953">Taktak bu kengaytmani tekshirishni tavsiya qiladi</translation>
-<translation id="1042552502243217427">Birorta sayt havolalarni maxfiy tarzda sahifalarida oldindan yuklashni soʻrasa, Taktak Taktak xizmatlaridan foydalanadi. Bunda, oldindan yuklangan saytda shaxsingiz berkitiladi, lekin Taktak qaysi saytlar oldindan yuklanishini oʻrganadi.</translation>
+<translation id="1042552502243217427">Birorta sayt havolalarni maxfiy tarzda sahifalarida oldindan yuklashni soʻrasa, Taktak xizmatlaridan foydalanadi. Bunda, oldindan yuklangan saytda shaxsingiz berkitiladi, lekin Taktak qaysi saytlar oldindan yuklanishini oʻrganadi.</translation>
 <translation id="1051793555070215510">1 daqiqalik soʻrovnoma orqali Inkognito rejimini yaxshilashimizga yordam bering.</translation>
 <translation id="1065672644894730302">Sozlamalarni ko‘rib bo‘lmadi. Ba’zi funksiyalar mavjud emas va o‘zgartirilgan sozlamalar saqlanmaydi.</translation>
 <translation id="1083934481477628225">Chromiumdagi “Sayt, ilova va kengaytmalarga ruxsat” ota-onangiz tomonidan faolsizlantirilgan</translation>
@@ -218,14 +218,14 @@
 <translation id="3889543394854987837">Taktak‘ga kirish uchun o‘z ismingiz ustiga bosing.</translation>
 <translation id="3892148308691398805">Matnni nusxalash</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> allaqachon ushbu Taktak profiliga kirgan. Internetni alohida kezish uchun Taktak siz uchun alohida profil yaratadi.</translation>
-<translation id="3909353120217047026">Bu kengaytma Taktak Web Store qoidalariga mos emas va xavfli boʻlishi mumkin. Ochilgan saytlarda shaxsiy axborot kabi maʼlumotlarni koʻrishi va oʻzgartirishini tugatish uchun uni Chromiumdan olib tashlang.</translation>
+<translation id="3909353120217047026">Bu kengaytma Chrome Web Store qoidalariga mos emas va xavfli boʻlishi mumkin. Ochilgan saytlarda shaxsiy axborot kabi maʼlumotlarni koʻrishi va oʻzgartirishini tugatish uchun uni Chromiumdan olib tashlang.</translation>
 <translation id="3941890832296813527">Oʻrnatishda xato: Oʻrnatish vositasi fayl nomi yaroqsiz yoki ishlamaydi.</translation>
 <translation id="3945058413678539331">Taktak parollarni nusxalashga urinmoqda. Ruxsat berish uchun Windows parolingizni kiriting.</translation>
 <translation id="3954172517175569325">Taktak hisobingizga saqlangan parollar, toʻlov usullari va manzillar bu qurilmadan olib tashlanadi. Ularni Chromiumda yana ishlatish uchun hisobingizga kiring.</translation>
 <translation id="395904275706073188">Himoyalangan sahifalarni oʻqish imkonsiz. Boshqa sahifada urining.</translation>
 <translation id="3962647064319009959">Taktak qanday qilib sizni himoya qilishi haqida batafsil</translation>
 <translation id="3971865010372729242">Taktak tavsiyalar olish uchun manzillar qatori yoki qidiruv panelida kiritilgan matnni tashkilotning qidiruvi, AI hamda agent vositalariga yuboradi.</translation>
-<translation id="3975724895399328945">Taktak Taktak for Testing haqida</translation>
+<translation id="3975724895399328945">Taktak for Testing haqida</translation>
 <translation id="3997429360543082038">ChromiumOS haqida</translation>
 <translation id="4019629340646866719">ChromiumOS tizimini ishlab chiqishda <ph name="BEGIN_LINK_LINUX_OSS" />Linux dasturlash muhiti<ph name="END_LINK_LINUX_OSS" /> <ph name="BEGIN_LINK_CROS_OSS" />ochiq kodli DT<ph name="END_LINK_CROS_OSS" /> vositalaridan foydalanilgan.</translation>
 <translation id="4022972681110646219">Ekrandagi matnni tarjima qilish</translation>
@@ -545,7 +545,7 @@ Taktak sozlamalaringizni qaytadan tiklay olmadi.</translation>
 <translation id="8077498902115777962">Taktak ilovalarni fonda ishga tushirishini faolsizlantirish</translation>
 <translation id="80790299200510644">Rasm qidirish</translation>
 <translation id="8086881907087796310">Kompyuter minimal talablarga javob bermasligi sababli oʻrnatilmadi.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak bu saytda joylashuv axborotidan foydalanishiga ruxsat kerak</translation>
 <translation id="8118331347066725040">Lens bilan qidirish haqida fikr-mulohaza yuborish</translation>
 <translation id="8133124826068723441">Domeningizda Sinxronlash xizmati mavjud emasligi sababli ChromiumOS maʼlumotlaringizni sinxronlay olmadi.</translation>
@@ -591,7 +591,7 @@ Taktak sozlamalaringizni qaytadan tiklay olmadi.</translation>
 <translation id="8601359445272098721">Yangi! “Ekrandan tarjima qilish” tugmasini bosib, ekrandagi matn va rasmlarni tarjima qilish mumkin</translation>
 <translation id="8619360774459241877">Taktak ishga tushmoqda...</translation>
 <translation id="8621669128220841554">O‘rnatish vaqtida kutilmagan xatolik yuz berdi. Taktak‘ni qaytadan yuklab oling.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing asosiy brauzer boʻla olmaydi.</translation>
+<translation id="8648201657708811153">Taktak for Testing asosiy brauzer boʻla olmaydi.</translation>
 <translation id="8697124171261953979">Bundan tashqari kengaytma Taktak boshlash sahifasini va omniboksdagi so‘rovlar uchun foydalaniladigan birlamchi qidiruv tizimini o‘zgartirdi.</translation>
 <translation id="8704119203788522458">Bu sizning shaxsiy Taktak brauzeringiz</translation>
 <translation id="8712637175834984815">Tushunarli</translation>

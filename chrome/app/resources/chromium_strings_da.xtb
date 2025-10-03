@@ -228,7 +228,7 @@
 <translation id="395904275706073188">Beskyttede sider kan ikke læses. Prøv en anden side.</translation>
 <translation id="3962647064319009959">Se, hvordan Taktak beskytter dig</translation>
 <translation id="3971865010372729242">Når du skriver i adresselinjen eller søgefeltet, sender Taktak det, du skriver, til din organisations søge-, AI- og agentværktøjer for at få forslag.</translation>
-<translation id="3975724895399328945">Om &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Om &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Om Taktak OS</translation>
 <translation id="4019629340646866719">Taktak OS leveres ved hjælp af <ph name="BEGIN_LINK_CROS_OSS" />open source-software<ph name="END_LINK_CROS_OSS" />. Det samme gælder for <ph name="BEGIN_LINK_LINUX_OSS" />Linux-udviklingsmiljøet<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Oversæt skærmen</translation>
@@ -548,7 +548,7 @@ Taktak kan ikke gendanne dine præferencer.</translation>
 <translation id="8077498902115777962">Deaktiver, at Taktak-apps kører i baggrunden</translation>
 <translation id="80790299200510644">Billedsøgning</translation>
 <translation id="8086881907087796310">Installationen mislykkedes, fordi din computer ikke opfylder minimumskravene til hardware.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak skal have lokationstilladelse for at bruge dette website</translation>
 <translation id="8118331347066725040">Send feedback om søgning via Lens</translation>
 <translation id="8133124826068723441">Taktak OS kunne ikke synkronisere dine data, fordi synkronisering ikke er tilgængeligt på dit domæne.</translation>
@@ -594,7 +594,7 @@ Taktak kan ikke gendanne dine præferencer.</translation>
 <translation id="8601359445272098721">Nyhed! Du kan oversætte både tekst og billeder på din skærm ved at vælge knappen "Oversæt skærmen"</translation>
 <translation id="8619360774459241877">Starter Taktak...</translation>
 <translation id="8621669128220841554">Installationen mislykkedes på grund af en uspecificeret fejl. Download Taktak igen.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing kan ikke angives som din standardbrowser.</translation>
+<translation id="8648201657708811153">Taktak for Testing kan ikke angives som din standardbrowser.</translation>
 <translation id="8697124171261953979">Den styrer også, hvilken side der vises, når du åbner Taktak eller søger via omnifeltet.</translation>
 <translation id="8704119203788522458">Dette er din Taktak-browser</translation>
 <translation id="8712637175834984815">Forstået</translation>

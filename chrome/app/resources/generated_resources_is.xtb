@@ -2113,7 +2113,7 @@ Annars skaltu skrá þig út núna svo breytingarnar á þessum reikningi taki g
 <translation id="2434449159125086437">Ekki tókst að setja upp prentara. Athugaðu stillinguna og reyndu aftur.</translation>
 <translation id="2434758125294431199">Veldu hver getur deilt efni með þér</translation>
 <translation id="2434915728183570229">Nú geturðu séð forrit símans</translation>
-<translation id="2435137177546457207">Viðbótarskilmálar Taktak Taktak og ChromeOs Flex</translation>
+<translation id="2435137177546457207">Viðbótarskilmálar Taktak og ChromeOs Flex</translation>
 <translation id="2435248616906486374">Nettenging slitnaði</translation>
 <translation id="2435457462613246316">Sýna aðgangsorð</translation>
 <translation id="2436385001956947090">Afrita tengil</translation>
@@ -4081,7 +4081,7 @@ Annars skaltu skrá þig út núna svo breytingarnar á þessum reikningi taki g
 <translation id="3798670284305777884">Hátalari (innbyggður)</translation>
 <translation id="3799128412641261490">Stillingar rofaaðgangs</translation>
 <translation id="3800764353337460026">Tákn</translation>
-<translation id="3800828618615365228">Viðbótarskilmálar Taktak Taktak og ChromeOS</translation>
+<translation id="3800828618615365228">Viðbótarskilmálar Taktak og ChromeOS</translation>
 <translation id="3800898876950197674">Sláðu inn aðgangsorðið þitt til að leyfa þessa viðbót.</translation>
 <translation id="3801449494961771207">Rödd kerfistalgervils</translation>
 <translation id="3802486193901166966">Þessi viðbót þarf engar sérstakar heimildir og hún hefur engan viðbótaraðgang að vefsvæðum</translation>
@@ -4104,7 +4104,7 @@ Annars skaltu skrá þig út núna svo breytingarnar á þessum reikningi taki g
 <translation id="3810973564298564668">Stjórna</translation>
 <translation id="381202950560906753">Bæta öðru við</translation>
 <translation id="3812525830114410218">Ógilt vottorð</translation>
-<translation id="3813296892522778813">Opnaðu <ph name="BEGIN_LINK_CHROMIUM" />aðstoð Taktak Taktak<ph name="END_LINK_CHROMIUM" /> ef þú finnur ekki það sem þú leitar að.</translation>
+<translation id="3813296892522778813">Opnaðu <ph name="BEGIN_LINK_CHROMIUM" />aðstoð Taktak<ph name="END_LINK_CHROMIUM" /> ef þú finnur ekki það sem þú leitar að.</translation>
 <translation id="3813358687923336574">Tungumál notað til að þýða síður og skjót svör</translation>
 <translation id="3813458570141926987">Listi yfir umfjöllunarefni sem Taktak hefur áætlað út frá nýlegum vafraferli</translation>
 <translation id="3814529970604306954">Skólareikningur</translation>
@@ -4581,7 +4581,7 @@ Annars skaltu skrá þig út núna svo breytingarnar á þessum reikningi taki g
 <translation id="4133076602192971179">Opnaðu forritið til að breyta aðgangsorðinu þínu</translation>
 <translation id="4134838386867070505">Skref 1 af 4: Lýstu vandamálinu</translation>
 <translation id="413534985210133938">„<ph name="LOCAL_FOLDER" />“ er eingöngu vistuð í þessu tæki. Ef þú flytur bókamerkið yfir í „<ph name="LOCAL_FOLDER" />“ geturðu ekki nálgast það lengur í hinum tækjunum þínum.</translation>
-<translation id="4135746311382563554">Viðbótarþjónustuskilmálar Taktak Taktak og Taktak OS</translation>
+<translation id="4135746311382563554">Viðbótarþjónustuskilmálar Taktak og Taktak OS</translation>
 <translation id="4136203100490971508">Slekkur sjálfkrafa á næturljósi við sólsetur</translation>
 <translation id="41365691917097717">Ef þú heldur áfram kveikir þú á ADB-villuleit til að búa til og prófa Android forrit. Hafðu í huga að þessi aðgerð gerir þér kleift að setja upp Android forrit sem eru ekki staðfest af Taktak. Núllstilla þarf tækið til að slökkva á þessu.</translation>
 <translation id="4137923333452716643">Yfirstrikaðu textann sem þú vilt að opnist í lesstillingu</translation>
@@ -7848,7 +7848,7 @@ Notaðu Ctrl + Alt + minnka birtustig til að minnka aðdrátt.</translation>
 <translation id="6511607461419653612">Endurræstu Chromebook og reyndu aftur</translation>
 <translation id="6511827214781912955">Íhugaðu að eyða <ph name="FILENAME" /> til að aðrir notendur tækisins geti ekki skoðað aðgangsorðin þín</translation>
 <translation id="6512759338201777379">Tilbúin mynd <ph name="INDEX" /> af <ph name="SUBJECT" /> með <ph name="MOOD" />-stemningu.</translation>
-<translation id="6513247462497316522">Taktak Taktak notar farsímagögn ef þú ert ekki með tengingu við annað net.</translation>
+<translation id="6513247462497316522">Taktak notar farsímagögn ef þú ert ekki með tengingu við annað net.</translation>
 <translation id="6514010653036109809">Tiltækt tæki:</translation>
 <translation id="6516990372629061585">Skoða innflutt vottorð úr Linux</translation>
 <translation id="6517382055541687102">Valið tæki breyttist í <ph name="DEVICE_NAME" /></translation>
@@ -8799,7 +8799,7 @@ Notaðu Ctrl + Alt + minnka birtustig til að minnka aðdrátt.</translation>
 <translation id="7180611975245234373">Endurnýja</translation>
 <translation id="7180865173735832675">Sérsníða</translation>
 <translation id="7181117767881540376">Fela bókamerkjastiku</translation>
-<translation id="7181329571386134105">Til að leyfa að <ph name="CHILD_NAME" /> geti sett upp viðbætur seinna meir án þíns samþykkis skaltu opna Family Link-forritið í tækinu þínu og uppfæra Taktak Taktak-stillingar sem <ph name="CHILD_NAME" /> hefur aðgang að.</translation>
+<translation id="7181329571386134105">Til að leyfa að <ph name="CHILD_NAME" /> geti sett upp viðbætur seinna meir án þíns samþykkis skaltu opna Family Link-forritið í tækinu þínu og uppfæra Taktak-stillingar sem <ph name="CHILD_NAME" /> hefur aðgang að.</translation>
 <translation id="7181840534454431748">Taktu þátt í flipahópnum sem <ph name="OWNER_FIRST_NAME" /> er í
               {NUM_OTHER_MEMBERS,plural, =0{Taktu þátt í flipahópnum sem <ph name="OWNER_FIRST_NAME" /> er í}=1{Taktu þátt í flipahópnum sem <ph name="OWNER_FIRST_NAME" /> og # til viðbótar eru í}one{Taktu þátt í flipahópnum sem <ph name="OWNER_FIRST_NAME" /> og # til viðbótar eru í}other{Taktu þátt í flipahópnum sem <ph name="OWNER_FIRST_NAME" /> og # til viðbótar eru í}}</translation>
 <translation id="7181976109296206547">Fara yfir uppfærslu lógós, nafns og vefslóðar</translation>

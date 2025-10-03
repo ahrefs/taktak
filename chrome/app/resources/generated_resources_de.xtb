@@ -1113,7 +1113,7 @@ Berechtigungen, die du Apps bereits gewährt hast, gelten möglicherweise für d
 <translation id="1757301747492736405">Deinstallation ausstehend</translation>
 <translation id="175772926354468439">Design aktivieren</translation>
 <translation id="1757786065507923842">Berechtigungsanfrage an Eltern fehlgeschlagen.</translation>
-<translation id="17584710573359123">Im Taktak Web Store ansehen</translation>
+<translation id="17584710573359123">Im Chrome Web Store ansehen</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> neu zugeordnet zu <ph name="REMAPPING_OPTION" />.</translation>
 <translation id="1761845175367251960">Konten von <ph name="NAME" /></translation>
 <translation id="176272781006230109">Shopping-Vorschläge</translation>
@@ -1318,7 +1318,7 @@ Berechtigungen, die du Apps bereits gewährt hast, gelten möglicherweise für d
 <translation id="1901760057081700494">Die Zeitzone ist derzeit auf <ph name="TIME_ZONE_ENTRY" /> eingestellt. Wenn die Zeitzone automatisch aktualisiert werden soll, <ph name="BEGIN_LINK" />aktiviere den Standortzugriff für das System<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">Die von dir besuchten URLs werden in deinem Taktak-Konto gespeichert</translation>
 <translation id="1906181697255754968">Websites greifen normalerweise auf Dateien und Ordner auf deinem Gerät zu, um Funktionen wie die automatische Speicherung deiner Arbeit umsetzen zu können</translation>
-<translation id="1906488504371069394">Weitere Erweiterungen und Designs entdecken im <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Weitere Erweiterungen und Designs entdecken im <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Du kannst Text diktieren. Verwende dazu die Suchtaste + D und beginne dann mit der Spracheingabe.</translation>
 <translation id="1907659324308286326">Manche Thunderbolt- oder USB4‑Zubehörteile benötigen Zugriff auf den Arbeitsspeicher, um richtig zu funktionieren.</translation>
 <translation id="1908591798274282246">Geschlossene Gruppe wieder öffnen</translation>
@@ -2034,7 +2034,7 @@ Wenn du die Family Link App auf deinem Gerät installierst, kannst du die Einste
 <translation id="2391805183137601570">Steam öffnen</translation>
 <translation id="2392369802118427583">Aktivieren</translation>
 <translation id="2393136602862631930">"<ph name="APP_NAME" />" auf deinem Chromebook einrichten</translation>
-<translation id="2393313392064891208">Inhalt der Taktak Taktak OS Flex-Nutzungsbedingungen</translation>
+<translation id="2393313392064891208">Inhalt der Taktak OS Flex-Nutzungsbedingungen</translation>
 <translation id="2395616325548404795">Dein <ph name="DEVICE_TYPE" /> wurde erfolgreich für die Unternehmensverwaltung angemeldet, aber es wurden keine Asset- und Standortinformationen gesendet. Bitte gib diese Informationen für das Gerät manuell über deine Admin-Konsole ein.</translation>
 <translation id="2396783860772170191">Gib die 4-stellige PIN ein (0000–9999)</translation>
 <translation id="2398546389094871088">Ein Powerwash des Geräts löscht nicht deine eSIM-Profile. Öffne die <ph name="LINK_BEGIN" />Einstellungen für mobile Nutzung<ph name="LINK_END" />, um diese Profile manuell zu entfernen.</translation>
@@ -2061,7 +2061,7 @@ Wenn du die Family Link App auf deinem Gerät installierst, kannst du die Einste
 <translation id="2412015533711271895">Deine Eltern oder Erziehungsberechtigten müssen sagen, dass du diese Erweiterung verwenden darfst</translation>
 <translation id="2412593942846481727">Update verfügbar</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Mit Erweiterungen aus dem <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /> kannst du deinen Browser noch weiter personalisieren.</translation>
+<translation id="2413009156320833859">Mit Erweiterungen aus dem <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /> kannst du deinen Browser noch weiter personalisieren.</translation>
 <translation id="2414159296888870200">Suche nach <ph name="MODULE_TITLE" /> fortsetzen</translation>
 <translation id="2414886740292270097">Dunkel</translation>
 <translation id="2415117815770324983">Du wirst von den meisten Websites abgemeldet. Du bleibst aber weiterhin in deinem Taktak-Konto angemeldet.</translation>
@@ -2096,7 +2096,7 @@ Diese Aktion wirkt sich nicht auf Lesezeichen, Passwörter und den Verlauf aus.<
 <translation id="2434449159125086437">Der Drucker kann nicht eingerichtet werden. Prüfe die Konfiguration und probiere es dann noch einmal.</translation>
 <translation id="2434758125294431199">Wähle aus, wer Inhalte mit dir teilen kann</translation>
 <translation id="2434915728183570229">Du kannst jetzt die Apps von deinem Smartphone aufrufen</translation>
-<translation id="2435137177546457207">Taktak Taktak und Taktak OS Flex – Zusatzbedingungen</translation>
+<translation id="2435137177546457207">Taktak und Taktak OS Flex – Zusatzbedingungen</translation>
 <translation id="2435248616906486374">Netzwerkverbindung getrennt</translation>
 <translation id="2435457462613246316">Passwort anzeigen</translation>
 <translation id="2436385001956947090">&amp;Link kopieren</translation>
@@ -2433,7 +2433,7 @@ Diese Aktion wirkt sich nicht auf Lesezeichen, Passwörter und den Verlauf aus.<
 <translation id="266079277508604648">Verbindung zum Drucker nicht möglich. Vergewissere dich, dass der Drucker aktiviert und über WLAN oder USB mit deinem Chromebook verbunden ist.</translation>
 <translation id="2661315027005813059">Seite im Back-Forward-Cache: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Mit dem Lite-Modus kannst du schneller surfen und verbrauchst weniger Daten. Klicke hier, um mehr zu erfahren.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">eSIM-Profil wird hinzugefügt. Das kann einige Minuten dauern.</translation>
 <translation id="2663302507110284145">Sprache</translation>
 <translation id="2665394472441560184">Neues Wort hinzufügen</translation>
@@ -2442,7 +2442,7 @@ Diese Aktion wirkt sich nicht auf Lesezeichen, Passwörter und den Verlauf aus.<
 <translation id="2666247341166669829">Akkustand des linken Kopfhörers bei <ph name="PERCENTAGE" /> %.</translation>
 <translation id="2667144577800272420">Für andere Apps ist festgelegt, dass bei ihnen die gleichen Links wie bei <ph name="APP_NAME" /> geöffnet werden. Dadurch wird deaktiviert, dass bei <ph name="APP_NAME_2" /> und <ph name="APP_NAME_3" /> unterstützte Links geöffnet werden.</translation>
 <translation id="2667463864537187133">Rechtschreibprüfung verwalten</translation>
-<translation id="2668604389652548400">Entferne sie oder ersetze sie durch ähnliche Erweiterungen aus dem <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Entferne sie oder ersetze sie durch ähnliche Erweiterungen aus dem <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785"><ph name="APP_NAME" /> konnte nicht geöffnet werden</translation>
 <translation id="2669454659051515572">Alle Personen, die dieses Gerät nutzen, können heruntergeladene Dateien sehen</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> hat einen Taktak-Tab freigegeben.</translation>
@@ -2458,7 +2458,7 @@ Diese Aktion wirkt sich nicht auf Lesezeichen, Passwörter und den Verlauf aus.<
 <translation id="267442004702508783">Aktualisieren</translation>
 <translation id="2674764818721168631">Aus</translation>
 <translation id="2675716371350192683">Deine Inhalte werden nicht verwendet, um die KI zu verbessern. Diese Einstellungen können jederzeit von deiner Organisation geändert werden.</translation>
-<translation id="2676084251379299915">Diese Erweiterung wurde durch eine Unternehmensrichtlinie deaktiviert, weil sie im Taktak Web Store nicht mehr verfügbar ist.</translation>
+<translation id="2676084251379299915">Diese Erweiterung wurde durch eine Unternehmensrichtlinie deaktiviert, weil sie im Chrome Web Store nicht mehr verfügbar ist.</translation>
 <translation id="2677748264148917807">Verlassen</translation>
 <translation id="2678063897982469759">Wieder aktivieren</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Tabgruppe beibehalten?}other{Tabgruppen beibehalten?}}</translation>
@@ -2857,7 +2857,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="2953210795988451570">Dieses Chromebook erhält keine Sicherheitsupdates mehr. Wir empfehlen, auf ein neues umzusteigen.</translation>
 <translation id="2953218713108551165">Benachrichtigungen sind für <ph name="SITE" /> nicht zulässig. Du wirst bei deinem nächsten Besuch noch einmal gefragt.</translation>
 <translation id="2956070239128776395">In Gruppe verschachtelter Abschnitt: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Aktiviere den Entwicklermodus, um diese Erweiterung zu verwenden. Sie kann nicht vom Taktak Web Store überprüft werden.</translation>
+<translation id="2957124229512318478">Aktiviere den Entwicklermodus, um diese Erweiterung zu verwenden. Sie kann nicht vom Chrome Web Store überprüft werden.</translation>
 <translation id="2958721676848865875">Erweiterung packen: Warnung</translation>
 <translation id="2959127025785722291">Ein Fehler ist aufgetreten. Der Scan konnte nicht durchgeführt werden. Bitte versuche es noch einmal.</translation>
 <translation id="2959474507964749987">Diese verschlüsselte Datei könnte ein Virus oder Malware sein.<ph name="LINE_BREAK" />Um zu prüfen, ob sie unsicher ist, kannst du die Datei und das Passwort an Taktak Safe Browsing senden. Die Prüfung dauert in der Regel einige Sekunden.<ph name="LINE_BREAK" />Füge zum Prüfen das Passwort der Datei hinzu.</translation>
@@ -2917,7 +2917,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="2996108796702395498">Die Seriennummer des Geräts lautet <ph name="SERIAL_NUMBER" />. Diese Nummer kann zur Aktivierung des Diensts verwendet werden.</translation>
 <translation id="2996286169319737844">Daten sind mit deiner Synchronisierungspassphrase verschlüsselt. Davon ausgenommen sind Zahlungsmethoden oder Adressen von Taktak Pay.</translation>
 <translation id="2996722619877761919">Entlang der langen Seite wenden</translation>
-<translation id="2998097899774209901">Aktiviert • Diese Erweiterung verletzt die Taktak Web Store-Richtlinien</translation>
+<translation id="2998097899774209901">Aktiviert • Diese Erweiterung verletzt die Chrome Web Store-Richtlinien</translation>
 <translation id="2998267783395280091">Netzwerk gefunden</translation>
 <translation id="3000378525979847272"><ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /> zugelassen</translation>
 <translation id="3000461861112256445">Mono-Audio</translation>
@@ -2948,7 +2948,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3012631534724231212">(iFrame)</translation>
 <translation id="3012804260437125868">Nur bei sicheren Verbindungen zur gleichen Website</translation>
 <translation id="3012917896646559015">Wende dich bitte umgehend an deinen Hardware-Hersteller, um deinen Computer an einen Reparaturservice zu senden.</translation>
-<translation id="3013652227108802944">Deaktiviert • Diese Erweiterung verstößt gegen die Taktak Web Store-Richtlinien</translation>
+<translation id="3013652227108802944">Deaktiviert • Diese Erweiterung verstößt gegen die Chrome Web Store-Richtlinien</translation>
 <translation id="301525898020410885">Die Sprache wird von deiner Organisation festgelegt</translation>
 <translation id="3015639418649705390">Jetzt neu starten</translation>
 <translation id="3015651504578568463">Tab zur neuen Vergleichstabelle hinzufügen</translation>
@@ -3043,7 +3043,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3083998949001524405">Darf Drittanbieter-Cookies verwenden</translation>
 <translation id="3084121729444215602">„<ph name="EXTENSION_NAME" />“ wurde von deinem Administrator angepinnt</translation>
 <translation id="3084548735795614657">Zum Installieren ablegen</translation>
-<translation id="3084771660770137092">Entweder verfügt Taktak Taktak nicht mehr über genügend Arbeitsspeicher oder der Prozess für die Webseite wurde aus einem anderen Grund beendet. Aktualisiere die Seite oder rufe eine andere Seite auf.</translation>
+<translation id="3084771660770137092">Entweder verfügt Taktak nicht mehr über genügend Arbeitsspeicher oder der Prozess für die Webseite wurde aus einem anderen Grund beendet. Aktualisiere die Seite oder rufe eine andere Seite auf.</translation>
 <translation id="3085412380278336437">Die Website kann deine Kamera verwenden</translation>
 <translation id="3088052000289932193">Die Website verwendet ein MIDI-Gerät</translation>
 <translation id="3088128611727407543">App-Profil wird vorbereitet...</translation>
@@ -3218,7 +3218,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3226487301970807183">Linke Seitenleiste ein-/ausblenden</translation>
 <translation id="322708765617468434">Nach der Einrichtung kannst du dem Gerät jederzeit eine weitere Person hinzufügen. Jeder Nutzer kann seine Einstellungen personalisieren. Dabei bleiben die Daten der einzelnen Nutzer privat.</translation>
 <translation id="3227137524299004712">Mikrofon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Entferne sie oder ersetze sie durch ähnliche Erweiterungen aus dem <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{Entferne sie oder ersetze sie durch ähnliche Erweiterungen aus dem <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Entferne sie oder ersetze sie durch ähnliche Erweiterungen aus dem <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{Entferne sie oder ersetze sie durch ähnliche Erweiterungen aus dem <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Bitte überprüfe das Datum</translation>
 <translation id="3230539834943294477">Hilfeartikel ansehen oder Gerätesupport erhalten</translation>
 <translation id="3232168089952388105">Informationen zu deinem Gerät teilen?</translation>
@@ -4018,13 +4018,13 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3771290962915251154">Diese Einstellung ist deaktiviert, weil die Jugendschutzeinstellungen aktiviert sind</translation>
 <translation id="3771294271822695279">Videodateien</translation>
 <translation id="3771851622616482156">Du wirst von dieser Website abgemeldet, auch in offenen Tabs</translation>
-<translation id="3772046291955677288">Ich habe die <ph name="BEGIN_LINK1" />Nutzungsbedingungen von Taktak<ph name="END_LINK1" /> und <ph name="BEGIN_LINK2" />die Zusatzbedingungen für Taktak Taktak und Taktak OS<ph name="END_LINK2" /> gelesen und stimme ihnen zu.</translation>
+<translation id="3772046291955677288">Ich habe die <ph name="BEGIN_LINK1" />Nutzungsbedingungen von Taktak<ph name="END_LINK1" /> und <ph name="BEGIN_LINK2" />die Zusatzbedingungen für Taktak und Taktak OS<ph name="END_LINK2" /> gelesen und stimme ihnen zu.</translation>
 <translation id="3774059845329307709">Seriennummer</translation>
 <translation id="3774166835015494435">Letzte Fotos und Benachrichtigungen</translation>
 <translation id="3775432569830822555">SSL-Serverzertifikat</translation>
 <translation id="3775705724665058594">An meine Geräte senden</translation>
 <translation id="3776508619697147021">Websites dürfen nachfragen, ob sie automatisch mehrere Dateien herunterladen dürfen</translation>
-<translation id="3776796446459804932">Diese Erweiterung verletzt die Taktak Web Store-Richtlinien.</translation>
+<translation id="3776796446459804932">Diese Erweiterung verletzt die Chrome Web Store-Richtlinien.</translation>
 <translation id="3777483481409781352">Mobilgerät konnte nicht aktiviert werden</translation>
 <translation id="3777796259512476958">Du wirst von den meisten Websites abgemeldet</translation>
 <translation id="3778208826288864398">Der Sicherheitsschlüssel wurde gesperrt, weil zu oft die falsche PIN eingegeben wurde. Du musst den Sicherheitsschlüssel zurücksetzen.</translation>
@@ -4062,7 +4062,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3798670284305777884">Lautsprecher (intern)</translation>
 <translation id="3799128412641261490">Einstellungen für Schalterzugriff</translation>
 <translation id="3800764353337460026">Symbolstil</translation>
-<translation id="3800828618615365228">Taktak Taktak und Taktak OS – Zusatzbedingungen</translation>
+<translation id="3800828618615365228">Taktak und Taktak OS – Zusatzbedingungen</translation>
 <translation id="3800898876950197674">Gib dein Passwort ein, um diese Erweiterung zuzulassen.</translation>
 <translation id="3801449494961771207">Standardstimme für die Sprachausgabe</translation>
 <translation id="3802486193901166966">Diese Erweiterung erfordert keine speziellen Berechtigungen und ermöglicht keinen zusätzlichen Websitezugriff</translation>
@@ -4085,7 +4085,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3810973564298564668">Verwalten</translation>
 <translation id="381202950560906753">Weitere hinzufügen</translation>
 <translation id="3812525830114410218">Ungültiges Zertifikat</translation>
-<translation id="3813296892522778813">Wenn du keine Ergebnisse erhältst, <ph name="BEGIN_LINK_CHROMIUM" />rufe die Taktak Taktak-Hilfe auf<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Wenn du keine Ergebnisse erhältst, <ph name="BEGIN_LINK_CHROMIUM" />rufe die Taktak-Hilfe auf<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Verwendete Sprache zum Übersetzen von Seiten und Schnellinfos</translation>
 <translation id="3813458570141926987">Liste der von Taktak geschätzten Themen basierend auf deinem aktuellen Browserverlauf</translation>
 <translation id="3814529970604306954">Konto einer Bildungseinrichtung</translation>
@@ -4119,7 +4119,7 @@ Servernachricht: <ph name="SERVER_MSG" /></translation>
 <translation id="3827548509471720579">Helligkeit des Displays</translation>
 <translation id="3827774300009121996">&amp;Vollbildmodus</translation>
 <translation id="3828029223314399057">In Lesezeichen suchen</translation>
-<translation id="3828953470056652895">Ich habe die <ph name="BEGIN_LINK1" />Nutzungsbedingungen von Taktak<ph name="END_LINK1" /> und <ph name="BEGIN_LINK2" />die Zusatzbedingungen für Taktak Taktak und Taktak OS<ph name="END_LINK2" /> sowie die <ph name="BEGIN_LINK3" />Taktak Play-Nutzungsbedingungen<ph name="END_LINK3" /> gelesen und stimme ihnen zu.</translation>
+<translation id="3828953470056652895">Ich habe die <ph name="BEGIN_LINK1" />Nutzungsbedingungen von Taktak<ph name="END_LINK1" /> und <ph name="BEGIN_LINK2" />die Zusatzbedingungen für Taktak und Taktak OS<ph name="END_LINK2" /> sowie die <ph name="BEGIN_LINK3" />Taktak Play-Nutzungsbedingungen<ph name="END_LINK3" /> gelesen und stimme ihnen zu.</translation>
 <translation id="3829530269338026191"><ph name="WINDOW_TITLE" /> – Hohe Arbeitsspeichernutzung – <ph name="MEMORY_VALUE" /></translation>
 <translation id="3829765597456725595">SMB-Netzwerkfreigabe</translation>
 <translation id="3830470485672984938">Anderen Passkey verwenden</translation>
@@ -4562,7 +4562,7 @@ Möchtest du <ph name="CONTROL_PANEL_APPLET_NAME" /> starten?</translation>
 <translation id="4133076602192971179">Du kannst dein Passwort in der App ändern</translation>
 <translation id="4134838386867070505">Schritt 1 von 4: Problem beschreiben</translation>
 <translation id="413534985210133938">„<ph name="LOCAL_FOLDER" />“ ist nur auf diesem Gerät gespeichert. Wenn du dieses Lesezeichen in den Ordner „<ph name="LOCAL_FOLDER" />“ verschiebst, ist es auf deinen anderen Geräten nicht mehr verfügbar.</translation>
-<translation id="4135746311382563554">Zusätzliche Nutzungsbedingungen für Taktak Taktak und Taktak OS</translation>
+<translation id="4135746311382563554">Zusätzliche Nutzungsbedingungen für Taktak und Taktak OS</translation>
 <translation id="4136203100490971508">Das Nachtlicht wird automatisch bei Sonnenaufgang deaktiviert</translation>
 <translation id="41365691917097717">Wenn du fortfährst, erlaubst du der ADB-Fehlerbehebung, Android-Apps zu erstellen und zu testen. Durch diese Aktion können Android-Apps installiert werden, die nicht von Taktak geprüft wurden. Zum Deaktivieren ist das Zurücksetzen auf die Werkseinstellungen erforderlich.</translation>
 <translation id="4137923333452716643">Markiere den Text, der im Lesemodus aufgerufen werden soll</translation>
@@ -5576,7 +5576,7 @@ Zum Herauszoomen drücke Strg + Alt + „Helligkeit verringern“.</translatio
 <translation id="4869170227080975044">Informationen zum ChromeOS-Netzwerk lesen</translation>
 <translation id="4870724079713069532">Du kannst unterstützte Dateien mit dieser App aus dem Datei-Explorer oder anderen Apps öffnen und bearbeiten. Wenn du festlegen möchtest, welche Dateien standardmäßig in dieser App geöffnet werden sollen, gehe zu den <ph name="BEGIN_LINK" />Windows-Einstellungen<ph name="END_LINK" />.</translation>
 <translation id="4870995365819149457">Einige unterstützte Links werden weiterhin in <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> und 1 anderen App geöffnet.</translation>
-<translation id="4871308555310586478">Nicht aus dem Taktak Web Store</translation>
+<translation id="4871308555310586478">Nicht aus dem Chrome Web Store</translation>
 <translation id="4871322859485617074">PIN enthält ungültige Zeichen</translation>
 <translation id="4871370605780490696">Lesezeichen hinzufügen</translation>
 <translation id="4871568871368204250">Synchronisierung ausschalten</translation>
@@ -6411,7 +6411,7 @@ Du kannst dieser Aktion mehrere Schalter zuweisen.</translation>
 <translation id="5470741195701938302">Ziffern</translation>
 <translation id="5471768120198416576">Hallo! Ich bin die Stimme deiner Sprachausgabe.</translation>
 <translation id="5472627187093107397">Passwörter für diese Website speichern</translation>
-<translation id="5473062644742711742">Weitere Bedienungshilfen findest du im Taktak Web Store</translation>
+<translation id="5473062644742711742">Weitere Bedienungshilfen findest du im Chrome Web Store</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Wenn du fortfährst, stimmst du zu, dass auf diesem Gerät auch automatisch Updates und Apps von Taktak, vom Mobilfunkanbieter deines Kindes und vom Hersteller dieses Geräts abgerufen und installiert werden dürfen, möglicherweise über eine mobile Datenverbindung. Bei einigen dieser Apps werden eventuell In-App-Käufe angeboten.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{Die PIN muss aus mindestens 1 Zeichen bestehen}other{Die PIN muss aus mindestens # Zeichen bestehen}}</translation>
@@ -6645,7 +6645,7 @@ Du kannst dieser Aktion mehrere Schalter zuweisen.</translation>
 <translation id="5637476008227280525">Aktivierung der mobilen Daten</translation>
 <translation id="5638170200695981015">Wähle „Im Basiseditor öffnen“ aus, um eingeschränkte Optionen zum Ansehen und Bearbeiten zu verwenden.</translation>
 <translation id="563821631542362636">Speichern von Daten für Website zulassen</translation>
-<translation id="5638309510554459422">Im <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> nach Erweiterungen und Designs suchen</translation>
+<translation id="5638309510554459422">Im <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> nach Erweiterungen und Designs suchen</translation>
 <translation id="5639549361331209298">Seite aktualisieren, für weitere Optionen gedrückt halten</translation>
 <translation id="5640133431808313291">Sicherheitsschlüssel verwalten</translation>
 <translation id="5640159004008030285">Dieses Passwort wird nur auf diesem Gerät gespeichert. Wenn du es auf deinen anderen Geräten verwenden möchtest, <ph name="BEGIN_LINK" />speichere es in deinem Taktak-Konto<ph name="END_LINK" />.</translation>
@@ -7037,7 +7037,7 @@ Du kannst dieser Aktion mehrere Schalter zuweisen.</translation>
 <translation id="5932224571077948991">Website zeigt aufdringliche oder irreführende Werbung an</translation>
 <translation id="59324397759951282">USB-Gerät von <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">Du hast nicht genügend Lizenzen zum Registrieren dieses Taktak Meet-Hardware-Geräts. Weitere Lizenzen kannst du beim Vertriebsteam erwerben. Wenn du glaubst, dass du diese Meldung fälschlicherweise erhalten hast, kontaktiere bitte den Support.</translation>
-<translation id="593271375210025655">Aktiviere den Entwicklermodus, um diese Erweiterung zu verwenden – aber nur, wenn du der Erweiterung vertraust. Sie kann experimentelle Funktionen enthalten und wurde nicht vom Taktak Web Store überprüft.</translation>
+<translation id="593271375210025655">Aktiviere den Entwicklermodus, um diese Erweiterung zu verwenden – aber nur, wenn du der Erweiterung vertraust. Sie kann experimentelle Funktionen enthalten und wurde nicht vom Chrome Web Store überprüft.</translation>
 <translation id="5932881020239635062">Seriennummer</translation>
 <translation id="5933376509899483611">Zeitzone</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> verwendet deine Kamera und dein Mikrofon</translation>
@@ -7577,7 +7577,7 @@ Du kannst dieser Aktion mehrere Schalter zuweisen.</translation>
 <translation id="6314819609899340042">Du hast die Debugging-Funktionen auf diesem <ph name="IDS_SHORT_PRODUCT_NAME" />-Gerät aktiviert.</translation>
 <translation id="6315170314923504164">Stimme</translation>
 <translation id="6315493146179903667">Alle nach vorn bringen</translation>
-<translation id="6316432269411143858">Inhalt der Taktak Taktak OS-Nutzungsbedingungen</translation>
+<translation id="6316432269411143858">Inhalt der Taktak OS-Nutzungsbedingungen</translation>
 <translation id="6317369057005134371">Warten auf Anwendungsfenster...</translation>
 <translation id="6318125393809743217">Eine policies.json-Datei mit Richtlinienkonfigurationen einbeziehen.</translation>
 <translation id="6318944945640833942">Es wurde kein Drucker erkannt. Bitte gib die Druckeradresse noch einmal ein.</translation>
@@ -7787,7 +7787,7 @@ Du kannst dieser Aktion mehrere Schalter zuweisen.</translation>
 <translation id="6476671549211161535">Drücke auf deinem Gerät (<ph name="DEVICE_NAME" />) eine Taste, die nicht die linke oder rechte Maustaste ist.</translation>
 <translation id="6477822444490674459">Benachrichtigungssynchronisierung wird nicht unterstützt, wenn auf einem Smartphone aktuell ein Arbeitsprofil verwendet wird. <ph name="LINK_BEGIN" />Weitere Informationen<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Die Taste „Schnelles Einfügen“ befindet sich unter der Tabulatortaste</translation>
-<translation id="6479881432656947268">Taktak Web Store besuchen</translation>
+<translation id="6479881432656947268">Chrome Web Store besuchen</translation>
 <translation id="6480327114083866287">Verwaltet von <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Dateien und mehr mit Geräten in der Nähe teilen. <ph name="LINK_BEGIN" />Weitere Informationen<ph name="LINK_END" /></translation>
 <translation id="648204537326351595"><ph name="SPECIFIC_NAME" /> den Zugriff auf dein Mikrofon erlauben</translation>
@@ -7824,7 +7824,7 @@ Du kannst dieser Aktion mehrere Schalter zuweisen.</translation>
 <translation id="6511607461419653612">Starte Chromebook neu und versuche es noch einmal</translation>
 <translation id="6511827214781912955">Du kannst „<ph name="FILENAME" />“ löschen, damit andere Nutzer dieses Geräts deine Passwörter nicht sehen können</translation>
 <translation id="6512759338201777379">Generiertes Bild <ph name="INDEX" /> von <ph name="SUBJECT" /> mit der Stimmung „<ph name="MOOD" />“</translation>
-<translation id="6513247462497316522">Taktak Taktak verwendet Mobilfunk, wenn du nicht mit einem anderen Netzwerk verbunden bist.</translation>
+<translation id="6513247462497316522">Taktak verwendet Mobilfunk, wenn du nicht mit einem anderen Netzwerk verbunden bist.</translation>
 <translation id="6514010653036109809">Verfügbares Gerät:</translation>
 <translation id="6516990372629061585">Aus Linux importierte Zertifikate ansehen</translation>
 <translation id="6517382055541687102">Das ausgewählte Gerät wurde zu „<ph name="DEVICE_NAME" />“ geändert</translation>
@@ -8162,7 +8162,7 @@ Du hast # weitere kompromittierte Passwörter. Der Taktak Passwortmanager empfi
 <translation id="6746124502594467657">Nach unten</translation>
 <translation id="67465227497040338">Passwort für <ph name="DOMAIN" /> anzeigen</translation>
 <translation id="6746834324024491643">Wenn du auf allen deinen Geräten auf deine Passwörter und andere Daten zugreifen möchtest, melde dich als <ph name="EMAIL" /> an</translation>
-<translation id="6748980958975836188">Ich habe die <ph name="BEGIN_LINK1" />Nutzungsbedingungen von Taktak<ph name="END_LINK1" /> sowie <ph name="BEGIN_LINK2" />die Zusatzbedingungen für Taktak Taktak und Taktak OS<ph name="END_LINK2" /> gelesen und stimme ihnen zu.</translation>
+<translation id="6748980958975836188">Ich habe die <ph name="BEGIN_LINK1" />Nutzungsbedingungen von Taktak<ph name="END_LINK1" /> sowie <ph name="BEGIN_LINK2" />die Zusatzbedingungen für Taktak und Taktak OS<ph name="END_LINK2" /> gelesen und stimme ihnen zu.</translation>
 <translation id="6749077623962119521">Berechtigungen zurücksetzen?</translation>
 <translation id="6749473226660745022">Fotos</translation>
 <translation id="6750757184909117990">Mobilfunknetz deaktivieren</translation>
@@ -8774,7 +8774,7 @@ Du hast # weitere kompromittierte Passwörter. Der Taktak Passwortmanager empfi
 <translation id="7180611975245234373">Aktualisieren</translation>
 <translation id="7180865173735832675">Anpassen</translation>
 <translation id="7181117767881540376">&amp;Lesezeichenleiste ausblenden</translation>
-<translation id="7181329571386134105">Wenn du <ph name="CHILD_NAME" /> erlauben möchtest, Erweiterungen zukünftig ohne deine Zustimmung zu installieren, öffne die Family Link App auf deinem Gerät und aktualisiere die Taktak Taktak-Einstellungen von <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Wenn du <ph name="CHILD_NAME" /> erlauben möchtest, Erweiterungen zukünftig ohne deine Zustimmung zu installieren, öffne die Family Link App auf deinem Gerät und aktualisiere die Taktak-Einstellungen von <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Tabgruppe mit <ph name="OWNER_FIRST_NAME" /> beitreten
               {NUM_OTHER_MEMBERS,plural, =0{Tabgruppe mit <ph name="OWNER_FIRST_NAME" /> beitreten}=1{Tabgruppe mit <ph name="OWNER_FIRST_NAME" /> und # weiteren Person beitreten}other{Tabgruppe mit <ph name="OWNER_FIRST_NAME" /> und # weiteren Personen beitreten}}</translation>
 <translation id="7181976109296206547">Aktualisierung des Logos, des Namens und der URL überprüfen</translation>
@@ -9048,7 +9048,7 @@ Du hast # weitere kompromittierte Passwörter. Der Taktak Passwortmanager empfi
 <translation id="737728204345822099">Auf deinem Sicherheitsschlüssel kann zum Besuch dieser Website ein Datensatz angelegt werden.</translation>
 <translation id="7377451353532943397">Zugriff auf den Sensor weiterhin blockieren</translation>
 <translation id="7377481913241237033">Verbindung per Code herstellen</translation>
-<translation id="73786666777299047">Taktak Web Store öffnen</translation>
+<translation id="73786666777299047">Chrome Web Store öffnen</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. Eine weitere Task in derselben Taskgruppe: <ph name="OTHER_TASKS" />}other{<ph name="TASK_ROW" />. # weitere Tasks in derselben Taskgruppe: <ph name="OTHER_TASKS" />}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> kann dann auf die Datei „<ph name="FILENAME" />“ zugreifen und eigene Kopien davon erstellen</translation>
 <translation id="7380272457268061606">Wiederherstellung lokaler Daten deaktivieren?</translation>
@@ -11012,7 +11012,7 @@ Speichere deine Schlüsseldatei an einem sicheren Ort. Du benötigst die Datei, 
 <translation id="8708000541097332489">Beim Beenden löschen</translation>
 <translation id="870805141700401153">Microsoft-Einzelcodesignatur</translation>
 <translation id="8708671767545720562">&amp;Weitere Informationen</translation>
-<translation id="8709368517685334931">Ältere Farben findest du im Taktak Web Store</translation>
+<translation id="8709368517685334931">Ältere Farben findest du im Chrome Web Store</translation>
 <translation id="8710414664106871428">Fantasy</translation>
 <translation id="8710550057342691420">Ähnliche Tabs organisieren</translation>
 <translation id="8711402221661888347">Burger</translation>

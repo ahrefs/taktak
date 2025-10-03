@@ -2039,7 +2039,7 @@
 <translation id="2391805183137601570">Открыть Steam</translation>
 <translation id="2392369802118427583">Активировать</translation>
 <translation id="2393136602862631930">Установка <ph name="APP_NAME" /> на Chromebook</translation>
-<translation id="2393313392064891208">Текст Условий использования Taktak Taktak OS Flex</translation>
+<translation id="2393313392064891208">Текст Условий использования Taktak OS Flex</translation>
 <translation id="2395616325548404795">Устройство <ph name="DEVICE_TYPE" /> зарегистрировано в организации, но при передаче данных об объекте и местоположении произошла ошибка. Введите эту информацию вручную в консоли администратора.</translation>
 <translation id="2396783860772170191">Введите четырехзначный PIN-код (0000–9999)</translation>
 <translation id="2398546389094871088">При использовании функции Powerwash профили eSIM не удаляются. Это можно сделать вручную в разделе <ph name="LINK_BEGIN" />настроек для мобильных устройств<ph name="LINK_END" />.</translation>
@@ -2101,7 +2101,7 @@
 <translation id="2434449159125086437">Не удалось настроить принтер. Проверьте конфигурацию и повторите попытку.</translation>
 <translation id="2434758125294431199">Укажите, кто может делиться файлами и ссылками с вами</translation>
 <translation id="2434915728183570229">Теперь вы можете просматривать приложения с телефона</translation>
-<translation id="2435137177546457207">Дополнительные условия использования Taktak Taktak и Taktak OS Flex</translation>
+<translation id="2435137177546457207">Дополнительные условия использования Taktak и Taktak OS Flex</translation>
 <translation id="2435248616906486374">Подключение отсутствует</translation>
 <translation id="2435457462613246316">Показать пароль</translation>
 <translation id="2436385001956947090">&amp;Копировать ссылку</translation>
@@ -2438,7 +2438,7 @@
 <translation id="266079277508604648">Не удается установить соединение с принтером. Убедитесь, что он включен и подключен к устройству Chromebook через Wi-Fi или USB.</translation>
 <translation id="2661315027005813059">Страница возвратного кеша: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Экономьте время и трафик благодаря упрощенному режиму. Нажмите, чтобы узнать больше.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Добавление профиля eSIM. Это может занять несколько минут.</translation>
 <translation id="2663302507110284145">Язык</translation>
 <translation id="2665394472441560184">Добавить слово</translation>
@@ -4069,7 +4069,7 @@
 <translation id="3798670284305777884">Динамик (встроенный)</translation>
 <translation id="3799128412641261490">Настройки функции Switch Access</translation>
 <translation id="3800764353337460026">Стиль символов</translation>
-<translation id="3800828618615365228">Дополнительные условия использования Taktak Taktak и Taktak OS</translation>
+<translation id="3800828618615365228">Дополнительные условия использования Taktak и Taktak OS</translation>
 <translation id="3800898876950197674">Чтобы разрешить установку расширения, введите пароль.</translation>
 <translation id="3801449494961771207">Стандартный голос для озвучивания текста</translation>
 <translation id="3802486193901166966">Расширению не требуются особые разрешения и у него нет дополнительного доступа к сайтам</translation>
@@ -7588,7 +7588,7 @@
 <translation id="6314819609899340042">Функции отладки на устройстве <ph name="IDS_SHORT_PRODUCT_NAME" /> включены.</translation>
 <translation id="6315170314923504164">Микрофон</translation>
 <translation id="6315493146179903667">Переместить все на передний план</translation>
-<translation id="6316432269411143858">Полный текст Условий использования Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Полный текст Условий использования Taktak OS</translation>
 <translation id="6317369057005134371">Запуск приложения…</translation>
 <translation id="6318125393809743217">Включить файл policies.json в правила</translation>
 <translation id="6318944945640833942">Принтер не найден. Укажите адрес ещё раз.</translation>
@@ -7835,7 +7835,7 @@
 <translation id="6511607461419653612">Перезапустите Chromebook и повторите попытку.</translation>
 <translation id="6511827214781912955">Рекомендуем удалить файл <ph name="FILENAME" />, чтобы другие пользователи, которые работают с этим устройством, не могли видеть ваши пароли.</translation>
 <translation id="6512759338201777379">Сгенерированное изображение: <ph name="INDEX" />. Объект: <ph name="SUBJECT" />. Настроение: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">При отсутствии подключения к другой сети Taktak Taktak будет использовать мобильную сеть передачи данных.</translation>
+<translation id="6513247462497316522">При отсутствии подключения к другой сети Taktak будет использовать мобильную сеть передачи данных.</translation>
 <translation id="6514010653036109809">Доступное устройство:</translation>
 <translation id="6516990372629061585">Посмотреть сертификаты, импортированные из Linux</translation>
 <translation id="6517382055541687102">Выбранное устройство заменено. Вместо него используется устройство "<ph name="DEVICE_NAME" />".</translation>
@@ -8791,7 +8791,7 @@
 <translation id="7180611975245234373">Обновить</translation>
 <translation id="7180865173735832675">Настроить</translation>
 <translation id="7181117767881540376">Скрыть панель закладок</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> сможет самостоятельно устанавливать расширения, если вы измените настройки Taktak Taktak для пользователя <ph name="CHILD_NAME" />. Это можно сделать на вашем устройстве в приложении Family Link.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> сможет самостоятельно устанавливать расширения, если вы измените настройки Taktak для пользователя <ph name="CHILD_NAME" />. Это можно сделать на вашем устройстве в приложении Family Link.</translation>
 <translation id="7181840534454431748">Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" />}=1{Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" /> и ещё # пользователем}one{Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" /> и ещё # пользователем}few{Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" /> и ещё # пользователями}many{Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" /> и ещё # пользователями}other{Получите доступ к группе вкладок вместе с пользователем <ph name="OWNER_FIRST_NAME" /> и ещё # пользователя}}</translation>
 <translation id="7181976109296206547">Проверьте новый логотип, название и URL</translation>
@@ -8956,7 +8956,7 @@
 <translation id="7299588179200441056"><ph name="URL" /> – <ph name="FOLDER" /></translation>
 <translation id="730068416968462308">Анимация</translation>
 <translation id="7301812050652048720">Ключ доступа удален.</translation>
-<translation id="730289542559375723">{NUM_APPLICATIONS,plural, =1{Это приложение может помешать работе Taktak Taktak.}one{Эти приложения могут помешать работе Taktak Taktak.}few{Эти приложения могут помешать работе Taktak Taktak.}many{Эти приложения могут помешать работе Taktak Taktak.}other{Эти приложения могут помешать работе Taktak Taktak.}}</translation>
+<translation id="730289542559375723">{NUM_APPLICATIONS,plural, =1{Это приложение может помешать работе Taktak.}one{Эти приложения могут помешать работе Taktak.}few{Эти приложения могут помешать работе Taktak.}many{Эти приложения могут помешать работе Taktak.}other{Эти приложения могут помешать работе Taktak.}}</translation>
 <translation id="7303281435234579599">Не удалось настроить демонстрационный режим.</translation>
 <translation id="7303485269821975179">Создать пароль <ph name="DEVICE_TYPE" /></translation>
 <translation id="7303900363563182677">У этого сайта нет доступа к тексту и изображениям, скопированным в буфер обмена</translation>

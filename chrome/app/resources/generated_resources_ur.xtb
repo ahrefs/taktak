@@ -2101,7 +2101,7 @@
 <translation id="2434449159125086437">پرنٹر سیٹ اپ نہیں ہو سکتا۔ براہ کرم کنفیگریشن چیک کریں اور دوبارہ کوشش کریں۔</translation>
 <translation id="2434758125294431199">منتخب کریں کہ کون آپ کے ساتھ اشتراک کرسکتا ہے</translation>
 <translation id="2434915728183570229">اب آپ اپنے فون کی ایپس دیکھ سکتے ہیں</translation>
-<translation id="2435137177546457207">‏Taktak Taktak اور ChromeOS Flex کی اضافی شرائط</translation>
+<translation id="2435137177546457207">‏Taktak اور ChromeOS Flex کی اضافی شرائط</translation>
 <translation id="2435248616906486374">نیٹ ورک منقطع ہوگیا</translation>
 <translation id="2435457462613246316">پاس ورڈ دکھائیں</translation>
 <translation id="2436385001956947090">لنک کاپی کریں</translation>
@@ -4067,7 +4067,7 @@
 <translation id="3798670284305777884">اسپیکر (داخلی)</translation>
 <translation id="3799128412641261490">سوئچ رسائی کی ترتیبات</translation>
 <translation id="3800764353337460026">علامت کا طرز</translation>
-<translation id="3800828618615365228">‏Taktak Taktak اور ChromeOS کی اضافی شرائط</translation>
+<translation id="3800828618615365228">‏Taktak اور ChromeOS کی اضافی شرائط</translation>
 <translation id="3800898876950197674">اس ایکسٹینشن کی اجازت دینے کے لیے، اپنا پاس ورڈ درج کریں۔</translation>
 <translation id="3801449494961771207">ٹیکسٹ ٹو اسپیچ کی سسٹم کی آواز</translation>
 <translation id="3802486193901166966">اس ایکسٹینشن کو کسی خاص اجازت کی ضرورت نہیں ہے اور اس کے پاس سائٹ تک کوئی اضافی رسائی نہیں ہے</translation>
@@ -4090,7 +4090,7 @@
 <translation id="3810973564298564668">نظم کریں</translation>
 <translation id="381202950560906753">کوئی دوسرا شامل کریں</translation>
 <translation id="3812525830114410218">غلط سرٹیفیکیٹ</translation>
-<translation id="3813296892522778813">‏آپ جو چیز تلاش کر رہے ہیں اگر وہ نہیں مل رہی ہے تو <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak مدد<ph name="END_LINK_CHROMIUM" /> پر جائیں</translation>
+<translation id="3813296892522778813">‏آپ جو چیز تلاش کر رہے ہیں اگر وہ نہیں مل رہی ہے تو <ph name="BEGIN_LINK_CHROMIUM" />Taktak مدد<ph name="END_LINK_CHROMIUM" /> پر جائیں</translation>
 <translation id="3813358687923336574">صفحات کا ترجمہ کرنے اور فوری جوابات کے لیے استعمال کردہ زبان</translation>
 <translation id="3813458570141926987">‏آپ کی حالیہ براؤزنگ کی سرگزشت کی بنیاد پر Taktak کے زریعے تخمینہ کردہ موضوعات کی فہرست</translation>
 <translation id="3814529970604306954">اسکول کا اکاؤنٹ</translation>
@@ -4567,7 +4567,7 @@
 <translation id="4133076602192971179">پاس ورڈ تبدیل کرنے کیلئے ایپ کو کھولیں</translation>
 <translation id="4134838386867070505">4 میں سے مرحلہ 1: مسئلہ کی وضاحت کریں</translation>
 <translation id="413534985210133938">‫<ph name="LOCAL_FOLDER" /> صرف اس آلے پر محفوظ ہے۔ اگر آپ اس بُک مارک کو "<ph name="LOCAL_FOLDER" />" میں منتقل کرتے ہیں تو آپ اسے مزید اپنے دیگر آلات پر نہیں حاصل کر سکیں گے۔</translation>
-<translation id="4135746311382563554">‏Taktak Taktak اور Taktak OS کی اضافی سروس کی شرائط</translation>
+<translation id="4135746311382563554">‏Taktak اور Taktak OS کی اضافی سروس کی شرائط</translation>
 <translation id="4136203100490971508">طلوع آفتاب کے وقت نائٹ لائٹ خودکار طور پر آف ہو جائے گی</translation>
 <translation id="41365691917097717">‏جاری رکھنے سے Android ایپس تخلیق کرنے اور ٹیسٹ کرنے کے لیے ADB ڈیبگنگ فعال ہو جائے گی۔ نوٹ کریں کہ یہ کارروائی ان Android ایپس کو انسٹال کرنے کی اجازت دیتی ہے جن کی تصدیق Taktak کے ذریعے نہیں کی گئی ہے، اور غیر فعال کرنے کے لیے فیکٹری ری سیٹ کی ضرورت ہوتی ہے۔</translation>
 <translation id="4137923333452716643">اس ٹیکسٹ کو نمایاں کریں جسے آپ پڑھنے کی وضع میں کھولنا چاہتے ہیں</translation>
@@ -7831,7 +7831,7 @@
 <translation id="6511607461419653612">‏اپنا Chromebook دوبارہ شروع کریں اور دوبارہ کوشش کریں</translation>
 <translation id="6511827214781912955"><ph name="FILENAME" /> کو حذف کرنے پر غور کریں، تاکہ اس آلے کو استعمال کرنے والے دوسرے لوگ آپ کے پاس ورڈز نہ دیکھ سکیں</translation>
 <translation id="6512759338201777379"><ph name="MOOD" /> مُوڈ کے ساتھ <ph name="SUBJECT" /> کی تخلیق کردہ تصویر <ph name="INDEX" /></translation>
-<translation id="6513247462497316522">‏اگر آپ کسی دوسرے نیٹ ورک سے منسلک نہیں ہیں تو Taktak Taktak موبائل ڈیٹا کا استعمال کرے گا۔</translation>
+<translation id="6513247462497316522">‏اگر آپ کسی دوسرے نیٹ ورک سے منسلک نہیں ہیں تو Taktak موبائل ڈیٹا کا استعمال کرے گا۔</translation>
 <translation id="6514010653036109809">دستیاب آلہ:</translation>
 <translation id="6516990372629061585">‏‫Linux سے درآمد شدہ سرٹیفکیٹس دیکھیں</translation>
 <translation id="6517382055541687102">منتخب کردہ آلہ <ph name="DEVICE_NAME" /> میں تبدیل ہو گیا</translation>
@@ -8780,7 +8780,7 @@
 <translation id="7180611975245234373">ریفریش کریں</translation>
 <translation id="7180865173735832675">حسب ضرورت بنائیں</translation>
 <translation id="7181117767881540376">&amp;بک مارکس بار کو چھپائیں</translation>
-<translation id="7181329571386134105">‏آپ کی منظوری کے بغیر <ph name="CHILD_NAME" /> کو مستقبل کی ایکسٹینشنز انسٹال کرنے کی اجازت دینے کے لیے، اپنے آلے پر Family Link ایپ کھولیں اور <ph name="CHILD_NAME" /> کے Taktak Taktak کی ترتیبات کو اپ ڈیٹ کریں۔</translation>
+<translation id="7181329571386134105">‏آپ کی منظوری کے بغیر <ph name="CHILD_NAME" /> کو مستقبل کی ایکسٹینشنز انسٹال کرنے کی اجازت دینے کے لیے، اپنے آلے پر Family Link ایپ کھولیں اور <ph name="CHILD_NAME" /> کے Taktak کی ترتیبات کو اپ ڈیٹ کریں۔</translation>
 <translation id="7181840534454431748">‫<ph name="OWNER_FIRST_NAME" /> کے ساتھ ٹیب گروپ میں شامل ہوں
             {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" />}=1{ کے ساتھ ٹیب گروپ میں شامل ہوں <ph name="OWNER_FIRST_NAME" /> اور # دیگر}other{کے ساتھ ٹیب گروپ میں شامل ہوں <ph name="OWNER_FIRST_NAME" /> اور # دیگر کے ساتھ ٹیب گروپ میں شامل ہوں}}</translation>
 <translation id="7181976109296206547">‏لوگو، نام اور URL اپ ڈیٹس کا جائزہ لیں</translation>

@@ -223,14 +223,14 @@ Mae'n bosib na fydd rhai nodweddion ar gael ac ni fydd newidiadau o ran dewisiad
 <translation id="3889543394854987837">Cliciwch eich enw i agor Taktak ac i ddechrau pori.</translation>
 <translation id="3892148308691398805">Copïo'r testun</translation>
 <translation id="390528597099634151">Mae <ph name="EXISTING_USER" /> wedi'i fewngofnodi yn barod i'r proffil Taktak hwn. I gadw'ch pori ar wahân, gall Taktak greu proffil eich hun ar eich cyfer.</translation>
-<translation id="3909353120217047026">Mae'r estyniad hwn yn torri polisi Taktak Web Store, a gallai fod yn anniogel. Tynnwch ef o Taktak fel na all weld na newid eich data ar wefannau rydych yn ymweld â nhw mwyach, gan gynnwys eich gwybodaeth bersonol.</translation>
+<translation id="3909353120217047026">Mae'r estyniad hwn yn torri polisi Chrome Web Store, a gallai fod yn anniogel. Tynnwch ef o Taktak fel na all weld na newid eich data ar wefannau rydych yn ymweld â nhw mwyach, gan gynnwys eich gwybodaeth bersonol.</translation>
 <translation id="3941890832296813527">Gwall gosod: Mae enw ffeil y gosodwr yn annilys neu heb ei gefnogi.</translation>
 <translation id="3945058413678539331">Mae Taktak yn ceisio copïo cyfrineiriau. Teipiwch eich cyfrinair Windows i ganiatáu hyn.</translation>
 <translation id="3954172517175569325">Bydd eich cyfrineiriau, eich dulliau talu a'ch cyfeiriadau a gadwyd gennych yn eich Cyfrif Taktak yn cael eu tynnu o'r ddyfais hon. I'w defnyddio eto yn Taktak, mewngofnodwch eto.</translation>
 <translation id="395904275706073188">Nid oes modd darllen tudalennau gwarchodedig. Rhowch gynnig ar dudalen wahanol.</translation>
 <translation id="3962647064319009959">Dysgwch sut mae Taktak yn eich cadw'n ddiogel</translation>
 <translation id="3971865010372729242">Pan fyddwch chi'n teipio yn y bar cyfeiriad neu'r blwch chwilio, mae Taktak yn anfon yr hyn rydych chi'n ei deipio i offer chwilio, AI ac asiant eich sefydliad i gael awgrymiadau.</translation>
-<translation id="3975724895399328945">Ynglŷn â &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Ynglŷn â &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Ynghylch ChromiumOS</translation>
 <translation id="4019629340646866719">Mae ChromiumOS yn bosib oherwydd <ph name="BEGIN_LINK_CROS_OSS" />meddalwedd ffynhonnell agored<ph name="END_LINK_CROS_OSS" /> ychwanegol, fel y mae <ph name="BEGIN_LINK_LINUX_OSS" />amgylchedd datblygu Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Cyfieithu'r sgrîn</translation>
@@ -550,7 +550,7 @@ Ni all Taktak adfer eich gosodiadau.</translation>
 <translation id="8077498902115777962">Analluogi rhedeg Taktak yn y cefndir ar gyfer apiau</translation>
 <translation id="80790299200510644">Chwilio Lluniau</translation>
 <translation id="8086881907087796310">Wedi methu â gosod oherwydd nad yw'ch cyfrifiadur yn bodloni'r gofynion caledwedd sylfaenol.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Mae angen caniatâd lleoliad ar Taktak ar gyfer y wefan hon</translation>
 <translation id="8118331347066725040">Anfon adborth ar gyfer chwilio gyda Lens</translation>
 <translation id="8133124826068723441">Nid oedd ChromiumOS yn gallu cysoni eich data gan nad yw Cysoni ar gael ar gyfer eich parth.</translation>
@@ -596,7 +596,7 @@ Ni all Taktak adfer eich gosodiadau.</translation>
 <translation id="8601359445272098721">Newydd! Gallwch gyfieithu testun a delweddau ar eich sgrin trwy ddewis y botwm "cyfieithu sgrîn".</translation>
 <translation id="8619360774459241877">Wrthi'n lansio Taktak...</translation>
 <translation id="8621669128220841554">Methwyd y gosodiad oherwydd gwall amhenodol. Lawrlwythwch Taktak eto.</translation>
-<translation id="8648201657708811153">Ni ellir gwneud Taktak Taktak for Testing yn borwr diofyn i chi.</translation>
+<translation id="8648201657708811153">Ni ellir gwneud Taktak for Testing yn borwr diofyn i chi.</translation>
 <translation id="8697124171261953979">Mae hefyd yn rheoli pa dudalen sy'n cael ei dangos pan fyddwch yn cychwyn Taktak neu'n chwilio o'r Omniflwch.</translation>
 <translation id="8704119203788522458">Dyma eich Taktak</translation>
 <translation id="8712637175834984815">Iawn</translation>

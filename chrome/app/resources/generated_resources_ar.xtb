@@ -2107,7 +2107,7 @@
 <translation id="2434449159125086437">تعذّر إعداد الطابعة. يُرجى التحقّق من الإعداد وإعادة المحاولة.</translation>
 <translation id="2434758125294431199">يمكنك اختيار الأشخاص الذين يمكنهم مشاركة الملفات مع جهازك</translation>
 <translation id="2434915728183570229">يمكنك الآن الاطّلاع على تطبيقات هاتفك</translation>
-<translation id="2435137177546457207">‏الأحكام الإضافية لكلٍّ من متصفِّح Taktak Taktak ونظام التشغيل ChromeOS Flex</translation>
+<translation id="2435137177546457207">‏الأحكام الإضافية لكلٍّ من متصفِّح Taktak ونظام التشغيل ChromeOS Flex</translation>
 <translation id="2435248616906486374">تم قطع الاتصال بالشبكة</translation>
 <translation id="2435457462613246316">عرض كلمة المرور</translation>
 <translation id="2436385001956947090">نسخ &amp;الرابط</translation>
@@ -2444,7 +2444,7 @@
 <translation id="266079277508604648">‏يتعذّر الاتصال بالطابعة. يُرجى التحقّق مما إذا كانت الطابعة مُفعّلة ومتصلة بجهاز Chromebook عن طريق Wi-Fi أو USB.</translation>
 <translation id="2661315027005813059">الصفحة المخزّنة من خلال ميزة "التخزين المؤقت للصفحات": <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">يمكنك التصفُّح بشكلٍ أسرع واستخدام بيانات أقل مع الوضع البسيط. يمكنك النقر للاطّلاع على مزيد من المعلومات.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">‏جارٍ إضافة الملف الشخصي لشريحة eSIM. قد يستغرق ذلك بضع دقائق.</translation>
 <translation id="2663302507110284145">اللغة</translation>
 <translation id="2665394472441560184">إضافة كلمة جديدة</translation>
@@ -4030,7 +4030,7 @@
 <translation id="3771290962915251154">لقد تم إيقاف هذا الإعداد بسبب تفعيل "أدوات رقابة الأهل".</translation>
 <translation id="3771294271822695279">ملفات فيديو</translation>
 <translation id="3771851622616482156">سيتم تسجيل خروجك من هذا الموقع الإلكتروني، بما في ذلك المواقع الإلكترونية في علامات التبويب المفتوحة.</translation>
-<translation id="3772046291955677288">‏لقد قرأت <ph name="BEGIN_LINK1" />بنود خدمة Taktak<ph name="END_LINK1" /> و<ph name="BEGIN_LINK2" />بنود الخدمة الإضافية لكلٍّ من متصفّح Taktak Taktak ونظام التشغيل Taktak<ph name="END_LINK2" /> وأوافق عليها.</translation>
+<translation id="3772046291955677288">‏لقد قرأت <ph name="BEGIN_LINK1" />بنود خدمة Taktak<ph name="END_LINK1" /> و<ph name="BEGIN_LINK2" />بنود الخدمة الإضافية لكلٍّ من متصفّح Taktak ونظام التشغيل Taktak<ph name="END_LINK2" /> وأوافق عليها.</translation>
 <translation id="3774059845329307709">رقم تسلسلي</translation>
 <translation id="3774166835015494435">الصور والإشعارات الحديثة</translation>
 <translation id="3775432569830822555">‏شهادة خادم بروتوكول SSL (طبقة المقابس الآمنة)</translation>
@@ -4074,7 +4074,7 @@
 <translation id="3798670284305777884">سماعة (داخلية)</translation>
 <translation id="3799128412641261490">إعدادات "الوصول عبر مفتاح تحكّم"</translation>
 <translation id="3800764353337460026">أسلوب الرموز</translation>
-<translation id="3800828618615365228">‏بنود الخدمة الإضافية لكلٍّ من متصفّح Taktak Taktak ونظام التشغيل Taktak</translation>
+<translation id="3800828618615365228">‏بنود الخدمة الإضافية لكلٍّ من متصفّح Taktak ونظام التشغيل Taktak</translation>
 <translation id="3800898876950197674">للسماح بهذه الإضافة، يجب إدخال كلمة المرور.</translation>
 <translation id="3801449494961771207">الصوت المستخدَم في ميزة "تحويل النص إلى كلام" في النظام</translation>
 <translation id="3802486193901166966">لا تتطلّب هذه الإضافة أذونات خاصة ولا تمتلك أذونات إضافية للوصول إلى المواقع الإلكترونية.</translation>
@@ -4097,7 +4097,7 @@
 <translation id="3810973564298564668">إدارة</translation>
 <translation id="381202950560906753">إضافة بصمة إصبع أخرى</translation>
 <translation id="3812525830114410218">شهادة سيئة</translation>
-<translation id="3813296892522778813">‏في حال عدم العثور على المعلومات المطلوبة، يمكنك الانتقال إلى <ph name="BEGIN_LINK_CHROMIUM" />مساعدة Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">‏في حال عدم العثور على المعلومات المطلوبة، يمكنك الانتقال إلى <ph name="BEGIN_LINK_CHROMIUM" />مساعدة Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">اللغة المستخدمة لترجمة الصفحات وميزة "معلومات سريعة"</translation>
 <translation id="3813458570141926987">‏تضم هذه القائمة المواضيع التي استنتَج Taktak اهتمامك بها استنادًا إلى سجلّ التصفُّح الأخير.</translation>
 <translation id="3814529970604306954">حساب المؤسسة التعليمية</translation>
@@ -4131,7 +4131,7 @@
 <translation id="3827548509471720579">سطوع الشاشة</translation>
 <translation id="3827774300009121996">&amp;ملء الشاشة</translation>
 <translation id="3828029223314399057">البحث في الإشارات المرجعية</translation>
-<translation id="3828953470056652895">‏لقد قرأت <ph name="BEGIN_LINK1" />بنود خدمة Taktak<ph name="END_LINK1" /> و<ph name="BEGIN_LINK2" />بنود الخدمة الإضافية لكلٍّ من متصفّح Taktak Taktak ونظام التشغيل Taktak<ph name="END_LINK2" /> و<ph name="BEGIN_LINK3" />بنود خدمة Taktak Play<ph name="END_LINK3" /> وأوافق عليها.</translation>
+<translation id="3828953470056652895">‏لقد قرأت <ph name="BEGIN_LINK1" />بنود خدمة Taktak<ph name="END_LINK1" /> و<ph name="BEGIN_LINK2" />بنود الخدمة الإضافية لكلٍّ من متصفّح Taktak ونظام التشغيل Taktak<ph name="END_LINK2" /> و<ph name="BEGIN_LINK3" />بنود خدمة Taktak Play<ph name="END_LINK3" /> وأوافق عليها.</translation>
 <translation id="3829530269338026191">"<ph name="WINDOW_TITLE" />" - استخدام مرتفع للذاكرة - <ph name="MEMORY_VALUE" /></translation>
 <translation id="3829765597456725595">‏خادم مشاركة الملفات عبر بروتوكول SMB</translation>
 <translation id="3830470485672984938">استخدام مفتاح مرور آخر</translation>
@@ -4571,7 +4571,7 @@
 <translation id="4133076602192971179">فتح التطبيق لتغيير كلمة المرور</translation>
 <translation id="4134838386867070505">الخطوة 1 من 4: وصف المشكلة</translation>
 <translation id="413534985210133938">تم حفظ "<ph name="LOCAL_FOLDER" />" على هذا الجهاز فقط. وفي حال نقل هذه الإشارة المرجعية إلى "<ph name="LOCAL_FOLDER" />"، لن يعود بإمكانك الوصول إليها على أجهزتك الأخرى.</translation>
-<translation id="4135746311382563554">‏بنود الخدمة الإضافية لكلٍ من متصفِّح Taktak Taktak ونظام التشغيل Taktak</translation>
+<translation id="4135746311382563554">‏بنود الخدمة الإضافية لكلٍ من متصفِّح Taktak ونظام التشغيل Taktak</translation>
 <translation id="4136203100490971508">سيتم إيقاف الإضاءة الليلية تلقائيًا عند شروق الشمس.</translation>
 <translation id="41365691917097717">‏ستؤدي المواصلة إلى تفعيل خيار "تصحيح الأخطاء عبر ADB" لإنشاء تطبيقات Android واختبارها. ويُرجى ملاحظة أن هذا الإجراء يتيح تثبيت تطبيقات Android لم تتحقَّق منها Taktak، ويتطلب أيضًا إعادة ضبط على الإعدادات الأصلية لإيقافه.</translation>
 <translation id="4137923333452716643">يجب تمييز النص الذي تريد عرضه في "وضع القراءة"</translation>
@@ -7838,7 +7838,7 @@
 <translation id="6511607461419653612">‏يُرجى إعادة تشغيل جهاز Chromebook والمحاولة مجددًا</translation>
 <translation id="6511827214781912955">ننصحك بحذف الملف "<ph name="FILENAME" />"، حتى لا يتمكّن مستخدمو هذا الجهاز الآخرون من الاطّلاع على كلمات مرورك</translation>
 <translation id="6512759338201777379">تم إنشاء الصورة رقم <ph name="INDEX" /> بالعنوان "<ph name="SUBJECT" />" والحالة "<ph name="MOOD" />".</translation>
-<translation id="6513247462497316522">‏سيستخدم Taktak Taktak بيانات الجوال إذا لم تكن متصلاً بشبكة أخرى.</translation>
+<translation id="6513247462497316522">‏سيستخدم Taktak بيانات الجوال إذا لم تكن متصلاً بشبكة أخرى.</translation>
 <translation id="6514010653036109809">الجهاز المتاح:</translation>
 <translation id="6516990372629061585">‏عرض الشهادات المستورَدة من Linux</translation>
 <translation id="6517382055541687102">تم تغيير الجهاز المحدَّد إلى "<ph name="DEVICE_NAME" />"</translation>
@@ -8796,7 +8796,7 @@
 <translation id="7180611975245234373">إعادة التحميل</translation>
 <translation id="7180865173735832675">تخصيص</translation>
 <translation id="7181117767881540376">إخفاء شريط الإشارات</translation>
-<translation id="7181329571386134105">‏للسماح لـ "<ph name="CHILD_NAME" />" بتثبيت الإضافات المستقبلية بدون موافقتك، عليك فتح تطبيق Family Link على جهازك وتعديل إعدادات Taktak Taktak الخاصة بـ "<ph name="CHILD_NAME" />".</translation>
+<translation id="7181329571386134105">‏للسماح لـ "<ph name="CHILD_NAME" />" بتثبيت الإضافات المستقبلية بدون موافقتك، عليك فتح تطبيق Family Link على جهازك وتعديل إعدادات Taktak الخاصة بـ "<ph name="CHILD_NAME" />".</translation>
 <translation id="7181840534454431748">الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />"
             {NUM_OTHER_MEMBERS,plural, =0{الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />"}=1{الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />" ومستخدم واحد آخر}two{الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />" ومستخدمَين آخرَين}few{الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />" و# مستخدمِين آخرِين}many{الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />" و# مستخدمًا آخر}other{الانضمام إلى مجموعة علامات التبويب مع "<ph name="OWNER_FIRST_NAME" />" و# مستخدم آخر}}</translation>
 <translation id="7181976109296206547">‏مراجعة التعديلات التي تم إجراؤها على الشعار والاسم وعنوان URL</translation>

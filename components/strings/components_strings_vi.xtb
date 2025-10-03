@@ -348,7 +348,7 @@ Nếu bạn từ chối, chế độ cài đặt quyền riêng tư của bạn 
 <translation id="1567040042588613346">Chính sách này đang hoạt động như dự kiến nhưng lại thay thế cho cùng một giá trị được đặt trong một nguồn khác.</translation>
 <translation id="1567405528131216114">Thêm <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Nhập ngày hết hạn</translation>
-<translation id="1569694109004336106">Taktak Taktak đang cố gắng bật Windows Hello để điền mật khẩu.</translation>
+<translation id="1569694109004336106">Taktak đang cố gắng bật Windows Hello để điền mật khẩu.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> inch</translation>
 <translation id="1574714699824202614">Đang xác minh phương thức thanh toán</translation>
 <translation id="1576277203042721907">Thông tin mua sắm chi tiết</translation>
@@ -654,7 +654,7 @@ Nếu bạn từ chối, chế độ cài đặt quyền riêng tư của bạn 
 <translation id="2090451897496479509">Liên hệ với nhà cung cấp để biết thêm thông tin</translation>
 <translation id="2091887806945687916">Âm thanh</translation>
 <translation id="2093184051799735948">Tìm kiếm trên <ph name="ENGINE_NAME" /> hoặc nhập URL</translation>
-<translation id="2093982008204312032">Taktak Taktak đang cố gắng tắt Windows Hello để điền mật khẩu.</translation>
+<translation id="2093982008204312032">Taktak đang cố gắng tắt Windows Hello để điền mật khẩu.</translation>
 <translation id="2094505752054353250">Miền không khớp</translation>
 <translation id="2094704029599359040">Thông tin phiên bản</translation>
 <translation id="2099652385553570808">Dập 3 ghim bên trái</translation>
@@ -864,7 +864,7 @@ Nếu bạn từ chối, chế độ cài đặt quyền riêng tư của bạn 
 <translation id="2396249848217231973">&amp;Hoàn tác xóa</translation>
 <translation id="239708975263889666">Chỉnh sửa mã số hành khách đã biết</translation>
 <translation id="2399344929880464793">IBAN này được lưu trong Tài khoản Taktak của bạn để bạn có thể sử dụng trên các dịch vụ của Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak đang cố gắng chỉnh sửa phương thức thanh toán.</translation>
+<translation id="2399868464369312507">Taktak đang cố gắng chỉnh sửa phương thức thanh toán.</translation>
 <translation id="2400263725572336749">Thêm thông tin hộ chiếu</translation>
 <translation id="2400271059665846158">Quản lý thẻ khách hàng thân thiết trong Taktak Wallet</translation>
 <translation id="2400600116338235695">Trang web có thể yêu cầu kết nối với cổng nối tiếp</translation>
@@ -3119,7 +3119,7 @@ Nếu bạn từ chối, chế độ cài đặt quyền riêng tư của bạn 
 <translation id="6164605812717770913">Cha mẹ hoặc người giám hộ cho biết bạn không được truy cập vào trang web này. Bạn có thể yêu cầu cha mẹ hoặc người giám hộ bỏ chặn.</translation>
 <translation id="6165508094623778733">Tìm hiểu thêm</translation>
 <translation id="6167577165590485365">Lần tìm nạp mới nhất:</translation>
-<translation id="617256461084925519">Taktak Taktak đang cố gắng xác minh danh tính của bạn để có thể điền thông tin thanh toán cho bạn.</translation>
+<translation id="617256461084925519">Taktak đang cố gắng xác minh danh tính của bạn để có thể điền thông tin thanh toán cho bạn.</translation>
 <translation id="6173208311907792313">Hoàn tất giao dịch mua bằng Windows Hello</translation>
 <translation id="6176387967264100435">Đây là mức giá cao</translation>
 <translation id="6177128806592000436">Kết nối của bạn tới trang web này không an toàn</translation>
@@ -3979,7 +3979,7 @@ Thông tin chi tiết bổ sung:
 <translation id="7564049878696755256">Bạn có thể mất quyền truy cập vào tài khoản <ph name="ORG_NAME" /> của mình hoặc bị đánh cắp danh tính. Taktak khuyên bạn nên thay đổi mật khẩu ngay bây giờ.</translation>
 <translation id="7564667064360547717">Áo sơ mi và áo</translation>
 <translation id="7567204685887185387">Máy chủ này không chứng minh được rằng đó là <ph name="DOMAIN" />; chứng chỉ bảo mật của máy chủ này có thể đã bị gian lận khi phát hành. Điều này có thể do định cấu hình sai hoặc có kẻ tấn công chặn kết nối của bạn.</translation>
-<translation id="7568616151991626879">Taktak Taktak đang cố gắng điền mật khẩu của bạn vào <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak đang cố gắng điền mật khẩu của bạn vào <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Không có}=1{1 thẻ trên thiết bị này}other{# thẻ trên thiết bị này}}</translation>
 <translation id="7569490014721427265">Gôn</translation>
 <translation id="7569952961197462199">Xóa thẻ tín dụng khỏi Taktak?</translation>
@@ -4560,7 +4560,7 @@ Thông tin chi tiết bổ sung:
 <translation id="8541579497401304453">Gọi điện thoại để liên hệ với doanh nghiệp.</translation>
 <translation id="8542014550340843547">Dập 3 ghim dưới cùng</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak đang cố gắng sửa đổi chế độ cài đặt cho việc điền phương thức thanh toán.</translation>
+<translation id="8544217240017914508">Taktak đang cố gắng sửa đổi chế độ cài đặt cho việc điền phương thức thanh toán.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Lựa chọn giá cao</translation>
 <translation id="8546254312340305428">Cung cấp lý do tải tệp lên (bắt buộc)</translation>

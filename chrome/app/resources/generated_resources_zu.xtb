@@ -2078,7 +2078,7 @@ Ungaphatha izilungiselelo zale akhawunti ngokufaka uhlelo lokusebenza lwe-Family
 <translation id="2412015533711271895">Umzali wakho noma umnakekeli wakho kufanele athi KULUNGILE ngawe ukusebenzisa lesi sandiso</translation>
 <translation id="2412593942846481727">Isibuyekezo siyatholakala</translation>
 <translation id="2412753904894530585">I-Kerberos</translation>
-<translation id="2413009156320833859">Enza ngendlela oyifisayo ibhrawuza yakho nakakhulu ngezandiso ezivela <ph name="BEGIN_LINK1" />ku-Taktak Web Store<ph name="END_LINK1" /></translation>
+<translation id="2413009156320833859">Enza ngendlela oyifisayo ibhrawuza yakho nakakhulu ngezandiso ezivela <ph name="BEGIN_LINK1" />ku-Chrome Web Store<ph name="END_LINK1" /></translation>
 <translation id="2414159296888870200">Qhubeka nokubhrawuza <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Mnyama</translation>
 <translation id="2415117815770324983">Ikukhipha kumasayithi amaningi. Uzohlala ungene ngemvume ku-Taktak Account yakho.</translation>
@@ -2113,7 +2113,7 @@ Ungaphatha izilungiselelo zale akhawunti ngokufaka uhlelo lokusebenza lwe-Family
 <translation id="2434449159125086437">Ayikwazi ukusetha iphrinta. Sicela uhlole ukulungiselelwa uphinde uzame futhi.</translation>
 <translation id="2434758125294431199">Khetha ukuthi obani ongabelana nawe</translation>
 <translation id="2434915728183570229">Manje usungabuka ama-app wefoni yakho</translation>
-<translation id="2435137177546457207">Imigomo Eyengeziwe ye-Taktak Taktak ne-ChromeOS Flex</translation>
+<translation id="2435137177546457207">Imigomo Eyengeziwe ye-Taktak ne-ChromeOS Flex</translation>
 <translation id="2435248616906486374">Inethiwekhi inqanyuliwe</translation>
 <translation id="2435457462613246316">Bonisa iphasiwedi</translation>
 <translation id="2436385001956947090">Kopisha &amp;ilinki</translation>
@@ -3237,7 +3237,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="3226487301970807183">Guqula ukuqondanisa ngakwesobunxele iphaneli eseceleni</translation>
 <translation id="322708765617468434">Ungakwazi ukwengeza omunye umuntu kudivayisi ngemva kokusetha. Umuntu ngamunye angaqondanisa i-akhawunti yakhe nomuntu siqu futhi agcine idatha iyimfihlo.</translation>
 <translation id="3227137524299004712">Imakrofoni</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Isuse noma ishintshe nezandiso ezifanayo ezivela <ph name="BEGIN_LINK" />ku-Taktak Web Store<ph name="END_LINK" />.}one{Zisuse noma zishintshe nezandiso ezifanayo ezivela <ph name="BEGIN_LINK" />ku-Taktak Web Store<ph name="END_LINK" />}other{Zisuse noma zishintshe nezandiso ezifanayo ezivela <ph name="BEGIN_LINK" />ku-Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Isuse noma ishintshe nezandiso ezifanayo ezivela <ph name="BEGIN_LINK" />ku-Chrome Web Store<ph name="END_LINK" />.}one{Zisuse noma zishintshe nezandiso ezifanayo ezivela <ph name="BEGIN_LINK" />ku-Chrome Web Store<ph name="END_LINK" />}other{Zisuse noma zishintshe nezandiso ezifanayo ezivela <ph name="BEGIN_LINK" />ku-Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Hlola usuku</translation>
 <translation id="3230539834943294477">Bheka izihloko zosizo noma uthole ukwesekwa kwedivayisi</translation>
 <translation id="3232168089952388105">Yabelana ngolwazi mayelana nedivayisi yakho?</translation>
@@ -4081,7 +4081,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="3798670284305777884">Isipikha (okungaphakathi)</translation>
 <translation id="3799128412641261490">Amasethingi okufinyelela eswishi</translation>
 <translation id="3800764353337460026">Isitayela sesimbuli</translation>
-<translation id="3800828618615365228">Imigomo Engeziwe ye-Taktak Taktak ne-ChromeOS</translation>
+<translation id="3800828618615365228">Imigomo Engeziwe ye-Taktak ne-ChromeOS</translation>
 <translation id="3800898876950197674">Ukuze uvumele lesi sandiso, faka iphasiwedi yakho.</translation>
 <translation id="3801449494961771207">Izwi lesistimu yokuguqula umbhalo ube inkulumo</translation>
 <translation id="3802486193901166966">Lesi sandiso asidingi izimvume ezikhethekile futhi asinakho ukufinyelela kwesayithi okwengeziwe</translation>
@@ -4104,7 +4104,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="3810973564298564668">Phatha</translation>
 <translation id="381202950560906753">Engeza enye</translation>
 <translation id="3812525830114410218">Isitifiketi esingalungile</translation>
-<translation id="3813296892522778813">Iya kokuthi <ph name="BEGIN_LINK_CHROMIUM" />usizo lwe-Taktak Taktak<ph name="END_LINK_CHROMIUM" /> uma ungakwazi ukuthola okufunayo.</translation>
+<translation id="3813296892522778813">Iya kokuthi <ph name="BEGIN_LINK_CHROMIUM" />usizo lwe-Taktak<ph name="END_LINK_CHROMIUM" /> uma ungakwazi ukuthola okufunayo.</translation>
 <translation id="3813358687923336574">Ulimi olusetshenziselwa ukuhumusha amakhasi Nezimpendulo ezisheshayo</translation>
 <translation id="3813458570141926987">Uhlu lwezihloko ezilinganiselwe yi-Taktak ngokusekelwe kumlando wakho wakamuva wokubhrawuza</translation>
 <translation id="3814529970604306954">I-akhawunti Yesikole</translation>
@@ -4580,7 +4580,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="4133076602192971179">Vula uhlelo lokusebenza ukushintsha iphasiwedi yakho</translation>
 <translation id="4134838386867070505">Isinyathelo soku-1 kwezi-4: Chaza inkinga</translation>
 <translation id="413534985210133938">Okuthi "<ph name="LOCAL_FOLDER" />" kulondolozwe kule divayisi kuphela. Uma uhambisa le bhukhimakhi kokuthi "<ph name="LOCAL_FOLDER" />", ngeke usayithola kwamanye amadivayisi akho.</translation>
-<translation id="4135746311382563554">Imigomo yesevisi engeziwe ye-Taktak Taktak ne-Taktak OS</translation>
+<translation id="4135746311382563554">Imigomo yesevisi engeziwe ye-Taktak ne-Taktak OS</translation>
 <translation id="4136203100490971508">Umkhayo wasebusuku uzovala ngokuzenzakalelayo uma kuphuma ilanga</translation>
 <translation id="41365691917097717">Ukuqhubeka kuzonika amandla ukulungisa amaphutha e-ADB okudala nokuhlola izinhlelo zokusebenza ze-Android. Qaphela ukuthi lesi senzo sivumela ukufakwa kwezinhlelo zokusebenza ze-Android ezingazange ziqinisekiswe i-Taktak, futhi sidinga ukusethwa kabusha kwasekuqaleni ukuze usikhubaze.</translation>
 <translation id="4137923333452716643">Gqamisa umbhalo ofuna ukuwubonisa kumodi yokufunda</translation>
@@ -6431,7 +6431,7 @@ Ungabela amaswishi amaningi kulesi senzo.</translation>
 <translation id="5470741195701938302">Izinombolo</translation>
 <translation id="5471768120198416576">Sawubona lapho! Ngiyizwi lakho lokuguqula umbhalo ube inkulumo.</translation>
 <translation id="5472627187093107397">Londoloza amaphasiwedi waleli sayithi</translation>
-<translation id="5473062644742711742">Thola amathuluzi okufinyelela amaningi ku-Taktak Web Store</translation>
+<translation id="5473062644742711742">Thola amathuluzi okufinyelela amaningi ku-Chrome Web Store</translation>
 <translation id="5473075389972733037">I-IBM</translation>
 <translation id="5473099001878321374">Ngokuqhubeka, uyavuma ukuthi le divayisi ingaphinda ilande ngokuzenzakalela iphinde ifake izibuyekezo nama-app avela ku-Taktak, inkampani yenethiwekhi yengane yakho, kanye nomkhiqizi wale divayisi, uma kungenzeka ngedatha yeselula. Amanye wala ma-app anganikeza ngokuthenga kwangaphakathi ne-app.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{Iphinikhodi kufanele okungenani ibe nohlamvu olulodwa}one{Iphinikhodi kumele okungenani ibe izinhlamvu ezingu-#}other{Iphinikhodi kumele okungenani ibe izinhlamvu ezingu-#}}</translation>
@@ -7848,7 +7848,7 @@ I-<ph name="DOMAIN" /> idinga ukuba ugcine ikhadi lakho elimsathi lifakiwe.</tra
 <translation id="6511607461419653612">Qala kabusha i-Chromebook bese uzama futhi</translation>
 <translation id="6511827214781912955">Cabangela ukusula i-<ph name="FILENAME" />, ukuze abanye abasebenzisa le divayisi bangakwazi ukubona amaphasiwedi akho.</translation>
 <translation id="6512759338201777379">Kukhiqizwe isithombe <ph name="INDEX" /> se-<ph name="SUBJECT" />, ngesimomizwa esithi <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">I-Taktak Taktak izosebenzisa idatha yeselula uma ngabe ungaxhunyiwe kwenye inethiwekhi</translation>
+<translation id="6513247462497316522">I-Taktak izosebenzisa idatha yeselula uma ngabe ungaxhunyiwe kwenye inethiwekhi</translation>
 <translation id="6514010653036109809">Idivayisi etholakalayo:</translation>
 <translation id="6516990372629061585">Buka izitifiketi ezingenisiwe ezithathwe kuLinux</translation>
 <translation id="6517382055541687102">Idivayisi ekhethiwe ishintshele ku-<ph name="DEVICE_NAME" /></translation>
@@ -8404,7 +8404,7 @@ Unamaphasiwedi onakalisiwe angu-# ngokwengeziwe. Umphathi Wephasiwedi Ye-Taktak 
 <translation id="6878862640969460273">Ukuvundla</translation>
 <translation id="6880587130513028875">Izithombe ziye zavinjwa kuleli khasi.</translation>
 <translation id="6881845890692344060">Umlawuli wakho uphumile. Uyalawula manje.</translation>
-<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK" />Funda kabanzi<ph name="END_LINK" /></translation>
+<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies.</translation>
 <translation id="6883319974225028188">Eshu!  Isistimu yehlulekile ukulondoloza ukulungiswa kwedivayisi.</translation>
 <translation id="6883606786470492001">Phatha izihloko zesikhangiso sakho namanye amasethingi ukuze ubeke umkhawulo kulokho amasayithi angakufunda ngawe ukuze akubonise izikhangiso eziqondaniswe nomuntu siqu</translation>
 <translation id="6884474387073389421">Uqinisekile ukuthi ufuna ukusula idatha yokungena ngemvume ekhethiwe?</translation>
@@ -8799,7 +8799,7 @@ Unamaphasiwedi onakalisiwe angu-# ngokwengeziwe. Umphathi Wephasiwedi Ye-Taktak 
 <translation id="7180611975245234373">Qala kabusha</translation>
 <translation id="7180865173735832675">Yenza ngokwezifiso</translation>
 <translation id="7181117767881540376">&amp;Fihla ibha yamabhukhimakhi</translation>
-<translation id="7181329571386134105">Ukuvumela ukuthi u-<ph name="CHILD_NAME" /> ukuze ufake izandiso zesikhathi esizayo ngaphandle kwemvume yakho, vula i-app ye-Family Link kudivayisi yakho futhi ubuyekeze amasethingi ka<ph name="CHILD_NAME" /> we-Taktak Taktak.</translation>
+<translation id="7181329571386134105">Ukuvumela ukuthi u-<ph name="CHILD_NAME" /> ukuze ufake izandiso zesikhathi esizayo ngaphandle kwemvume yakho, vula i-app ye-Family Link kudivayisi yakho futhi ubuyekeze amasethingi ka<ph name="CHILD_NAME" /> we-Taktak.</translation>
 <translation id="7181840534454431748">Joyina Iqembu Lethebhu no-<ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Joyina Iqembu Lethebhu no-<ph name="OWNER_FIRST_NAME" />}=1{Joyina Iqembu Lethebhu no-<ph name="OWNER_FIRST_NAME" /> Nabanye abangu-#}one{Joyina Iqembu Lethebhu no-<ph name="OWNER_FIRST_NAME" /> Nabanye abangu-#}other{Joyina Iqembu Lethebhu no-<ph name="OWNER_FIRST_NAME" /> Nabanye abangu-#}}</translation>
 <translation id="7181976109296206547">Buyekeza ilogo, igama, ne-URL okuthuthukisiwe</translation>

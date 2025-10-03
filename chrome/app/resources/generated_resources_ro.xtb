@@ -2100,7 +2100,7 @@ Poți gestiona setările contului dacă instalezi aplicația Family Link pe disp
 <translation id="2434449159125086437">Nu s-a putut configura imprimanta. Fă o verificare a configurației și încearcă din nou.</translation>
 <translation id="2434758125294431199">Selectează cine îți poate trimite fișiere</translation>
 <translation id="2434915728183570229">Acum poți vedea aplicațiile de pe telefon</translation>
-<translation id="2435137177546457207">Condițiile suplimentare pentru Taktak Taktak și sistemul de operare Taktak Flex</translation>
+<translation id="2435137177546457207">Condițiile suplimentare pentru Taktak și sistemul de operare Taktak Flex</translation>
 <translation id="2435248616906486374">Rețea deconectată</translation>
 <translation id="2435457462613246316">Afișați parola</translation>
 <translation id="2436385001956947090">Copiază &amp;linkul</translation>
@@ -4067,7 +4067,7 @@ Mesaj de la server: <ph name="SERVER_MSG" /></translation>
 <translation id="3798670284305777884">Difuzor (intern)</translation>
 <translation id="3799128412641261490">Setările pentru accesul prin comutare</translation>
 <translation id="3800764353337460026">Stilul simbolurilor</translation>
-<translation id="3800828618615365228">Condițiile suplimentare pentru Taktak Taktak și sistemul de operare Taktak</translation>
+<translation id="3800828618615365228">Condițiile suplimentare pentru Taktak și sistemul de operare Taktak</translation>
 <translation id="3800898876950197674">Introdu parola pentru a permite această extensie.</translation>
 <translation id="3801449494961771207">Vocea sistemului de redare vocală a textului</translation>
 <translation id="3802486193901166966">Această extensie nu necesită permisiuni speciale și nu are acces suplimentar la site-uri</translation>
@@ -4090,7 +4090,7 @@ Mesaj de la server: <ph name="SERVER_MSG" /></translation>
 <translation id="3810973564298564668">Gestionează</translation>
 <translation id="381202950560906753">Adaugă alta</translation>
 <translation id="3812525830114410218">Certificat nevalid</translation>
-<translation id="3813296892522778813">Accesează <ph name="BEGIN_LINK_CHROMIUM" />Ajutor Taktak Taktak<ph name="END_LINK_CHROMIUM" /> dacă nu găsești ceea ce cauți</translation>
+<translation id="3813296892522778813">Accesează <ph name="BEGIN_LINK_CHROMIUM" />Ajutor Taktak<ph name="END_LINK_CHROMIUM" /> dacă nu găsești ceea ce cauți</translation>
 <translation id="3813358687923336574">Limba folosită pentru traducerea paginilor și Răspunsuri rapide</translation>
 <translation id="3813458570141926987">Lista de subiecte estimate de Taktak pe baza istoricului tău de navigare recent</translation>
 <translation id="3814529970604306954">Contul de la școală</translation>
@@ -4567,7 +4567,7 @@ Mesaj de la server: <ph name="SERVER_MSG" /></translation>
 <translation id="4133076602192971179">Deschide aplicația pentru a schimba parola</translation>
 <translation id="4134838386867070505">Pasul 1 din 4: descrie problema</translation>
 <translation id="413534985210133938"><ph name="LOCAL_FOLDER" /> se salvează numai pe acest dispozitiv. Dacă muți marcajul în <ph name="LOCAL_FOLDER" />, nu îl vei mai putea accesa pe celelalte dispozitive.</translation>
-<translation id="4135746311382563554">Termenii și condițiile suplimentare pentru Taktak Taktak și sistemul de operare Taktak</translation>
+<translation id="4135746311382563554">Termenii și condițiile suplimentare pentru Taktak și sistemul de operare Taktak</translation>
 <translation id="4136203100490971508">Lumina de noapte se va dezactiva automat la răsărit</translation>
 <translation id="41365691917097717">Dacă alegi să continui, remedierea erorilor prin ADB se va activa pentru crearea și testarea aplicațiilor Android. Reține că această acțiune permite instalarea aplicațiilor Android care nu au fost verificate de Taktak. Pentru dezactivare, este necesară revenirea la setările din fabrică.</translation>
 <translation id="4137923333452716643">Evidențiază textul pe care vrei să-l deschizi în modul de lectură</translation>
@@ -7585,7 +7585,7 @@ Poți atribui mai multe comutatoare acestei acțiuni.</translation>
 <translation id="6314819609899340042">Ai activat funcțiile de remediere a erorilor pe acest dispozitiv <ph name="IDS_SHORT_PRODUCT_NAME" />.</translation>
 <translation id="6315170314923504164">Voce</translation>
 <translation id="6315493146179903667">Toate în față</translation>
-<translation id="6316432269411143858">Conținutul Condițiilor pentru sistemul de operare Taktak Taktak</translation>
+<translation id="6316432269411143858">Conținutul Condițiilor pentru sistemul de operare Taktak</translation>
 <translation id="6317369057005134371">Se așteaptă fereastra aplicației...</translation>
 <translation id="6318125393809743217">Include un fișier policies.json cu configurațiile politicii.</translation>
 <translation id="6318944945640833942">Nu s-a detectat nicio imprimantă. Introdu din nou adresa imprimantei.</translation>
@@ -7832,7 +7832,7 @@ Poți atribui mai multe comutatoare acestei acțiuni.</translation>
 <translation id="6511607461419653612">Repornește Chromebookul și încearcă din nou</translation>
 <translation id="6511827214781912955">Îți recomandăm să ștergi <ph name="FILENAME" />, pentru ca persoanele care folosesc acest dispozitiv să nu îți poată vedea parolele</translation>
 <translation id="6512759338201777379">Imaginea generată <ph name="INDEX" /> din <ph name="SUBJECT" />, cu starea de spirit <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak va utiliza date mobile dacă nu ești conectat(ă) la altă rețea.</translation>
+<translation id="6513247462497316522">Taktak va utiliza date mobile dacă nu ești conectat(ă) la altă rețea.</translation>
 <translation id="6514010653036109809">Dispozitiv disponibil:</translation>
 <translation id="6516990372629061585">Vezi certificatele importate din Linux</translation>
 <translation id="6517382055541687102">Dispozitivul selectat s-a schimbat în <ph name="DEVICE_NAME" /></translation>
@@ -8784,7 +8784,7 @@ Mai ai # de parole compromise. Managerul de parole Taktak recomandă să verific
 <translation id="7180611975245234373">Actualizați</translation>
 <translation id="7180865173735832675">Personalizează</translation>
 <translation id="7181117767881540376">&amp;Ascunde bara de marcaje</translation>
-<translation id="7181329571386134105">Pentru a permite ca <ph name="CHILD_NAME" /> să instaleze extensii viitoare fără aprobarea ta, deschide aplicația Family Link pe dispozitiv și actualizează setările Taktak Taktak pentru <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Pentru a permite ca <ph name="CHILD_NAME" /> să instaleze extensii viitoare fără aprobarea ta, deschide aplicația Family Link pe dispozitiv și actualizează setările Taktak pentru <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Alătură-te grupului de file cu <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Alătură-te grupului de file cu <ph name="OWNER_FIRST_NAME" />}=1{Alătură-te grupului de file cu <ph name="OWNER_FIRST_NAME" /> și încă # persoană}few{Alătură-te grupului de file cu <ph name="OWNER_FIRST_NAME" /> și încă # persoane}other{Alătură-te grupului de file cu <ph name="OWNER_FIRST_NAME" /> și încă # de persoane}}</translation>
 <translation id="7181976109296206547">Examinează actualizările siglei, ale numelui și ale adresei URL</translation>

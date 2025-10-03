@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">تعمل هذه السياسة على النحو المنشود، غير أنّ القيمة نفسها مُحدّدة في مكان آخر ومن ثمَّ تم استبدالها بموجب هذه السياسة.</translation>
 <translation id="1567405528131216114">إضافة <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">إدخال تاريخ انتهاء الصلاحية</translation>
-<translation id="1569694109004336106">‏يحاول Taktak Taktak تفعيل Windows Hello لملء كلمات المرور.</translation>
+<translation id="1569694109004336106">‏يحاول Taktak تفعيل Windows Hello لملء كلمات المرور.</translation>
 <translation id="1572765991610098222">‏<ph name="WIDTH" /> x <ph name="HEIGHT" /> بوصة</translation>
 <translation id="1574714699824202614">جارٍ التحقق من طريقة الدفع</translation>
 <translation id="1576277203042721907">ميزة "إحصاءات التسوّق"</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">يُرجى التواصل مع مقدِّم الخدمة للحصول على مزيد من المعلومات</translation>
 <translation id="2091887806945687916">الصوت</translation>
 <translation id="2093184051799735948">‏يُرجى البحث في "<ph name="ENGINE_NAME" />" أو كتابة عنوان URL</translation>
-<translation id="2093982008204312032">‏يحاول Taktak Taktak إيقاف استخدام Windows Hello لملء كلمات المرور.</translation>
+<translation id="2093982008204312032">‏يحاول Taktak إيقاف استخدام Windows Hello لملء كلمات المرور.</translation>
 <translation id="2094505752054353250">النطاق غير متطابق</translation>
 <translation id="2094704029599359040">معلومات الإصدار</translation>
 <translation id="2099652385553570808">وضع ثلاثة دبابيس يسارًا</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">التراجع عن الحذف</translation>
 <translation id="239708975263889666">تعديل رقم المسافر المعروف</translation>
 <translation id="2399344929880464793">‏تم حفظ رقم الحساب بصيغة IBAN هذا في حسابك على Taktak لاستخدامه على مختلف خدمات Taktak.</translation>
-<translation id="2399868464369312507">‏يحاول Taktak Taktak تعديل طُرق الدفع.</translation>
+<translation id="2399868464369312507">‏يحاول Taktak تعديل طُرق الدفع.</translation>
 <translation id="2400263725572336749">إضافة جواز سفر</translation>
 <translation id="2400271059665846158">‏إدارة بطاقات الولاء في "محفظة Taktak"</translation>
 <translation id="2400600116338235695">السماح للموقع الإلكتروني بطلب الاتصال بمنافذ تسلسلية</translation>
@@ -3121,7 +3121,7 @@
 <translation id="6164605812717770913">لم يوافق وصيّك أو أحد والدَيك على طلبك بزيارة هذا الموقع الإلكتروني. يمكنك طلب إزالة الحظر من أيّ منهما.</translation>
 <translation id="6165508094623778733">مزيد من المعلومات</translation>
 <translation id="6167577165590485365">وقت آخر محاولة استرجاع:</translation>
-<translation id="617256461084925519">‏يحاول Taktak Taktak إثبات هويتك لملء معلومات الدفع.</translation>
+<translation id="617256461084925519">‏يحاول Taktak إثبات هويتك لملء معلومات الدفع.</translation>
 <translation id="6173208311907792313">‏يُرجى إكمال عملية الشراء باستخدام Windows Hello</translation>
 <translation id="6176387967264100435">هذا السعر مرتفع</translation>
 <translation id="6177128806592000436">إن اتصالك بهذا الموقع غير آمن</translation>
@@ -3981,7 +3981,7 @@
 <translation id="7564049878696755256">‏قد لا يعود بإمكانك الوصول إلى حسابك على <ph name="ORG_NAME" /> أو تتم سرقة هويتك. لذا يوصي Taktak بتغيير كلمة مرورك الآن.</translation>
 <translation id="7564667064360547717">قمصان وسترات</translation>
 <translation id="7567204685887185387">لم يتمكّن هذا الخادم من إثبات أنه <ph name="DOMAIN" />؛ بل إنه شهادة أمان تم إصدارها عن طريق الاحتيال. وربما يكون سبب ذلك خطأ في التكوين أو مهاجمًا يعترض اتصالك.</translation>
-<translation id="7568616151991626879">‏يحاول Taktak Taktak إدخال كلمة مرورك في "<ph name="APP_NAME" />".</translation>
+<translation id="7568616151991626879">‏يحاول Taktak إدخال كلمة مرورك في "<ph name="APP_NAME" />".</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{ما مِن علامات تبويب على هذا الجهاز}=1{علامة تبويب واحدة على هذا الجهاز}two{علامتا تبويب على هذا الجهاز}few{‫# علامات تبويب على هذا الجهاز}many{‫# علامة تبويب على هذا الجهاز}other{‫# علامة تبويب على هذا الجهاز}}</translation>
 <translation id="7569490014721427265">غولف</translation>
 <translation id="7569952961197462199">‏هل المطلوب إزالة بطاقة الائتمان من Taktak؟</translation>
@@ -4564,7 +4564,7 @@
 <translation id="8541579497401304453">التعرّف على نشاط تجاري من خلال بدء مكالمة هاتفية.</translation>
 <translation id="8542014550340843547">وضع ثلاثة دبابيس في الأسفل</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">‏يحاول Taktak Taktak تعديل إعدادات ميزة "الملء التلقائي" لبيانات طُرق الدفع.</translation>
+<translation id="8544217240017914508">‏يحاول Taktak تعديل إعدادات ميزة "الملء التلقائي" لبيانات طُرق الدفع.</translation>
 <translation id="8544303911974837265">بوليستر</translation>
 <translation id="854548366864113872">خيار السعر العالي</translation>
 <translation id="8546254312340305428">يرجى إدخال سبب للتحميل (مطلوب).</translation>

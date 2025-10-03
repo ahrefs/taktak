@@ -348,7 +348,7 @@ Kung ayaw mo, iba-block ito ng iyong mga setting ng privacy. Papayagan nito ang 
 <translation id="1567040042588613346">Gumagana ang patakarang ito tulad ng inaasahan pero itinatakda ang kaparehong value sa ibang lugar at nasasapawan ito ng patakarang ito.</translation>
 <translation id="1567405528131216114">Idagdag ang <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Ilagay ang petsa ng pag-expire</translation>
-<translation id="1569694109004336106">Sinusubukan ng Taktak Taktak na i-on ang Windows Hello para sa paglalagay ng mga password.</translation>
+<translation id="1569694109004336106">Sinusubukan ng Taktak na i-on ang Windows Hello para sa paglalagay ng mga password.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Vine-verify ang paraan ng pagbabayad</translation>
 <translation id="1576277203042721907">Mga insight sa Shopping</translation>
@@ -654,7 +654,7 @@ Kung ayaw mo, iba-block ito ng iyong mga setting ng privacy. Papayagan nito ang 
 <translation id="2090451897496479509">Makipag-ugnayan sa provider para sa higit pang impormasyon</translation>
 <translation id="2091887806945687916">Tunog</translation>
 <translation id="2093184051799735948">Hanapin ang <ph name="ENGINE_NAME" /> o mag-type ng URL</translation>
-<translation id="2093982008204312032">Sinusubukan ng Taktak Taktak na i-off ang Windows Hello para sa paglalagay ng mga password.</translation>
+<translation id="2093982008204312032">Sinusubukan ng Taktak na i-off ang Windows Hello para sa paglalagay ng mga password.</translation>
 <translation id="2094505752054353250">Maling pagtutugma sa domain</translation>
 <translation id="2094704029599359040">Impormasyon ng Bersyon</translation>
 <translation id="2099652385553570808">Triple staple left</translation>
@@ -864,7 +864,7 @@ Kung ayaw mo, iba-block ito ng iyong mga setting ng privacy. Papayagan nito ang 
 <translation id="2396249848217231973">&amp;I-undo ang pagtanggal</translation>
 <translation id="239708975263889666">Mag-edit ng known traveler number</translation>
 <translation id="2399344929880464793">Na-save ang IBAN na ito sa iyong Taktak Account, kaya magagamit mo ito sa mga serbisyo ng Taktak.</translation>
-<translation id="2399868464369312507">Sinusubukan ng Taktak Taktak na i-edit ang mga paraan ng pagbabayad.</translation>
+<translation id="2399868464369312507">Sinusubukan ng Taktak na i-edit ang mga paraan ng pagbabayad.</translation>
 <translation id="2400263725572336749">Magdagdag ng passport</translation>
 <translation id="2400271059665846158">Pamahalaan ang iyong mga loyalty card sa Taktak Wallet</translation>
 <translation id="2400600116338235695">Puwedeng hilinging kumonekta sa mga serial port</translation>
@@ -1994,7 +1994,7 @@ Kung ayaw mo, iba-block ito ng iyong mga setting ng privacy. Papayagan nito ang 
 <translation id="4269599248168651462">Ibinibigay ang certificate ng server sa isang non-unique na pangalan.</translation>
 <translation id="4270541775497538019">Stacker 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{Tingnan ang 0 na review. Ang average na rating ay <ph name="STARS" /> star.}=1{Tingnan ang 1 review. Ang average na rating ay <ph name="STARS" /> star.}one{Tingnan ang lahat ng # review. Ang average na rating ay <ph name="STARS" /> star.}other{Tingnan ang lahat ng # na review. Ang average na rating ay <ph name="STARS" /> star.}}</translation>
-<translation id="4271652479722040953">Kapag nagdagdag ng mga extension sa Taktak, ipinapadala ang nauugnay na data tungkol sa mga extension na ito sa mga third party para sa pagsusuri at posibleng nakikita ang mga ito ng iyong administrator. Kasama sa data ang impormasyon tungkol sa mga extension gaya ng pangalan, oras ng pag-install, source ng pag-install pati na rin ang aktibidad na nauugnay sa mga extension na ito (tulad ng pagbabago ng mga tab, pakikipag-ugnayan sa mga website, o pag-access sa cookies). Kinokolekta ang data na ito para sa mga extension na naka-install mula sa Taktak Web Store pati na rin ang mga extension na hindi galing sa store.</translation>
+<translation id="4271652479722040953">Kapag nagdagdag ng mga extension sa Taktak, ipinapadala ang nauugnay na data tungkol sa mga extension na ito sa mga third party para sa pagsusuri at posibleng nakikita ang mga ito ng iyong administrator. Kasama sa data ang impormasyon tungkol sa mga extension gaya ng pangalan, oras ng pag-install, source ng pag-install pati na rin ang aktibidad na nauugnay sa mga extension na ito (tulad ng pagbabago ng mga tab, pakikipag-ugnayan sa mga website, o pag-access sa cookies). Kinokolekta ang data na ito para sa mga extension na naka-install mula sa Chrome Web Store pati na rin ang mga extension na hindi galing sa store.</translation>
 <translation id="4275830172053184480">I-restart ang iyong device</translation>
 <translation id="4276974990916607331">Huwag na lang</translation>
 <translation id="4277028893293644418">I-reset ang password</translation>
@@ -3119,7 +3119,7 @@ Kung ayaw mo, iba-block ito ng iyong mga setting ng privacy. Papayagan nito ang 
 <translation id="6164605812717770913">Sinabi ng magulang o tagapag-alaga na hindi OK na bisitahin mo ang site na ito. Puwede mong hilingin sa kanyang i-unblock ito.</translation>
 <translation id="6165508094623778733">Matuto pa</translation>
 <translation id="6167577165590485365">Huling sinubukan ang pag-fetch:</translation>
-<translation id="617256461084925519">Sinusubukan ng Taktak Taktak na i-verify na ikaw ito para mapunan nito ang impormasyon mo sa pagbabayad.</translation>
+<translation id="617256461084925519">Sinusubukan ng Taktak na i-verify na ikaw ito para mapunan nito ang impormasyon mo sa pagbabayad.</translation>
 <translation id="6173208311907792313">Kumpletuhin ang iyong pagbili gamit ang Windows Hello</translation>
 <translation id="6176387967264100435">Mataas ang presyong ito</translation>
 <translation id="6177128806592000436">Hindi ligtas ang iyong koneksyon sa site na ito</translation>
@@ -3979,7 +3979,7 @@ Mga karagdagang detalye:
 <translation id="7564049878696755256">Maaari kang mawalan ng access sa iyong account sa <ph name="ORG_NAME" /> o manakawan ng pagkakakilanlan. Inirerekomenda ng Taktak na palitan ang iyong password ngayon.</translation>
 <translation id="7564667064360547717">Mga Kamiseta at Pantaas</translation>
 <translation id="7567204685887185387">Hindi mapatunayan ng server na ito na ito ay <ph name="DOMAIN" />; maaaring mapanlokong ibinigay ang certificate ng seguridad nito. Maaaring dulot ito ng maling configuration o isang umaatake na hinahadlangan ang iyong koneksyon.</translation>
-<translation id="7568616151991626879">Sinusubukan ng Taktak Taktak na ilagay ang iyong password sa <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Sinusubukan ng Taktak na ilagay ang iyong password sa <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Wala}=1{1 tab sa device na ito}one{# tab sa device na ito}other{# na tab sa device na ito}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Alisin ang credit card sa Taktak?</translation>
@@ -4560,7 +4560,7 @@ Mga karagdagang detalye:
 <translation id="8541579497401304453">Makipag-ugnayan sa isang negosyo sa pamamagitan ng pagtawag sa telepono.</translation>
 <translation id="8542014550340843547">Triple staple bottom</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Sinusubukan ng Taktak Taktak na baguhin ang mga setting para sa paglalagay ng mga paraan ng pagbabayad.</translation>
+<translation id="8544217240017914508">Sinusubukan ng Taktak na baguhin ang mga setting para sa paglalagay ng mga paraan ng pagbabayad.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Mahal na Opsyon</translation>
 <translation id="8546254312340305428">Magbigay ng dahilan para sa pag-upload (nire-require)</translation>

@@ -1329,7 +1329,7 @@
 <translation id="1901760057081700494">ဒေသစံတော်ချိန်ကို လောလောဆယ် <ph name="TIME_ZONE_ENTRY" /> သို့ သတ်မှတ်ထားသည်။ စံတော်ချိန်ကို အလိုအလျောက်အပ်ဒိတ်လုပ်ရန် <ph name="BEGIN_LINK" />စနစ်တည်နေရာသုံးခွင့် ဖွင့်ပါ<ph name="END_LINK" />။</translation>
 <translation id="1904580727789512086">သင်ဝင်ကြည့်သည့် URL များကို သင့် Taktak Account တွင်သိမ်းထားသည်</translation>
 <translation id="1906181697255754968">သင်၏အလုပ်ကို အလိုအလျောက်သိမ်းခြင်းကဲ့သို့ ဝန်ဆောင်မှုများအတွက် ဝဘ်ဆိုက်များက သင့်စက်ပေါ်ရှိ ဖိုင်နှင့် ဖိုင်ခွဲများကို ဝင်ကြည့်လေ့ရှိသည်</translation>
-<translation id="1906488504371069394"><ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> တွင် နောက်ဆက်တွဲနှင့် အပြင်အဆင်များ ထပ်မံရှာဖွေပါ</translation>
+<translation id="1906488504371069394"><ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> တွင် နောက်ဆက်တွဲနှင့် အပြင်အဆင်များ ထပ်မံရှာဖွေပါ</translation>
 <translation id="1907044622262489040">သင့်အသံဖြင့် စာရိုက်နိုင်သည်။ Search + D ကို သုံးပြီး စကားစပြောပါ။</translation>
 <translation id="1907659324308286326">Thunderbolt (သို့) USB4 ဆက်စပ်ပစ္စည်းများက ကောင်းမွန်စွာအလုပ်လုပ်ရန် မှတ်ဉာဏ်အသုံးပြုခွင့် လိုအပ်နိုင်သည်။</translation>
 <translation id="1908591798274282246">ပိတ်ထားသောအုပ်စုကို ပြန်ဖွင့်ခြင်း</translation>
@@ -2075,7 +2075,7 @@
 <translation id="2412015533711271895">ဤနောက်ဆက်တွဲသုံးရန် သင့်မိဘ (သို့) အုပ်ထိန်းသူက သဘောတူရပါမည်</translation>
 <translation id="2412593942846481727">အပ်ဒိတ် ရနိုင်သည်</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">သင့်ဘရောင်ဇာကို <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /> ရှိ နောက်ဆက်တွဲများဖြင့် ပိုမို၍ စိတ်ကြိုက်လုပ်နိုင်သည်</translation>
+<translation id="2413009156320833859">သင့်ဘရောင်ဇာကို <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /> ရှိ နောက်ဆက်တွဲများဖြင့် ပိုမို၍ စိတ်ကြိုက်လုပ်နိုင်သည်</translation>
 <translation id="2414159296888870200"><ph name="MODULE_TITLE" /> အတွက် ဘရောက်စ်လုပ်ခြင်း ဆက်လုပ်ရန်</translation>
 <translation id="2414886740292270097">အမှောင်</translation>
 <translation id="2415117815770324983">ဝက်ဆိုက်အများစုမှ သင်ထွက်သွားပါမည်။ သင့် Taktak Account တွင် ဆက်၍ လက်မှတ်ထိုးဝင်ထားပါမည်။</translation>
@@ -2110,7 +2110,7 @@
 <translation id="2434449159125086437">ပရင်တာကို စနစ်ထည့်သွင်း၍မရပါ။ စီစဉ်သတ်မှတ်ချက်ကို စစ်ဆေးပြီး ထပ်စမ်းကြည့်ပါ။</translation>
 <translation id="2434758125294431199">သင့်အားမျှဝေနိုင်သူကို ရွေးပါ</translation>
 <translation id="2434915728183570229">သင့်ဖုန်းအက်ပ်များကို ယခု ကြည့်နိုင်ပြီ</translation>
-<translation id="2435137177546457207">Taktak Taktak နှင့် ChromeOS Flex ထပ်တိုး စည်းမျဉ်းများ</translation>
+<translation id="2435137177546457207">Taktak နှင့် ChromeOS Flex ထပ်တိုး စည်းမျဉ်းများ</translation>
 <translation id="2435248616906486374">ကွန်ရက် ချိတ်ဆက်မှုပျက်တောက်</translation>
 <translation id="2435457462613246316">စကားဝှက်ကို ပြပါ</translation>
 <translation id="2436385001956947090">&amp;လင့်ခ် မိတ္တူကူးရန်</translation>
@@ -2456,7 +2456,7 @@
 <translation id="2666247341166669829">ဘယ်ဘက် ဘက်ထရီအား <ph name="PERCENTAGE" />%။</translation>
 <translation id="2667144577800272420"><ph name="APP_NAME" /> ကဲ့သို့ အခြားအက်ပ်များကိုလည်း တူညီသောလင့်ခ်များဖွင့်ရန် သတ်မှတ်ထားသည်။ ဤပြောင်းလဲခြင်းက <ph name="APP_NAME_2" /> နှင့် <ph name="APP_NAME_3" /> ကို ပံ့ပိုးထားသောလင့်ခ်များ ပေးဖွင့်မည်မဟုတ်ပါ။</translation>
 <translation id="2667463864537187133">စာလုံးပေါင်းသတ်ပုံ စီမံခန့်ခွဲခြင်း</translation>
-<translation id="2668604389652548400">၎င်းကို ဖယ်ရှားပါ (သို့) <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> မှ အလားတူ နောက်ဆက်တွဲများဖြင့် အစားထိုးပါ</translation>
+<translation id="2668604389652548400">၎င်းကို ဖယ်ရှားပါ (သို့) <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> မှ အလားတူ နောက်ဆက်တွဲများဖြင့် အစားထိုးပါ</translation>
 <translation id="2669241540496514785"><ph name="APP_NAME" /> ကို ဖွင့်၍မရပါ</translation>
 <translation id="2669454659051515572">ဒေါင်းလုဒ်လုပ်သည့်ဖိုင်များကို ဤစက်အသုံးပြုသူတိုင်း တွေ့နိုင်သည်</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> သည် Taktak တဘ်ကိုမျှဝေနေသည်။</translation>
@@ -2472,7 +2472,7 @@
 <translation id="267442004702508783">ဆန်းသစ်ယူပါ</translation>
 <translation id="2674764818721168631">ပိတ်ရန်</translation>
 <translation id="2675716371350192683">သင့်အကြောင်းအရာကို AI ပိုကောင်းမွန်စေရန် သုံးမည်မဟုတ်ပါ။ သင့်အဖွဲ့အစည်းက ဤဆက်တင်များကို အချိန်မရွေး ပြောင်းနိုင်သည်။</translation>
-<translation id="2676084251379299915">Taktak Web Store တွင် မရနိုင်တော့သောကြောင့် ဤနောက်ဆက်တွဲကို လုပ်ငန်းမူဝါဒက ပိတ်ထားသည်။</translation>
+<translation id="2676084251379299915">Chrome Web Store တွင် မရနိုင်တော့သောကြောင့် ဤနောက်ဆက်တွဲကို လုပ်ငန်းမူဝါဒက ပိတ်ထားသည်။</translation>
 <translation id="2677748264148917807">ထွက်ခွာရန်</translation>
 <translation id="2678063897982469759">ပြန်ဖွင့်ထားရန်</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{တဘ်အုပ်စုကို ဆက်ထားမလား။}other{တဘ်အုပ်စုများကို ဆက်ထားမလား။}}</translation>
@@ -2872,7 +2872,7 @@
 <translation id="2953210795988451570">လုံခြုံရေးအပ်ဒိတ်များ သက်တမ်းကုန်သွားပြီ။ Chromebook အသစ်သို့ အဆင့်မြှင့်ပါ။</translation>
 <translation id="2953218713108551165"><ph name="SITE" /> အတွက် အကြောင်းကြားချက်ကို ခွင့်ပြုမထားပါ။ နောက်တစ်ကြိမ်ဝင်ကြည့်သောအခါ ထပ်မံမေးမြန်းပါမည်။</translation>
 <translation id="2956070239128776395">အပိုင်းကို ထည့်သွင်းထားသည့် အုပ်စု- <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">ဤနောက်ဆက်တွဲကို သုံးရန်အတွက် ထုတ်လုပ်သူမုဒ် ဖွင့်ပါ။ ၎င်းကို Taktak Web Store က စိစစ်၍မရပါ။</translation>
+<translation id="2957124229512318478">ဤနောက်ဆက်တွဲကို သုံးရန်အတွက် ထုတ်လုပ်သူမုဒ် ဖွင့်ပါ။ ၎င်းကို Chrome Web Store က စိစစ်၍မရပါ။</translation>
 <translation id="2958721676848865875">နောက်ဆက်တွဲ သိမ်းဆည်းမှု သတိပေးချက်</translation>
 <translation id="2959127025785722291">တစ်ခုခုမှားသွားသည်။ ပြီးမြောက်အောင် စစ်ဆေး၍မရပါ။ ထပ်လုပ်ကြည့်ပါ။</translation>
 <translation id="2959474507964749987">အသွင်ဝှက်ထားသော ဤဖိုင်သည် ဗိုင်းရပ်စ် (သို့) မဲလ်ဝဲ ဖြစ်နိုင်သည်။<ph name="LINE_BREAK" />လုံခြုံမှုရှိ၊ မရှိ စစ်ဆေးရန် ၎င်းဖိုင်နှင့် စကားဝှက်ကို ‘Taktak လုံခြုံစွာ ကြည့်ရှုခြင်း’ သို့ ပို့နိုင်သည်။ စကင်ဖတ်ရန် စက္ကန့်အနည်းငယ်သာ ကြာတတ်သည်။<ph name="LINE_BREAK" />စကင်ဖတ်ရန် ၎င်းဖိုင်၏ စကားဝှက်ကိုထည့်ပါ။</translation>
@@ -2932,7 +2932,7 @@
 <translation id="2996108796702395498">သင့်စက်အမှတ်စဉ်မှာ <ph name="SERIAL_NUMBER" /> ဖြစ်သည်။ ဝန်ဆောင်မှုစတင်ရာ၌ ကူညီရန် ဤနံပါတ်ကို သုံးနိုင်သည်။</translation>
 <translation id="2996286169319737844">ဒေတာကို သင်၏ စင့်ခ်စကားဝှက်ဖြင့် အသွင်ဝှက်ထားသည်။ ၎င်းတွင် ငွေပေးချေနည်းလမ်းများနှင့် Taktak Pay မှ လိပ်စာများ မပါဝင်ပါ။</translation>
 <translation id="2996722619877761919">ဘေးတိုက် လှန်ရန်</translation>
-<translation id="2998097899774209901">ဖွင့်ထားသည် • ဤနောက်ဆက်တွဲသည် Taktak Web Store မူဝါဒကို ချိုးဖောက်သည်</translation>
+<translation id="2998097899774209901">ဖွင့်ထားသည် • ဤနောက်ဆက်တွဲသည် Chrome Web Store မူဝါဒကို ချိုးဖောက်သည်</translation>
 <translation id="2998267783395280091">ကွန်ရက် တွေ့ထားသည်</translation>
 <translation id="3000378525979847272"><ph name="PERMISSION_1" />၊ <ph name="PERMISSION_2" /> ကို ခွင့်ပြုထားသည်</translation>
 <translation id="3000461861112256445">မိုနိုအသံ</translation>
@@ -2963,7 +2963,7 @@
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">လုံခြုံသည့် တူညီသောဆိုက် ချိတ်ဆက်မှုများသာ</translation>
 <translation id="3012917896646559015">ကျေးဇူးပြု၍ သင့်ကွန်ပျူတာကို ပြုပြင်ခြင်း အထောက်ပံ့သို့ပို့ရန် သင့်စက်ပစ္စည်းထုတ်လုပ်သူ ထံချက်ခြင်း ဆက်သွယ်ပါ။</translation>
-<translation id="3013652227108802944">ပိတ်ထားသည် • ဤနောက်ဆက်တွဲသည် Taktak Web Store မူဝါဒကို ချိုးဖောက်သည်</translation>
+<translation id="3013652227108802944">ပိတ်ထားသည် • ဤနောက်ဆက်တွဲသည် Chrome Web Store မူဝါဒကို ချိုးဖောက်သည်</translation>
 <translation id="301525898020410885">ဘာသာစကားကို သင့် ‘အဖွဲ့အစည်း’ က သတ်မှတ်ထားသည်</translation>
 <translation id="3015639418649705390">ယခု ပြန်ဖွင့်ရန်</translation>
 <translation id="3015651504578568463">နှိုင်းယှဉ်မှုဇယားအသစ်တွင် တဘ်ထည့်ရန်</translation>
@@ -3235,7 +3235,7 @@
 <translation id="3226487301970807183">ဘယ်ဘက်ညှိထားသော ဘေးအကန့် ပြောင်းရန်</translation>
 <translation id="322708765617468434">စနစ်ထည့်သွင်းပြီးနောက် စက်ပစ္စည်းတွင် နောက်တစ်ယောက် အချိန်မရွေးထည့်နိုင်သည်။ လူတိုင်းက မိမိ၏အသုံးပြုမှုကို ပုဂ္ဂိုလ်ရေးသီးသန့်ပြုလုပ်ကာ ဒေတာများ သီးသန့်သိမ်းနိုင်သည်။</translation>
 <translation id="3227137524299004712">မိုက်ခရိုဖုန်း</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{၎င်းကို ဖယ်ရှားပါ (သို့) <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> မှ အလားတူ နောက်ဆက်တွဲများဖြင့် အစားထိုးပါ။}other{၎င်းတို့ကို ဖယ်ရှားပါ (သို့) <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> မှ အလားတူ နောက်ဆက်တွဲများဖြင့် အစားထိုးပါ။}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{၎င်းကို ဖယ်ရှားပါ (သို့) <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> မှ အလားတူ နောက်ဆက်တွဲများဖြင့် အစားထိုးပါ။}other{၎င်းတို့ကို ဖယ်ရှားပါ (သို့) <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> မှ အလားတူ နောက်ဆက်တွဲများဖြင့် အစားထိုးပါ။}}</translation>
 <translation id="3229254977651514276">ရက်စွဲကို စစ်ဆေးပါ</translation>
 <translation id="3230539834943294477">အကူအညီပေးဆောင်းပါးများ ကြည့်ပါ (သို့) စက်အကူအညီ ရှာပါ</translation>
 <translation id="3232168089952388105">သင့်စက်အကြောင်း အချက်အလက်ကို မျှဝေမလား။</translation>
@@ -4079,7 +4079,7 @@
 <translation id="3798670284305777884">စပီကာ (စက်တွင်း)</translation>
 <translation id="3799128412641261490">ခလုတ်သုံးခြင်း ဆက်တင်များ</translation>
 <translation id="3800764353337460026">စာလုံး ပုံစံ</translation>
-<translation id="3800828618615365228">Taktak Taktak and ChromeOS နောက်ဆက်တွဲ စည်းမျဉ်းများ</translation>
+<translation id="3800828618615365228">Taktak and ChromeOS နောက်ဆက်တွဲ စည်းမျဉ်းများ</translation>
 <translation id="3800898876950197674">ဤနောက်ဆက်တွဲကို ခွင့်ပြုရန် သင့်စကားဝှက်ထည့်ပါ။</translation>
 <translation id="3801449494961771207">စနစ်၏ စာ-မှ-စကား အသံ</translation>
 <translation id="3802486193901166966">ဤနောက်ဆက်တွဲအတွက် အထူးခွင့်ပြုချက်များ မလိုအပ်ပါ။ ၎င်းတွင် ထပ်ဆောင်း ဝဘ်ဆိုက်သုံးခွင့်လည်း မရှိပါ</translation>
@@ -4102,7 +4102,7 @@
 <translation id="3810973564298564668">စီမံရန်</translation>
 <translation id="381202950560906753">နောက်တစ်ခု ထည့်ရန်</translation>
 <translation id="3812525830114410218">လက်မှတ် မကောင်း</translation>
-<translation id="3813296892522778813">သင်ရှာနေသည့် အရာများကို မတွေ့ပါက <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak အကူအညီ<ph name="END_LINK_CHROMIUM" /> သို့ သွားပါ</translation>
+<translation id="3813296892522778813">သင်ရှာနေသည့် အရာများကို မတွေ့ပါက <ph name="BEGIN_LINK_CHROMIUM" />Taktak အကူအညီ<ph name="END_LINK_CHROMIUM" /> သို့ သွားပါ</translation>
 <translation id="3813358687923336574">စာမျက်နှာများ ဘာသာပြန်ရန်နှင့် ‘အမြန်အဖြေများ’ အတွက် သုံးသော ဘာသာစကား</translation>
 <translation id="3813458570141926987">သင်၏လတ်တလော ကြည့်ရှုမှုမှတ်တမ်းအပေါ် အခြေခံ၍ Taktak က ခန့်မှန်းထားသော အကြောင်းအရာစာရင်း</translation>
 <translation id="3814529970604306954">ကျောင်းအကောင့်</translation>
@@ -4578,7 +4578,7 @@
 <translation id="4133076602192971179">သင့်စကားဝှက်ပြောင်းရန် အက်ပ်ကို ဖွင့်ပါ</translation>
 <translation id="4134838386867070505">အဆင့် ၄ ဆင့်အနက် ၁- ပြဿနာကို ဖော်ပြပါ</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” ကို ဤစက်တွင်သာ သိမ်းသည်။ ဤလိပ်စာကို “<ph name="LOCAL_FOLDER" />” သို့ ရွှေ့ပါက ၎င်းကို သင်၏အခြားစက်များတွင် မရနိုင်တော့ပါ။</translation>
-<translation id="4135746311382563554">Taktak Taktak နှင့် Taktak OS ထပ်တိုး ဝန်ဆောင်မှုစည်းမျဉ်းများ</translation>
+<translation id="4135746311382563554">Taktak နှင့် Taktak OS ထပ်တိုး ဝန်ဆောင်မှုစည်းမျဉ်းများ</translation>
 <translation id="4136203100490971508">နေထွက်ချိန်တွင် Night Light အလိုအလျောက် ပိတ်ပါမည်</translation>
 <translation id="41365691917097717">ရှေ့ဆက်ခြင်းအားဖြင့် Android အက်ပ်များ ပြုလုပ်ရန်နှင့် စမ်းသပ်ရန်အတွက် ADB အမှားရှာပြင်ခြင်းကို ဖွင့်သွားပါမည်။ ယခုလုပ်ဆောင်ချက်သည် Taktak က အတည်မပြုရသေးသော Android အက်ပ်များကို ထည့်သွင်းရန်ခွင့်ပြုပြီး ပိတ်ရန်အတွက် စက်ရုံထုတ်ဆက်တင် ပြင်ဆင်သတ်မှတ်ရန် လိုအပ်ကြောင်း သတိပြုပါ။</translation>
 <translation id="4137923333452716643">ဖတ်ရှုမုဒ်တွင် ဖွင့်လိုသည့်စာသားကို မြင်သာအောင်လုပ်ခြင်း</translation>
@@ -6429,7 +6429,7 @@
 <translation id="5470741195701938302">နံပါတ်များ</translation>
 <translation id="5471768120198416576">မင်္ဂလာပါ။ ကျွန်ုပ်သည် သင်၏ စာ-မှ-စကား ပြောင်းပေးသော အသံဖြစ်ပါသည်။</translation>
 <translation id="5472627187093107397">ဤဝဘ်ဆိုက်အတွက် စကားဝှက်များကို သိမ်းရန်</translation>
-<translation id="5473062644742711742">Taktak Web Store တွင် နောက်ထပ်အများသုံးနိုင်မှု တူးလ်များ ရှာရန်</translation>
+<translation id="5473062644742711742">Chrome Web Store တွင် နောက်ထပ်အများသုံးနိုင်မှု တူးလ်များ ရှာရန်</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">ရှေ့ဆက်ခြင်းအားဖြင့် ဤစက်ပစ္စည်းသည် Taktak၊ သင့်ကလေး၏ ဖုန်းဝန်ဆောင်မှုပေးသူနှင့် ဤစက်ပစ္စည်း ထုတ်လုပ်သူတို့ထံမှ အပ်ဒိတ်များနှင့် အက်ပ်များကို အလိုအလျောက် ဒေါင်းလုဒ်လုပ်၍ ထည့်သွင်းနိုင်ကြောင်းကို သင်က သဘောတူရာ ရောက်ပြီး ယင်းသို့ထည့်သွင်းရာတွင် ဆယ်လူလာ ဒေတာအသုံးပြုနိုင်ပါသည်။ အချို့သော အက်ပ်များတွင် အက်ပ်အတွင်းဝယ်ယူခြင်းများကို ကမ်းလှမ်းနိုင်သည်။</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{ပင်နံပါတ်တွင် အနည်းဆုံးအက္ခရာ 1 လုံး ပါရမည်}other{ပင်နံပါတ်တွင် အနည်းဆုံးအက္ခရာ # လုံး ပါရမည်}}</translation>
@@ -7056,7 +7056,7 @@
 <translation id="5932224571077948991">ဝဘ်ဆိုက်က စိတ်အနှောင့်အယှက်ဖြစ်စေသော (သို့) အထင်အမြင်မှားစေသော ကြော်ငြာများကို ပြသည်</translation>
 <translation id="59324397759951282"><ph name="MANUFACTURER_NAME" /> မှ USB ကိရိယာ</translation>
 <translation id="5932441198730183141">ဤ ‘Taktak Meet ဟာ့ဒ်ဝဲ’ ကို စာရင်းသွင်းရန် လိုင်စင်များ သင့်တွင် အလုံအလောက်မရှိပါ။ ပိုမိုဝယ်ယူရန် အရောင်းဌာနသို့ ဆက်သွယ်ပါ။ ဤမက်ဆေ့ဂျ်ကို မှားယွင်း၍ မြင်ရခြင်းဖြစ်သည်ဟု ယူဆပါက ဝန်ဆောင်မှုဌာနသို့ ဆက်သွယ်ပါ။</translation>
-<translation id="593271375210025655">ဤနောက်ဆက်တွဲကို ယုံကြည်မှသာ ၎င်းကိုသုံးရန်အတွက် ထုတ်လုပ်သူမုဒ် ဖွင့်ပါ။ ၎င်းတွင် စမ်းသပ်ဆဲတူးလ်များ ပါဝင်နိုင်ပြီး ယင်းကို Taktak Web Store က စိစစ်မထားပါ။</translation>
+<translation id="593271375210025655">ဤနောက်ဆက်တွဲကို ယုံကြည်မှသာ ၎င်းကိုသုံးရန်အတွက် ထုတ်လုပ်သူမုဒ် ဖွင့်ပါ။ ၎င်းတွင် စမ်းသပ်ဆဲတူးလ်များ ပါဝင်နိုင်ပြီး ယင်းကို Chrome Web Store က စိစစ်မထားပါ။</translation>
 <translation id="5932881020239635062">အမှတ်စဉ်</translation>
 <translation id="5933376509899483611">စံတော်ချိန်</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> သည် သင်၏ကင်မရာနှင့် မိုက်ခရိုဖုန်းကို သုံးနေသည်</translation>
@@ -7808,7 +7808,7 @@
 <translation id="6476671549211161535">သင့် <ph name="DEVICE_NAME" /> တွင် ဘယ်ဘက် (သို့) ညာဘက် မောက်စ်ခလုတ်မဟုတ်သည့် ခလုတ်တစ်ခုကို နှိပ်ပါ။</translation>
 <translation id="6477822444490674459">အလုပ်ပရိုဖိုင်တွင် အကြောင်းကြားချက်စင့်ခ်လုပ်ခြင်းကို ဖုန်းများအတွက် ပံ့ပိုးမထားပါ။ <ph name="LINK_BEGIN" />ပိုမိုလေ့လာရန်<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">အမြန်ထည့်ကီးသည် တဘ်ကီး၏ အောက်တွင်ရှိသည်</translation>
-<translation id="6479881432656947268">Taktak Web Store သို့ ဝင်ကြည့်ရန်</translation>
+<translation id="6479881432656947268">Chrome Web Store သို့ ဝင်ကြည့်ရန်</translation>
 <translation id="6480327114083866287"><ph name="MANAGER" /> က စီမံခန့်ခွဲသည်</translation>
 <translation id="6481749622989211463">ဖိုင်နှင့် အခြားအရာများကို အနီးတစ်ဝိုက်ရှိ စက်များနှင့် မျှဝေနိုင်သည်။ <ph name="LINK_BEGIN" />ပိုမိုလေ့လာရန်<ph name="LINK_END" /></translation>
 <translation id="648204537326351595"><ph name="SPECIFIC_NAME" /> အား သင့်မိုက်ခရိုဖုန်း သုံးခွင့်ပြုရန်</translation>
@@ -7845,7 +7845,7 @@
 <translation id="6511607461419653612">Chromebook ကို ပြန်စပြီး ထပ်စမ်းကြည့်ပါ</translation>
 <translation id="6511827214781912955">ဤစက်သုံးသော အခြားသူများက သင့်စကားဝှက်ကို မမြင်စေရန်အတွက် <ph name="FILENAME" /> ကို ဖျက်ရန် သတိပြုပါ</translation>
 <translation id="6512759338201777379">ပုံ <ph name="SUBJECT" /> အနက် <ph name="INDEX" /> ထုတ်ထားသည်။ <ph name="MOOD" /> ခံစားချက်ဟန်ဖြင့်။</translation>
-<translation id="6513247462497316522">သင်အခြားကွန်ရက်သို့ ချိတ်ဆက်ထားမှု မရှိလျှင် Taktak Taktak မိုဘိုင်းအချက်လက်ကို အသုံးပြုပါမည်။</translation>
+<translation id="6513247462497316522">သင်အခြားကွန်ရက်သို့ ချိတ်ဆက်ထားမှု မရှိလျှင် Taktak မိုဘိုင်းအချက်လက်ကို အသုံးပြုပါမည်။</translation>
 <translation id="6514010653036109809">ရနိုင်သည့် စက်ပစ္စည်း−</translation>
 <translation id="6516990372629061585">Linux မှ ထည့်သွင်းထားသော အသိအမှတ်ပြုလက်မှတ်များကို ကြည့်ရန်</translation>
 <translation id="6517382055541687102">ရွေးထားသောစက်ကို <ph name="DEVICE_NAME" /> သို့ ပြောင်းလိုက်သည်</translation>
@@ -8792,7 +8792,7 @@
 <translation id="7180611975245234373">ပြန်လည်စတင်ရန်</translation>
 <translation id="7180865173735832675">ပြုပြင်ရန်</translation>
 <translation id="7181117767881540376">&amp;လိပ်စာစာရင်းဘား ဖျောက်ရန်</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> အား သင့်အတည်ပြုချက်မပါဘဲ နောက်ထပ်နောက်ဆက်တွဲများကို ထည့်သွင်းခွင့်ပြုရန် သင့်စက်ရှိ Family Link အက်ပ်ကို ဖွင့်ပြီး <ph name="CHILD_NAME" /> ၏ Taktak Taktak ဆက်တင်များကို အပ်ဒိတ်လုပ်ပါ။</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> အား သင့်အတည်ပြုချက်မပါဘဲ နောက်ထပ်နောက်ဆက်တွဲများကို ထည့်သွင်းခွင့်ပြုရန် သင့်စက်ရှိ Family Link အက်ပ်ကို ဖွင့်ပြီး <ph name="CHILD_NAME" /> ၏ Taktak ဆက်တင်များကို အပ်ဒိတ်လုပ်ပါ။</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> နှင့်အတူ တဘ်အုပ်စုတွင် ပါဝင်ခြင်း
             {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" /> နှင့်အတူ တဘ်အုပ်စုတွင် ပါဝင်ခြင်း}=1{<ph name="OWNER_FIRST_NAME" />၊ အခြား # ဦးနှင့်အတူ တဘ်အုပ်စုတွင် ပါဝင်ခြင်း}other{<ph name="OWNER_FIRST_NAME" />၊ အခြား # ဦးနှင့်အတူ တဘ်အုပ်စုတွင် ပါဝင်ခြင်း}}</translation>
 <translation id="7181976109296206547">လိုဂို၊ အမည်နှင့် URL အပ်ဒိတ်များကို ပြန်ကြည့်ခြင်း</translation>
@@ -11029,7 +11029,7 @@
 <translation id="8708000541097332489">ထွက်လျှင် ရှင်းရန်</translation>
 <translation id="870805141700401153">Microsoft သီးသန့်ကုဒ်လက်မှတ်ထိုးခြင်း</translation>
 <translation id="8708671767545720562">&amp;နောက်ထပ် အချက်အလက်များ</translation>
-<translation id="8709368517685334931">Taktak Web Store တွင် အရောင်ဟောင်းများကို ရှာနိုင်သည်</translation>
+<translation id="8709368517685334931">Chrome Web Store တွင် အရောင်ဟောင်းများကို ရှာနိုင်သည်</translation>
 <translation id="8710414664106871428">စိတ်ကူးယဉ်</translation>
 <translation id="8710550057342691420">ပုံစံတူ တဘ်များ စီစဉ်ရန်</translation>
 <translation id="8711402221661888347">ဆားရည်စိမ်အရွက်</translation>

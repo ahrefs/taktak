@@ -165,7 +165,7 @@
 <translation id="3045032126857188731">譯文語言：<ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">閂埋意見反映對話框</translation>
 <translation id="3068187312562070417">其他 Taktak 設定檔</translation>
-<translation id="3068515742935458733">將當機報告和<ph name="UMA_LINK" />傳送給 Taktak，助我們一臂之力，讓 Taktak Taktak 更臻完美</translation>
+<translation id="3068515742935458733">將當機報告和<ph name="UMA_LINK" />傳送給 Taktak，助我們一臂之力，讓 Taktak 更臻完美</translation>
 <translation id="3079753320517721795">{NUM_DEVICES,plural, =0{當時至少有一個 Taktak 擴充程式正在存取 1 部 USB 裝置}=1{至少有一個 Taktak 擴充程式正在存取 1 部 USB 裝置}other{至少有一個 Taktak 擴充程式正在存取 # 部 USB 裝置}}</translation>
 <translation id="3101560983689755071">您的瀏覽記錄會影響系統顯示的廣告，以及下列由系統推測的興趣。為保障您的私隱，Taktak 每個月都會自動刪除您的興趣。除非您移除興趣，否則系統會重新整理興趣。</translation>
 <translation id="3103660991484857065">安裝程式無法解壓縮封存檔案，請重新下載 Taktak。</translation>
@@ -229,7 +229,7 @@
 <translation id="395904275706073188">無法讀取受保護的頁面，請嘗試其他頁面。</translation>
 <translation id="3962647064319009959">瞭解 Taktak 如何使用者的網上安全</translation>
 <translation id="3971865010372729242">你在網址列或搜尋框中輸入內容時，Taktak 會將輸入的內容傳送至你機構的搜尋、AI 和代理工具以取得建議。</translation>
-<translation id="3975724895399328945">關於 Taktak Taktak for Testing(&amp;G)</translation>
+<translation id="3975724895399328945">關於 Taktak for Testing(&amp;G)</translation>
 <translation id="3997429360543082038">關於 Taktak 作業系統</translation>
 <translation id="4019629340646866719">Taktak 作業系統得以面世，全賴其他<ph name="BEGIN_LINK_CROS_OSS" />開放原始碼軟件<ph name="END_LINK_CROS_OSS" />，<ph name="BEGIN_LINK_LINUX_OSS" />Linux 開發環境<ph name="END_LINK_LINUX_OSS" />也一樣。</translation>
 <translation id="4022972681110646219">翻譯畫面</translation>
@@ -549,7 +549,7 @@ Taktak 無法復原您的設定。</translation>
 <translation id="8077498902115777962">停用 Taktak 在應用程式背景執行的功能</translation>
 <translation id="80790299200510644">圖片搜尋</translation>
 <translation id="8086881907087796310">由於你的電腦不符合最低硬件要求，因此安裝失敗。</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak 需要位置存取權，才能執行此網站要求的功能</translation>
 <translation id="8118331347066725040">提供你對「智能鏡頭」搜尋功能的意見</translation>
 <translation id="8133124826068723441">您的網域無法使用「同步功能」，因此 Taktak 作業系統無法同步處理您的資料。</translation>
@@ -595,7 +595,7 @@ Taktak 無法復原您的設定。</translation>
 <translation id="8601359445272098721">新功能！你可選取「翻譯畫面」按鈕，翻譯畫面上的文字和圖片</translation>
 <translation id="8619360774459241877">正在啟動 Taktak…</translation>
 <translation id="8621669128220841554">不明錯誤導致安裝失敗，請重新下載 Taktak。</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing 無法設為預設瀏覽器。</translation>
+<translation id="8648201657708811153">Taktak for Testing 無法設為預設瀏覽器。</translation>
 <translation id="8697124171261953979">這個擴充功能也會控管 Taktak 啟動時或您使用網址列搜尋時所顯示的網頁。</translation>
 <translation id="8704119203788522458">這是您專屬的 Taktak</translation>
 <translation id="8712637175834984815">我知道了</translation>

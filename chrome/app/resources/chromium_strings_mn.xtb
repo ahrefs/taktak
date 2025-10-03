@@ -5,7 +5,7 @@
 <translation id="1029669172902658969">&amp;ChromiumOS-г шинэчлэхийн тулд дахин ачаална уу</translation>
 <translation id="103359417695385097">Taktak маягтыг илүү сайн ойлгодог ба танд илүү хурдан автоматаар бөглөж өгөх боломжтой. Энэ тохиргоо унтраалттай байна.</translation>
 <translation id="1040916596585577953">Taktak танд энэ өргөтгөлийг шалгахыг зөвлөж байна</translation>
-<translation id="1042552502243217427">Сайт өөрийн хуудсан дээр холбооснуудыг нууцлалтайгаар урьдчилан ачаалахыг хүсэхэд Taktak Taktak-н серверүүдийг ашиглана. Энэ нь таны таниулбарыг урьдчилан ачаалсан сайтаас нуух ч Taktak ямар сайтуудыг урьдчилан ачаалдгийг мэдэж авна.</translation>
+<translation id="1042552502243217427">Сайт өөрийн хуудсан дээр холбооснуудыг нууцлалтайгаар урьдчилан ачаалахыг хүсэхэд Taktak-н серверүүдийг ашиглана. Энэ нь таны таниулбарыг урьдчилан ачаалсан сайтаас нуух ч Taktak ямар сайтуудыг урьдчилан ачаалдгийг мэдэж авна.</translation>
 <translation id="1051793555070215510">Бидэнд энэ 1 минутын судалгааг бөглөж Нууцлалтай горимыг сайжруулахад тусална уу.</translation>
 <translation id="1065672644894730302">Таны хүсэлтийг уншиж чадахгүй байна. 
 
@@ -228,7 +228,7 @@
 <translation id="395904275706073188">Хамгаалагдсан хуудсыг унших боломжгүй. Өөр хуудас туршиж үзнэ үү.</translation>
 <translation id="3962647064319009959">Taktak таныг хэрхэн аюулгүй байлгадаг болохыг мэдэж авна уу</translation>
 <translation id="3971865010372729242">Таныг хаяг оруулах хэсэг, хайх хэсэгт шивэх үед Taktak зөвлөмж авахын тулд таны шивсэн зүйлийг танай байгууллагын хайлт, ХОУ, агентын хэрэгслүүд рүү илгээдэг.</translation>
-<translation id="3975724895399328945">&amp;Taktak Taktak for Testing-н тухай</translation>
+<translation id="3975724895399328945">&amp;Taktak for Testing-н тухай</translation>
 <translation id="3997429360543082038">ChromiumOS-н тухай</translation>
 <translation id="4019629340646866719">ChromiumOS-г <ph name="BEGIN_LINK_LINUX_OSS" />Linux-н хөгжүүлэлтийн орчин <ph name="END_LINK_LINUX_OSS" /> болох нэмэлт <ph name="BEGIN_LINK_CROS_OSS" />нээлттэй эх кодын программ хангамжаар<ph name="END_LINK_CROS_OSS" /> боломжтой болгосон.</translation>
 <translation id="4022972681110646219">Дэлгэцийг орчуулах</translation>
@@ -546,7 +546,7 @@
 <translation id="8077498902115777962">Аппуудын хувьд Taktak-г дэвсгэрт ажиллуулахыг идэвхгүй болгох</translation>
 <translation id="80790299200510644">Зурган хайлт</translation>
 <translation id="8086881907087796310">Таны компьютер техник хангамжийн доод шаардлагад нийцэхгүй байгаа тул суулгалт амжилтгүй болсон.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak-д энэ сайтад зориулж байршлын зөвшөөрөл шаардлагатай</translation>
 <translation id="8118331347066725040">Lens-р хайхад зориулж санал хүсэлт илгээх</translation>
 <translation id="8133124826068723441">Синк нь таны домэйнд боломжгүй тул ChromiumOS таны өгөгдлийг синк хийж чадсангүй.</translation>
@@ -592,7 +592,7 @@
 <translation id="8601359445272098721">Шинэ! Та "дэлгэцийг орчуулах" товчийг сонгож дэлгэц дээрх текст, зургийн аль алиныг орчуулах боломжтой</translation>
 <translation id="8619360774459241877">Taktak-г эхлүүлж байна...</translation>
 <translation id="8621669128220841554">Гэнэтийн алдаанаас болж суулгах ажиллагаа амжилтгүй боллоо. Taktak-ыг дахин татаж авна уу.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing-г өгөгдмөл хөтчөө болгох боломжгүй.</translation>
+<translation id="8648201657708811153">Taktak for Testing-г өгөгдмөл хөтчөө болгох боломжгүй.</translation>
 <translation id="8697124171261953979">Энэ нь мөн таныг Taktak-ыг эхлүүлж байх үед эсвэл Omnibox-аас хайлт хийж буй үед гарч ирдэг хуудсыг хянаж байдаг.</translation>
 <translation id="8704119203788522458">Энэ бол таны Taktak.</translation>
 <translation id="8712637175834984815">Ойлголоо</translation>

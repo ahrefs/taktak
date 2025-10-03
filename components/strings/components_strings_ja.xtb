@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">このポリシーは想定どおり動作していますが、同じ値が設定されている別のポリシーが優先されています。</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> を追加</translation>
 <translation id="1569487616857761740">有効期限の入力</translation>
-<translation id="1569694109004336106">Taktak Taktak がパスワード入力で Windows Hello を有効にしようとしています。</translation>
+<translation id="1569694109004336106">Taktak がパスワード入力で Windows Hello を有効にしようとしています。</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" />x<ph name="HEIGHT" /> インチ</translation>
 <translation id="1574714699824202614">お支払い方法を確認しています</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">詳しくはプロバイダにお問い合わせください</translation>
 <translation id="2091887806945687916">音声</translation>
 <translation id="2093184051799735948"><ph name="ENGINE_NAME" /> で検索するか URL を入力してください</translation>
-<translation id="2093982008204312032">Taktak Taktak がパスワード入力で Windows Hello を無効にしようとしています。</translation>
+<translation id="2093982008204312032">Taktak がパスワード入力で Windows Hello を無効にしようとしています。</translation>
 <translation id="2094505752054353250">ドメインが一致しません</translation>
 <translation id="2094704029599359040">バージョン情報</translation>
 <translation id="2099652385553570808">3 か所のステープル（左）</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">削除の取り消し（&amp;U）</translation>
 <translation id="239708975263889666">Known Traveler 番号の編集</translation>
 <translation id="2399344929880464793">この IBAN は Taktak アカウントに保存され、Taktak サービス全体で使用できるようになります。</translation>
-<translation id="2399868464369312507">Taktak Taktak がお支払い方法を編集しようとしています。</translation>
+<translation id="2399868464369312507">Taktak がお支払い方法を編集しようとしています。</translation>
 <translation id="2400263725572336749">パスポートの追加</translation>
 <translation id="2400271059665846158">Taktak ウォレットでポイントカードを管理する</translation>
 <translation id="2400600116338235695">シリアルポートへの接続を要求できる</translation>
@@ -3119,7 +3119,7 @@
 <translation id="6164605812717770913">このサイトへのアクセスは保護者が許可していませんが、許可を求めることはできます。</translation>
 <translation id="6165508094623778733">詳細</translation>
 <translation id="6167577165590485365">最後に取得を試行した時間:</translation>
-<translation id="617256461084925519">Taktak Taktak でお支払い情報を入力するため、本人確認を行います。</translation>
+<translation id="617256461084925519">Taktak でお支払い情報を入力するため、本人確認を行います。</translation>
 <translation id="6173208311907792313">Windows Hello を使用して購入手続きを完了してください</translation>
 <translation id="6176387967264100435">この価格は高額です</translation>
 <translation id="6177128806592000436">このサイトへの接続は保護されていません</translation>
@@ -3980,7 +3980,7 @@
 <translation id="7564049878696755256"><ph name="ORG_NAME" /> アカウントにアクセスできなくなったり、個人情報が盗まれたりする可能性があります。今すぐパスワードを変更することをおすすめします。</translation>
 <translation id="7564667064360547717">トップス</translation>
 <translation id="7567204685887185387">このサーバーが <ph name="DOMAIN" /> であることを確認できませんでした。このサーバーのセキュリティ証明書は不正に発行されたものである可能性があります。原因としては、不適切な設定や、悪意のあるユーザーによる接続妨害が考えられます。</translation>
-<translation id="7568616151991626879">Taktak Taktak が <ph name="APP_NAME" /> でパスワードを入力しようとしています。</translation>
+<translation id="7568616151991626879">Taktak が <ph name="APP_NAME" /> でパスワードを入力しようとしています。</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{なし}=1{このデバイスの 1 個のタブ}other{このデバイスの # 個のタブ}}</translation>
 <translation id="7569490014721427265">ゴルフ</translation>
 <translation id="7569952961197462199">Taktak からクレジット カードを削除してもよろしいですか？</translation>
@@ -4561,7 +4561,7 @@
 <translation id="8541579497401304453">ビジネスに電話で問い合わせます。</translation>
 <translation id="8542014550340843547">3 か所のステープル（下）</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak がお支払い方法の入力の設定を変更しようとしています。</translation>
+<translation id="8544217240017914508">Taktak がお支払い方法の入力の設定を変更しようとしています。</translation>
 <translation id="8544303911974837265">ポリエステル</translation>
 <translation id="854548366864113872">高価格のオプション</translation>
 <translation id="8546254312340305428">アップロードする理由をお知らせください（必須）</translation>

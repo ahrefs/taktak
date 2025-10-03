@@ -1125,7 +1125,7 @@ Permissions that you've already given to apps may apply to this account. You can
 <translation id="1757301747492736405">Uninstall pending</translation>
 <translation id="175772926354468439">Enable theme</translation>
 <translation id="1757786065507923842">Parent permission request failed.</translation>
-<translation id="17584710573359123">View in Taktak Web Store</translation>
+<translation id="17584710573359123">View in Chrome Web Store</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> remapped to <ph name="REMAPPING_OPTION" />.</translation>
 <translation id="1761845175367251960"><ph name="NAME" />'s accounts</translation>
 <translation id="176272781006230109">shopping suggestions</translation>
@@ -1331,7 +1331,7 @@ Permissions that you've already given to apps may apply to this account. You can
 <translation id="1901760057081700494">Time zone is currently set to <ph name="TIME_ZONE_ENTRY" />. To automatically update the time zone, <ph name="BEGIN_LINK" />turn on system location access<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">The URLs that you visit are saved to your Taktak Account</translation>
 <translation id="1906181697255754968">Sites usually access files and folders on your device for features like automatically saving your work</translation>
-<translation id="1906488504371069394">Discover more extensions and themes on the <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Discover more extensions and themes on the <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Type with your voice. Use Search + D, then start speaking.</translation>
 <translation id="1907659324308286326">Some Thunderbolt or USB4 accessories need memory access to work properly.</translation>
 <translation id="1908591798274282246">Reopen Closed Group</translation>
@@ -2050,7 +2050,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="2391805183137601570">Open Steam</translation>
 <translation id="2392369802118427583">Activate</translation>
 <translation id="2393136602862631930">Set up <ph name="APP_NAME" /> on your Chromebook</translation>
-<translation id="2393313392064891208">Taktak Taktak OS Flex terms contents</translation>
+<translation id="2393313392064891208">Taktak OS Flex terms contents</translation>
 <translation id="2395616325548404795">Your <ph name="DEVICE_TYPE" /> has successfully been enrolled for enterprise management, but failed to send its asset and location information. Please manually enter this information from your Admin console for this device.</translation>
 <translation id="2396783860772170191">Enter 4-digit pin (0000-9999)</translation>
 <translation id="2398546389094871088">Powerwashing your device won't remove your eSIM profiles. Go to <ph name="LINK_BEGIN" />Mobile settings<ph name="LINK_END" /> to manually remove these profiles.</translation>
@@ -2077,7 +2077,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="2412015533711271895">Your parent or guardian has to say that it's OK for you to use this extension</translation>
 <translation id="2412593942846481727">Update available</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Customise your browser even more with extensions from the <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /></translation>
+<translation id="2413009156320833859">Customise your browser even more with extensions from the <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /></translation>
 <translation id="2414159296888870200">Resume browsing for <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Dark</translation>
 <translation id="2415117815770324983">Signs you out of most sites. You'll stay signed in to your Taktak Account.</translation>
@@ -2112,7 +2112,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="2434449159125086437">Unable to set up printer. Please check configuration and try again.</translation>
 <translation id="2434758125294431199">Select who can share with you</translation>
 <translation id="2434915728183570229">You can now view your phone's apps</translation>
-<translation id="2435137177546457207">Taktak Taktak and Taktak OS Flex additional terms</translation>
+<translation id="2435137177546457207">Taktak and Taktak OS Flex additional terms</translation>
 <translation id="2435248616906486374">Network disconnected</translation>
 <translation id="2435457462613246316">Show password</translation>
 <translation id="2436385001956947090">Copy &amp;link</translation>
@@ -2449,7 +2449,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="266079277508604648">Can’t connect to printer. Check that the printer is turned on and is connected to your Chromebook by Wi-Fi or USB.</translation>
 <translation id="2661315027005813059">Back-forward cached page: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Browse faster and use less data with Lite mode. Click to find out more.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Adding eSIM profile. This may take a few minutes.</translation>
 <translation id="2663302507110284145">Language</translation>
 <translation id="2665394472441560184">Add a new word</translation>
@@ -2458,7 +2458,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="2666247341166669829">Left battery level <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">Other apps are set to open the same links as <ph name="APP_NAME" />. This will disable <ph name="APP_NAME_2" /> and <ph name="APP_NAME_3" /> from opening supported links.</translation>
 <translation id="2667463864537187133">Manage spell check</translation>
-<translation id="2668604389652548400">Remove or replace it with similar extensions from the <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Remove or replace it with similar extensions from the <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785">Couldn't open <ph name="APP_NAME" /></translation>
 <translation id="2669454659051515572">Anyone using this device can see downloaded files</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> is sharing a Taktak tab.</translation>
@@ -2474,7 +2474,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="267442004702508783">refresh</translation>
 <translation id="2674764818721168631">Off</translation>
 <translation id="2675716371350192683">Your content will not be used to improve AI. Your organisation may change these settings at any time.</translation>
-<translation id="2676084251379299915">This extension has been disabled by enterprise policy because it is no longer available on the Taktak Web Store.</translation>
+<translation id="2676084251379299915">This extension has been disabled by enterprise policy because it is no longer available on the Chrome Web Store.</translation>
 <translation id="2677748264148917807">Leave</translation>
 <translation id="2678063897982469759">Re-enable</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Keep tab group?}other{Keep tab groups?}}</translation>
@@ -2873,7 +2873,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="2953210795988451570">Security updates have ended. Upgrade to a new Chromebook.</translation>
 <translation id="2953218713108551165">Notifications not allowed for <ph name="SITE" />. You’ll be asked again on your next visit.</translation>
 <translation id="2956070239128776395">Section nested in group: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Turn on developer mode to use this extension, which can't be reviewed by the Taktak Web Store.</translation>
+<translation id="2957124229512318478">Turn on developer mode to use this extension, which can't be reviewed by the Chrome Web Store.</translation>
 <translation id="2958721676848865875">Pack extension warning</translation>
 <translation id="2959127025785722291">Something went wrong. Scanning could not be completed. Please try again.</translation>
 <translation id="2959474507964749987">This encrypted file might be a virus or malware.<ph name="LINE_BREAK" />To check if it's unsafe, you can send the file and password to Taktak Safe Browsing. Scans usually take a few seconds.<ph name="LINE_BREAK" />To scan, add the file's password.</translation>
@@ -2933,7 +2933,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="2996108796702395498">Your device serial number is <ph name="SERIAL_NUMBER" />. This number can be used to help activate service.</translation>
 <translation id="2996286169319737844">Data is encrypted with your sync passphrase. This doesn't include payment methods and addresses from Taktak Pay.</translation>
 <translation id="2996722619877761919">Flip on long edge</translation>
-<translation id="2998097899774209901">On • This extension violates the Taktak Web Store policy</translation>
+<translation id="2998097899774209901">On • This extension violates the Chrome Web Store policy</translation>
 <translation id="2998267783395280091">Network found</translation>
 <translation id="3000378525979847272">Allowed <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="3000461861112256445">Mono audio</translation>
@@ -2964,7 +2964,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">Secure same-site connections only</translation>
 <translation id="3012917896646559015">Please contact your hardware manufacturer immediately to send your computer to a repair facility.</translation>
-<translation id="3013652227108802944">Off • This extension violates the Taktak Web Store policy</translation>
+<translation id="3013652227108802944">Off • This extension violates the Chrome Web Store policy</translation>
 <translation id="301525898020410885">Language is set by your organisation</translation>
 <translation id="3015639418649705390">Relaunch now</translation>
 <translation id="3015651504578568463">Add tab to new comparison table</translation>
@@ -3236,7 +3236,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="3226487301970807183">Toggle left-aligned side panel</translation>
 <translation id="322708765617468434">You can always add another person to the device after setup. Each person can personalise their experience and keep data private.</translation>
 <translation id="3227137524299004712">Microphone</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Remove or replace it with similar extensions from the <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{Remove or replace them with similar extensions from the <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Remove or replace it with similar extensions from the <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{Remove or replace them with similar extensions from the <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Check the date</translation>
 <translation id="3230539834943294477">View help articles or find device support</translation>
 <translation id="3232168089952388105">Share information about your device?</translation>
@@ -4042,7 +4042,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="3775432569830822555">SSL Server Certificate</translation>
 <translation id="3775705724665058594">Send to your devices</translation>
 <translation id="3776508619697147021">Sites can ask to automatically download multiple files</translation>
-<translation id="3776796446459804932">This extension violates the Taktak Web Store policy.</translation>
+<translation id="3776796446459804932">This extension violates the Chrome Web Store policy.</translation>
 <translation id="3777483481409781352">Could not activate mobile device</translation>
 <translation id="3777796259512476958">Signs you out of most sites</translation>
 <translation id="3778208826288864398">The security key is locked because the wrong PIN was entered too many times. You’ll need to reset the security key.</translation>
@@ -4080,7 +4080,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="3798670284305777884">Speaker (internal)</translation>
 <translation id="3799128412641261490">Switch Access settings</translation>
 <translation id="3800764353337460026">Symbol style</translation>
-<translation id="3800828618615365228">Taktak Taktak and Taktak OS additional terms</translation>
+<translation id="3800828618615365228">Taktak and Taktak OS additional terms</translation>
 <translation id="3800898876950197674">To allow this extension, enter your password.</translation>
 <translation id="3801449494961771207">System text-to-speech voice</translation>
 <translation id="3802486193901166966">This extension requires no special permissions and has no additional site access</translation>
@@ -4103,7 +4103,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="3810973564298564668">Manage</translation>
 <translation id="381202950560906753">Add another</translation>
 <translation id="3812525830114410218">Bad certificate</translation>
-<translation id="3813296892522778813">Go to <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak help<ph name="END_LINK_CHROMIUM" /> if you can't find what you're looking for</translation>
+<translation id="3813296892522778813">Go to <ph name="BEGIN_LINK_CHROMIUM" />Taktak help<ph name="END_LINK_CHROMIUM" /> if you can't find what you're looking for</translation>
 <translation id="3813358687923336574">Language used for translating pages and Quick Answers</translation>
 <translation id="3813458570141926987">List of topics estimated by Taktak based on your recent browsing history</translation>
 <translation id="3814529970604306954">School account</translation>
@@ -4580,7 +4580,7 @@ You can manage this account’s settings by installing the Family Link app on yo
 <translation id="4133076602192971179">Open the app to change your password</translation>
 <translation id="4134838386867070505">Step 1 of 4: Describe the issue</translation>
 <translation id="413534985210133938">'<ph name="LOCAL_FOLDER" />' is saved only to this device. If you move this bookmark to '<ph name="LOCAL_FOLDER" />', you'll no longer get it on your other devices.</translation>
-<translation id="4135746311382563554">Taktak Taktak and ChromeOS additional Terms of Service</translation>
+<translation id="4135746311382563554">Taktak and ChromeOS additional Terms of Service</translation>
 <translation id="4136203100490971508">Night Light will turn off automatically at sunrise</translation>
 <translation id="41365691917097717">Continuing will enable ADB debugging for creating and testing Android apps. Note that this action allows installation of Android apps that haven't been verified by Taktak, and requires a factory reset to disable.</translation>
 <translation id="4137923333452716643">Highlight the text that you want to open in reading mode</translation>
@@ -5491,7 +5491,7 @@ Use Ctrl + Alt + Brightness down to zoom out.</translation>
 <translation id="4807098396393229769">Name on card</translation>
 <translation id="4807122856660838973">Turn on Safe Browsing</translation>
 <translation id="4807514039636325497">DBus Details</translation>
-<translation id="4808525520374557629">Get notifications that suggest ways to improve detected performance issues. <ph name="BEGIN_LINK" />Learn more about performance issue alerts<ph name="END_LINK" /></translation>
+<translation id="4808525520374557629">Get notifications that suggest ways to improve detected performance issues.</translation>
 <translation id="4808667324955055115">Pop-ups blocked:</translation>
 <translation id="4809079943450490359">Instructions from your device administrator:</translation>
 <translation id="4809447465126035330">Delete</translation>
@@ -5595,7 +5595,7 @@ Use Ctrl + Alt + Brightness down to zoom out.</translation>
 <translation id="4869170227080975044">Read ChromeOS network information</translation>
 <translation id="4870724079713069532">You can open and edit supported files with this app from File Explorer or other apps. To control which files open in this app by default, go to <ph name="BEGIN_LINK" />Windows settings<ph name="END_LINK" />.</translation>
 <translation id="4870995365819149457">Some supported links will still open in <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> and 1 other app.</translation>
-<translation id="4871308555310586478">Not from Taktak Web Store.</translation>
+<translation id="4871308555310586478">Not from Chrome Web Store.</translation>
 <translation id="4871322859485617074">PIN contains invalid characters</translation>
 <translation id="4871370605780490696">Add bookmark</translation>
 <translation id="4871568871368204250">Turn off sync</translation>
@@ -6088,7 +6088,7 @@ Use Ctrl + Alt + Brightness down to zoom out.</translation>
 <translation id="52254442782792731">Current visibility setting is not set yet</translation>
 <translation id="5225463052809312700">Turn on camera</translation>
 <translation id="5226253862147382094">Review logo and URL updates</translation>
-<translation id="5226514125747186">A dotted circle appears around site icons. <ph name="BEGIN_LINK" />Learn more about inactive tabs<ph name="END_LINK" /></translation>
+<translation id="5226514125747186">A dotted circle appears around site icons.</translation>
 <translation id="5226731562812684363">Websites are not allowed to use your location</translation>
 <translation id="5227679487546032910">Default teal avatar</translation>
 <translation id="5228245824943774148"><ph name="NUM_DEVICES_CONNECTED" /> devices connected</translation>
@@ -6431,7 +6431,7 @@ You can assign multiple switches to this action.</translation>
 <translation id="5470741195701938302">Numbers</translation>
 <translation id="5471768120198416576">Hi there! I'm your text-to-speech voice.</translation>
 <translation id="5472627187093107397">Save passwords for this site</translation>
-<translation id="5473062644742711742">Find more accessibility tools in the Taktak Web Store</translation>
+<translation id="5473062644742711742">Find more accessibility tools in the Chrome Web Store</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">By continuing, you agree that this device may also automatically download and install updates and apps from Taktak, your child's operator and this device's manufacturer, possibly using mobile data. Some of these apps may offer in-app purchases.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN must be at least one character}other{PIN must be at least # characters}}</translation>
@@ -6667,7 +6667,7 @@ You can assign multiple switches to this action.</translation>
 <translation id="5637476008227280525">Mobile data enable</translation>
 <translation id="5638170200695981015">Choose 'Open in basic editor' to use limited view and editing options.</translation>
 <translation id="563821631542362636">Allow site to save data</translation>
-<translation id="5638309510554459422">Find extensions and themes in the <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="5638309510554459422">Find extensions and themes in the <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="5639549361331209298">Reload this page, hold to see more options</translation>
 <translation id="5640133431808313291">Manage security keys</translation>
 <translation id="5640159004008030285">This password is saved only to this device. To use it on your other devices, <ph name="BEGIN_LINK" />save it in your Taktak Account<ph name="END_LINK" />.</translation>
@@ -7059,7 +7059,7 @@ You can assign multiple switches to this action.</translation>
 <translation id="5932224571077948991">Site shows intrusive or misleading ads</translation>
 <translation id="59324397759951282">USB device from <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">You do not have enough available licences to enrol this Taktak Meet hardware device. Please contact sales to purchase more. If you believe that you're seeing this message in error, please contact support.</translation>
-<translation id="593271375210025655">Turn on developer mode to use this extension, but only if you trust the extension. It may contain experimental features and hasn't been reviewed by the Taktak Web Store.</translation>
+<translation id="593271375210025655">Turn on developer mode to use this extension, but only if you trust the extension. It may contain experimental features and hasn't been reviewed by the Chrome Web Store.</translation>
 <translation id="5932881020239635062">Serial</translation>
 <translation id="5933376509899483611">Time Zone</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> is using your camera and microphone</translation>
@@ -7600,7 +7600,7 @@ You can assign multiple switches to this action.</translation>
 <translation id="6314819609899340042">You have successfully enabled debugging features on this <ph name="IDS_SHORT_PRODUCT_NAME" /> device.</translation>
 <translation id="6315170314923504164">Voice</translation>
 <translation id="6315493146179903667">Bring All to Front</translation>
-<translation id="6316432269411143858">Taktak Taktak OS terms contents</translation>
+<translation id="6316432269411143858">Taktak OS terms contents</translation>
 <translation id="6317369057005134371">Waiting for application window...</translation>
 <translation id="6318125393809743217">Include a policies.json file with policy configurations.</translation>
 <translation id="6318944945640833942">Couldn't detect a printer. Please enter printer address again.</translation>
@@ -7810,7 +7810,7 @@ You can assign multiple switches to this action.</translation>
 <translation id="6476671549211161535">Press a button that's not the left or right mouse button on your <ph name="DEVICE_NAME" />.</translation>
 <translation id="6477822444490674459">Notification syncing is not supported for phones in a work profile. <ph name="LINK_BEGIN" />Learn more<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Quick Insert key is located beneath the Tab key</translation>
-<translation id="6479881432656947268">Visit Taktak Web Store</translation>
+<translation id="6479881432656947268">Visit Chrome Web Store</translation>
 <translation id="6480327114083866287">Managed by <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Share files and more with Nearby devices. <ph name="LINK_BEGIN" />Learn more<ph name="LINK_END" /></translation>
 <translation id="648204537326351595">Allow <ph name="SPECIFIC_NAME" /> to access your microphone</translation>
@@ -7847,7 +7847,7 @@ You can assign multiple switches to this action.</translation>
 <translation id="6511607461419653612">Restart your Chromebook and try again</translation>
 <translation id="6511827214781912955">Consider deleting <ph name="FILENAME" />, so that others who use this device can't see your passwords</translation>
 <translation id="6512759338201777379">Generated image <ph name="INDEX" /> of <ph name="SUBJECT" />, with <ph name="MOOD" /> mood.</translation>
-<translation id="6513247462497316522">Taktak Taktak will use mobile data if you're not connected to another network.</translation>
+<translation id="6513247462497316522">Taktak will use mobile data if you're not connected to another network.</translation>
 <translation id="6514010653036109809">Available device:</translation>
 <translation id="6516990372629061585">View imported certificates from Linux</translation>
 <translation id="6517382055541687102">The selected device changed to <ph name="DEVICE_NAME" /></translation>
@@ -8401,7 +8401,7 @@ You have # more compromised passwords. Taktak Password Manager recommends checki
 <translation id="6878862640969460273">Landscape</translation>
 <translation id="6880587130513028875">Images were blocked on this page.</translation>
 <translation id="6881845890692344060">Your administrator has logged out. You're in control now.</translation>
-<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK" />Learn more<ph name="END_LINK" /></translation>
+<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies.</translation>
 <translation id="6883319974225028188">Oops!  The system failed to save device configuration.</translation>
 <translation id="6883606786470492001">Manage your ad topics and other settings to limit what sites can learn about you to show you personalised ads</translation>
 <translation id="6884474387073389421">Are you sure that you want to delete the selected sign-in data?</translation>
@@ -8797,7 +8797,7 @@ You have # more compromised passwords. Taktak Password Manager recommends checki
 <translation id="7180611975245234373">Refresh</translation>
 <translation id="7180865173735832675">Customise</translation>
 <translation id="7181117767881540376">Hide bookmarks bar</translation>
-<translation id="7181329571386134105">To allow <ph name="CHILD_NAME" /> to install future extensions without your approval, open the Family Link app on your device and update <ph name="CHILD_NAME" />’s Taktak Taktak settings.</translation>
+<translation id="7181329571386134105">To allow <ph name="CHILD_NAME" /> to install future extensions without your approval, open the Family Link app on your device and update <ph name="CHILD_NAME" />’s Taktak settings.</translation>
 <translation id="7181840534454431748">Join tab group with <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Join tab group with <ph name="OWNER_FIRST_NAME" />}=1{Join tab group with <ph name="OWNER_FIRST_NAME" /> and # other}other{Join tab group with <ph name="OWNER_FIRST_NAME" /> and # others}}</translation>
 <translation id="7181976109296206547">Review logo, name and URL updates</translation>
@@ -9071,7 +9071,7 @@ You have # more compromised passwords. Taktak Password Manager recommends checki
 <translation id="737728204345822099">A record of your visit to this site may be kept on your security key.</translation>
 <translation id="7377451353532943397">Continue blocking sensor access</translation>
 <translation id="7377481913241237033">Connect with a code</translation>
-<translation id="73786666777299047">Open Taktak Web Store</translation>
+<translation id="73786666777299047">Open Chrome Web Store</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. Another task in the same task group: <ph name="OTHER_TASKS" />}other{<ph name="TASK_ROW" />. Other # tasks in the same task group: <ph name="OTHER_TASKS" />}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> will be able to view and make its own copies of <ph name="FILENAME" /></translation>
 <translation id="7380272457268061606">Disable local data recovery?</translation>
@@ -11035,7 +11035,7 @@ Keep your key file in a safe place. You will need it to create new versions of y
 <translation id="8708000541097332489">Clear on exit</translation>
 <translation id="870805141700401153">Microsoft Individual Code Signing</translation>
 <translation id="8708671767545720562">&amp;More Information</translation>
-<translation id="8709368517685334931">You can find older colours in the Taktak Web Store</translation>
+<translation id="8709368517685334931">You can find older colours in the Chrome Web Store</translation>
 <translation id="8710414664106871428">Fantasy</translation>
 <translation id="8710550057342691420">Organise similar tabs</translation>
 <translation id="8711402221661888347">Ketchup</translation>

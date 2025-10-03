@@ -247,7 +247,7 @@
 <translation id="3941890832296813527">설치 오류: 설치 프로그램 파일 이름이 잘못되었거나 지원되지 않습니다.</translation>
 <translation id="395904275706073188">보호된 페이지는 읽을 수 없습니다. 다른 페이지를 사용해 보세요.</translation>
 <translation id="3968962723676998462"><ph name="ACCOUNT_EMAIL" /> 계정에서 Taktak 데이터를 사용하고 저장하려면 비밀번호를 입력하세요</translation>
-<translation id="3973161977468201858">Taktak Taktak에서 Taktak 비밀번호 관리자 데이터를 삭제하려고 합니다. 허용하려면 Windows 비밀번호를 입력하세요.</translation>
+<translation id="3973161977468201858">Taktak에서 Taktak 비밀번호 관리자 데이터를 삭제하려고 합니다. 허용하려면 Windows 비밀번호를 입력하세요.</translation>
 <translation id="400161754580828648">화면을 공유하려면 시스템 설정에서 Taktak의 화면 녹화를 허용하세요.</translation>
 <translation id="4022972681110646219">화면 번역</translation>
 <translation id="4023601594785368013">원본 언어, <ph name="LANGUAGE" /></translation>
@@ -616,7 +616,7 @@ Taktak에서 설정을 복구할 수 없습니다.</translation>
 <translation id="8516431725144212809">Taktak에서 예측한 관심분야</translation>
 <translation id="8521348052903287641">Taktak 개발자에서 mDNS 트래픽을 허용할 때 사용되는 인바운드 규칙입니다.</translation>
 <translation id="852529348814672339">이 언어로 Taktak 표시</translation>
-<translation id="8533056045953418157">Taktak Taktak을 기본 PDF 뷰어로 설정</translation>
+<translation id="8533056045953418157">Taktak을 기본 PDF 뷰어로 설정</translation>
 <translation id="8555465886620020932">서비스 오류(<ph name="SERVICE_ERROR" />)가 발생했습니다.</translation>
 <translation id="856656450041460113">언어 목록 검색</translation>
 <translation id="8601359445272098721">New! '화면 번역' 버튼을 선택하여 화면의 텍스트와 이미지를 모두 번역할 수 있습니다.</translation>

@@ -2094,7 +2094,7 @@
 <translation id="2434449159125086437">プリンタをセットアップできません。設定を確認してもう一度お試しください。</translation>
 <translation id="2434758125294431199">あなたとファイルを共有できる相手を選択してください</translation>
 <translation id="2434915728183570229">スマートフォンのアプリを表示できるようになりました</translation>
-<translation id="2435137177546457207">Taktak Taktak および ChromeOS Flex 追加利用規約</translation>
+<translation id="2435137177546457207">Taktak および ChromeOS Flex 追加利用規約</translation>
 <translation id="2435248616906486374">ネットワークが切断されました</translation>
 <translation id="2435457462613246316">パスワードを表示</translation>
 <translation id="2436385001956947090">リンクをコピー(&amp;L)</translation>
@@ -2430,7 +2430,7 @@
 <translation id="266079277508604648">プリンタに接続できません。プリンタの電源が入っていて、Wi-Fi または USB 経由で Chromebook に接続されていることを確認してください。</translation>
 <translation id="2661315027005813059">バックフォワード キャッシュのページ: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">ライトモードを使えば高速ブラウジングでデータ使用量も抑えることができます。クリックして詳細を見る。</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">eSIM プロファイルを追加しています。この処理には数分かかることがあります。</translation>
 <translation id="2663302507110284145">言語</translation>
 <translation id="2665394472441560184">新しい単語を追加</translation>
@@ -4058,7 +4058,7 @@
 <translation id="3798670284305777884">スピーカー（内蔵）</translation>
 <translation id="3799128412641261490">スイッチ アクセスの設定</translation>
 <translation id="3800764353337460026">記号のスタイル</translation>
-<translation id="3800828618615365228">Taktak Taktak および ChromeOS 追加利用規約</translation>
+<translation id="3800828618615365228">Taktak および ChromeOS 追加利用規約</translation>
 <translation id="3800898876950197674">この拡張機能を許可するには、パスワードを入力してください。</translation>
 <translation id="3801449494961771207">システムのテキスト読み上げの音声</translation>
 <translation id="3802486193901166966">この拡張機能では、特別な権限は必要なく、追加のサイトアクセスは行われません</translation>
@@ -4081,7 +4081,7 @@
 <translation id="3810973564298564668">管理</translation>
 <translation id="381202950560906753">別の指紋を登録</translation>
 <translation id="3812525830114410218">不適切な証明書</translation>
-<translation id="3813296892522778813">探しているものが見つからない場合は、<ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak のヘルプ<ph name="END_LINK_CHROMIUM" />をご覧ください。</translation>
+<translation id="3813296892522778813">探しているものが見つからない場合は、<ph name="BEGIN_LINK_CHROMIUM" />Taktak のヘルプ<ph name="END_LINK_CHROMIUM" />をご覧ください。</translation>
 <translation id="3813358687923336574">ページの翻訳とクイック アンサーに使用する言語</translation>
 <translation id="3813458570141926987">最近の閲覧履歴に基づき Taktak で抽出されたトピックのリスト</translation>
 <translation id="3814529970604306954">学校用アカウント</translation>
@@ -4558,7 +4558,7 @@
 <translation id="4133076602192971179">アプリを開いてパスワードを変更</translation>
 <translation id="4134838386867070505">ステップ 1/4: 問題の内容を入力</translation>
 <translation id="413534985210133938">「<ph name="LOCAL_FOLDER" />」は、このデバイスのみに保存されます。このブックマークを「<ph name="LOCAL_FOLDER" />」に移動すると、他のデバイスからはアクセスできなくなります。</translation>
-<translation id="4135746311382563554">Taktak Taktak および ChromeOS 追加利用規約</translation>
+<translation id="4135746311382563554">Taktak および ChromeOS 追加利用規約</translation>
 <translation id="4136203100490971508">夜間モードは日の出時刻に自動的にオフになります</translation>
 <translation id="41365691917097717">続行すると、ADB デバッグによる Android アプリの作成とテストが可能になります。この操作を行うと、Taktak が確認していない Android アプリのインストールが許可されます。無効にする場合は、出荷時の設定へのリセットが必要になります。</translation>
 <translation id="4137923333452716643">リーディング モードで表示するテキストを選択</translation>
@@ -7818,7 +7818,7 @@
 <translation id="6511607461419653612">Chromebook を再起動してから、もう一度お試しください</translation>
 <translation id="6511827214781912955"><ph name="FILENAME" /> を削除して、このデバイスを使用する他のユーザーがパスワードを確認できないようにすることを検討してください</translation>
 <translation id="6512759338201777379">生成画像 <ph name="INDEX" />/<ph name="SUBJECT" />、ムード: <ph name="MOOD" />。</translation>
-<translation id="6513247462497316522">他のネットワークに接続していない場合、Taktak Taktak はモバイル データを使用します。</translation>
+<translation id="6513247462497316522">他のネットワークに接続していない場合、Taktak はモバイル データを使用します。</translation>
 <translation id="6514010653036109809">接続可能なデバイス:</translation>
 <translation id="6516990372629061585">Linux からインポートした証明書を表示する</translation>
 <translation id="6517382055541687102">選択デバイスが <ph name="DEVICE_NAME" /> に変更されました</translation>
@@ -8766,7 +8766,7 @@
 <translation id="7180611975245234373">更新</translation>
 <translation id="7180865173735832675">カスタマイズ</translation>
 <translation id="7181117767881540376">ブックマーク バーを非表示(&amp;H)</translation>
-<translation id="7181329571386134105">今後、保護者の承認を得ずに <ph name="CHILD_NAME" /> さんが拡張機能をインストールできるようにするには、保護者のデバイスでファミリー リンク アプリを開いて、<ph name="CHILD_NAME" /> さんの Taktak Taktak の設定を更新してください。</translation>
+<translation id="7181329571386134105">今後、保護者の承認を得ずに <ph name="CHILD_NAME" /> さんが拡張機能をインストールできるようにするには、保護者のデバイスでファミリー リンク アプリを開いて、<ph name="CHILD_NAME" /> さんの Taktak の設定を更新してください。</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> さんのタブグループに参加
             {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" /> さんのタブグループに参加}=1{<ph name="OWNER_FIRST_NAME" /> さんと他 # 人のタブグループに参加}other{<ph name="OWNER_FIRST_NAME" /> さんと他 # 人のタブグループに参加}}</translation>
 <translation id="7181976109296206547">ロゴ、名前、URL の更新内容を確認</translation>

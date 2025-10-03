@@ -70,21 +70,21 @@
                          sub-label="$i18n{incognitoTrackingProtectionsPageEntrypointSublabel}">
             </cr-link-row>
         </template>
-        <template if=
-                "[[shouldShowAdPrivacy_(
-                isPrivacySandboxRestricted_,
-                isPrivacySandboxRestrictedNoticeEnabled_)]]" is="dom-if">
-            <cr-link-row class="hr"
-                         id="privacySandboxLinkRow"
-                         label="$i18n{adPrivacyLinkRowLabel}"
-                         on-click="onPrivacySandboxClick_"
-                         role-description="$i18n{subpageArrowRoleDescription}"
-                         start-icon="privacy20:ads-click"
-                         sub-label="[[computeAdPrivacySublabel_(
-                  isPrivacySandboxRestricted_,
-                  isPrivacySandboxRestrictedNoticeEnabled_)]]">
-            </cr-link-row>
-        </template>
+<!--        <template if=-->
+<!--                "[[shouldShowAdPrivacy_(-->
+<!--                isPrivacySandboxRestricted_,-->
+<!--                isPrivacySandboxRestrictedNoticeEnabled_)]]" is="dom-if">-->
+<!--            <cr-link-row class="hr"-->
+<!--                         id="privacySandboxLinkRow"-->
+<!--                         label="$i18n{adPrivacyLinkRowLabel}"-->
+<!--                         on-click="onPrivacySandboxClick_"-->
+<!--                         role-description="$i18n{subpageArrowRoleDescription}"-->
+<!--                         start-icon="privacy20:ads-click"-->
+<!--                         sub-label="[[computeAdPrivacySublabel_(-->
+<!--                  isPrivacySandboxRestricted_,-->
+<!--                  isPrivacySandboxRestrictedNoticeEnabled_)]]">-->
+<!--            </cr-link-row>-->
+<!--        </template>-->
         <cr-link-row class="hr" id="securityLinkRow"
                      label="$i18n{securityPageTitle}" on-click="onSecurityPageClick_"
                      role-description="$i18n{subpageArrowRoleDescription}"

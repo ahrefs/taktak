@@ -227,7 +227,7 @@
 <translation id="395904275706073188">Aizsargātas lapas nevar lasīt. Izmēģiniet citu lapu.</translation>
 <translation id="3962647064319009959">Uzziniet, kā Taktak rūpējas par jūsu drošību</translation>
 <translation id="3971865010372729242">Kad rakstāt adreses joslā vai meklēšanas lodziņā, pārlūks Taktak nosūta rakstīto tekstu jūsu organizācijas meklēšanas, MI un starpnieku rīkiem, lai iegūtu ieteikumus.</translation>
-<translation id="3975724895399328945">Par Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Par Taktak for Testing</translation>
 <translation id="3997429360543082038">Par Taktak OS</translation>
 <translation id="4019629340646866719">Taktak OS, kā arī <ph name="BEGIN_LINK_LINUX_OSS" />Linux izstrādes vides<ph name="END_LINK_LINUX_OSS" /> darbību nodrošina papildu <ph name="BEGIN_LINK_CROS_OSS" />atklātā pirmkoda programmatūra<ph name="END_LINK_CROS_OSS" />.</translation>
 <translation id="4022972681110646219">Tulkot ekrāna tekstu</translation>
@@ -545,7 +545,7 @@ Dažas funkcijas var nebūt pieejamas. Norādiet citu profila direktoriju vai iz
 <translation id="8077498902115777962">Atspējot Taktak darbību fonā lietotnēm</translation>
 <translation id="80790299200510644">Attēlu meklēšana</translation>
 <translation id="8086881907087796310">Instalēšana neizdevās, jo jūsu dators neatbilst minimālajām aparatūras prasībām.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> — Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> — Taktak for Testing</translation>
 <translation id="8105840573057009683">Pārlūkam Taktak ir nepieciešama atrašanās vietas atļauja šai vietnei.</translation>
 <translation id="8118331347066725040">Sūtiet atsauksmes par meklēšanu, izmantojot Lens</translation>
 <translation id="8133124826068723441">Taktak OS nevarēja sinhronizēt jūsu datus, jo jūsu domēnā nav pieejama sinhronizācija.</translation>
@@ -591,7 +591,7 @@ Dažas funkcijas var nebūt pieejamas. Norādiet citu profila direktoriju vai iz
 <translation id="8601359445272098721">Jaunums! Atlasot pogu “Tulkot ekrānu”, varat tulkot gan ekrānā redzamo tekstu, gan attēlus.</translation>
 <translation id="8619360774459241877">Notiek Taktak palaišana...</translation>
 <translation id="8621669128220841554">Instalēšana neizdevās nenoteiktas kļūdas dēļ. Lejupielādējiet pārlūku Taktak vēlreiz.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing nevar iestatīt kā noklusējuma pārlūku.</translation>
+<translation id="8648201657708811153">Taktak for Testing nevar iestatīt kā noklusējuma pārlūku.</translation>
 <translation id="8697124171261953979">Tas nosaka arī to, kāda lapa tiks rādīta, kad atvērsiet pārlūku Taktak vai meklēsiet, izmantojot universālo lodziņu.</translation>
 <translation id="8704119203788522458">Šis ir jūsu Taktak</translation>
 <translation id="8712637175834984815">Sapratu!</translation>

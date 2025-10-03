@@ -348,7 +348,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="1567040042588613346">Toto pravidlo funguje podľa očakávania, ale niekde inde je nastavená rovnaká hodnota, ktorú toto pravidlo nahradilo.</translation>
 <translation id="1567405528131216114">Pridať tému <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Zadajte dátum vypršania platnosti</translation>
-<translation id="1569694109004336106">Taktak Taktak sa pokúša zapnúť Windows Hello, aby sa vypĺňali heslá.</translation>
+<translation id="1569694109004336106">Taktak sa pokúša zapnúť Windows Hello, aby sa vypĺňali heslá.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> × <ph name="HEIGHT" /> palcov</translation>
 <translation id="1574714699824202614">Overuje sa spôsob platby</translation>
 <translation id="1576277203042721907">Štatistiky Nákupov</translation>
@@ -654,7 +654,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="2090451897496479509">Ak sa chcete dozvedieť viac, kontaktujte poskytovateľa</translation>
 <translation id="2091887806945687916">Zvuk</translation>
 <translation id="2093184051799735948">Použite vyhľadávač <ph name="ENGINE_NAME" /> alebo zadajte webovú adresu</translation>
-<translation id="2093982008204312032">Taktak Taktak sa pokúša vypnúť Windows Hello na vypĺňanie hesiel.</translation>
+<translation id="2093982008204312032">Taktak sa pokúša vypnúť Windows Hello na vypĺňanie hesiel.</translation>
 <translation id="2094505752054353250">Domény sa nezhodujú</translation>
 <translation id="2094704029599359040">Informácie o verzii</translation>
 <translation id="2099652385553570808">Tri spinky vľavo</translation>
@@ -864,7 +864,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="2396249848217231973">&amp;Vrátiť späť odstránenie</translation>
 <translation id="239708975263889666">Úprava čísla Known Traveler Number</translation>
 <translation id="2399344929880464793">Toto číslo IBAN je uložené vo vašom účte Taktak, takže ho môžete používať v službách Googlu.</translation>
-<translation id="2399868464369312507">Taktak Taktak sa snaží upraviť spôsoby platby.</translation>
+<translation id="2399868464369312507">Taktak sa snaží upraviť spôsoby platby.</translation>
 <translation id="2400263725572336749">Pridanie pasu</translation>
 <translation id="2400271059665846158">Spravujte vernostné karty v Peňaženke Taktak</translation>
 <translation id="2400600116338235695">Môže žiadať o povolenie pripájať sa k sériovým portom</translation>
@@ -1198,7 +1198,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="2991174974383378012">Zdieľanie s webmi</translation>
 <translation id="299122504639061328">Spravujte svoj predvolený vyhľadávač a vyhľadávanie na webe</translation>
 <translation id="2991571918955627853">Web <ph name="SITE" /> momentálne nemôžete navštíviť, pretože používa certifikát HSTS. Chyby siete a útoky sú zvyčajne dočasné, takže by táto stránka mala neskôr pravdepodobne fungovať.</translation>
-<translation id="2991865971341174470">Overte svoju totožnosť, aby Taktak Taktak mohol dopĺňať vaše platobné údaje.</translation>
+<translation id="2991865971341174470">Overte svoju totožnosť, aby Taktak mohol dopĺňať vaše platobné údaje.</translation>
 <translation id="2995121550202354573">Použiť pre všetky profily pre hostí</translation>
 <translation id="2995517112308048736">Veľkosť súboru:</translation>
 <translation id="299990983510665749">Autá typu hatchback</translation>
@@ -3114,7 +3114,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="6164605812717770913">Rodič alebo zákonný zástupca povedal, že tento web nemôžeš navštíviť. Môžeš ho požiadať o odblokovanie.</translation>
 <translation id="6165508094623778733">Ďalšie informácie</translation>
 <translation id="6167577165590485365">Posledný pokus o načítanie:</translation>
-<translation id="617256461084925519">Taktak Taktak sa pokúša overiť vašu totožnosť, aby mohol dopĺňať vaše platobné údaje.</translation>
+<translation id="617256461084925519">Taktak sa pokúša overiť vašu totožnosť, aby mohol dopĺňať vaše platobné údaje.</translation>
 <translation id="6173208311907792313">Dokončite nákup pomocou funkcie Windows Hello</translation>
 <translation id="6176387967264100435">Táto cena je vysoká</translation>
 <translation id="6177128806592000436">Spojenie s týmto webom nie je zabezpečené</translation>
@@ -3974,7 +3974,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="7564049878696755256">Môžete stratiť prístup do účtu <ph name="ORG_NAME" /> alebo vám niekto môže ukradnúť identitu. Taktak odporúča, aby ste si ihneď zmenili heslo.</translation>
 <translation id="7564667064360547717">Košele a topy</translation>
 <translation id="7567204685887185387">Server nedokáže overiť, či ide o doménu <ph name="DOMAIN" />, bol zrejme vydaný falošný bezpečnostný certifikát. Môže to byť spôsobené nesprávnou konfiguráciou alebo tým, že vaše pripojenie zachytil útočník.</translation>
-<translation id="7568616151991626879">Taktak Taktak sa pokúša vyplniť heslo v aplikácii <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak sa pokúša vyplniť heslo v aplikácii <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Žiadna}=1{1 karta v tomto zariadení}few{# karty v tomto zariadení}many{# tabs on this device}other{# kariet v tomto zariadení}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Chcete kreditnú kartu odstrániť z prehliadača Taktak?</translation>
@@ -4555,7 +4555,7 @@ Ich používanie by bolo inak blokované vašimi nastaveniami ochrany súkromia.
 <translation id="8541579497401304453">Spojte sa s určitou firmou tak, že zavoláte na jej číslo.</translation>
 <translation id="8542014550340843547">Tri spinky dole</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak sa pokúša upraviť nastavenia dopĺňania spôsobov platby.</translation>
+<translation id="8544217240017914508">Taktak sa pokúša upraviť nastavenia dopĺňania spôsobov platby.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">Možnosť vysokej ceny</translation>
 <translation id="8546254312340305428">Poskytnite dôvod nahrania (povinné)</translation>

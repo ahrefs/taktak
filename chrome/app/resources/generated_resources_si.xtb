@@ -1114,7 +1114,7 @@
 <translation id="1757301747492736405">අස්ථාපනය පොරොත්තු වනු ලැබේ</translation>
 <translation id="175772926354468439">තේමාව සබල කරන්න</translation>
 <translation id="1757786065507923842">මාපිය අවසර ඉල්ලීම අසමත් විය.</translation>
-<translation id="17584710573359123">Taktak Web Store තුළ බලන්න</translation>
+<translation id="17584710573359123">Chrome Web Store තුළ බලන්න</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> <ph name="REMAPPING_OPTION" /> වෙත යළි අනුරූපණය කර ඇත.</translation>
 <translation id="1761845175367251960"><ph name="NAME" />ගේ ගිණුම්</translation>
 <translation id="176272781006230109">සාප්පු සවාරි යෝජනා</translation>
@@ -1320,7 +1320,7 @@
 <translation id="1901760057081700494">වේලා කලාපය දැනට <ph name="TIME_ZONE_ENTRY" /> ලෙස සැකසේ. වේලා කලාපය ස්වයංක්‍රීයව යාවත්කාලීන කිරීමට, <ph name="BEGIN_LINK" />පද්ධති ස්ථාන ප්‍රවේශය සක්‍රීය කරන්න<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">ඔබ පිවිසෙන URL ඔබගේ Taktak ගිණුමට සුරැකේ</translation>
 <translation id="1906181697255754968">අඩවි සාමාන්‍යයෙන් ඔබේ වැඩ ස්වයංක්‍රියව සුරැකීම වැනි විශේෂාංග සඳහා ඔබගේ උපාංගයේ ගොනු සහ ෆෝල්ඩරවලට ප්‍රවේශ වේ</translation>
-<translation id="1906488504371069394"><ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> මත තවත් දිගු සහ තේමා සොයා ගන්න</translation>
+<translation id="1906488504371069394"><ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> මත තවත් දිගු සහ තේමා සොයා ගන්න</translation>
 <translation id="1907044622262489040">ඔබේ කටහඬ සමග ටයිප් කරන්න. සෙවීම + D භාවිතා කර, ඉන්පසු කථා කිරීම අරඹන්න.</translation>
 <translation id="1907659324308286326">සමහර Thunderbolt හෝ USB4 ආයිත්තම් නිසියාකාරව ක්‍රියා කිරීමට මතක ප්‍රවේශය අවශ්‍ය වේ.</translation>
 <translation id="1908591798274282246">සංවෘත සමූහය යළි විවෘත කරන්න</translation>
@@ -2066,7 +2066,7 @@
 <translation id="2412015533711271895">ඔබ මෙම දිගුව භාවිතා කිරීම සුදුසු බව ඔබේ මාපියන් හෝ භාරකරු පැවසිය යුතු වේ</translation>
 <translation id="2412593942846481727">යාවත්කාලීනයක් ඇත</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859"><ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /> වෙතින් වන දිගු සමග ඔබේ බ්‍රව්සරය වඩාත් අභිරුචි කරන්න</translation>
+<translation id="2413009156320833859"><ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /> වෙතින් වන දිගු සමග ඔබේ බ්‍රව්සරය වඩාත් අභිරුචි කරන්න</translation>
 <translation id="2414159296888870200"><ph name="MODULE_TITLE" /> සඳහා බ්‍රවුස් කිරීම නැවත පටන් ගන්න</translation>
 <translation id="2414886740292270097">අඳුරු</translation>
 <translation id="2415117815770324983">ඔබව බොහෝ අඩවිවලින් වරනු ඇත. ඔබ ඔබේ Taktak ගිණුමට පුරනය වී සිටිනු ඇත.</translation>
@@ -2101,7 +2101,7 @@
 <translation id="2434449159125086437">මුද්‍රකය සැකසීමට නොහැක. වින්‍යාසය පරීක්‍ෂා කර නැවත උත්සාහ කරන්න.</translation>
 <translation id="2434758125294431199">ඔබ සමඟ බෙදා ගත හැක්කේ කාටද යන්න තෝරන්න</translation>
 <translation id="2434915728183570229">ඔබට දැන් ඔබගේ දුරකථනයේ යෙදුම් බැලිය හැකිය</translation>
-<translation id="2435137177546457207">Taktak Taktak සහ ChromeOS Flex අතිරේක නියම</translation>
+<translation id="2435137177546457207">Taktak සහ ChromeOS Flex අතිරේක නියම</translation>
 <translation id="2435248616906486374">ජාලය විසන්ධි කෙරිණි</translation>
 <translation id="2435457462613246316">මුරපදය පෙන්වන්න</translation>
 <translation id="2436385001956947090">&amp;සබැඳිය පිටපත් කරන්න</translation>
@@ -2447,7 +2447,7 @@
 <translation id="2666247341166669829">වම් බැටරි මට්ටම <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">අනෙකුත් යෙදුම් <ph name="APP_NAME" /> ලෙස එකම සබැඳි විවෘත කිරීමට සකසා ඇත. මෙය සහාය දක්වන සබැඳි විවෘත කිරීමෙන් <ph name="APP_NAME_2" /> සහ <ph name="APP_NAME_3" /> අබල කරනු ඇත.</translation>
 <translation id="2667463864537187133">අක්ෂර වින්‍යාස පරීක්ෂාව කළමණාකරණය කරන්න</translation>
-<translation id="2668604389652548400">එය ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න</translation>
+<translation id="2668604389652548400">එය ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න</translation>
 <translation id="2669241540496514785"><ph name="APP_NAME" /> විවෘත කළ නොහැකි විය</translation>
 <translation id="2669454659051515572">මෙම උපාංගය භාවිත කරන ඕනෑම කෙනෙකුට බාගත් ගොනු දැකිය හැකිය</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> Taktak ටැබයක් බෙදා ගනිමින් සිටී.</translation>
@@ -2463,7 +2463,7 @@
 <translation id="267442004702508783">නැවුම් කිරීම</translation>
 <translation id="2674764818721168631">අක්‍රිය</translation>
 <translation id="2675716371350192683">ඔබේ අන්තර්ගතය AI වැඩි දියුණු කිරීමට භාවිතා නොකරනු ඇත. ඔබේ සංවිධානය ඕනෑම අවස්ථාවක දී මෙම සැකසීම් වෙනස් කළ හැක.</translation>
-<translation id="2676084251379299915">මෙම දිගුව තවදුරටත් Taktak Web Store හි නොමැති නිසා ව්‍යවසාය ප්‍රතිපත්තිය මගින් අබල කර ඇත.</translation>
+<translation id="2676084251379299915">මෙම දිගුව තවදුරටත් Chrome Web Store හි නොමැති නිසා ව්‍යවසාය ප්‍රතිපත්තිය මගින් අබල කර ඇත.</translation>
 <translation id="2677748264148917807">හැර යන්න</translation>
 <translation id="2678063897982469759">යළි-සබල කරන්න</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{පටිති සමූහය තබා ගන්න ද?}one{පටිති සමූහ තබා ගන්න ද?}other{පටිති සමූහ තබා ගන්න ද?}}</translation>
@@ -2862,7 +2862,7 @@
 <translation id="2953210795988451570">ආරක්ෂක යාවත්කාලීන නිමා වී ඇත. නව Chromebook වෙත උත්ශ්‍රේණි කරන්න.</translation>
 <translation id="2953218713108551165"><ph name="SITE" /> සඳහා දැනුම්දීම් ඉඩ නොදෙයි. ඔබේ මීළඟ සංචාරයේ දී නැවත ඔබෙන් අසනු ඇත.</translation>
 <translation id="2956070239128776395">කණ්ඩායම තුළ හසු වූ කොටස: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">මෙම දිගුව භාවිතා කිරීමට සංවර්ධක ප්‍රකාරය ක්‍රියාත්මක කරන්න, මෙය Taktak Web Store මගින් සමාලෝචනය කළ නොහැක.</translation>
+<translation id="2957124229512318478">මෙම දිගුව භාවිතා කිරීමට සංවර්ධක ප්‍රකාරය ක්‍රියාත්මක කරන්න, මෙය Chrome Web Store මගින් සමාලෝචනය කළ නොහැක.</translation>
 <translation id="2958721676848865875">ඇසුරුම් දිගු අනතුරු හැඟවීම</translation>
 <translation id="2959127025785722291">යම් දෙයක් වැරදිණි. ස්කෑන් කිරීම සම්පූර්ණ කළ නොහැකි විය. නැවත උත්සාහ කරන්න.</translation>
 <translation id="2959474507964749987">මෙම සංකේතනය කළ ගොනුව වෛරසයක් හෝ අනිෂ්ට මෘදුකාංගයක් විය හැක.<ph name="LINE_BREAK" />එය අනාරක්ෂිත දැයි පරීක්ෂා කිරීමට, ඔබට ගොනුව සහ මුරපදය Taktak ආරක්ෂිත බ්‍රවුස් කිරීම වෙත යැවිය හැක. ස්කෑන් කිරීමට සාමාන්‍යයෙන් තත්පර කිහිපයක් ගත වේ.<ph name="LINE_BREAK" />ස්කෑන් කිරීම සඳහා, ගොනුවේ මුරපදය එක් කරන්න.</translation>
@@ -2922,7 +2922,7 @@
 <translation id="2996108796702395498">ඔබේ උපාංගයේ අනුක්‍රමික අංකය <ph name="SERIAL_NUMBER" /> වෙයි. සේවය ක්‍රියාත්මක කිරීමට උදවු කිරීමට මෙම අංකය භාවිත කළ හැක.</translation>
 <translation id="2996286169319737844">ඔබගේ සමමුහූර්ත මුර-වැකිකඩ සමඟ දත්ත සංකේතන කෙරේ. මෙයට Taktak Pay වෙතින් ගෙවීමේ ක්‍රම සහ ලිපින ඇතුළු නොවේ.</translation>
 <translation id="2996722619877761919">දිග දාරයෙන් උඩ දමන්න</translation>
-<translation id="2998097899774209901">ක්‍රියාත්මකයි • මෙම දිගුව Taktak Web Store ප්‍රතිපත්තිය උල්ලංඝනය කරයි</translation>
+<translation id="2998097899774209901">ක්‍රියාත්මකයි • මෙම දිගුව Chrome Web Store ප්‍රතිපත්තිය උල්ලංඝනය කරයි</translation>
 <translation id="2998267783395280091">ජාලය හමු විය</translation>
 <translation id="3000378525979847272"><ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /> ඉඩ දෙන ලදි</translation>
 <translation id="3000461861112256445">ඒකල ශ්‍රව්‍යය</translation>
@@ -2953,7 +2953,7 @@
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">එකම අඩවියේ සුරක්ෂිත සම්බන්ධතා පමණි</translation>
 <translation id="3012917896646559015">කරුණාකර ඔබගේ පරිගණකය අළුත්වැඩියා මධ්‍යස්ථානයකට යැවීමට වහාම ඔබගේ දෘඩාංග නිෂ්පාදක අමතන්න.</translation>
-<translation id="3013652227108802944">ක්‍රියාවිරහිතයි • මෙම දිගුව Taktak Web Store ප්‍රතිපත්තිය උල්ලංඝනය කරයි</translation>
+<translation id="3013652227108802944">ක්‍රියාවිරහිතයි • මෙම දිගුව Chrome Web Store ප්‍රතිපත්තිය උල්ලංඝනය කරයි</translation>
 <translation id="301525898020410885">භාෂාව සකසා ඇත්තේ ඔබගේ සංවිධානය විසිනි</translation>
 <translation id="3015639418649705390">දැන් නැවත දියත් කරන්න</translation>
 <translation id="3015651504578568463">නව සංසන්දන වගුවට පටිත්ත එක් කරන්න</translation>
@@ -3223,7 +3223,7 @@
 <translation id="3226487301970807183">වමට පෙළගැස්වූ පැති පැනලය ටොගල කරන්න</translation>
 <translation id="322708765617468434">පිහිටුවීමෙන් පසු ඔබට සැම විට ම වෙනත් පුද්ගලයෙකු උපාංගයට එක් කළ හැක. එක් එක් පුද්ගලයාට තම අත්දැකීම් පෞද්ගලීකරණය කිරීමට සහ දත්ත පෞද්ගලිකව තබා ගැනීමට හැක.</translation>
 <translation id="3227137524299004712">මයික්‍රෆෝනය:</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{එය ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න.}one{ඒවා ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න.}other{ඒවා ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න.}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{එය ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න.}one{ඒවා ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න.}other{ඒවා ඉවත් කරන්න හෝ <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> වෙතින් සමාන දිගුවලින් ප්‍රතිස්ථාපන කරන්න.}}</translation>
 <translation id="3229254977651514276">දිනය පරීක්ෂා කරන්න</translation>
 <translation id="3230539834943294477">උදවු ලිපි බලන්න, නැති නම් උපාංග සහය සොයා ගන්න</translation>
 <translation id="3232168089952388105">ඔබේ උපාංගය පිළිබඳ තොරතුරු බෙදා ගන්න ද?</translation>
@@ -4029,7 +4029,7 @@
 <translation id="3775432569830822555">SSL සේවාදායක සහතිකය</translation>
 <translation id="3775705724665058594">ඔබේ උපාංග වෙත යවන්න</translation>
 <translation id="3776508619697147021">අඩවි ස්වයංක්‍රියව ගොනු කිහිපයක් බාගැනීමට ඉල්ලිය හැකිය</translation>
-<translation id="3776796446459804932">දිගුව විසින් Taktak Web Store ප්‍රතිපත්තිය උල්ලංගනය කරයි.</translation>
+<translation id="3776796446459804932">දිගුව විසින් Chrome Web Store ප්‍රතිපත්තිය උල්ලංගනය කරයි.</translation>
 <translation id="3777483481409781352">සෙලියුලර් උපාංගය ක්‍රියාත්මක කළ නොහැකි විය</translation>
 <translation id="3777796259512476958">ඔබව බොහෝ අඩවිවලින් වරනු ඇත</translation>
 <translation id="3778208826288864398">ඉතා වැඩි අවස්ථාවක් වැරදි රහස් අංකය ඇතුළත් කළ බැවින් ආරක්‍ෂක යතුරට අඟුලු දමා ඇත. ඔබ ආරක්‍ෂක යතුර යළි සැකසීමට අවශ්‍ය වෙයි.</translation>
@@ -4067,7 +4067,7 @@
 <translation id="3798670284305777884">ස්පීකරය (අභ්‍යන්තර)</translation>
 <translation id="3799128412641261490">ප්‍රවේශය මාරු කිරීමේ සැකසීම්</translation>
 <translation id="3800764353337460026">සංඛේත මෝස්තරය</translation>
-<translation id="3800828618615365228">Taktak Taktak සහ ChromeOS අතිරේක නියම</translation>
+<translation id="3800828618615365228">Taktak සහ ChromeOS අතිරේක නියම</translation>
 <translation id="3800898876950197674">මෙම දිගුව ඉඩ දීමට, ඔබේ මුරපදය ඇතුළු කරන්න.</translation>
 <translation id="3801449494961771207">පද්ධති පෙළ සිට කථන හඬ</translation>
 <translation id="3802486193901166966">මෙම දිගුවට විශේෂ අවසරයන් අවශ්‍ය නොවන අතර අතිරේක අඩවි ප්‍රවේශයක් නොමැත</translation>
@@ -4090,7 +4090,7 @@
 <translation id="3810973564298564668">කළමනාකරණය</translation>
 <translation id="381202950560906753">තව එකක් එක් කරන්න</translation>
 <translation id="3812525830114410218">නරක සහතිකය</translation>
-<translation id="3813296892522778813">ඔබ සොයමින් සිටින දේ සොයාගත නොහැකි නම් <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak උදවු<ph name="END_LINK_CHROMIUM" /> වෙත යන්න</translation>
+<translation id="3813296892522778813">ඔබ සොයමින් සිටින දේ සොයාගත නොහැකි නම් <ph name="BEGIN_LINK_CHROMIUM" />Taktak උදවු<ph name="END_LINK_CHROMIUM" /> වෙත යන්න</translation>
 <translation id="3813358687923336574">පිටු සහ ඉක්මන් පිළිතුරු පරිවර්තනය කිරීම සඳහා භාවිත කරන භාෂාව</translation>
 <translation id="3813458570141926987">ඔබේ මෑත බ්‍රවුස් කිරීමේ ඉතිහාසය මත පදනම්ව Taktak විසින් ඇස්තමේන්තු කරන ලද මාතෘකා ලැයිස්තුව</translation>
 <translation id="3814529970604306954">පාසල් ගිණුම</translation>
@@ -4568,7 +4568,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="4133076602192971179">ඔබේ මුරපදය වෙනස් කිරීමට යෙදුම විවෘත කරන්න</translation>
 <translation id="4134838386867070505">පියවර 4න් 1: ගැටලුව විස්තර කරන්න</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” සුරැකෙන්නේ මෙම උපාංගයට පමණි. ඔබ මෙම පිටුසන “<ph name="LOCAL_FOLDER" />” වෙත ගෙන ගියහොත්, ඔබට එය ඔබේ අනෙකුත් උපාංග මත තවදුරටත් නොලැබෙනු ඇත.</translation>
-<translation id="4135746311382563554">Taktak Taktak සහ Taktak OS අතිරේක සේවා නියම</translation>
+<translation id="4135746311382563554">Taktak සහ Taktak OS අතිරේක සේවා නියම</translation>
 <translation id="4136203100490971508">රාත්‍රී ආලෝකය හිරු නැගීමේදී ස්වයංක්‍රීයව ක්‍රියාවිරහිත වනු ඇත</translation>
 <translation id="41365691917097717">ඉදිරියට යාම Android යෙදුම් සෑදීම සහ පරීක්‍ෂා කිරීම සඳහා ADB නිදොස් කිරීම සබල කරයි. මෙම ක්‍රියාව Taktak විසින් සත්‍යාපිත නොවන Android යෙදුම් ස්ථාපන කිරීමට ඉඩ දෙන අතර, අබල කිරීමට කර්මාන්තශාලා යළි සැකසුමක් අවශ්‍ය වන බව සලකන්න.</translation>
 <translation id="4137923333452716643">ඔබට කියවීමේ ප්‍රකාරයේ විවෘත කිරීමට අවශ්‍ය පෙළ උද්දීපනය කරන්න</translation>
@@ -5583,7 +5583,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="4869170227080975044">ChromeOS ජාල තොරතුරු කියවන්න</translation>
 <translation id="4870724079713069532">ඔබට File Explorer හෝ වෙනත් යෙදුම් වෙතින් මෙම යෙදුම සමග සහාය දක්වන ගොනු විවෘත කිරීමට සහ සංස්කරණය කිරීමට හැකිය. පෙරනිමියෙන් මෙම යෙදුම තුළ විවෘත වන ගොනු පාලනය කිරීමට, <ph name="BEGIN_LINK" />Windows සැකසීම්<ph name="END_LINK" /> වෙත යන්න.</translation>
 <translation id="4870995365819149457">සමහර සහාය දක්වන සබැඳි තවම <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> සහ තවත් යෙදුම් 1ක් තුළ විවෘතව තිබෙනු ඇත.</translation>
-<translation id="4871308555310586478">Taktak Web Store වෙතින් නොවේ.</translation>
+<translation id="4871308555310586478">Chrome Web Store වෙතින් නොවේ.</translation>
 <translation id="4871322859485617074">රහස් අංකයේ අවලංගු අනුලකුණු අඩංගු ය</translation>
 <translation id="4871370605780490696">පිටු සලකුණ එක් කරන්න</translation>
 <translation id="4871568871368204250">සමමුහුර්තය ක්‍රියා විරහිත කරන්න</translation>
@@ -6418,7 +6418,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="5470741195701938302">සංඛ්‍යා</translation>
 <translation id="5471768120198416576">ආයුබෝවන් ඔබට! මම ඔබේ පෙළ-කථනයට කටහඬයි.</translation>
 <translation id="5472627187093107397">මෙම වෙබ් අඩවිය සඳහා මුරපද සුරකින්න</translation>
-<translation id="5473062644742711742">Taktak Web Store තුළ තවත් ප්‍රවේශ්‍යතා මෙවලම් සොයා ගන්න</translation>
+<translation id="5473062644742711742">Chrome Web Store තුළ තවත් ප්‍රවේශ්‍යතා මෙවලම් සොයා ගන්න</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">ඉදිරියට යාමෙන්, බොහෝ විට සෙලියුලර් දත්ත භාවිතයෙන් මෙම උපාංගයට Taktak, ඔබගේ දරුවාගේ වාහකය, සහ මෙම උපාංගයේ නිෂ්පාදක වෙතින් යාවත්කාලීන සහ යෙදුම් ස්වයංක්‍රියව බාගෙන ස්ථාපනය කළ හැකි බවට ඔබ එකඟ වේ. මෙම යෙදුම්වලින් සමහරක් යෙදුම-තුළ මිලදී ගැනීම් පිරිනමයි.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN අඩු තරමින් අනුලකුණු එකක් විය යුතුය}one{PIN අඩු තරමින් අනුලකුණු #ක් විය යුතුය}other{PIN අඩු තරමින් අනුලකුණු #ක් විය යුතුය}}</translation>
@@ -6655,7 +6655,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="5637476008227280525">ජංගම දත්ත සබල කිරීම</translation>
 <translation id="5638170200695981015">සීමිත දර්ශන සහ සංස්කරණ විකල්ප භාවිත කිරීමට "මූලික සංස්කාරකයේ විවෘත කරන්න" තෝරන්න.</translation>
 <translation id="563821631542362636">දත්ත සුරැකීමට අඩවියට ඉඩ දෙන්න</translation>
-<translation id="5638309510554459422"><ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> තුළ දිගු සහ තේමාවන් සොයා ගන්න</translation>
+<translation id="5638309510554459422"><ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> තුළ දිගු සහ තේමාවන් සොයා ගන්න</translation>
 <translation id="5639549361331209298">මෙම පිටුව ප්‍රවේශනය කරන්න, තවත් අභිරුචි බැලීමට අල්ලාගෙන සිටින්න</translation>
 <translation id="5640133431808313291">ආරක්‍ෂක යතුරු කළමනා කරන්න</translation>
 <translation id="5640159004008030285">මෙම මුරපදය සුරැකෙන්නේ මෙම උපාංගයට පමණි. එය ඔබේ අනෙකුත් උපාංගවල භාවිතා කිරීම සඳහා, <ph name="BEGIN_LINK" />එය ඔබේ Taktak ගිණුමේ සුරකින්න<ph name="END_LINK" />.</translation>
@@ -7047,7 +7047,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="5932224571077948991">වෙබ් අඩවිය ආක්‍රමණික හෝ නොමඟ යවන දැන්වීම් පෙන්වයි</translation>
 <translation id="59324397759951282"><ph name="MANUFACTURER_NAME" /> වෙතින් USB උපාංගය</translation>
 <translation id="5932441198730183141">මෙම Taktak Meet දෘඪාංග උපාංගය ලියාපදිංචි කිරීමට ඔබට ප්‍රමාණවත් ලබා ගත හැකි බලපත්‍ර නොමැත. තවත් මිලදී ගැනීමට කරුණාකර විකුණුම් අංශය සම්බන්ධ කර ගන්න. ඔබ මෙම පණිවිඩය වැරදීමකින් දකින බව විශ්වාස කරන්නේ නම්, සහාය සම්බන්ධ කර ගන්න.</translation>
-<translation id="593271375210025655">මෙම දිගුව භාවිතා කිරීමට සංවර්ධක ප්‍රකාරය ක්‍රියාත්මක කරන්න, නමුත් ඔබ දිගුව විශ්වාස කරන්නේ නම් පමණි. එහි පර්යේෂණාත්මක විශේෂාංග අඩංගු විය හැකි අතර Taktak Web Store විසින් සමාලෝචනය කර නොමැත.</translation>
+<translation id="593271375210025655">මෙම දිගුව භාවිතා කිරීමට සංවර්ධක ප්‍රකාරය ක්‍රියාත්මක කරන්න, නමුත් ඔබ දිගුව විශ්වාස කරන්නේ නම් පමණි. එහි පර්යේෂණාත්මක විශේෂාංග අඩංගු විය හැකි අතර Chrome Web Store විසින් සමාලෝචනය කර නොමැත.</translation>
 <translation id="5932881020239635062">අනුක්‍රමික</translation>
 <translation id="5933376509899483611">වේලා කලාපය</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> ඔබගේ කැමරාව හා මයික්‍රෆෝනය භාවිත කරමින් ඇත</translation>
@@ -7798,7 +7798,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="6476671549211161535">ඔබේ <ph name="DEVICE_NAME" /> මත වම් හෝ දකුණු මූසික බොත්තම නොවන බොත්තමක් ඔබන්න.</translation>
 <translation id="6477822444490674459">කාර්යාල පැතිකඩක ඇති දුරකථන සඳහා දැනුම්දීම් සමමුහුර්තකරණය සහාය නොදක්වයි. <ph name="LINK_BEGIN" />තව දැන ගන්න<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">ඉක්මන් ඇතුළු කිරීමේ යතුර ටැබ් යතුරට යටින් පිහිටා ඇත</translation>
-<translation id="6479881432656947268">Taktak Web Store වෙත පිවිසෙන්න</translation>
+<translation id="6479881432656947268">Chrome Web Store වෙත පිවිසෙන්න</translation>
 <translation id="6480327114083866287"><ph name="MANAGER" /> විසින් කළමනාකරණය කෙරේ</translation>
 <translation id="6481749622989211463">අවට උපාංග සමග ගොනු සහ තවත් දේ බෙදා ගන්න. <ph name="LINK_BEGIN" />තව දැන ගන්න<ph name="LINK_END" /></translation>
 <translation id="648204537326351595"><ph name="SPECIFIC_NAME" /> හට ඔබේ මයික්‍රෆෝනයට ප්‍රවේශ වීමට ඉඩ දෙන්න</translation>
@@ -7835,7 +7835,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="6511607461419653612">ඔබේ Chromebook යළි අරඹා නැවත උත්සාහ කරන්න</translation>
 <translation id="6511827214781912955"><ph name="FILENAME" /> මකා දැමීමට සලකා බලන්න, එවිට මෙම උපාංගය භාවිතා කරන අනෙක් අයට ඔබේ මුරපද දැකිය නොහැක</translation>
 <translation id="6512759338201777379"><ph name="MOOD" /> මනෝභාවය සමග <ph name="SUBJECT" /> න් <ph name="INDEX" /> ජනිත රූපය.</translation>
-<translation id="6513247462497316522">ඔබ වෙනත් ජාලයකට සබැඳී නැති නම්, Taktak Taktak ජංගම දත්ත භාවිතා කරනු ඇත.</translation>
+<translation id="6513247462497316522">ඔබ වෙනත් ජාලයකට සබැඳී නැති නම්, Taktak ජංගම දත්ත භාවිතා කරනු ඇත.</translation>
 <translation id="6514010653036109809">ලබා ගත හැකි උපාංගය:</translation>
 <translation id="6516990372629061585">Linux වෙතින් ආයාත කළ සහතික බලන්න</translation>
 <translation id="6517382055541687102">තෝරාගත් උපාංගය <ph name="DEVICE_NAME" /> වෙත වෙනස් විය</translation>
@@ -8784,7 +8784,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="7180611975245234373">නැවුම් කරන්න</translation>
 <translation id="7180865173735832675">ගැලපුම් කරන්න</translation>
 <translation id="7181117767881540376">&amp;පිටුසන් තීරුව සඟවන්න</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> හට ඔබේ අනුමැතියකින් තොරව අනාගත දිගු ස්ථාපනය කිරීමට ඉඩ දීමට, ඔබේ උපාංගයෙහි Family Link යෙදුම විවෘත කර <ph name="CHILD_NAME" />ගේ Taktak Taktak සැකසීම් යාවත්කාලීන කරන්න.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> හට ඔබේ අනුමැතියකින් තොරව අනාගත දිගු ස්ථාපනය කිරීමට ඉඩ දීමට, ඔබේ උපාංගයෙහි Family Link යෙදුම විවෘත කර <ph name="CHILD_NAME" />ගේ Taktak සැකසීම් යාවත්කාලීන කරන්න.</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> සමග පටිති සමූහයට එකතු වන්න
               {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" /> සමග පටිති සමූහයට එකතු වන්න}=1{<ph name="OWNER_FIRST_NAME" /> සහ තවත් # දෙනෙකු සමග පටිති සමූහයට එකතු වන්න}one{<ph name="OWNER_FIRST_NAME" /> සහ තවත් # දෙනෙකු සමග පටිති සමූහයට එකතු වන්න}other{<ph name="OWNER_FIRST_NAME" /> සහ තවත් # දෙනෙකු සමග පටිති සමූහයට එකතු වන්න}}</translation>
 <translation id="7181976109296206547">ලාංඡනය, නම සහ URL යාවත්කාලීන කිරීම් සමාලෝචනය කරන්න</translation>
@@ -9058,7 +9058,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="737728204345822099">ඔබගේ ආරක්ෂක යතුරේ මෙම අඩවිය වෙත ඔබගේ පැමිණීමේ සටහනක් තැබිය හැකිය.</translation>
 <translation id="7377451353532943397">සංවේදක ප්‍රවේශය දිගටම අවහිර කරන්න</translation>
 <translation id="7377481913241237033">කේතයක් සමගින් සම්බන්ධ වන්න</translation>
-<translation id="73786666777299047">Taktak Web Store විවෘත කරන්න</translation>
+<translation id="73786666777299047">Chrome Web Store විවෘත කරන්න</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. එම කාර්ය කණ්ඩායමේ තවත් කාර්යයක්: <ph name="OTHER_TASKS" />}one{<ph name="TASK_ROW" />. එකම කාර්ය කණ්ඩායමේ අනෙකුත් කාර්ය #: <ph name="OTHER_TASKS" />:}other{<ph name="TASK_ROW" />. එකම කාර්ය කණ්ඩායමේ අනෙකුත් කාර්ය #: <ph name="OTHER_TASKS" />:}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> හට <ph name="FILENAME" /> බැලීමට සහ එහිම පිටපත් සෑදීමට හැකි වනු ඇත</translation>
 <translation id="7380272457268061606">ස්ථානීය දත්ත ප්‍රතිසාධනය අබල කරන්න ද?</translation>
@@ -11020,7 +11020,7 @@ Linux ස්ථාපනය කිරීම දත්තවලින් <ph name
 <translation id="8708000541097332489">පිටවීමේදී පිරිසිදු</translation>
 <translation id="870805141700401153">Microsoft තනි කේත පිරීම</translation>
 <translation id="8708671767545720562">තව තොරතුරු</translation>
-<translation id="8709368517685334931">ඔබට Taktak Web Store තුළින් ඉතා පරණ වර්ණ සොයා ගත හැක</translation>
+<translation id="8709368517685334931">ඔබට Chrome Web Store තුළින් ඉතා පරණ වර්ණ සොයා ගත හැක</translation>
 <translation id="8710414664106871428">මනඃකල්පිත</translation>
 <translation id="8710550057342691420">සමාන ටැබ සංවිධානය කරන්න</translation>
 <translation id="8711402221661888347">Pickles</translation>

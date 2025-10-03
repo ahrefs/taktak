@@ -2092,7 +2092,7 @@
 <translation id="2434449159125086437">无法设置打印机。请检查配置，然后重试。</translation>
 <translation id="2434758125294431199">选择哪些人员可与您分享文件</translation>
 <translation id="2434915728183570229">您现在可以查看手机中的应用</translation>
-<translation id="2435137177546457207">Taktak Taktak 和 ChromeOS Flex 附加条款</translation>
+<translation id="2435137177546457207">Taktak 和 ChromeOS Flex 附加条款</translation>
 <translation id="2435248616906486374">网络连接已断开</translation>
 <translation id="2435457462613246316">显示密码</translation>
 <translation id="2436385001956947090">复制链接(&amp;L)</translation>
@@ -4057,7 +4057,7 @@
 <translation id="3798670284305777884">扬声器（内部）</translation>
 <translation id="3799128412641261490">开关控制设置</translation>
 <translation id="3800764353337460026">符号样式</translation>
-<translation id="3800828618615365228">Taktak Taktak 和 Taktak 操作系统附加条款</translation>
+<translation id="3800828618615365228">Taktak 和 Taktak 操作系统附加条款</translation>
 <translation id="3800898876950197674">要允许使用此扩展程序，请输入密码。</translation>
 <translation id="3801449494961771207">系统默认文字转语音声音</translation>
 <translation id="3802486193901166966">此扩展程序无需任何特殊权限，并且无权访问其他网站</translation>
@@ -4080,7 +4080,7 @@
 <translation id="3810973564298564668">管理</translation>
 <translation id="381202950560906753">添加其他指纹</translation>
 <translation id="3812525830114410218">证书有误</translation>
-<translation id="3813296892522778813">如果您找不到要查找的内容，请参阅 <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak 帮助<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">如果您找不到要查找的内容，请参阅 <ph name="BEGIN_LINK_CHROMIUM" />Taktak 帮助<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">翻译页面和快速解答时使用的语言</translation>
 <translation id="3813458570141926987">主题列表，这些主题是 Taktak 根据您近期的浏览记录推测的</translation>
 <translation id="3814529970604306954">学校账号</translation>
@@ -4556,7 +4556,7 @@
 <translation id="4133076602192971179">打开应用以更改密码</translation>
 <translation id="4134838386867070505">步骤 1/4：描述问题</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />”仅会保存到此设备上。如果您将此书签移至“<ph name="LOCAL_FOLDER" />”，您将无法再在其他设备上获取它。</translation>
-<translation id="4135746311382563554">Taktak Taktak 和 Taktak 操作系统附加服务条款</translation>
+<translation id="4135746311382563554">Taktak 和 Taktak 操作系统附加服务条款</translation>
 <translation id="4136203100490971508">夜间光效将于日出时自动关闭</translation>
 <translation id="41365691917097717">继续操作会启用 ADB 调试，以创建和测试 Android 应用。请注意，此操作会允许安装未经 Taktak 验证的 Android 应用，而且一旦安装就无法停用，除非将设备恢复到出厂设置。</translation>
 <translation id="4137923333452716643">选中您想在阅读模式下打开的文字</translation>
@@ -7571,7 +7571,7 @@
 <translation id="6314819609899340042">已在此<ph name="IDS_SHORT_PRODUCT_NAME" />设备上成功启用调试功能。</translation>
 <translation id="6315170314923504164">语音</translation>
 <translation id="6315493146179903667">前置全部窗口</translation>
-<translation id="6316432269411143858">Taktak Taktak 操作系统条款内容</translation>
+<translation id="6316432269411143858">Taktak 操作系统条款内容</translation>
 <translation id="6317369057005134371">等待应用窗口…</translation>
 <translation id="6318125393809743217">添加一个包含政策配置的 policies.json 文件。</translation>
 <translation id="6318944945640833942">无法检测到打印机。请重新输入打印机地址。</translation>
@@ -7818,7 +7818,7 @@
 <translation id="6511607461419653612">请重启 Chromebook，然后重试</translation>
 <translation id="6511827214781912955">不妨考虑删除“<ph name="FILENAME" />”，让使用此设备的他人看不到您的密码</translation>
 <translation id="6512759338201777379">生成了第 <ph name="INDEX" /> 张<ph name="SUBJECT" />图片，情感基调是<ph name="MOOD" />。</translation>
-<translation id="6513247462497316522">如果您没有连接到其他网络，则 Taktak Taktak 会使用移动数据网络。</translation>
+<translation id="6513247462497316522">如果您没有连接到其他网络，则 Taktak 会使用移动数据网络。</translation>
 <translation id="6514010653036109809">可用的设备：</translation>
 <translation id="6516990372629061585">查看从 Linux 导入的证书</translation>
 <translation id="6517382055541687102">所选设备已更改为“<ph name="DEVICE_NAME" />”</translation>
@@ -8768,7 +8768,7 @@
 <translation id="7180611975245234373">刷新</translation>
 <translation id="7180865173735832675">自定义</translation>
 <translation id="7181117767881540376">隐藏书签栏(&amp;H)</translation>
-<translation id="7181329571386134105">要允许<ph name="CHILD_NAME" />日后在未经您批准的情况下安装扩展程序，请在设备上打开 Family Link 应用并更新<ph name="CHILD_NAME" />的 Taktak Taktak 设置。</translation>
+<translation id="7181329571386134105">要允许<ph name="CHILD_NAME" />日后在未经您批准的情况下安装扩展程序，请在设备上打开 Family Link 应用并更新<ph name="CHILD_NAME" />的 Taktak 设置。</translation>
 <translation id="7181840534454431748">加入<ph name="OWNER_FIRST_NAME" />所在的标签页分组
               {NUM_OTHER_MEMBERS,plural, =0{加入<ph name="OWNER_FIRST_NAME" />所在的标签页分组}=1{加入<ph name="OWNER_FIRST_NAME" />和另外 # 人所在的标签页分组}other{加入<ph name="OWNER_FIRST_NAME" />和另外 # 人所在的标签页分组}}</translation>
 <translation id="7181976109296206547">查看徽标、名称和网址更新</translation>

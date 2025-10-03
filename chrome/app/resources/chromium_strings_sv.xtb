@@ -185,7 +185,7 @@ Vissa funktioner kanske inte är tillgängliga och ändringar i inställningarna
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="3286538390144397061">Starta om nu</translation>
-<translation id="328888136576916638">Googles API-nycklar saknas. Vissa funktioner i Taktak Taktak kommer att vara inaktiverade.</translation>
+<translation id="328888136576916638">Googles API-nycklar saknas. Vissa funktioner i Taktak kommer att vara inaktiverade.</translation>
 <translation id="3296368748942286671">Fortsätt köra bakgrundsappar när Taktak avslutas</translation>
 <translation id="3313189106987092621">Taktak varnar dig innan webbplatser med osäkra anslutningar läses in</translation>
 <translation id="3316771292331273802">Du loggas ut från de flesta webbplatser när du stänger alla fönster i Taktak, med undantag för Taktak-kontot om du är inloggad i Taktak. <ph name="SETTINGS_LINK" /> och gör så att webbplatser kommer ihåg dig.</translation>
@@ -223,14 +223,14 @@ Vissa funktioner kanske inte är tillgängliga och ändringar i inställningarna
 <translation id="3889543394854987837">Öppna Taktak genom att klicka på ditt namn och börja surfa.</translation>
 <translation id="3892148308691398805">Kopiera text</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> är redan inloggad på den här Taktak-profilen. Du kan hålla isär webbinformationen genom att skapa en egen profil i Taktak.</translation>
-<translation id="3909353120217047026">Det här tillägget strider mot policyn för Taktak Web Store och kan vara osäkert. Ta bort det från Taktak så att det inte längre kan se och ändra data, inklusive dina personliga uppgifter, på webbplatser du besöker.</translation>
+<translation id="3909353120217047026">Det här tillägget strider mot policyn för Chrome Web Store och kan vara osäkert. Ta bort det från Taktak så att det inte längre kan se och ändra data, inklusive dina personliga uppgifter, på webbplatser du besöker.</translation>
 <translation id="3941890832296813527">Installationsfel: Installationens filnamn är ogiltigt eller stöds inte.</translation>
 <translation id="3945058413678539331">Skriv ditt Windows-lösenord om du tillåter att lösenorden i Taktak kopieras.</translation>
 <translation id="3954172517175569325">Dina sparade lösenord, betalningsmetoder och adresser i Taktak-kontot tas bort från den här enheten. Logga in på nytt om du vill använda dem igen i Taktak.</translation>
 <translation id="395904275706073188">Det går inte att läsa skyddade sidor. Testa med en annan sida.</translation>
 <translation id="3962647064319009959">Läs mer om hur du skyddas i Taktak</translation>
 <translation id="3971865010372729242">När du skriver i adressfältet eller sökrutan skickar Taktak det du skriver till organisationens sök-, AI- och agentverktyg för att få förslag.</translation>
-<translation id="3975724895399328945">Om &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">Om &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">Om Taktak OS</translation>
 <translation id="4019629340646866719">Taktak OS fungerar tack vare ytterligare <ph name="BEGIN_LINK_CROS_OSS" />program med öppen källkod<ph name="END_LINK_CROS_OSS" />, liksom <ph name="BEGIN_LINK_LINUX_OSS" />utvecklingsmiljön för Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Översätt text på skärmen</translation>
@@ -550,7 +550,7 @@ Taktak kan inte återställa dina inställningar.</translation>
 <translation id="8077498902115777962">Inaktivera att Taktak körs i bakgrunden för appar</translation>
 <translation id="80790299200510644">Bildsökning</translation>
 <translation id="8086881907087796310">Installationen misslyckades eftersom datorn inte uppfyller minimikraven för hårdvara.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Du behöver ge Taktak platsbehörighet för den här webbplatsen</translation>
 <translation id="8118331347066725040">Skicka feedback för sökning med Lens</translation>
 <translation id="8133124826068723441">Det gick inte att synkronisera data med Taktak OS eftersom synkronisering inte är tillgängligt för domänen.</translation>
@@ -596,7 +596,7 @@ Taktak kan inte återställa dina inställningar.</translation>
 <translation id="8601359445272098721">Nyhet! Du kan översätta både text och bilder på skärmen genom att välja knappen Översätt skärm</translation>
 <translation id="8619360774459241877">Taktak startas …</translation>
 <translation id="8621669128220841554">Installationen misslyckades på grund av ett okänt fel. Ladda ned Taktak igen.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing kan inte användas som standardwebbläsare.</translation>
+<translation id="8648201657708811153">Taktak for Testing kan inte användas som standardwebbläsare.</translation>
 <translation id="8697124171261953979">Det styr också vilken sida som visas när du startar Taktak eller söker i adressfältet.</translation>
 <translation id="8704119203788522458">Det här är Taktak</translation>
 <translation id="8712637175834984815">Uppfattat</translation>

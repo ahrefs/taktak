@@ -2112,7 +2112,7 @@
 <translation id="2434449159125086437">無法設定打印機，請檢查設定並再試一次。</translation>
 <translation id="2434758125294431199">選取誰可以與您分享檔案</translation>
 <translation id="2434915728183570229">您現可查看手機的應用程式</translation>
-<translation id="2435137177546457207">Taktak Taktak 和 ChromeOS Flex 的《附加條款》</translation>
+<translation id="2435137177546457207">Taktak 和 ChromeOS Flex 的《附加條款》</translation>
 <translation id="2435248616906486374">網絡已中斷連線</translation>
 <translation id="2435457462613246316">顯示密碼</translation>
 <translation id="2436385001956947090">複製連結(&amp;L)</translation>
@@ -4077,7 +4077,7 @@
 <translation id="3798670284305777884">喇叭 (內置)</translation>
 <translation id="3799128412641261490">「按鈕控制」設定</translation>
 <translation id="3800764353337460026">符號樣式</translation>
-<translation id="3800828618615365228">Taktak Taktak 和 Taktak OS 的《附加條款》</translation>
+<translation id="3800828618615365228">Taktak 和 Taktak OS 的《附加條款》</translation>
 <translation id="3800898876950197674">如要允許此擴充程式，請輸入密碼。</translation>
 <translation id="3801449494961771207">預設的「文字轉語音」聲音</translation>
 <translation id="3802486193901166966">這個擴充程式不需要任何特殊權限，亦無需額外的網站存取權</translation>
@@ -4100,7 +4100,7 @@
 <translation id="3810973564298564668">管理</translation>
 <translation id="381202950560906753">新增其他指紋</translation>
 <translation id="3812525830114410218">錯誤的憑證</translation>
-<translation id="3813296892522778813">如果您找不到需要的資訊，請參閱 <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak 說明<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">如果您找不到需要的資訊，請參閱 <ph name="BEGIN_LINK_CHROMIUM" />Taktak 說明<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">用於翻譯頁面和「快速解答」的語言</translation>
 <translation id="3813458570141926987">由 Taktak 根據您最近瀏覽記錄估計嘅主題清單</translation>
 <translation id="3814529970604306954">學校帳戶</translation>
@@ -4574,7 +4574,7 @@
 <translation id="4133076602192971179">開啟應用程式以變更密碼</translation>
 <translation id="4134838386867070505">第 1 步 (共 4 步)：描述問題</translation>
 <translation id="413534985210133938">「<ph name="LOCAL_FOLDER" />」只會儲存至此裝置。如果將此書籤移至「<ph name="LOCAL_FOLDER" />」，就無法在其他裝置上存取。</translation>
-<translation id="4135746311382563554">Taktak Taktak 和 Taktak OS 的《附加服務條款》</translation>
+<translation id="4135746311382563554">Taktak 和 Taktak OS 的《附加服務條款》</translation>
 <translation id="4136203100490971508">「夜燈模式」將會在日出時自動關閉</translation>
 <translation id="41365691917097717">如繼續操作，系統將允許 ADB 偵錯功能建立及測試 Android 應用程式。請注意，此操作允許安裝未經 Taktak 驗證的 Android 應用程式，並且需要恢復原廠設定才能停用。</translation>
 <translation id="4137923333452716643">突顯要在閱讀模式下開啟的文字</translation>
@@ -7589,7 +7589,7 @@
 <translation id="6314819609899340042">您已成功為這部 <ph name="IDS_SHORT_PRODUCT_NAME" /> 裝置啟用偵錯功能。</translation>
 <translation id="6315170314923504164">語音</translation>
 <translation id="6315493146179903667">全部移至最上層</translation>
-<translation id="6316432269411143858">Taktak Taktak OS 條款內容</translation>
+<translation id="6316432269411143858">Taktak OS 條款內容</translation>
 <translation id="6317369057005134371">正在等待應用程式視窗…</translation>
 <translation id="6318125393809743217">包括具有政策設定的 policies.json 檔案。</translation>
 <translation id="6318944945640833942">偵測不到打印機，請再次輸入打印機位址。</translation>
@@ -7836,7 +7836,7 @@
 <translation id="6511607461419653612">請重新啟動 Chromebook，然後再試一次</translation>
 <translation id="6511827214781912955">建議刪除「<ph name="FILENAME" />」，讓此裝置的其他使用者無法查看您的密碼</translation>
 <translation id="6512759338201777379">AI 生成的<ph name="SUBJECT" /> 圖片 <ph name="INDEX" />，情境係<ph name="MOOD" />。</translation>
-<translation id="6513247462497316522">如果您沒有連線至其他網絡，Taktak Taktak 將使用流動數據網絡連線。</translation>
+<translation id="6513247462497316522">如果您沒有連線至其他網絡，Taktak 將使用流動數據網絡連線。</translation>
 <translation id="6514010653036109809">可用的裝置：</translation>
 <translation id="6516990372629061585">查看從 Linux 匯入的憑證</translation>
 <translation id="6517382055541687102">揀咗嘅裝置已改為 <ph name="DEVICE_NAME" /></translation>
@@ -8786,7 +8786,7 @@
 <translation id="7180611975245234373">重新整理</translation>
 <translation id="7180865173735832675">自訂</translation>
 <translation id="7181117767881540376">隱藏書籤列(&amp;H)</translation>
-<translation id="7181329571386134105">如要讓<ph name="CHILD_NAME" />之後可直接安裝擴充程式，不需經過你核准，請在裝置上開啟 Family Link 應用程式，並更新<ph name="CHILD_NAME" />的 Taktak Taktak 設定。</translation>
+<translation id="7181329571386134105">如要讓<ph name="CHILD_NAME" />之後可直接安裝擴充程式，不需經過你核准，請在裝置上開啟 Family Link 應用程式，並更新<ph name="CHILD_NAME" />的 Taktak 設定。</translation>
 <translation id="7181840534454431748">加入<ph name="OWNER_FIRST_NAME" />所在的分頁群組
               {NUM_OTHER_MEMBERS,plural, =0{加入<ph name="OWNER_FIRST_NAME" />所在的分頁群組}=1{加入<ph name="OWNER_FIRST_NAME" />和另外 # 人所在的分頁群組}other{加入<ph name="OWNER_FIRST_NAME" />和另外 # 人所在的分頁群組}}</translation>
 <translation id="7181976109296206547">查看標誌、名稱和網址更新</translation>

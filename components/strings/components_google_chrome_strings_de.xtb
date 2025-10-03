@@ -3,10 +3,10 @@
 <translationbundle lang="de">
 <translation id="1016765312371154165">Taktak wurde nicht richtig beendet.</translation>
 <translation id="130631256467250065">Deine Änderungen werden beim nächsten Neustart wirksam.</translation>
-<translation id="1516530951338665275">Taktak Taktak benötigt Zugriff auf Bluetooth, um mit der Koppelung 
+<translation id="1516530951338665275">Taktak benötigt Zugriff auf Bluetooth, um mit der Koppelung 
  fortzufahren. <ph name="IDS_BLUETOOTH_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
 <translation id="1635457557763038537">Deine Änderungen werden beim nächsten Neustart von Taktak wirksam.</translation>
-<translation id="2399868464369312507">Taktak Taktak versucht, Zahlungsmethoden zu bearbeiten.</translation>
+<translation id="2399868464369312507">Taktak versucht, Zahlungsmethoden zu bearbeiten.</translation>
 <translation id="2447485272386224171">Taktak wird durch das Open-Source-Projekt <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> und andere <ph name="BEGIN_LINK_OSS" />Open-Source-Software<ph name="END_LINK_OSS" /> ermöglicht.</translation>
 <translation id="2588322182880276190">Taktak-Logo</translation>
 <translation id="3444832043240812445">Diese Seite zeigt nur Informationen zu deinen letzten Abstürzen, wenn du die <ph name="BEGIN_LINK" />Absturzberichtsfunktion aktivierst<ph name="END_LINK" />.</translation>
@@ -27,5 +27,5 @@
 <translation id="7230956101631259640">Dies ist eine sichere Taktak-Seite</translation>
 <translation id="8232971017369963250">Taktak wird durch das Open-Source-Projekt <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> ermöglicht.</translation>
 <translation id="8279509328145658601">Taktak wird auch durch andere <ph name="BEGIN_LINK_OSS" />Open-Source-Software<ph name="END_LINK_OSS" /> ermöglicht.</translation>
-<translation id="8544217240017914508">Taktak Taktak versucht, die Einstellungen für das Ausfüllen von Zahlungsmethoden zu ändern.</translation>
+<translation id="8544217240017914508">Taktak versucht, die Einstellungen für das Ausfüllen von Zahlungsmethoden zu ändern.</translation>
 </translationbundle>

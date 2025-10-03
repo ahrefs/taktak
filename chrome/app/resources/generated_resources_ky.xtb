@@ -1125,7 +1125,7 @@
 <translation id="1757301747492736405">Чыгарып салуу күтүлүүдө</translation>
 <translation id="175772926354468439">Теманы иштетүү</translation>
 <translation id="1757786065507923842">Ата-эненин уруксат сурамы ишке ашкан жок.</translation>
-<translation id="17584710573359123">Taktak Web Store'до көрүү</translation>
+<translation id="17584710573359123">Chrome Web Store'до көрүү</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> <ph name="REMAPPING_OPTION" /> болуп дайындалды.</translation>
 <translation id="1761845175367251960"><ph name="NAME" /> аккаунту</translation>
 <translation id="176272781006230109">Соода кылуу сунуштары</translation>
@@ -1331,7 +1331,7 @@
 <translation id="1901760057081700494">Убакыт алкагы учурда <ph name="TIME_ZONE_ENTRY" /> болуп коюлган. Убакыт алкагын автоматтык түрдө жаңыртуу үчүн <ph name="BEGIN_LINK" />системага жайгашкан жерди аныктоо мүмкүнчүлүгүн бериңиз<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">Сиз кирген URL даректери Taktak аккаунтуңузга сакталат</translation>
 <translation id="1906181697255754968">Сайттар адатта ишиңизди автоматтык түрдө сактоо сыяктуу функциялар үчүн түзмөгүңүздөгү файлдарды жана папкаларды колдонот</translation>
-<translation id="1906488504371069394">Дагы башка кеңейтүүлөрдү жана темаларды <ph name="BEGIN_LINK" />Taktak Web Store'дон<ph name="END_LINK" /> табасыз</translation>
+<translation id="1906488504371069394">Дагы башка кеңейтүүлөрдү жана темаларды <ph name="BEGIN_LINK" />Chrome Web Store'дон<ph name="END_LINK" /> табасыз</translation>
 <translation id="1907044622262489040">Айтып териңиз. Search + D баскычтарын басып, сүйлөп баштаңыз.</translation>
 <translation id="1907659324308286326">Ойдогудай иштеши үчүн Thunderbolt же USB4 аксессуарларына эстутумду колдонууга уруксат берүү керек.</translation>
 <translation id="1908591798274282246">Жабылган топту кайра ачуу</translation>
@@ -2112,7 +2112,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="2434449159125086437">Принтер жөндөлгөн жок. Анын конфигурациясын текшерип, кайталап көрүңүз.</translation>
 <translation id="2434758125294431199">Сиз менен ким бөлүшө аларын тандаңыз</translation>
 <translation id="2434915728183570229">Телефонуңуздагы колдонмолорду көрө аласыз</translation>
-<translation id="2435137177546457207">Taktak Taktak жана ChromeOS Flex'тин кошумча шарттары</translation>
+<translation id="2435137177546457207">Taktak жана ChromeOS Flex'тин кошумча шарттары</translation>
 <translation id="2435248616906486374">Тармак ажыратылды</translation>
 <translation id="2435457462613246316">Сырсөздү көрсөтүү</translation>
 <translation id="2436385001956947090">&amp;Шилтемени көчүрүү</translation>
@@ -2474,7 +2474,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="267442004702508783">жаңылоо</translation>
 <translation id="2674764818721168631">Өчүк</translation>
 <translation id="2675716371350192683">Мазмунуңуз ЖИни жакшыртуу үчүн колдонулбайт. Уюмуңуз бул параметрлерди каалаган убакта өзгөртө алат.</translation>
-<translation id="2676084251379299915">Бул кеңейтүү Taktak Web Store'до мындан ары жеткиликсиз болгондуктан, Enterprise саясаты тарабынан өчүрүлдү.</translation>
+<translation id="2676084251379299915">Бул кеңейтүү Chrome Web Store'до мындан ары жеткиликсиз болгондуктан, Enterprise саясаты тарабынан өчүрүлдү.</translation>
 <translation id="2677748264148917807">Чыгуу</translation>
 <translation id="2678063897982469759">Кайра иштетүү</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Өтмөктөр тобун калтырасызбы?}other{Өтмөк топторун калтырасызбы?}}</translation>
@@ -4080,7 +4080,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="3798670284305777884">Катуу сүйлөткүч (ички)</translation>
 <translation id="3799128412641261490">Switch Access параметрлери</translation>
 <translation id="3800764353337460026">Символ стили</translation>
-<translation id="3800828618615365228">Taktak Taktak жана ChromeOS'тун кошумча шарттары</translation>
+<translation id="3800828618615365228">Taktak жана ChromeOS'тун кошумча шарттары</translation>
 <translation id="3800898876950197674">Бул кеңейтүүгө уруксат берүү үчүн сырсөзүңүздү териңиз.</translation>
 <translation id="3801449494961771207">Тутумдун кеп синтезаторунун үнү</translation>
 <translation id="3802486193901166966">Бул кеңейтүү атайын уруксаттарды талап кылбайт жана кошумча сайтка кирүүнүн кереги жок</translation>
@@ -4103,7 +4103,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="3810973564298564668">Башкаруу</translation>
 <translation id="381202950560906753">Дагы бирди кошуу</translation>
 <translation id="3812525830114410218">Начар тастыктама</translation>
-<translation id="3813296892522778813">Эгер издегениңизди таппай жатсаңыз, <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak жардам<ph name="END_LINK_CHROMIUM" /> бөлүмүнө өтүңүз</translation>
+<translation id="3813296892522778813">Эгер издегениңизди таппай жатсаңыз, <ph name="BEGIN_LINK_CHROMIUM" />Taktak жардам<ph name="END_LINK_CHROMIUM" /> бөлүмүнө өтүңүз</translation>
 <translation id="3813358687923336574">Которуу үчүн колдонулган тил жана Ыкчам жооптор</translation>
 <translation id="3813458570141926987">Taktak'дун баамында акыркы көрүлгөн вебсайттардын негизинде аныкталган темалардын тизмеси</translation>
 <translation id="3814529970604306954">Мектеп аккаунту</translation>
@@ -4580,7 +4580,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="4133076602192971179">Колдонмону ачып, сырсөзүңүздү өзгөртүңүз</translation>
 <translation id="4134838386867070505">4 кадамдын ичинен 1-кадам: Көйгөйдү түшүндүрүп бериңиз</translation>
 <translation id="413534985210133938">"<ph name="LOCAL_FOLDER" />" ушул түзмөктө гана сакталат. Эгер бул кыстарманы "<ph name="LOCAL_FOLDER" />" папкасына жылдырсаңыз, аны башка түзмөктөрдө ача албай каласыз.</translation>
-<translation id="4135746311382563554">Taktak Taktak менен ChromeOS'тун Кошумча тейлөө шарттары</translation>
+<translation id="4135746311382563554">Taktak менен ChromeOS'тун Кошумча тейлөө шарттары</translation>
 <translation id="4136203100490971508">Түнкү режим күн чыкканда автоматтык түрдө өчөт</translation>
 <translation id="41365691917097717">Улантсаңыз, ADB Android колдонмолорун түзүп, аларды сыноодогу мүчүлүштүктөрдү оңдоону иштетет. Бул аракет Taktak тарабынан текшерилбеген Android колдонмолорун орнотууга уруксат берет. Аларды өчүрүү үчүн түзмөктү баштапкы абалга кайтаруу керек болот.</translation>
 <translation id="4137923333452716643">Окуу режиминде ачкыңыз келген текстти бөлүп көрсөтүңүз</translation>
@@ -6431,7 +6431,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="5470741195701938302">Сандар</translation>
 <translation id="5471768120198416576">Салам! Мен сизге текстти окуп беремин.</translation>
 <translation id="5472627187093107397">Бул сайттагы сырсөздөрдү сактоо</translation>
-<translation id="5473062644742711742">Taktak Web Store'до көбүрөөк атайын мүмкүнчүлүктөр куралдарын таап алыңыз</translation>
+<translation id="5473062644742711742">Chrome Web Store'до көбүрөөк атайын мүмкүнчүлүктөр куралдарын таап алыңыз</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Улантуу менен бул түзмөккө Taktak'дан, байланыш операторуңуздан жана түзмөгүңүздүн өндүрүүчүсүнөн жаңыртууларды жана колдонмолорду автоматтык түрдө жүктөп алып, орнотууга мүмкүнчүлүк береcиз (мобилдик Интернет аркылуу дагы). Бул колдонмолордун айрымдары колдонмо аркылуу сатып алууну сунушташы мүмкүн.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN код кеминде бир символдон турушу керек}other{PIN код кеминде # символдон турушу керек}}</translation>
@@ -6667,7 +6667,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="5637476008227280525">Мобилдик Интернетти иштетүү</translation>
 <translation id="5638170200695981015">Чектелген көрүү жана түзөтүү параметрлерин колдонуу үчүн "Негизги түзөткүчтө ачуу" баскычын басыңыз.</translation>
 <translation id="563821631542362636">Сайтка маалымат сактоого уруксат берүү</translation>
-<translation id="5638309510554459422"><ph name="BEGIN_LINK" />Taktak Web Store'дон<ph name="END_LINK" /> кеңейтүүлөрдү жана темаларды таап алыңыз</translation>
+<translation id="5638309510554459422"><ph name="BEGIN_LINK" />Chrome Web Store'дон<ph name="END_LINK" /> кеңейтүүлөрдү жана темаларды таап алыңыз</translation>
 <translation id="5639549361331209298">Бул баракты кайра жүктөп, көбүрөөк параметр көрүү үчүн коё бербей кармап туруңуз</translation>
 <translation id="5640133431808313291">Коопсуздук ачкычтарын башкаруу</translation>
 <translation id="5640159004008030285">Бул сырсөз ушул түзмөктө гана сакталат. Аны башка түзмөктөрдө колдонуу үчүн <ph name="BEGIN_LINK" />Taktak аккаунтуңузда сактаңыз<ph name="END_LINK" />.</translation>
@@ -7810,7 +7810,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="6476671549211161535"><ph name="DEVICE_NAME" /> түзмөгүндөгү сол же оң баскычтан башка баскычты басыңыз.</translation>
 <translation id="6477822444490674459">Жумуш профилиндеги телефондордо билдирмелер шайкештирилбейт. <ph name="LINK_BEGIN" />Кеңири маалымат<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Ыкчам киргизүү баскычы Tab баскычынын астында жайгашкан</translation>
-<translation id="6479881432656947268">Taktak Web Store'го баш багуу</translation>
+<translation id="6479881432656947268">Chrome Web Store'го баш багуу</translation>
 <translation id="6480327114083866287"><ph name="MANAGER" /> башкарат</translation>
 <translation id="6481749622989211463">Жакын жердеги түзмөктөр менен файлдарды жана башка нерселерди бөлүшүңүз. <ph name="LINK_BEGIN" />Кеңири маалымат<ph name="LINK_END" /></translation>
 <translation id="648204537326351595"><ph name="SPECIFIC_NAME" /> кызматына микрофонду колдонууга уруксат берүү</translation>
@@ -7847,7 +7847,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="6511607461419653612">Chromebook'ту өчүрүп күйгүзүп, кайталап көрүңүз</translation>
 <translation id="6511827214781912955">Бул түзмөктү колдонгон башка колдонуучулар сырсөздөрүңүздү көрүп албашы үчүн, <ph name="FILENAME" /> файлын өчүрүү сунушталат</translation>
 <translation id="6512759338201777379"><ph name="SUBJECT" /> ичинен түзүлгөн сүрөт: <ph name="INDEX" />, маанай: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Башка тармакка туташып турбасаңыз, Taktak Taktak мобилдик дайындарды колдонот.</translation>
+<translation id="6513247462497316522">Башка тармакка туташып турбасаңыз, Taktak мобилдик дайындарды колдонот.</translation>
 <translation id="6514010653036109809">Жеткиликтүү түзмөк:</translation>
 <translation id="6516990372629061585">Linux'тан импорттолгон тастыктамаларды көрүү</translation>
 <translation id="6517382055541687102">Тандалган түзмөк төмөнкүгө <ph name="DEVICE_NAME" /> өзгөртүлдү</translation>
@@ -8042,7 +8042,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="6644846457769259194">Түзмөгүңүз жаңыртылууда (<ph name="PROGRESS_PERCENT" />)</translation>
 <translation id="6646476869708241165">Ыкчам туташууну өчүрүү</translation>
 <translation id="6646579314269804020">Түзмөктөрүңүздүн арасында Wi‑Fi параметрлерин бөлүшөсүз.</translation>
-<translation id="6646696210740573446">Taktak Taktak'га IP дарегиңизди жашырган купуялык сервери аркылуу URL'дин обфускацияланган бөлүгүн жөнөтөт. Эгер сайт сырсөзүңүздү уурдоого аракет кылса же кооптуу файлды жүктөп алсаңыз, Taktak URL даректерди, анын ичинде барактардагы мазмундун үлгүлөрүн Taktak'га жөнөтүшү мүмкүн.</translation>
+<translation id="6646696210740573446">Taktak'га IP дарегиңизди жашырган купуялык сервери аркылуу URL'дин обфускацияланган бөлүгүн жөнөтөт. Эгер сайт сырсөзүңүздү уурдоого аракет кылса же кооптуу файлды жүктөп алсаңыз, Taktak URL даректерди, анын ичинде барактардагы мазмундун үлгүлөрүн Taktak'га жөнөтүшү мүмкүн.</translation>
 <translation id="6647228709620733774">Netscape Тастыктама борборунун жоюу URL дареги</translation>
 <translation id="6647690760956378579">Кадимки үндү алдын ала угуу</translation>
 <translation id="6648911618876616409">Маанилүү жаңыртуу орнотууга даяр. Баштоо үчүн аккаунтуңузга кириңиз.</translation>
@@ -8796,7 +8796,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="7180611975245234373">Жаңылоо</translation>
 <translation id="7180865173735832675">Өзгөчөлөштүрүү</translation>
 <translation id="7181117767881540376">&amp;Кыстармалар тилкесин жашыруу</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> уруксатыңызды сурабастан кеңейтүүлөрдү орнотуп алышы үчүн түзмөгүңүздө Family Link колдонмосун ачып, <ph name="CHILD_NAME" /> үчүн Taktak Taktak параметрлерин жаңыртыңыз.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> уруксатыңызды сурабастан кеңейтүүлөрдү орнотуп алышы үчүн түзмөгүңүздө Family Link колдонмосун ачып, <ph name="CHILD_NAME" /> үчүн Taktak параметрлерин жаңыртыңыз.</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> менен өтмөктөр тобуна кошулуңуз
             {NUM_OTHER_MEMBERS,plural, =0{менен өтмөктөр тобуна кошулуңуз<ph name="OWNER_FIRST_NAME" />}=1{ <ph name="OWNER_FIRST_NAME" /> жана башка }other{# менен өтмөктөр тобуна кошулуңуз <ph name="OWNER_FIRST_NAME" /> жана башка }}# менен өтмөктөр тобуна кошулуңуз</translation>
 <translation id="7181976109296206547">Жаңы логотипти, аталышты жана URL дарегин карап көрүңүз</translation>
@@ -9183,7 +9183,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="7448430327655618736">Колдонмолорду автоматтык түрдө орнотуу</translation>
 <translation id="7448664748118305024">Бардык терезелер жабылганда, сайттар түзмөгүңүзгө сактаган маалыматты өчүрүү</translation>
 <translation id="7450761244949417357"><ph name="ALTERNATIVE_BROWSER_NAME" /> аркылуу ачылууда</translation>
-<translation id="7450926666485653189">Taktak Taktak'га IP дарегиңизди жашырган купуялык сервери аркылуу URL'дин обфускацияланган бөлүгүн жөнөтөт</translation>
+<translation id="7450926666485653189">Taktak'га IP дарегиңизди жашырган купуялык сервери аркылуу URL'дин обфускацияланган бөлүгүн жөнөтөт</translation>
 <translation id="7453008956351770337">Бул принтерди тандоо менен, төмөнкү кеңейтүү принтериңизге кирүүсүнө уруксат берип жатасыз:</translation>
 <translation id="7453032093368223821">Башка маалыматты тескөө</translation>
 <translation id="7454548535253569100">Портал: <ph name="SUBFRAME_SITE" /></translation>
@@ -10607,7 +10607,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="8410775397654368139">Taktak Play</translation>
 <translation id="8411043186249152291">толук экран</translation>
 <translation id="8412136526970428322">Төмөнкүлөргө уруксат берилди: <ph name="PERMISSION" /> жана дагы <ph name="COUNT" /></translation>
-<translation id="8413795581997394485">Кооптуу деп таанылган сайттардан, жүктөлүп алынган файлдардан жана кеңейтүүлөрдөн коргойт. Сайтка киргениңизде, Taktak Taktak'га IP дарегиңизди жашырган купуялык сервери аркылуу URL'дин обфускацияланган бөлүгүн жөнөтөт. Эгер сайтта шектүү аракет болсо, анын толук URL даректери жана барак мазмунунун үлгүлөрү да жөнөтүлөт.</translation>
+<translation id="8413795581997394485">Кооптуу деп таанылган сайттардан, жүктөлүп алынган файлдардан жана кеңейтүүлөрдөн коргойт. Сайтка киргениңизде, Taktak'га IP дарегиңизди жашырган купуялык сервери аркылуу URL'дин обфускацияланган бөлүгүн жөнөтөт. Эгер сайтта шектүү аракет болсо, анын толук URL даректери жана барак мазмунунун үлгүлөрү да жөнөтүлөт.</translation>
 <translation id="8413956290606243087">ChromeOS системасына кыстарылган экрандагы нерсени окуп берүүчү ChromeVox куралын иштетесизби?</translation>
 <translation id="8414396119627470038"><ph name="SITE_ETLD_PLUS_ONE" /> сайтына <ph name="IDENTITY_PROVIDER_ETLD_PLUS_ONE" /> менен кириңиз</translation>
 <translation id="8416730306157376817"><ph name="BATTERY_PERCENTAGE" />% (куту)</translation>
@@ -11033,7 +11033,7 @@ Family Link колдонмосун түзмөгүңүзгө орнотуп, бу
 <translation id="8708000541097332489">Чыгууда тазалансын</translation>
 <translation id="870805141700401153">Microsoft Жеке кодунун колтамгасы</translation>
 <translation id="8708671767545720562">&amp;Көбүрөөк маалымат</translation>
-<translation id="8709368517685334931">Эски түстөрдү Taktak Web Store'дон табасыз</translation>
+<translation id="8709368517685334931">Эски түстөрдү Chrome Web Store'дон табасыз</translation>
 <translation id="8710414664106871428">Фантастика</translation>
 <translation id="8710550057342691420">Окшош өтмөктөрдү иретке келтирүү</translation>
 <translation id="8711402221661888347">Туздалган бадыраң</translation>

@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="it">
-<translation id="1001534784610492198">Il file del programma di installazione è danneggiato oppure non è valido. Scarica nuovamente Taktak Taktak.</translation>
+<translation id="1001534784610492198">Il file del programma di installazione è danneggiato oppure non è valido. Scarica nuovamente Taktak.</translation>
 <translation id="1018937009655463387">Per condividere la finestra, consenti la Registrazione dello schermo per Taktak nelle Impostazioni di sistema.</translation>
 <translation id="1026101648481255140">Riprendi l'installazione</translation>
-<translation id="102763973188675173">Personalizza e controlla Taktak Taktak. È disponibile un nuovo aggiornamento.</translation>
+<translation id="102763973188675173">Personalizza e controlla Taktak. È disponibile un nuovo aggiornamento.</translation>
 <translation id="1028061813283459617">Per eliminare i dati di navigazione solo da questo dispositivo e conservarli nel tuo Account Taktak, <ph name="BEGIN_LINK" />esci da Taktak<ph name="END_LINK" />.</translation>
 <translation id="1042270987544905725">Fai clic per chiudere la finestra di dialogo di accesso a Taktak</translation>
 <translation id="1051793555070215510">Aiutaci a migliorare la modalità di navigazione in incognito partecipando a questo sondaggio di 1 minuto.</translation>
@@ -29,9 +29,9 @@
 <translation id="1341711321000856656">Puoi cambiare per vedere le password di un altro profilo Taktak</translation>
 <translation id="1356661055722410047">Novità. Puoi tradurre sia testo che immagini sullo schermo</translation>
 <translation id="1363996462118479832">Impossibile sincronizzare i dati in ChromeOS a causa di un errore durante l'accesso.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Cerca</translation>
-<translation id="1399397803214730675">Su questo computer è già installata una versione più recente di Taktak Taktak. Se il software non funziona, disinstalla Taktak Taktak e riprova.</translation>
+<translation id="1399397803214730675">Su questo computer è già installata una versione più recente di Taktak. Se il software non funziona, disinstalla Taktak e riprova.</translation>
 <translation id="141901961143729572">Condividi le tue opinioni</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Taktak ha terminato l'aggiornamento. Puoi utilizzare l'ultima versione non appena eseguirai il riavvio. Dopodiché verranno riaperte le schede correnti.}=1{Taktak ha terminato l'aggiornamento. Puoi utilizzare l'ultima versione non appena eseguirai il riavvio. Dopodiché verranno riaperte le schede correnti. La finestra di navigazione in incognito non verrà riaperta.}other{Taktak ha terminato l'aggiornamento. Puoi utilizzare l'ultima versione non appena eseguirai il riavvio. Dopodiché verranno riaperte le schede correnti. # finestre di navigazione in incognito non verranno riaperte.}}</translation>
 <translation id="1434626383986940139">Applicazioni Taktak Canary</translation>
@@ -44,7 +44,7 @@
 <translation id="1547295885616600893">La realizzazione di ChromeOS è stata possibile grazie a <ph name="BEGIN_LINK_CROS_OSS" />software open source<ph name="END_LINK_CROS_OSS" /> aggiuntivi.</translation>
 <translation id="1547469039832541117">Termina l'attività evidenziata.</translation>
 <translation id="1553358976309200471">Aggiorna Taktak</translation>
-<translation id="1587223624401073077">Taktak Taktak sta utilizzando la videocamera.</translation>
+<translation id="1587223624401073077">Taktak sta utilizzando la videocamera.</translation>
 <translation id="1587325591171447154"><ph name="FILE_NAME" /> è pericoloso, pertanto è stato bloccato da Taktak.</translation>
 <translation id="1597911401261118146">Per controllare che le tue password siano protette da violazioni dei dati e altri problemi di sicurezza, <ph name="BEGIN_LINK" />accedi a Taktak<ph name="END_LINK" />.</translation>
 <translation id="1619887657840448962">Per rendere Taktak più sicuro, abbiamo disattivato la seguente estensione non presente nel <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> che potrebbe essere stata aggiunta a tua insaputa.</translation>
@@ -53,9 +53,9 @@
 <translation id="1651617469580841801">Quando utilizzi Taktak Lens, il titolo della pagina, l'URL e i contenuti, inclusi i PDF, vengono inviati a Taktak. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">Informazioni su ChromeOS Flex</translation>
 <translation id="1674870198290878346">Apri link in una finestra di navigazione in inco&amp;gnito di Taktak</translation>
-<translation id="1682634494516646069">Taktak Taktak non è in grado di leggere e scrivere nella directory dei dati: <ph name="USER_DATA_DIRECTORY" /></translation>
+<translation id="1682634494516646069">Taktak non è in grado di leggere e scrivere nella directory dei dati: <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Quando digiti nella barra degli indirizzi o nella casella di ricerca, Taktak invia ciò che digiti agli strumenti di ricerca, all'AI e all'agente della tua organizzazione per ricevere suggerimenti.</translation>
-<translation id="1698376642261615901">Taktak Taktak è un browser web che apre pagine e applicazioni web con grande velocità. È veloce, stabile e facile da utilizzare. Esplora il Web in modo più sicuro grazie alla protezione contro malware e phishing incorporata in Taktak Taktak.</translation>
+<translation id="1698376642261615901">Taktak è un browser web che apre pagine e applicazioni web con grande velocità. È veloce, stabile e facile da utilizzare. Esplora il Web in modo più sicuro grazie alla protezione contro malware e phishing incorporata in Taktak.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Taktak verrà riavviato tra un'ora}other{Taktak verrà riavviato tra # ore}}</translation>
 <translation id="1722488837206509557">In questo modo potrai selezionare i dispositivi disponibili su cui visualizzare i contenuti.</translation>
 <translation id="1786003790898721085">Assicurati di aver effettuato l'accesso a Taktak sul tuo dispositivo <ph name="TARGET_DEVICE_NAME" /> e prova a ripetere l'invio.</translation>
@@ -66,8 +66,8 @@
 <translation id="1832046143430087831">Accelera i siti con il motore V8 di Taktak, ma rende Taktak leggermente meno resistente agli attacchi. Questa impostazione non è attiva.</translation>
 <translation id="1838374766361614909">Cancella ricerca</translation>
 <translation id="1860536484129686729">Per questo sito Taktak ha bisogno dell'autorizzazione ad accedere alla fotocamera</translation>
-<translation id="1873233029667955273">Taktak Taktak non è il browser predefinito</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-In)</translation>
+<translation id="1873233029667955273">Taktak non è il browser predefinito</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-In)</translation>
 <translation id="1877026089748256423">Taktak non è aggiornato</translation>
 <translation id="1880677175115548835">Seleziona testo</translation>
 <translation id="1919130412786645364">Consenti l'accesso a Taktak</translation>
@@ -79,7 +79,7 @@
 <translation id="2024959665595762054">Verifica la tua identità per usare e salvare i dati di Taktak nel tuo Account Taktak</translation>
 <translation id="2034233344106846793">Quando possibile, Taktak esegue automaticamente l'upgrade delle connessioni non sicure a HTTPS</translation>
 <translation id="207902854391093810">Quando sono attive le prove, Ad measurement consente ai siti che visiti di chiedere a Taktak informazioni che li aiutino a valutare il rendimento dei loro annunci. Ad measurement limita il tracciamento tra siti trasferendo il minor numero possibile di informazioni tra i siti.</translation>
-<translation id="2091012649849228750">Per ricevere gli aggiornamenti futuri di Taktak Taktak, devi avere Windows 10 o versioni successive. Su questo computer è installato Windows 8.</translation>
+<translation id="2091012649849228750">Per ricevere gli aggiornamenti futuri di Taktak, devi avere Windows 10 o versioni successive. Su questo computer è installato Windows 8.</translation>
 <translation id="2094648590148273905">Termini di ChromeOS Flex</translation>
 <translation id="2094919256425865063">Vuoi chiudere comunque Taktak?</translation>
 <translation id="2096213354152647998">Non hai visitato il sito di recente. Taktak ha rimosso <ph name="PERMISSION" />.</translation>
@@ -101,18 +101,18 @@
 <translation id="2199691482078155239">Taktak ti offre un maggiore controllo sugli annunci che vedi e limita ciò che i siti possono imparare su di te quando ti mostrano annunci personalizzati</translation>
 <translation id="2216543877350048334">Esci per rimuovere il tuo Account Taktak da Taktak</translation>
 <translation id="2236949375853147973">Le mie attività</translation>
-<translation id="2290014774651636340">Mancano le chiavi dell'API di Taktak. Alcune funzionalità di Taktak Taktak verranno disattivate.</translation>
-<translation id="2290095356545025170">Sei sicuro di voler disinstallare Taktak Taktak?</translation>
+<translation id="2290014774651636340">Mancano le chiavi dell'API di Taktak. Alcune funzionalità di Taktak verranno disattivate.</translation>
+<translation id="2290095356545025170">Sei sicuro di voler disinstallare Taktak?</translation>
 <translation id="2301513536169703857">Accedi a Taktak per trovare le password, i preferiti  e altri dati su tutti i dispositivi</translation>
-<translation id="2309047409763057870">Questa è un'installazione secondaria, di conseguenza Taktak Taktak non può essere impostato come browser predefinito.</translation>
+<translation id="2309047409763057870">Questa è un'installazione secondaria, di conseguenza Taktak non può essere impostato come browser predefinito.</translation>
 <translation id="2345992953227471816">Taktak ha rilevato che le seguenti estensioni contengono malware:</translation>
 <translation id="2348335408836342058">Per questo sito Taktak ha bisogno dell'autorizzazione ad accedere alla fotocamera e al microfono</translation>
 <translation id="234869673307233423">Taktak non può controllare le tue password. Riprova più tardi.</translation>
 <translation id="2359808026110333948">Continua</translation>
 <translation id="2403703063067034158">Errore di avvio: è in esecuzione un'altra istanza di configurazione. Riprova più tardi.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{Una o più estensioni di Taktak stavano accedendo a 1 dispositivo HID}=1{Una o più estensioni di Taktak stanno accedendo a 1 dispositivo HID}other{Una o più estensioni di Taktak stanno accedendo a # dispositivi HID}}</translation>
-<translation id="2424440923901031101">Questa estensione viola le norme del Taktak Web Store e potrebbe non essere sicura. Rimuovila da Taktak in modo che non possa più vedere e modificare i tuoi dati sui siti che visiti, incluse le tue informazioni personali.</translation>
-<translation id="2467438592969358367">Taktak Taktak vuole esportare le password. Per consentire l'esportazione, digita la tua password Windows.</translation>
+<translation id="2424440923901031101">Questa estensione viola le norme del Chrome Web Store e potrebbe non essere sicura. Rimuovila da Taktak in modo che non possa più vedere e modificare i tuoi dati sui siti che visiti, incluse le tue informazioni personali.</translation>
+<translation id="2467438592969358367">Taktak vuole esportare le password. Per consentire l'esportazione, digita la tua password Windows.</translation>
 <translation id="2472092250898121027">Questa estensione contiene malware e non è sicura. Rimuovila da Taktak in modo che non possa più vedere e modificare i tuoi dati sui siti che visiti, incluse le tue informazioni personali.</translation>
 <translation id="2485422356828889247">Disinstalla</translation>
 <translation id="2513154137948333830">È richiesto il riavvio: <ph name="INSTALL_SUCCESS" /></translation>
@@ -124,19 +124,19 @@
 <translation id="2571392474191184472">La tua organizzazione gestisce Taktak</translation>
 <translation id="2574930892358684005"><ph name="EXISTING_USER" /> ha già eseguito l'accesso a questo profilo Taktak. Per tenere separata la tua navigazione, Taktak può creare per te il tuo profilo personale.</translation>
 <translation id="2579190314336775785">Le password possono essere eliminate solo al di fuori di Taktak</translation>
-<translation id="2580411288591421699">Impossibile installare la stessa versione di Taktak Taktak attualmente in esecuzione. Chiudi Taktak Taktak e riprova.</translation>
+<translation id="2580411288591421699">Impossibile installare la stessa versione di Taktak attualmente in esecuzione. Chiudi Taktak e riprova.</translation>
 <translation id="2586406160782125153">Verranno eliminati i tuoi dati di navigazione da questo dispositivo. Per recuperare i dati in un secondo momento, accedi a Taktak come <ph name="USER_EMAIL" />.</translation>
 <translation id="259935314519650377">Impossibile memorizzare nella cache il programma di installazione scaricato. Errore: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">Sistema</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Taktak esegue controlli regolari per verificare che il browser disponga delle impostazioni più sicure. Ti informeremo qualora fosse necessario un controllo da parte tua.</translation>
 <translation id="2652691236519827073">Apri link in una nuova &amp;scheda di Taktak</translation>
-<translation id="2665296953892887393">Aiutaci a migliorare Taktak Taktak inviando a Taktak report sugli arresti anomali e <ph name="UMA_LINK" /></translation>
+<translation id="2665296953892887393">Aiutaci a migliorare Taktak inviando a Taktak report sugli arresti anomali e <ph name="UMA_LINK" /></translation>
 <translation id="2668094785979141847">Fai clic per uscire da Taktak Lens</translation>
-<translation id="2681444469812712297">Apri <ph name="URL" /> in una nuova scheda in Taktak Taktak.</translation>
+<translation id="2681444469812712297">Apri <ph name="URL" /> in una nuova scheda in Taktak.</translation>
 <translation id="2712141162840347885">Seleziona un elemento da cercare con Taktak Lens o premi Esc per uscire</translation>
 <translation id="2738871930057338499">Impossibile connettersi a internet. HTTP 403 Accesso negato. Controlla la configurazione del proxy.</translation>
-<translation id="2742320827292110288">Avviso: Taktak Taktak non è in grado di impedire alle estensioni di registrare la tua cronologia di navigazione. Per disattivare questa estensione in modalità di navigazione in incognito, deseleziona questa opzione.</translation>
+<translation id="2742320827292110288">Avviso: Taktak non è in grado di impedire alle estensioni di registrare la tua cronologia di navigazione. Per disattivare questa estensione in modalità di navigazione in incognito, deseleziona questa opzione.</translation>
 <translation id="2753623023919742414">Fai clic per cercare</translation>
 <translation id="2765403129283291972">Per questo sito Taktak ha bisogno dell'autorizzazione ad accedere al microfono</translation>
 <translation id="2770231113462710648">Cambia browser predefinito con:</translation>
@@ -168,13 +168,13 @@
 <translation id="3003694935412297923">Tutte le attività</translation>
 <translation id="3018957014024118866">Elimina i dati anche da Taktak (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">Riavvia per aggiornare &amp;Taktak OS Flex</translation>
-<translation id="3037838751736561277">Taktak Taktak è in modalità background.</translation>
+<translation id="3037838751736561277">Taktak è in modalità background.</translation>
 <translation id="3038232873781883849">In attesa dell'installazione…</translation>
 <translation id="3045032126857188731">Lingua di destinazione: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Chiudi finestra di dialogo di feedback</translation>
 <translation id="306179102415443347">Usa la scorciatoia per accedere rapidamente a Gestore delle password di Taktak. Puoi spostare la scorciatoia nella schermata Home del computer o in Avvio applicazioni.</translation>
 <translation id="3065168410429928842">Scheda Taktak</translation>
-<translation id="3080151273017101988">Continua a eseguire applicazioni in background dopo la chiusura di Taktak Taktak</translation>
+<translation id="3080151273017101988">Continua a eseguire applicazioni in background dopo la chiusura di Taktak</translation>
 <translation id="3100998948628680988">Assegna un nome al tuo profilo Taktak</translation>
 <translation id="310459126943037700">Impossibile terminare le attività.</translation>
 <translation id="3112458742631356345">Taktak ha bloccato questo download perché il file non viene scaricato comunemente e potrebbe essere pericoloso</translation>
@@ -182,7 +182,7 @@
 <translation id="3119573284443908657">Taktak ha bloccato questo download perché il file di archivio include altri file che potrebbero nascondere malware</translation>
 <translation id="3135560418014806498">Aggiungi profilo Taktak</translation>
 <translation id="3137969841538672700">Trascina per cercare</translation>
-<translation id="3140883423282498090">Le modifiche verranno applicate al prossimo riavvio di Taktak Taktak.</translation>
+<translation id="3140883423282498090">Le modifiche verranno applicate al prossimo riavvio di Taktak.</translation>
 <translation id="3149510190863420837">Applicazioni Taktak</translation>
 <translation id="3161522574479303604">Tutte le lingue</translation>
 <translation id="319199214552513804">Accedi a Taktak per trovare questa estensione e altro su tutti i tuoi computer</translation>
@@ -199,7 +199,7 @@
 <translation id="3352986031709923790">angolo in alto a destra dell'area di ricerca: destra <ph name="RIGHT" />%, in alto <ph name="TOP" />%</translation>
 <translation id="3360895254066713204">Supporto Taktak</translation>
 <translation id="3379938682270551431">{0,plural, =0{Taktak verrà riavviato ora}=1{Taktak verrà riavviato tra 1 secondo}other{Taktak verrà riavviato tra # secondi}}</translation>
-<translation id="3396977131400919238">Durante l'installazione si è verificato un errore del sistema operativo. Scarica nuovamente Taktak Taktak.</translation>
+<translation id="3396977131400919238">Durante l'installazione si è verificato un errore del sistema operativo. Scarica nuovamente Taktak.</translation>
 <translation id="3428747202529429621">Ti protegge su Taktak e potrebbe essere utilizzata per migliorare la sicurezza su altre app Taktak se esegui l'accesso</translation>
 <translation id="3434246496373299699">Taktak può controllare le tue password quando accedi con il tuo Account Taktak</translation>
 <translation id="3438681572027105609">Accedi a Taktak per trovare le password e altri dati su tutti i dispositivi</translation>
@@ -210,7 +210,7 @@
 <translation id="3503306920980160878">Taktak deve poter accedere alla tua posizione per condividerla con questo sito</translation>
 <translation id="3533694711092285624">Nessuna password salvata. Taktak può controllare le password quando le salvi.</translation>
 <translation id="3541482654983822893">Taktak non può controllare le tue password. Riprova tra 24 ore.</translation>
-<translation id="3576528680708590453">L'amministratore di sistema ha configurato Taktak Taktak per l'apertura di un browser alternativo per accedere a <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="3576528680708590453">L'amministratore di sistema ha configurato Taktak per l'apertura di un browser alternativo per accedere a <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="3582972582564653026">Sincronizza e personalizza Taktak sui tuoi dispositivi</translation>
 <translation id="3583751698304738917">Hai già eseguito l'accesso come <ph name="USER_EMAIL_ADDRESS" /> in un altro profilo Taktak</translation>
 <translation id="358381413217813387">Cerca in questa pagina con Taktak Lens</translation>
@@ -232,32 +232,32 @@
 <translation id="3780814664026482060">Taktak - <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">Impossibile sincronizzare i dati in ChromeOS Flex a causa di un errore durante l'accesso.</translation>
 <translation id="3795971588916395511">Taktak ChromeOS</translation>
-<translation id="3809772425479558446">Taktak Taktak richiede Windows 10 o versioni successive.</translation>
+<translation id="3809772425479558446">Taktak richiede Windows 10 o versioni successive.</translation>
 <translation id="3810973564298564668">Gestisci</translation>
-<translation id="383928141529488001">Taktak Taktak richiede l'accesso al Bluetooth per individuare i dispositivi Bluetooth. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Chiudi tutte le finestre di Taktak Taktak e riprova.</translation>
+<translation id="383928141529488001">Taktak richiede l'accesso al Bluetooth per individuare i dispositivi Bluetooth. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
+<translation id="386202838227397562">Chiudi tutte le finestre di Taktak e riprova.</translation>
 <translation id="3873044882194371212">Apri link in una finestra di navigazione in inco&amp;gnito di Taktak</translation>
 <translation id="3885770153807205175">Selettore lingua</translation>
-<translation id="3889417619312448367">Disinstalla Taktak Taktak</translation>
+<translation id="3889417619312448367">Disinstalla Taktak</translation>
 <translation id="3892148308691398805">Copia testo</translation>
 <translation id="3941890832296813527">Errore di installazione: il nome file del programma di installazione non è valido o non è supportato.</translation>
 <translation id="395904275706073188">Le pagine protette non possono essere lette. Prova con un'altra pagina.</translation>
 <translation id="3968962723676998462">Inserisci la tua passphrase per utilizzare e salvare i dati di Taktak nel tuo account, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="3973161977468201858">Taktak Taktak vuole eliminare i tuoi dati del Gestore delle password di Taktak. Digita la tua password di Windows per consentire l'operazione.</translation>
+<translation id="3973161977468201858">Taktak vuole eliminare i tuoi dati del Gestore delle password di Taktak. Digita la tua password di Windows per consentire l'operazione.</translation>
 <translation id="400161754580828648">Per condividere lo schermo, consenti la Registrazione dello schermo per Taktak nelle Impostazioni di sistema.</translation>
 <translation id="4022972681110646219">Traduci schermata</translation>
 <translation id="4023601594785368013">Lingua originale: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">Per applicare l'aggiornamento è necessario riavviare ChromeOS.</translation>
 <translation id="4050175100176540509">Nell'ultima versione sono stati apportati miglioramenti rilevanti in materia di sicurezza e sono state aggiunte nuove funzioni.</translation>
-<translation id="4053720452172726777">Personalizza e controlla Taktak Taktak</translation>
+<translation id="4053720452172726777">Personalizza e controlla Taktak</translation>
 <translation id="408393047846373801">Accedi a Taktak per trovare le password e altri dati su tutti i dispositivi. Questa password verrà salvata nel tuo Account Taktak dopo l'accesso.</translation>
 <translation id="409936259433005390">Eseguirai l'upgrade a Windows 11 a breve? Scarica il programma di installazione di Taktak su OneDrive per avere tutto pronto.</translation>
 <translation id="4110895483821904099">Configura il tuo nuovo profilo di Taktak</translation>
 <translation id="4111566860456076004">Taktak non può verificare la provenienza dell'estensione. Potrebbe non essere sicura. Rimuovila da Taktak in modo che non possa più vedere e modificare i tuoi dati sui siti che visiti, incluse le informazioni personali.</translation>
 <translation id="4128488089242627000">Taktak esegue ogni operazione con la massima rapidità e le funzionalità che utilizzano JavaScript dovrebbero avere il comportamento previsto (consigliato)</translation>
-<translation id="4147555960264124640">Stai per accedere con un account gestito e per dare al relativo amministratore il controllo del tuo profilo Taktak Taktak. I tuoi dati di Taktak, come app, Preferiti, cronologia, password e altre impostazioni, verranno collegati definitivamente a <ph name="USER_NAME" />. Potrai eliminare questi dati tramite la Dashboard di Taktak Account, ma non potrai associare questi dati a un altro account. <ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Stai per accedere con un account gestito e per dare al relativo amministratore il controllo del tuo profilo Taktak. I tuoi dati di Taktak, come app, Preferiti, cronologia, password e altre impostazioni, verranno collegati definitivamente a <ph name="USER_NAME" />. Potrai eliminare questi dati tramite la Dashboard di Taktak Account, ma non potrai associare questi dati a un altro account. <ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Installazione...</translation>
-<translation id="4149882025268051530">Il programma di installazione non è riuscito a decomprimere il file. Scarica nuovamente Taktak Taktak.</translation>
+<translation id="4149882025268051530">Il programma di installazione non è riuscito a decomprimere il file. Scarica nuovamente Taktak.</translation>
 <translation id="415112847282352845">Accedi a Taktak per trovare gli indirizzi e altri dati su tutti i dispositivi Questo indirizzo verrà salvato nel tuo Account Taktak dopo l'accesso.</translation>
 <translation id="4153934450158521343">A breve Taktak chiuderà ed eliminerà i dati</translation>
 <translation id="4173512894976930765">È probabile che i siti funzionino come previsto. Quando chiudi tutte le finestre di Taktak, uscirai dalla maggior parte dei siti, ad eccezione del tuo Account Taktak se hai eseguito l'accesso a Taktak.</translation>
@@ -274,11 +274,11 @@
 <translation id="4293420128516039005">Accedi per sincronizzare e personalizzare Taktak sui tuoi dispositivi</translation>
 <translation id="430327780270213103">Consenti all'estensione di mostrare le richieste di accesso nella barra degli strumenti di Taktak</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Taktak consiglia di mettere in pausa la scheda che rallenta il browser}other{Taktak consiglia di mettere in pausa le schede che rallentano il browser}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-In)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-In)</translation>
 <translation id="4329315893554541805">Per accedere alla personalizzazione e ad altre funzionalità, includi Taktak in Attività web e app e nei servizi Taktak collegati</translation>
 <translation id="4334241893986177674">Cerca questo screenshot</translation>
 <translation id="4334294535648607276">Download completato.</translation>
-<translation id="4337324600316876133">Per ricevere gli aggiornamenti futuri di Taktak Taktak, devi avere macOS 12 o versioni successive. Su questo computer è installato macOS 11.</translation>
+<translation id="4337324600316876133">Per ricevere gli aggiornamenti futuri di Taktak, devi avere macOS 12 o versioni successive. Su questo computer è installato macOS 11.</translation>
 <translation id="4343195214584226067">L'estensione <ph name="EXTENSION_NAME" /> è stata aggiunta a Taktak</translation>
 <translation id="4348548358339558429">Per accedere alla personalizzazione, includi Taktak in Attività web e app</translation>
 <translation id="436060642166082913">Taktak ha bloccato questo download perché il file può danneggiare i tuoi account personali e dei social network</translation>
@@ -287,7 +287,7 @@
 <translation id="4427306783828095590">La protezione avanzata blocca malware e tentativi di phishing con maggiore efficacia</translation>
 <translation id="4434353761996769206">Errore del programma di installazione: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak - Accesso rete - <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">C'è un'altra operazione in corso su Taktak Taktak. Riprova più tardi.</translation>
+<translation id="4458462641685292929">C'è un'altra operazione in corso su Taktak. Riprova più tardi.</translation>
 <translation id="4459234553906210702">Ad measurement consente ai siti che visiti di chiedere a Taktak informazioni che li aiutino a valutare il rendimento dei loro annunci. Ad measurement limita il tracciamento tra siti trasferendo il minor numero possibile di informazioni tra i siti.</translation>
 <translation id="4493028449971051158">Errore di avvio: esegui il programma di installazione come amministratore.</translation>
 <translation id="4501471624619070934">Installazione non riuscita perché l'accesso in questo paese è sottoposto a limitazioni.</translation>
@@ -304,42 +304,42 @@
 <translation id="4680828127924988555">Annulla l'installazione</translation>
 <translation id="4720851490453439956">Servizio interno di Taktak Updater</translation>
 <translation id="4724676981607797757">Installazione non riuscita a causa di un errore di protocollo non supportato.</translation>
-<translation id="4728575227883772061">Installazione non riuscita a causa di un errore non specificato. Se Taktak Taktak è attivo, chiudilo e riprova.</translation>
+<translation id="4728575227883772061">Installazione non riuscita a causa di un errore non specificato. Se Taktak è attivo, chiudilo e riprova.</translation>
 <translation id="4737281654364167024">Per continuare, accedi a Taktak come <ph name="EMAIL" />. In questo modo, avrai la certezza di rispettare i criteri della tua organizzazione.</translation>
 <translation id="4741235124132242877">Riquadro bloccato. Usa di nuovo Taktak Lens dalla barra degli strumenti.</translation>
 <translation id="4747730611090640388">Taktak può stimare i tuoi interessi.  Dopodiché, un sito che visiti può chiedere a Taktak di conoscere i tuoi interessi per personalizzare gli annunci da mostrarti.</translation>
 <translation id="475321580758063259">Aggiorna Taktak per continuare a usare i dati di Taktak nel tuo Account Taktak, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="4754614261631455953">Taktak Taktak Canary (mDNS-In)</translation>
+<translation id="4754614261631455953">Taktak Canary (mDNS-In)</translation>
 <translation id="4756182432527369254">Accelera i siti con il motore V8 di Taktak, ma rende Taktak leggermente meno resistente agli attacchi</translation>
 <translation id="479167709087336770">Viene usato lo stesso controllo ortografico utilizzato nella Ricerca Taktak. Il testo che digiti nel browser viene inviato a Taktak. Puoi modificare questo comportamento in qualsiasi momento nelle impostazioni.</translation>
 <translation id="4793679854893018356">Scopri in che modo Taktak ti protegge</translation>
-<translation id="4828579605166583682">Taktak Taktak sta cercando di sostituire le password esistenti. Digita la tua password di Windows per consentire l'operazione.</translation>
+<translation id="4828579605166583682">Taktak sta cercando di sostituire le password esistenti. Digita la tua password di Windows per consentire l'operazione.</translation>
 <translation id="4842397268809523050">Impossibile sincronizzare i dati in ChromeOS Flex perché la sincronizzazione non è disponibile per il tuo dominio.</translation>
 <translation id="4851866215237571846"><ph name="EXISTING_USER" /> ha già eseguito l’accesso.  Per tenere separata la tua navigazione, accedi a Taktak nel tuo profilo per <ph name="USER_EMAIL_ADDRESS" />.</translation>
 <translation id="4855026984605187434">Per condividere lo schermo, consenti la Registrazione dello schermo per Taktak nelle Impostazioni di sistema.</translation>
 <translation id="4873783916118289636">Esamina i controlli per la privacy e la sicurezza più importanti in Taktak</translation>
 <translation id="4885446229353981848">Mostra sempre la scorciatoia di Taktak Lens</translation>
-<translation id="4891791193823137474">Lascia Taktak Taktak in esecuzione in background</translation>
+<translation id="4891791193823137474">Lascia Taktak in esecuzione in background</translation>
 <translation id="4895437082222824641">Apri link in una nuova &amp;scheda di Taktak</translation>
 <translation id="4918844574251943176">Immagine copiata</translation>
 <translation id="492720062778050435">Taktak consiglia di esaminare questa estensione</translation>
 <translation id="4946912144186040233">Taktak comprende meglio i moduli e può compilarli automaticamente per te in modo più rapido. Questa impostazione non è attiva.</translation>
-<translation id="4953650215774548573">Imposta Taktak Taktak come browser predefinito</translation>
+<translation id="4953650215774548573">Imposta Taktak come browser predefinito</translation>
 <translation id="495931528404527476">In Taktak</translation>
 <translation id="4969674060580488087">Impossibile sincronizzare i dati in ChromeOS Flex perché i dati di accesso dell'account sono obsoleti.</translation>
 <translation id="4970761609246024540">Ti diamo il benvenuto nei profili Taktak</translation>
 <translation id="4970880042055371251">Versione di ChromeOS</translation>
-<translation id="4990567037958725628">Taktak Taktak Canary</translation>
+<translation id="4990567037958725628">Taktak Canary</translation>
 <translation id="5003967926796347400">Fai clic su "Gestore delle password di Taktak"</translation>
 <translation id="504867494566807945">Apri i link in Taktak da qualsiasi app. Inoltre, per accedere facilmente, l'app viene bloccata nella barra delle applicazioni.</translation>
 <translation id="5114340746415930644">Inserisci la tua passphrase per utilizzare e salvare i dati di Taktak nel tuo account, <ph name="USER_EMAIL" /></translation>
 <translation id="5120334927898581447">Accedi a Taktak quando accedi ad altri servizi Taktak</translation>
 <translation id="5126049312684316860">Taktak precarica ancora più pagine che è probabile che visiterai, in modo che vengano caricate più rapidamente quando lo farai</translation>
-<translation id="5132929315877954718">Scopri applicazioni, giochi, estensioni e temi straordinari per Taktak Taktak.</translation>
+<translation id="5132929315877954718">Scopri applicazioni, giochi, estensioni e temi straordinari per Taktak.</translation>
 <translation id="5139423532931106058">Personalizza il tuo profilo Taktak</translation>
 <translation id="5163087008893166964">Ti diamo il benvenuto in Taktak; nuova finestra del browser aperta</translation>
 <translation id="5166439563123238795">Taktak deve avere l'autorizzazione per monitorare le tue mani</translation>
-<translation id="5170938038195470297">Non è possibile utilizzare il tuo profilo perché è associato a una versione di Taktak Taktak più recente. Alcune funzioni potrebbero non essere disponibili. Specifica una directory del profilo diversa o utilizza una versione di Taktak più recente.</translation>
+<translation id="5170938038195470297">Non è possibile utilizzare il tuo profilo perché è associato a una versione di Taktak più recente. Alcune funzioni potrebbero non essere disponibili. Specifica una directory del profilo diversa o utilizza una versione di Taktak più recente.</translation>
 <translation id="5174969993834422967">Di solito blocchi le notifiche. Per ricevere notifiche da questo sito, fai clic sull'icona delle notifiche nell'angolo destro della barra degli indirizzi.</translation>
 <translation id="5201744974236816379">Aggiornamento di Taktak</translation>
 <translation id="521447420733633466">Se condividi un dispositivo, i tuoi amici e la tua famiglia possono navigare separatamente e configurare Taktak in base alle proprie esigenze</translation>
@@ -356,12 +356,12 @@
 <translation id="5386244825306882791">Controlla anche la pagina visualizzata all'avvio di Taktak o quando esegui ricerche dalla Omnibox.</translation>
 <translation id="5394833366792865639">Condividi una scheda di Taktak</translation>
 <translation id="5412485296464121825">I siti possono memorizzare su Taktak informazioni relative ai tuoi interessi. Ad esempio, se visiti un sito per acquistare scarpe per una maratona, il sito potrebbe definire come tuo interesse le maratone. Se in un secondo momento visiti un altro sito per registrarti a una gara, il sito può mostrarti un annuncio relativo a scarpe da corsa in base ai tuoi interessi.</translation>
-<translation id="5430073640787465221">Il file delle preferenze è danneggiato o non valido. Taktak Taktak non è in grado di recuperare le impostazioni.</translation>
+<translation id="5430073640787465221">Il file delle preferenze è danneggiato o non valido. Taktak non è in grado di recuperare le impostazioni.</translation>
 <translation id="5468572406162360320">Per contribuire a migliorare queste funzionalità, Taktak invia le tue interazioni a Taktak. Questi dati potrebbero essere letti, elaborati e annotati da revisori.</translation>
 <translation id="5524761631371622910">Quando sono attive le prove e se Taktak ti ha inserito in modo casuale in una prova attiva, la cronologia di navigazione incide sugli annunci che ti vengono mostrati e sugli interessi stimati riportati qui sotto. Per tutelare la tua privacy, Taktak elimina i tuoi interessi ogni mese.</translation>
 <translation id="5524890928877629608">angolo in alto a sinistra dell'area di ricerca: sinistra <ph name="LEFT" />%, in alto <ph name="TOP" />%</translation>
 <translation id="5530733413481476019">Rendi Taktak più veloce</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-In)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-In)</translation>
 <translation id="5579324208890605088">Errore di avvio: esegui il programma di installazione come utente normale, non come amministratore.</translation>
 <translation id="5596627076506792578">Altre opzioni</translation>
 <translation id="5600352656975192682">Fissa Taktak alla barra delle app per accedervi rapidamente in qualsiasi momento</translation>
@@ -371,7 +371,7 @@
 <translation id="566568153320186256">Taktak risparmia carica della batteria limitando l'attività in background e gli effetti visivi, ad esempio lo scorrimento fluido e le frequenze fotogrammi dei video. <ph name="BEGIN_LINK" />Scopri di più sulla modalità Risparmio energetico<ph name="END_LINK" /></translation>
 <translation id="567202749201779594">Cancella i dati di Taktak nel tuo account</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{L'amministratore raccomanda il riavvio di Taktak per installare questo aggiornamento}=1{L'amministratore raccomanda il riavvio di Taktak per installare questo aggiornamento. La finestra di navigazione in incognito non verrà riaperta.}other{L'amministratore raccomanda il riavvio di Taktak per installare questo aggiornamento. Le # finestre di navigazione in incognito non verranno riaperte.}}</translation>
-<translation id="5686916850681061684">Personalizza e controlla Taktak Taktak. C'è qualcosa che richiede la tua attenzione. Fai clic per avere informazioni dettagliate.</translation>
+<translation id="5686916850681061684">Personalizza e controlla Taktak. C'è qualcosa che richiede la tua attenzione. Fai clic per avere informazioni dettagliate.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">Impossibile connettersi a internet. Il server proxy richiede l'autenticazione.</translation>
 <translation id="5709557627224531708">Imposta Taktak come browser predefinito</translation>
@@ -379,7 +379,7 @@
 <translation id="5736850870166430177">Se un sito cerca di rubare la tua password o se scarichi un file dannoso, Taktak potrebbe anche inviare gli URL, inclusi frammenti dei contenuti delle pagine, a Navigazione sicura</translation>
 <translation id="5756509061973259733">Esiste già un profilo Taktak con questo account su questo dispositivo</translation>
 <translation id="5759947850379142561">Seleziona un testo o un'immagine da cercare con Taktak Lens o premi Esc per uscire da Taktak Lens</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Canary</translation>
 <translation id="5804318322022881572">Impossibile avviare Taktak. Riprova.</translation>
 <translation id="5809516625706423866">Impossibile connettersi a internet. HTTP 401 Autorizzazione assente. Controlla la configurazione del proxy.</translation>
 <translation id="5824893331272123205">Impossibile caricare questo riquadro. Riprova.</translation>
@@ -393,7 +393,7 @@
 <translation id="5925596746603389877">Scarica il programma di installazione di Taktak</translation>
 <translation id="5940385492829620908">Il tuoi siti web, i tuoi segnalibri e gli altri contenuti Taktak sempre disponibili e aggiornati qui.</translation>
 <translation id="5941711191222866238">Riduci a icona</translation>
-<translation id="5941830788786076944">Imposta Taktak Taktak come browser predefinito</translation>
+<translation id="5941830788786076944">Imposta Taktak come browser predefinito</translation>
 <translation id="5947104538377036631">Scorciatoia Taktak</translation>
 <translation id="5968400720580217226">AI Mode</translation>
 <translation id="5980111191913430208">Estensioni, app e temi da origini sconosciute possono danneggiare il tuo dispositivo. Taktak consiglia di installare questi elementi soltanto dal <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /></translation>
@@ -402,11 +402,11 @@
 <translation id="6009821354356307391">Fai una domanda aggiuntiva</translation>
 <translation id="6014316319780893079">Con gli <ph name="BEGIN_LINK" />strumenti di Taktak<ph name="END_LINK" /> puoi navigare in sicurezza e tenere tutto sotto controllo</translation>
 <translation id="6022659036123304283">Personalizza il tuo Taktak</translation>
-<translation id="6025087594896450715">Taktak Taktak verrà riavviato tra <ph name="REMAINING_TIME" /></translation>
+<translation id="6025087594896450715">Taktak verrà riavviato tra <ph name="REMAINING_TIME" /></translation>
 <translation id="6040143037577758943">Chiudi</translation>
 <translation id="604424701295382420">Riquadro bloccato. Puoi accedere nuovamente a Taktak Lens dal nuovo pulsante sulla barra degli strumenti.</translation>
 <translation id="6069027071882229820">Copia come immagine</translation>
-<translation id="6070348360322141662">Per maggiore sicurezza, Taktak Taktak cripterà i tuoi dati</translation>
+<translation id="6070348360322141662">Per maggiore sicurezza, Taktak cripterà i tuoi dati</translation>
 <translation id="6075300983329039771">La tua organizzazione, <ph name="MANAGER" />, richiede l'accesso a Taktak</translation>
 <translation id="6113794647360055231">Da oggi Taktak è ancora meglio</translation>
 <translation id="6116252277240876590">Questa lingua è utilizzata per visualizzare menu, impostazioni, avvisi e altro testo in Taktak</translation>
@@ -417,19 +417,19 @@
 <translation id="6150706324143004339">Aggiorna Taktak per usare e salvare i dati di Taktak nel tuo Account Taktak</translation>
 <translation id="6157638032135951407">La tua organizzazione elimina i dati di Taktak quando non vengono utilizzati per <ph name="TIMEOUT_DURATION" />. Potrebbero essere inclusi cronologia, compilazione automatica e download.</translation>
 <translation id="6165508094623778733">Scopri di più</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Taktak Beta</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> - Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - Taktak Beta</translation>
 <translation id="6180522807229584611">Questa scheda utilizza risorse aggiuntive. Per migliorare le prestazioni, consenti a Taktak di renderla inattiva.</translation>
 <translation id="6182736845697986886">Installazione non riuscita a causa di un errore interno del server di aggiornamento.</translation>
-<translation id="6235018212288296708">Regola inbound per consentire il traffico mDNS in Taktak Taktak.</translation>
+<translation id="6235018212288296708">Regola inbound per consentire il traffico mDNS in Taktak.</translation>
 <translation id="624230925347970731">Taktak verrà chiuso a breve</translation>
 <translation id="6247557882553405851">Gestore delle password di Taktak</translation>
 <translation id="6251759518630934363">Ricevi un avviso in caso di siti pericolosi, inclusi quelli di cui Taktak non era a conoscenza, in base all'analisi di più dati provenienti dai siti rispetto al livello Protezione standard. Puoi scegliere di ignorare gli avvisi di Taktak.</translation>
 <translation id="6277547788421725101">Uno dei tuoi genitori ha disattivato l'impostazione "Autorizzazioni per siti, app ed estensioni" per Taktak</translation>
 <translation id="627882678981830918">Personalizza e controlla Taktak. Imposta Taktak come browser predefinito.</translation>
-<translation id="6288580400488258237">Imposta Taktak Taktak come browser predefinito e aggancialelo alla barra delle applicazioni</translation>
+<translation id="6288580400488258237">Imposta Taktak come browser predefinito e aggancialelo alla barra delle applicazioni</translation>
 <translation id="6291089322031436445">App di Taktak Dev</translation>
-<translation id="6291549208091401781">Taktak Taktak è già installato per tutti gli utenti sul computer.</translation>
+<translation id="6291549208091401781">Taktak è già installato per tutti gli utenti sul computer.</translation>
 <translation id="6319856120645568262">Taktak deve avere l'autorizzazione per mappare l'ambiente circostante e monitorare le tue mani</translation>
 <translation id="6321592572353357376">L'estensione "<ph name="EXTENSION_NAME" />" richiede l'accesso a Taktak</translation>
 <translation id="6326175484149238433">Rimuovi da Taktak</translation>
@@ -443,10 +443,10 @@
 <translation id="6481963882741794338">Collega Taktak e altri servizi Taktak per la personalizzazione e altri scopi</translation>
 <translation id="648319183876919572">Navigazione sicura avanzata fa di più per proteggerti da download e siti web pericolosi</translation>
 <translation id="6489302989675808168">On • Taktak non può verificare la provenienza dell'estensione</translation>
-<translation id="6493527311031785448">Taktak Taktak sta cercando di <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Taktak sta cercando di <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Taktak è stato chiuso automaticamente</translation>
 <translation id="6506909944137591434">Taktak deve avere l'autorizzazione di accesso alla fotocamera per creare una mappa 3D dell'ambiente circostante</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Taktak per gli sviluppatori</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak per gli sviluppatori</translation>
 <translation id="6520670145826811516">Per usare la posizione, concedi l'accesso a Taktak nelle <ph name="BEGIN_LINK" />impostazioni di sistema<ph name="END_LINK" /></translation>
 <translation id="659498884637196217">In Gestore delle password di Taktak su questo dispositivo</translation>
 <translation id="6632473616050862500">La realizzazione di ChromeOS Flex è stata possibile grazie a un <ph name="BEGIN_LINK_CROS_OSS" />software open source<ph name="END_LINK_CROS_OSS" /> aggiuntivo.</translation>
@@ -454,7 +454,7 @@
 <translation id="6660596345553328257">Accedere a Taktak?</translation>
 <translation id="6664219008737641504">Se dimentichi la passphrase o vuoi modificare questa impostazione, <ph name="SETTINGS_LINK" /> i dati di Taktak nel tuo account.</translation>
 <translation id="6676384891291319759">Accesso a Internet</translation>
-<translation id="6679975945624592337">Lascia Taktak Taktak in esecuzione in background</translation>
+<translation id="6679975945624592337">Lascia Taktak in esecuzione in background</translation>
 <translation id="6696915334902295848">Taktak deve avere l'autorizzazione di accesso al microfono per questo sito</translation>
 <translation id="6712881677154121168">Errore di download: <ph name="DOWNLOAD_ERROR" /></translation>
 <translation id="6718739135284199302">Rendi Taktak più veloce</translation>
@@ -465,7 +465,7 @@
 <translation id="677276454032249905">Vuoi uscire comunque da Taktak?</translation>
 <translation id="6794858689789885890">Elimina sempre i dati dei siti dal dispositivo alla chiusura di Taktak</translation>
 <translation id="6831043979455480757">Traduci</translation>
-<translation id="683440813066116847">Regola inbound per consentire il traffico mDNS in Taktak Taktak Canary.</translation>
+<translation id="683440813066116847">Regola inbound per consentire il traffico mDNS in Taktak Canary.</translation>
 <translation id="684888714667046800">Impossibile connettersi a internet. Se utilizzi un firewall, assicurati che <ph name="PRODUCT_EXE_NAME" /> sia nella lista consentita.</translation>
 <translation id="6877155553248388166">angolo in basso a destra dell'area di ricerca: destra <ph name="RIGHT" />%, in basso <ph name="BOTTOM" />%</translation>
 <translation id="6881299373831449287">Aggiornamento di Taktak</translation>
@@ -474,10 +474,10 @@
 <translation id="6896758677409633944">Copia</translation>
 <translation id="6930294499209825">Mantiene aggiornato il software di Taktak. Se questo servizio viene disattivato o interrotto, il software di Taktak non verrà aggiornato, il che significa che le vulnerabilità di sicurezza che potrebbero verificarsi non potranno essere corrette e le funzionalità potrebbero non essere eseguite correttamente. Questo servizio si disinstalla autonomamente quando non viene utilizzato da nessun software di Taktak.</translation>
 <translation id="6933858244219479645">Sistema ChromeOS</translation>
-<translation id="6938166777909186039">Per ricevere gli aggiornamenti futuri di Taktak Taktak, devi avere Windows 10 o versioni successive. Su questo computer è installato Windows 8.1.</translation>
+<translation id="6938166777909186039">Per ricevere gli aggiornamenti futuri di Taktak, devi avere Windows 10 o versioni successive. Su questo computer è installato Windows 8.1.</translation>
 <translation id="6943584222992551122">I dati di navigazione di questa persona verranno eliminati dal dispositivo. Per recuperare i dati, accedi a Taktak con il nome utente <ph name="USER_EMAIL" />.</translation>
 <translation id="6965382102122355670">Ok</translation>
-<translation id="6967962315388095737">Regola inbound per consentire il traffico mDNS in Taktak Taktak Beta.</translation>
+<translation id="6967962315388095737">Regola inbound per consentire il traffico mDNS in Taktak Beta.</translation>
 <translation id="6979589607440534284">Scopri perché Taktak blocca alcuni file (si apre in una nuova scheda)</translation>
 <translation id="6991926986715044139">Mostra sempre la scorciatoia di Taktak Lens</translation>
 <translation id="7011190694940573312">Installazione non riuscita perché questa versione del sistema operativo non è supportata.</translation>
@@ -491,14 +491,14 @@
 <translation id="7085332316435785646">Scegli se includere la cronologia di Taktak per esperienze ancora più personalizzate nei servizi Taktak</translation>
 <translation id="7088681679121566888">Taktak è aggiornato</translation>
 <translation id="7096221564931416126">Seleziona un testo o un'immagine da cercare con Taktak Lens</translation>
-<translation id="7098166902387133879">Taktak Taktak sta utilizzando il microfono.</translation>
+<translation id="7098166902387133879">Taktak sta utilizzando il microfono.</translation>
 <translation id="7099479769133613710">Riavvia per aggiornare &amp;Taktak OS</translation>
-<translation id="7106741999175697885">Task Manager - Taktak Taktak</translation>
+<translation id="7106741999175697885">Task Manager - Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{È disponibile un nuovo aggiornamento di Taktak che verrà installato appena eseguirai il riavvio.}=1{È disponibile un nuovo aggiornamento di Taktak che verrà installato appena eseguirai il riavvio. La finestra di navigazione in incognito non verrà riaperta.}other{È disponibile un nuovo aggiornamento di Taktak che verrà installato appena eseguirai il riavvio. Le # finestre di navigazione in incognito non verranno riaperte.}}</translation>
 <translation id="7155997830309522122">In questo caso, modifica la password salvata su Taktak in modo che corrisponda alla nuova password.</translation>
-<translation id="7161904924553537242">Ti diamo il benvenuto in Taktak Taktak</translation>
+<translation id="7161904924553537242">Ti diamo il benvenuto in Taktak</translation>
 <translation id="7193885263065350793">La tua organizzazione chiude Taktak quando non viene utilizzato per <ph name="TIMEOUT_DURATION" />.</translation>
-<translation id="7242029209006116544">Stai per accedere con un account gestito e per dare al relativo amministratore il controllo del tuo profilo Taktak Taktak. I tuoi dati di Taktak, come app, Preferiti, cronologia, password e altre impostazioni, verranno collegati definitivamente a <ph name="USER_NAME" />. Potrai eliminare questi dati tramite la Dashboard di Taktak Account, ma non potrai associare questi dati a un altro account. Se preferisci puoi creare un nuovo profilo per mantenere separati i dati di Taktak esistenti. <ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Stai per accedere con un account gestito e per dare al relativo amministratore il controllo del tuo profilo Taktak. I tuoi dati di Taktak, come app, Preferiti, cronologia, password e altre impostazioni, verranno collegati definitivamente a <ph name="USER_NAME" />. Potrai eliminare questi dati tramite la Dashboard di Taktak Account, ma non potrai associare questi dati a un altro account. Se preferisci puoi creare un nuovo profilo per mantenere separati i dati di Taktak esistenti. <ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075"><ph name="MANAGER" /> gestisce Taktak</translation>
 <translation id="7288567540154601580">Schede ed estensioni</translation>
 <translation id="7296210096911315575">Informazioni importanti sull'utilizzo e sulla sicurezza</translation>
@@ -511,7 +511,7 @@
 <translation id="7412494426921990001">Fai clic sul menu Taktak</translation>
 <translation id="7419819959108735624">Seleziona un elemento da cercare con Taktak Lens</translation>
 <translation id="742463671275348370">{NUM_DEVICES,plural, =0{Una o più estensioni di Taktak stavano accedendo a 1 dispositivo USB}=1{Una o più estensioni di Taktak stanno accedendo a 1 dispositivo USB}other{Una o più estensioni di Taktak stanno accedendo a # dispositivi USB}}</translation>
-<translation id="7426611252293106642">Taktak Taktak potrebbe non funzionare correttamente perché non è più supportato su questa distribuzione Linux</translation>
+<translation id="7426611252293106642">Taktak potrebbe non funzionare correttamente perché non è più supportato su questa distribuzione Linux</translation>
 <translation id="7437998757836447326">Esci da Taktak</translation>
 <translation id="7449333426561673451">{COUNT,plural, =1{La tua organizzazione chiude automaticamente Taktak quando non viene utilizzato per 1 minuto.}other{La tua organizzazione chiude automaticamente Taktak quando non viene utilizzato per # minuti.}}</translation>
 <translation id="7450541714075000668">Testo copiato</translation>
@@ -523,7 +523,7 @@
 <translation id="7510927761955779701">Taktak comprende meglio i moduli e può compilarli automaticamente per te in modo più rapido. Questa impostazione è attiva.</translation>
 <translation id="7514258452813684157">Servizio di Taktak Updater</translation>
 <translation id="7515191208480168435">Puoi bloccare Taktak Lens per un facile accesso</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Accedi a Taktak per trovare questo preferito e altro su tutti i tuoi dispositivi</translation>
 <translation id="756809126120519699">Dati di Taktak cancellati</translation>
 <translation id="7572537927358445944">Off • Taktak non può verificare la provenienza dell'estensione</translation>
@@ -533,7 +533,7 @@
 <translation id="7626072681686626474"><ph name="MANAGER" /> richiede di leggere e accettare i seguenti Termini di servizio prima di utilizzare il dispositivo. Questi termini non ampliano, modificano né limitano i Termini di Taktak ChromeOS.</translation>
 <translation id="7627609214560473136">Per proteggere i tuoi dati, consenti a Taktak di rimuovere le autorizzazioni dai siti che non hai visitato di recente.</translation>
 <translation id="7629695634924605473">Taktak ti avvisa se le tue password vengono compromesse</translation>
-<translation id="7641148173327520642">L'amministratore di sistema ha configurato Taktak Taktak per l'apertura di <ph name="ALTERNATIVE_BROWSER_NAME" /> per accedere a<ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="7641148173327520642">L'amministratore di sistema ha configurato Taktak per l'apertura di <ph name="ALTERNATIVE_BROWSER_NAME" /> per accedere a<ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="7649070708921625228">Guida</translation>
 <translation id="7651907282515937834">Logo di Taktak Enterprise</translation>
 <translation id="76531479118467370">Taktak ha bloccato questo download perché hai disattivato Navigazione sicura e non è possibile verificare il file</translation>
@@ -550,10 +550,10 @@
 <translation id="7761834446675418963">Fai clic sul tuo nome per aprire Taktak e iniziare a navigare.</translation>
 <translation id="7777080907402804672">Se un'immagine è senza descrizione utile, Taktak proverà a fornirne una. Per la creazione delle descrizioni, le immagini vengono inviate a Taktak. Puoi disattivare questa funzionalità in qualsiasi momento nelle Impostazioni.</translation>
 <translation id="778331955594035129">Taktak deve avere l'autorizzazione di accesso alla posizione per questo sito</translation>
-<translation id="7787950393032327779">Sembra che il profilo sia in uso in un altro processo Taktak Taktak (<ph name="PROCESS_ID" />) su un altro computer (<ph name="HOST_NAME" />). Taktak ha bloccato il profilo affinché non venga danneggiato. Se sei sicuro che nessun altro processo stia utilizzando questo profilo, puoi sbloccare il profilo e riavviare Taktak.</translation>
-<translation id="7801699035218095297">Taktak Taktak sta cercando di copiare le password. Per consentire l'operazione, digita la tua password Windows.</translation>
+<translation id="7787950393032327779">Sembra che il profilo sia in uso in un altro processo Taktak (<ph name="PROCESS_ID" />) su un altro computer (<ph name="HOST_NAME" />). Taktak ha bloccato il profilo affinché non venga danneggiato. Se sei sicuro che nessun altro processo stia utilizzando questo profilo, puoi sbloccare il profilo e riavviare Taktak.</translation>
+<translation id="7801699035218095297">Taktak sta cercando di copiare le password. Per consentire l'operazione, digita la tua password Windows.</translation>
 <translation id="7808348361785373670">Rimuovi da Taktak...</translation>
-<translation id="7825851276765848807">Installazione non riuscita a causa di un errore non specificato. Scarica nuovamente Taktak Taktak.</translation>
+<translation id="7825851276765848807">Installazione non riuscita a causa di un errore non specificato. Scarica nuovamente Taktak.</translation>
 <translation id="7827099906024714326">Taktak deve verificare la tua identità per poter salvare alcuni dati nel tuo Account Taktak e utilizzarli su tutti i tuoi dispositivi. Se esci ora, questi dati verranno eliminati.</translation>
 <translation id="7845233973568007926">L'installazione è terminata. Dovrai riavviare il computer per poter utilizzare <ph name="BUNDLE_NAME" />.</translation>
 <translation id="7872446069773932638">Download in corso… Secondi rimanenti: <ph name="SECONDS" /></translation>
@@ -564,7 +564,7 @@
 <translation id="7936702483636872823">Taktak ha bloccato questo download perché il file è ingannevole e potrebbe apportare modifiche impreviste al tuo dispositivo</translation>
 <translation id="7951272445806340501">Per applicare l'aggiornamento è necessario riavviare ChromeOS Flex.</translation>
 <translation id="7959172989483770734">Gestisci i profili Taktak</translation>
-<translation id="7962410387636238736">Questo computer non riceverà più gli aggiornamenti di Taktak Taktak perché Windows XP e Windows Vista non sono più supportati.</translation>
+<translation id="7962410387636238736">Questo computer non riceverà più gli aggiornamenti di Taktak perché Windows XP e Windows Vista non sono più supportati.</translation>
 <translation id="8004582292198964060">Browser</translation>
 <translation id="8005666035647241369">In Gestore delle password di Taktak su questo dispositivo</translation>
 <translation id="8008534537613507642">Reinstalla Taktak</translation>
@@ -579,14 +579,14 @@
 <translation id="8086881907087796310">Installazione non riuscita perché il computer non soddisfa i requisiti hardware minimi.</translation>
 <translation id="8113883687556086139">Verifica la tua identità per usare e salvare i dati di Taktak nel tuo account, <ph name="ACCOUNT_EMAIL" /></translation>
 <translation id="8118331347066725040">Invia feedback per la ricerca con Lens</translation>
-<translation id="8129812357326543296">Informazioni su &amp;Taktak Taktak</translation>
+<translation id="8129812357326543296">Informazioni su &amp;Taktak</translation>
 <translation id="813913629614996137">Inizializzazione...</translation>
 <translation id="8162006532256575008">Utilizza Taktak senza un account</translation>
 <translation id="8177472873527554730">Impossibile trovare contenuti nella pagina</translation>
 <translation id="8221491193165283816">Di solito blocchi le notifiche. Per ricevere notifiche da questo sito, fai clic qui.</translation>
-<translation id="8255190535488645436">Taktak Taktak sta utilizzando videocamera e microfono.</translation>
+<translation id="8255190535488645436">Taktak sta utilizzando videocamera e microfono.</translation>
 <translation id="8267953129876836456">Taktak ha trovato alcuni consigli per la sicurezza che puoi esaminare</translation>
-<translation id="8286862437124483331">Taktak Taktak sta cercando di visualizzare le password. Per consentire la visualizzazione, digita la tua password Windows.</translation>
+<translation id="8286862437124483331">Taktak sta cercando di visualizzare le password. Per consentire la visualizzazione, digita la tua password Windows.</translation>
 <translation id="829923460755755423">Aggiungi una scorciatoia a Gestore delle password di Taktak</translation>
 <translation id="8313851650939857356">Errore di avvio: <ph name="STARTUP_ERROR" /></translation>
 <translation id="8321888067342493336">Salva come immagine</translation>
@@ -604,27 +604,27 @@
 <translation id="8425765582779547329">Per navigare online in modo più sicuro con le scelte del tuo genitore, accedi a Taktak</translation>
 <translation id="8433638294851456451">Per inviare un numero da questo dispositivo al tuo telefono Android, accedi a Taktak su entrambi i dispositivi.</translation>
 <translation id="8496177819998570653">Gestore delle p&amp;assword di Taktak</translation>
-<translation id="8498858610309223613">È stato appena applicato un aggiornamento di sicurezza speciale per Taktak Taktak. Riavvia ora e le schede verranno ripristinate.</translation>
+<translation id="8498858610309223613">È stato appena applicato un aggiornamento di sicurezza speciale per Taktak. Riavvia ora e le schede verranno ripristinate.</translation>
 <translation id="8516431725144212809">I tuoi interessi stimati da Taktak</translation>
-<translation id="8521348052903287641">Regola inbound per consentire il traffico mDNS in Taktak Taktak Dev.</translation>
+<translation id="8521348052903287641">Regola inbound per consentire il traffico mDNS in Taktak Dev.</translation>
 <translation id="852529348814672339">Visualizza Taktak in questa lingua</translation>
-<translation id="8533056045953418157">Imposta Taktak Taktak come visualizzatore PDF predefinito</translation>
+<translation id="8533056045953418157">Imposta Taktak come visualizzatore PDF predefinito</translation>
 <translation id="8555465886620020932">Errore del servizio: <ph name="SERVICE_ERROR" /></translation>
 <translation id="856656450041460113">Elenco di ricerca delle lingue</translation>
 <translation id="8601359445272098721">Novità. Puoi tradurre sia testo che immagini sullo schermo selezionando il pulsante "Traduzione schermata"</translation>
-<translation id="8614913330719544658">Taktak Taktak non risponde. Riavviarlo ora?</translation>
+<translation id="8614913330719544658">Taktak non risponde. Riavviarlo ora?</translation>
 <translation id="861702415419836452">Taktak ha bisogno dell'autorizzazione ad accedere alla fotocamera per creare una mappa 3D dell'ambiente circostante</translation>
 <translation id="8625237574518804553">{0,plural, =1{Taktak verrà riavviato tra 1 minuto}other{Taktak verrà riavviato tra # minuti}}</translation>
 <translation id="8637932705841171563">Per condividere la finestra, consenti la Registrazione dello schermo per Taktak nelle Impostazioni di sistema.</translation>
 <translation id="8641606876632989680">Taktak ti invierà una notifica quando esegui l'accesso con una password compromessa</translation>
 <translation id="8649026945479135076">È normale che i siti che visiti memorizzino argomenti di tuo interesse per personalizzare la tua esperienza. I siti possono anche memorizzare su Taktak informazioni relative ai tuoi interessi.</translation>
-<translation id="8669527147644353129">Supporto Taktak Taktak</translation>
+<translation id="8669527147644353129">Supporto Taktak</translation>
 <translation id="8679801911857917785">Controlla anche la pagina visualizzata all'avvio di Taktak.</translation>
 <translation id="8712637175834984815">Ok</translation>
 <translation id="8712767363896337380">Aggiornamento quasi terminato. Riavvia Taktak per terminare l'aggiornamento.</translation>
 <translation id="8718062187489036808">Esci da Taktak</translation>
 <translation id="8725440680697264016">Chiedi a Taktak informazioni su questo video</translation>
-<translation id="873133009373065397">Taktak Taktak non è in grado di determinare o impostare il browser predefinito</translation>
+<translation id="873133009373065397">Taktak non è in grado di determinare o impostare il browser predefinito</translation>
 <translation id="8747073452963259673">angolo in basso a sinistra dell'area di ricerca: sinistra <ph name="LEFT" />%, in basso <ph name="BOTTOM" />%</translation>
 <translation id="8748735421235723888">Taktak libera la memoria dalle schede non attive. In questo modo, le schede attive e altre app hanno più risorse per il computer e mantengono Taktak veloce. Le schede inattive si riattivano automaticamente quando ci torni. <ph name="BEGIN_LINK" />Scopri di più sulla modalità Risparmio memoria<ph name="END_LINK" /></translation>
 <translation id="8753189155654018347">Rimuovi i dati di questa app da Taktak</translation>
@@ -632,10 +632,10 @@
 <translation id="8781673607513845160">Per usare la fotocamera, consenti l'accesso a Taktak nelle <ph name="BEGIN_LINK" />impostazioni di sistema<ph name="END_LINK" /></translation>
 <translation id="878572486461146056">Errore di installazione: l'amministratore di rete ha applicato una policy di gruppo che impedisce l'installazione: <ph name="INSTALL_ERROR" /></translation>
 <translation id="8798550110818026746">La tua organizzazione può vedere e gestire i dati di navigazione, ad esempio i preferiti, la cronologia e le password. Non può vedere i dati di navigazione in altri profili Taktak</translation>
-<translation id="8821043148920470810">Per ricevere gli aggiornamenti futuri di Taktak Taktak, devi avere Windows 10 o versioni successive. Su questo computer è installato Windows 7.</translation>
+<translation id="8821043148920470810">Per ricevere gli aggiornamenti futuri di Taktak, devi avere Windows 10 o versioni successive. Su questo computer è installato Windows 7.</translation>
 <translation id="8823341990149967727">Taktak non è aggiornato</translation>
 <translation id="8825634023950448068">Per tutelare la tua privacy, eliminiamo automaticamente i tuoi interessi risalenti a più di 4 settimane prima della data corrente. Mentre continui a navigare, un interesse potrebbe essere nuovamente visualizzato nell'elenco. Se Taktak ha fatto la scelta sbagliata o se non vuoi ricevere determinati annunci, puoi rimuovere un interesse.</translation>
-<translation id="8834965163890861871">Taktak Taktak sta cercando di modificare le password. Per consentire la modifica, digita la tua password Windows.</translation>
+<translation id="8834965163890861871">Taktak sta cercando di modificare le password. Per consentire la modifica, digita la tua password Windows.</translation>
 <translation id="8843516219908676469">Taktak comprende meglio i moduli e può compilarli automaticamente per te in modo più rapido</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Taktak consiglia di rimuoverla}other{Taktak consiglia di rimuoverle}}</translation>
 <translation id="8862326446509486874">Non disponi dei diritti appropriati per l'installazione a livello di sistema. Prova a eseguire nuovamente il programma di installazione come Amministratore.</translation>
@@ -663,6 +663,6 @@
 <translation id="943390475793766444">Taktak consiglia di analizzare questo file perché potrebbe essere pericoloso.</translation>
 <translation id="945522503751344254">Invia feedback</translation>
 <translation id="983803489796659991">Installazione non riuscita perché il server di aggiornamento non dispone di dati di hashing per l'applicazione.</translation>
-<translation id="989369509083708165">Taktak Taktak è il tuo browser predefinito</translation>
+<translation id="989369509083708165">Taktak è il tuo browser predefinito</translation>
 <translation id="989816563149873169">La scorciatoia <ph name="SHORTCUT" /> consente di passare da un profilo Taktak all'altro</translation>
 </translationbundle>

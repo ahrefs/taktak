@@ -223,14 +223,14 @@ Maaaring hindi available ang ilang tampok at hindi mase-save ang mga pagbabago s
 <translation id="3889543394854987837">I-click ang iyong pangalan upang buksan ang Taktak at simulan ang pagba-browse.</translation>
 <translation id="3892148308691398805">Kopyahin ang text</translation>
 <translation id="390528597099634151">Naka-sign in na si <ph name="EXISTING_USER" /> sa profile sa Taktak na ito. Para panatilihing hiwalay ang iyong pag-browse, puwedeng gumawa ang Taktak ng sarili mong profile para sa iyo.</translation>
-<translation id="3909353120217047026">Lumalabag ang extension na ito sa patakaran ng Taktak Web Store, at posibleng hindi ito ligtas. Alisin ito sa Taktak para hindi na nito makita at mabago ang iyong data sa mga site na binibisita mo, kabilang ang iyong personal na impormasyon.</translation>
+<translation id="3909353120217047026">Lumalabag ang extension na ito sa patakaran ng Chrome Web Store, at posibleng hindi ito ligtas. Alisin ito sa Taktak para hindi na nito makita at mabago ang iyong data sa mga site na binibisita mo, kabilang ang iyong personal na impormasyon.</translation>
 <translation id="3941890832296813527">Error sa pag-install: Invalid o hindi sinusuportahan ang filename ng installer.</translation>
 <translation id="3945058413678539331">Sinusubukan ng Taktak na kopyahin ang mga password. I-type ang iyong password sa Windows para payagan ito.</translation>
 <translation id="3954172517175569325">Aalisin sa device na ito ang mga password, paraan ng pagbabayad, at address na na-save mo sa iyong Taktak Account. Para magamit ulit ang mga ito sa Taktak, mag-sign in ulit.</translation>
 <translation id="395904275706073188">Hindi mababasa ang mga pinoprotektahang page. Sumubok ng ibang page.</translation>
 <translation id="3962647064319009959">Alamin kung paano ka pinapanatiling ligtas ng Taktak</translation>
 <translation id="3971865010372729242">Kapag nag-type ka sa address bar o box para sa paghahanap, ipinapadala ng Taktak kung ano ang tina-type mo sa tool sa paghahanap, AI tool, at tool ng ahente ng iyong organisasyon para makakuha ng mga suhestyon.</translation>
-<translation id="3975724895399328945">Tungkol sa &amp;Taktak Taktak na Pang-test</translation>
+<translation id="3975724895399328945">Tungkol sa &amp;Taktak na Pang-test</translation>
 <translation id="3997429360543082038">Tungkol sa ChromiumOS</translation>
 <translation id="4019629340646866719">Pinapagana ng karagdagang <ph name="BEGIN_LINK_CROS_OSS" />open source na software<ph name="END_LINK_CROS_OSS" /> ang ChromiumOS, pati na rin ang <ph name="BEGIN_LINK_LINUX_OSS" />environment sa pag-develop ng Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Isalin ang screen</translation>
@@ -550,7 +550,7 @@ Hindi mabawi ng Taktak ang iyong mga setting.</translation>
 <translation id="8077498902115777962">I-disable ang pagtakbo ng Taktak sa background para sa mga app</translation>
 <translation id="80790299200510644">Paghahanap ng Larawan</translation>
 <translation id="8086881907087796310">Hindi na-install dahil hindi natutugunan ng iyong computer ang mga minimum na requirement sa hardware.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">Kailangan ng Taktak ng pahintulot sa lokasyon para sa site na ito</translation>
 <translation id="8118331347066725040">Magpadala ng feedback para sa paghahanap gamit ang Lens</translation>
 <translation id="8133124826068723441">Hindi ma-sync ng ChromiumOS ang iyong data dahil hindi available ang Pag-sync para sa domain mo.</translation>
@@ -596,7 +596,7 @@ Hindi mabawi ng Taktak ang iyong mga setting.</translation>
 <translation id="8601359445272098721">Bago! Puwede kang magsalin ng text at mga larawan sa iyong screen sa pamamagitan ng pagpili sa button na "isalin ang screen"</translation>
 <translation id="8619360774459241877">Inilulunsad ang Taktak...</translation>
 <translation id="8621669128220841554">Nabigo ang pag-install dahil sa hindi natukoy na error. Mangyaring i-download muli ang Taktak.</translation>
-<translation id="8648201657708811153">Hindi puwedeng gawing default na browser mo ang Taktak Taktak na Pang-test.</translation>
+<translation id="8648201657708811153">Hindi puwedeng gawing default na browser mo ang Taktak na Pang-test.</translation>
 <translation id="8697124171261953979">Kinokontrol din nito kung anong pahina ang ipinapakita kapag sinimulan mo ang Taktak o naghanap mula sa Omnibox.</translation>
 <translation id="8704119203788522458">Ito ang iyong Taktak</translation>
 <translation id="8712637175834984815">Nakuha ko</translation>

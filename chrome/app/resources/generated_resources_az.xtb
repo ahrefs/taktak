@@ -2098,7 +2098,7 @@ Cihazda Family Link tətbiqini quraşdırmaqla bu hesabın ayarlarını idarə e
 <translation id="2434449159125086437">Printeri quraşdırmaq mümkün deyil. Konfiqurasiyanı yoxlayın və yenidən cəhd edin.</translation>
 <translation id="2434758125294431199">Sizinlə kimin paylaşa biləcəyini seçin</translation>
 <translation id="2434915728183570229">İndi telefonunuzun tətbiqlərinə baxa bilərsiniz</translation>
-<translation id="2435137177546457207">Taktak Taktak və ChromeOS Flex üzrə Əlavə Şərtlər</translation>
+<translation id="2435137177546457207">Taktak və ChromeOS Flex üzrə Əlavə Şərtlər</translation>
 <translation id="2435248616906486374">Şəbəkə bağlantısı kəsildi</translation>
 <translation id="2435457462613246316">Parol görünsün</translation>
 <translation id="2436385001956947090">Keçidi &amp;kopyalayın</translation>
@@ -4066,7 +4066,7 @@ Cihazda Family Link tətbiqini quraşdırmaqla bu hesabın ayarlarını idarə e
 <translation id="3798670284305777884">Spiker (daxili)</translation>
 <translation id="3799128412641261490">Düymə ilə giriş ayarları</translation>
 <translation id="3800764353337460026">Simvol üslubu</translation>
-<translation id="3800828618615365228">Taktak Taktak və ChromeOS üzrə Əlavə Şərtlər</translation>
+<translation id="3800828618615365228">Taktak və ChromeOS üzrə Əlavə Şərtlər</translation>
 <translation id="3800898876950197674">Bu artırmaya icazə vermək üçün parolunuzu daxil edin.</translation>
 <translation id="3801449494961771207">Sistemin nitq sintezi səsi</translation>
 <translation id="3802486193901166966">Bu artırma xüsusi icazələr tələb etmir və əlavə sayt girişi yoxdur</translation>
@@ -4089,7 +4089,7 @@ Cihazda Family Link tətbiqini quraşdırmaqla bu hesabın ayarlarını idarə e
 <translation id="3810973564298564668">İdarə edin</translation>
 <translation id="381202950560906753">Başqasını əlavə edin</translation>
 <translation id="3812525830114410218">İşləməyən sertifikat</translation>
-<translation id="3813296892522778813">Axtardığınızı tapa bilmirsinizsə <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak yardımı<ph name="END_LINK_CHROMIUM" /> bölməsinə gedin</translation>
+<translation id="3813296892522778813">Axtardığınızı tapa bilmirsinizsə <ph name="BEGIN_LINK_CHROMIUM" />Taktak yardımı<ph name="END_LINK_CHROMIUM" /> bölməsinə gedin</translation>
 <translation id="3813358687923336574">Səhifələrin tərcüməsi və Sürətli cavablar üçün istifadə olunan dil</translation>
 <translation id="3813458570141926987">Son baxış tarixçənizə əsasən Taktak tərəfindən təxmin edilən mövzuların siyahısı</translation>
 <translation id="3814529970604306954">Məktəb Hesabı</translation>
@@ -4564,7 +4564,7 @@ Cihazda Family Link tətbiqini quraşdırmaqla bu hesabın ayarlarını idarə e
 <translation id="4133076602192971179">Parolu dəyişmək üçün tətbiqi açın</translation>
 <translation id="4134838386867070505">Addım 1/4: Problemi təsvir edin</translation>
 <translation id="413534985210133938">"<ph name="LOCAL_FOLDER" />" yalnız bu cihazda yadda saxlanılır. Bu əlfəcini "<ph name="LOCAL_FOLDER" />" qovluğuna köçürsəniz, artıq onu digər cihazlarınızda əldə edə bilməyəcəksiniz.</translation>
-<translation id="4135746311382563554">Taktak Taktak və ChromeOS Əlavə Xidmət Şərtləri</translation>
+<translation id="4135746311382563554">Taktak və ChromeOS Əlavə Xidmət Şərtləri</translation>
 <translation id="4136203100490971508">Gecə İşığı şəfəq vaxtı avtomatik deaktiv ediləcək</translation>
 <translation id="41365691917097717">Davam etsəniz, Android tətbiqlərini yaratmaq və sınaqdan keçirmək üçün ADB sazlaması aktiv ediləcək. Nəzərə alın ki, bu əməliyyat Taktak tərəfindən doğrulanmamış Android tətbiqlərinin quraşdırılmasına icazə verir və deaktiv etmək üçün zavod sıfırlaması tələb edir.</translation>
 <translation id="4137923333452716643">Oxu rejimində açmaq istədiyiniz mətni vurğulayın</translation>
@@ -7829,7 +7829,7 @@ Bu əməliyyata birdən çox keçirici təyin edə bilərsiniz.</translation>
 <translation id="6511607461419653612">Chromebook-u yenidən başladın və təkrar cəhd edin</translation>
 <translation id="6511827214781912955"><ph name="FILENAME" /> faylını silin ki, bu cihazı istifadə edən başqa şəxslər parollarınızı görməsin</translation>
 <translation id="6512759338201777379"><ph name="MOOD" /> əhvalı ilə <ph name="INDEX" /> indeksli <ph name="SUBJECT" /> şəkli yaradıldı.</translation>
-<translation id="6513247462497316522">Digər şəbəkəyə qoşulmadığınız halda Taktak Taktak mobil data istifadə edəcək.</translation>
+<translation id="6513247462497316522">Digər şəbəkəyə qoşulmadığınız halda Taktak mobil data istifadə edəcək.</translation>
 <translation id="6514010653036109809">Əlçatan cihaz:</translation>
 <translation id="6516990372629061585">Linux-dan import edilmiş sertifikatlara baxın</translation>
 <translation id="6517382055541687102">Seçilmiş cihaz <ph name="DEVICE_NAME" /> olaraq dəyişdirildi</translation>
@@ -8778,7 +8778,7 @@ Daha # oğurlanmış parolunuz var. Taktak Parol Meneceri bu parolları indi yox
 <translation id="7180611975245234373">Yeniləyin</translation>
 <translation id="7180865173735832675">Fərdiləşdirin</translation>
 <translation id="7181117767881540376">&amp;Əlfəcin panelini gizlədin</translation>
-<translation id="7181329571386134105">Təsdiqiniz olmadan <ph name="CHILD_NAME" /> tərəfindən gələcək artırmaların quraşdırılmasına icazə vermək üçün cihazınızda Family Link tətbiqini açın və <ph name="CHILD_NAME" /> Taktak Taktak ayarlarını güncəlləyin.</translation>
+<translation id="7181329571386134105">Təsdiqiniz olmadan <ph name="CHILD_NAME" /> tərəfindən gələcək artırmaların quraşdırılmasına icazə vermək üçün cihazınızda Family Link tətbiqini açın və <ph name="CHILD_NAME" /> Taktak ayarlarını güncəlləyin.</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" /> ilə tab qrupuna qoşulun
               {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" /> ilə tab qrupuna qoşulun}=1{<ph name="OWNER_FIRST_NAME" /> və digər # şəxs ilə tab qrupuna qoşulun}other{<ph name="OWNER_FIRST_NAME" /> və digər # şəxs ilə tab qrupuna qoşulun}}</translation>
 <translation id="7181976109296206547">Loqo, ad və URL yeniləmələrini nəzərdən keçirin</translation>

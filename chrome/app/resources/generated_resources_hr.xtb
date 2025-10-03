@@ -2102,7 +2102,7 @@ Postavkama računa možete upravljati tako da instalirate aplikaciju Family Link
 <translation id="2434449159125086437">Postavljanje pisača nije moguće. Provjerite konfiguraciju i pokušajte ponovo.</translation>
 <translation id="2434758125294431199">Odaberite tko može dijeliti s vama</translation>
 <translation id="2434915728183570229">Sada možete pregledati aplikacije telefona</translation>
-<translation id="2435137177546457207">Dodatni uvjeti za Taktak Taktak i ChromeOS Flex</translation>
+<translation id="2435137177546457207">Dodatni uvjeti za Taktak i ChromeOS Flex</translation>
 <translation id="2435248616906486374">Mreža je isključena</translation>
 <translation id="2435457462613246316">Pokaži zaporku</translation>
 <translation id="2436385001956947090">Kopiraj &amp;vezu</translation>
@@ -4069,7 +4069,7 @@ Postavkama računa možete upravljati tako da instalirate aplikaciju Family Link
 <translation id="3798670284305777884">Zvučnik (ugrađeni)</translation>
 <translation id="3799128412641261490">Postavke navigacije prekidačima</translation>
 <translation id="3800764353337460026">Stil simbola</translation>
-<translation id="3800828618615365228">Dodatni uvjeti za Taktak Taktak i OS Taktak</translation>
+<translation id="3800828618615365228">Dodatni uvjeti za Taktak i OS Taktak</translation>
 <translation id="3800898876950197674">Da biste dopustili to proširenje, unesite zaporku.</translation>
 <translation id="3801449494961771207">Glas sustava za pretvaranje teksta u govor</translation>
 <translation id="3802486193901166966">To proširenje ne zahtijeva nikakva posebna dopuštenja i nema dodatni pristup web-lokaciji</translation>
@@ -4092,7 +4092,7 @@ Postavkama računa možete upravljati tako da instalirate aplikaciju Family Link
 <translation id="3810973564298564668">Upravljanje</translation>
 <translation id="381202950560906753">Dodaj još jedan</translation>
 <translation id="3812525830114410218">Neispravan certifikat</translation>
-<translation id="3813296892522778813">Ako ne možete pronaći ono što tražite, otvorite <ph name="BEGIN_LINK_CHROMIUM" />pomoć za Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Ako ne možete pronaći ono što tražite, otvorite <ph name="BEGIN_LINK_CHROMIUM" />pomoć za Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Jezik koji se koristi za prevođenje stranica i brze odgovore</translation>
 <translation id="3813458570141926987">Popis tema koje Taktak prikazuje na temelju vaše nedavne povijesti pregledavanja</translation>
 <translation id="3814529970604306954">Školski račun</translation>
@@ -4569,7 +4569,7 @@ Postavkama računa možete upravljati tako da instalirate aplikaciju Family Link
 <translation id="4133076602192971179">Otvorite aplikaciju da biste promijenili zaporku</translation>
 <translation id="4134838386867070505">1. od 4 koraka: opišite problem</translation>
 <translation id="413534985210133938">Mapa <ph name="LOCAL_FOLDER" /> sprema se samo na ovaj uređaj. Ako tu oznaku premjestite u mapu <ph name="LOCAL_FOLDER" />, više joj nećete moći pristupiti na drugim uređajima.</translation>
-<translation id="4135746311382563554">Dodatni uvjeti pružanja usluge za Taktak Taktak i OS Taktak</translation>
+<translation id="4135746311382563554">Dodatni uvjeti pružanja usluge za Taktak i OS Taktak</translation>
 <translation id="4136203100490971508">Noćno svjetlo automatski će se isključiti nakon izlaska sunca</translation>
 <translation id="41365691917097717">Nastavak će omogućiti ADB otklanjanje pogrešaka za izradu i testiranje Android aplikacija. Napominjemo da se time omogućuje instaliranje Android aplikacija koje Taktak nije potvrdio i da je za onemogućivanje potrebno vraćanje na tvorničke postavke.</translation>
 <translation id="4137923333452716643">Istaknite tekst koji želite otvoriti u načinu čitanja</translation>
@@ -7584,7 +7584,7 @@ Toj radnji možete dodijeliti više prekidača.</translation>
 <translation id="6314819609899340042">Uspješno ste omogućili značajke za otklanjanje pogrešaka na ovom uređaju <ph name="IDS_SHORT_PRODUCT_NAME" />.</translation>
 <translation id="6315170314923504164">Glasovno</translation>
 <translation id="6315493146179903667">Postavi sve u prednji plan</translation>
-<translation id="6316432269411143858">Sadržaj uvjeta za Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Sadržaj uvjeta za Taktak OS</translation>
 <translation id="6317369057005134371">Čeka se prozor aplikacije...</translation>
 <translation id="6318125393809743217">Uključi policies.json datoteku s konfiguracijama pravila.</translation>
 <translation id="6318944945640833942">Pisač nije otkriven. Ponovo unesite adresu pisača.</translation>
@@ -7831,7 +7831,7 @@ Toj radnji možete dodijeliti više prekidača.</translation>
 <translation id="6511607461419653612">Ponovo pokrenite Chromebook i pokušajte ponovo</translation>
 <translation id="6511827214781912955">Razmislite o brisanju datoteke <ph name="FILENAME" /> kako osobe koje upotrebljavaju ovaj uređaj ne bi mogle vidjeti vaše zaporke</translation>
 <translation id="6512759338201777379">Generirana je slika <ph name="INDEX" /> za <ph name="SUBJECT" /> s ugođajem <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak upotrijebit će mobilne podatke ako niste povezani na drugu mrežu.</translation>
+<translation id="6513247462497316522">Taktak upotrijebit će mobilne podatke ako niste povezani na drugu mrežu.</translation>
 <translation id="6514010653036109809">Dostupan uređaj:</translation>
 <translation id="6516990372629061585">Prikaz uvezenih certifikata iz Linuxa</translation>
 <translation id="6517382055541687102">Odabrani uređaj promijenjen je u <ph name="DEVICE_NAME" /></translation>

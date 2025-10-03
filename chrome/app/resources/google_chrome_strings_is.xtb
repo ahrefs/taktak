@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE translationbundle>
 <translationbundle lang="is">
-<translation id="1001534784610492198">Uppsetningarsafnskráin er skemmd eða ógild. Sæktu Taktak Taktak aftur.</translation>
+<translation id="1001534784610492198">Uppsetningarsafnskráin er skemmd eða ógild. Sæktu Taktak aftur.</translation>
 <translation id="1018937009655463387">Leyfðu skjáupptöku í Taktak í kerfisstillingunum til að deila glugganum þínum.</translation>
 <translation id="1026101648481255140">Halda uppsetningu áfram</translation>
-<translation id="102763973188675173">Sérstilltu og stjórnaðu Taktak Taktak. Uppfærsla er í boði.</translation>
+<translation id="102763973188675173">Sérstilltu og stjórnaðu Taktak. Uppfærsla er í boði.</translation>
 <translation id="1028061813283459617"><ph name="BEGIN_LINK" />Skráðu þig út af Taktak<ph name="END_LINK" /> til að eyða vefskoðunargögnum aðeins úr þessu tæki en ekki af Taktak-reikningnum þínum.</translation>
 <translation id="1042270987544905725">Smelltu til að loka innskráningarglugga Taktak</translation>
 <translation id="1051793555070215510">Taktu þátt í örstuttri könnun til að hjálpa okkur að bæta huliðsstillingu.</translation>
@@ -31,9 +31,9 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="1341711321000856656">Þú getur skipt um prófíl til að sjá aðgangsorð frá öðrum Taktak-prófíl</translation>
 <translation id="1356661055722410047">Nýtt! Þú getur þýtt bæði texta og myndir á skjánum þínum</translation>
 <translation id="1363996462118479832">ChromeOS gat ekki samstillt gögnin þín vegna innskráningarvillu.</translation>
-<translation id="137466361146087520">Taktak Taktak Beta</translation>
+<translation id="137466361146087520">Taktak Beta</translation>
 <translation id="1383876407941801731">Leita</translation>
-<translation id="1399397803214730675">Þessi tölva er þegar búin nýrri útgáfu af Taktak Taktak. Ef hugbúnaðurinn virkar ekki skaltu fjarlægja Taktak Taktak og reyna aftur.</translation>
+<translation id="1399397803214730675">Þessi tölva er þegar búin nýrri útgáfu af Taktak. Ef hugbúnaðurinn virkar ekki skaltu fjarlægja Taktak og reyna aftur.</translation>
 <translation id="141901961143729572">Segðu skoðun þína</translation>
 <translation id="1425903838053942728">{COUNT,plural, =0{Taktak-uppfærslu er lokið. Þú getur notað nýju útgáfuna um leið og þú hefur endurræst. Núverandi flipar opnast aftur þegar endurræsingu er lokið.}=1{Taktak-uppfærslu er lokið. Þú getur notað nýju útgáfuna um leið og þú hefur endurræst. Núverandi flipar opnast aftur þegar endurræsingu er lokið. Huliðsglugginn opnast ekki aftur.}one{Taktak-uppfærslu er lokið. Þú getur notað nýju útgáfuna um leið og þú hefur endurræst. Núverandi flipar opnast aftur þegar endurræsingu er lokið. # huliðsgluggi opnast ekki aftur.}other{Taktak-uppfærslu er lokið. Þú getur notað nýju útgáfuna um leið og þú hefur endurræst. Núverandi flipar opnast aftur þegar endurræsingu er lokið. # huliðsgluggar opnast ekki aftur.}}</translation>
 <translation id="1434626383986940139">Taktak Canary forrit</translation>
@@ -46,7 +46,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="1547295885616600893">ChromeOS á tilvist sína að þakka öðrum <ph name="BEGIN_LINK_CROS_OSS" />opnum hugbúnaði<ph name="END_LINK_CROS_OSS" />.</translation>
 <translation id="1547469039832541117">Lýkur völdu verkefni.</translation>
 <translation id="1553358976309200471">Uppfæra Taktak</translation>
-<translation id="1587223624401073077">Taktak Taktak er að nota myndavélina þína.</translation>
+<translation id="1587223624401073077">Taktak er að nota myndavélina þína.</translation>
 <translation id="1587325591171447154"><ph name="FILE_NAME" /> er skaðleg skrá og Taktak útilokaði hana.</translation>
 <translation id="1597911401261118146"><ph name="BEGIN_LINK" />Skráðu þig inn á Taktak<ph name="END_LINK" /> til að athuga hvort aðgangsorðin þín séu óhult fyrir öryggisbrotum og öðrum öryggisvandamálum.</translation>
 <translation id="1619887657840448962">Til að gera Taktak öruggara höfum við slökkt á eftirfarandi viðbót sem ekki er á skrá hjá <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /> og kann að hafa verið bætt við án þinnar vitneskju.</translation>
@@ -55,11 +55,11 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="1651617469580841801">Þegar þú notar Taktak-linsu verða titill síðu, vefslóð og innihald, að meðtöldum PDF-skjölum, send til Taktak. <ph name="LEARN_MORE" /></translation>
 <translation id="1662146548738125461">Um ChromeOS Flex</translation>
 <translation id="1674870198290878346">Opna tengil í h&amp;uliðsglugga í Taktak</translation>
-<translation id="1682634494516646069">Taktak Taktak getur ekki lesið eða skrifað í gagnamöppu sína:
+<translation id="1682634494516646069">Taktak getur ekki lesið eða skrifað í gagnamöppu sína:
 
 <ph name="USER_DATA_DIRECTORY" /></translation>
 <translation id="1688214853608504530">Þegar þú skrifar í veffangastikuna eða leitarreitinn sendir Taktak það sem þú skrifar til leitarforrits fyrirtækisins þíns, gervigreindar og verkfæra hjá fulltrúum til að fá tillögur.</translation>
-<translation id="1698376642261615901">Taktak Taktak er vafri sem keyrir vefsíður og forrit með ótrúlegum hraða. Hann er hraðvirkur, stöðugur og einfaldur í notkun. Notaðu vefinn á öruggari hátt með innbyggðri vernd Taktak Taktak gegn spilliforritum og vefveiðum.</translation>
+<translation id="1698376642261615901">Taktak er vafri sem keyrir vefsíður og forrit með ótrúlegum hraða. Hann er hraðvirkur, stöðugur og einfaldur í notkun. Notaðu vefinn á öruggari hátt með innbyggðri vernd Taktak gegn spilliforritum og vefveiðum.</translation>
 <translation id="1713301662689114961">{0,plural, =1{Taktak verður endurræst eftir klukkustund}one{Taktak verður endurræst eftir # klukkustund}other{Taktak verður endurræst eftir # klukkustundir}}</translation>
 <translation id="1722488837206509557">Þetta gerir þér kleift að velja á milli tiltækra tækja og efnis á skjá þeirra.</translation>
 <translation id="1786003790898721085">Vertu viss um að þú sért skráð(ur) inn á Taktak í <ph name="TARGET_DEVICE_NAME" /> og reyndu svo að senda aftur.</translation>
@@ -70,8 +70,8 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="1832046143430087831">Styttir hleðslutíma vefsvæða með V8-vél Taktak en gerir Taktak örlítið berskjaldaðri gagnvart árásum. Slökkt er á þessari stillingu.</translation>
 <translation id="1838374766361614909">Hreinsa leit</translation>
 <translation id="1860536484129686729">Taktak þarf leyfi til að nota myndavélina á þessu vefsvæði</translation>
-<translation id="1873233029667955273">Taktak Taktak er ekki sjálfgefinn vafri</translation>
-<translation id="1874309113135274312">Taktak Taktak Beta (mDNS-inn)</translation>
+<translation id="1873233029667955273">Taktak er ekki sjálfgefinn vafri</translation>
+<translation id="1874309113135274312">Taktak Beta (mDNS-inn)</translation>
 <translation id="1877026089748256423">Taktak er úrelt</translation>
 <translation id="1880677175115548835">Velja texta</translation>
 <translation id="1919130412786645364">Leyfa innskráningu í Taktak</translation>
@@ -83,7 +83,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="2024959665595762054">Staðfestu að þetta sért þú til að nota og vista Taktak-gögn á Taktak-reikningnum þínum</translation>
 <translation id="2034233344106846793">Taktak uppfærir óöruggar tengingar sjálfkrafa í HTTPS þegar hægt er</translation>
 <translation id="207902854391093810">Þegar kveikt er á prufuútgáfum gera auglýsingamælingar vefsvæðum sem þú opnar kleift að biðja Taktak um upplýsingar sem hjálpa vefsvæðinu að mæla afköst auglýsinga þess. Auglýsingamælingar takmarka rakningu á milli vefsvæða með því að flytja eins lítið magn upplýsinga á milli vefsvæða og mögulegt er.</translation>
-<translation id="2091012649849228750">Til að fá frekari uppfærslur á Taktak Taktak þarftu Windows 10 eða nýrri útgáfu. Þessi tölva notar Windows 8.</translation>
+<translation id="2091012649849228750">Til að fá frekari uppfærslur á Taktak þarftu Windows 10 eða nýrri útgáfu. Þessi tölva notar Windows 8.</translation>
 <translation id="2094648590148273905">Skilmálar ChromeOS Flex</translation>
 <translation id="2094919256425865063">Viltu samt loka Taktak?</translation>
 <translation id="2096213354152647998">Þú hefur ekki skoðað vefsvæðið nýlega. Taktak fjarlægði <ph name="PERMISSION" />.</translation>
@@ -91,7 +91,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="2108778574543343055">Ekki leyfa Taktak að keyra forrit í bakgrunni</translation>
 <translation id="2120620239521071941">Þetta mun eyða <ph name="ITEMS_COUNT" /> atriðum úr þessu tæki. Skráðu þig inn í Taktak sem <ph name="USER_EMAIL" /> til að endurheimta gögnin síðar.</translation>
 <translation id="2121284319307530122">Endurræstu til að uppfæra &amp;Taktak</translation>
-<translation id="2123055963409958220">Hjálpa til við að gera Taktak Taktak betra með því að tilkynna um <ph name="BEGIN_LINK" />núverandi stillingar<ph name="END_LINK" /></translation>
+<translation id="2123055963409958220">Hjálpa til við að gera Taktak betra með því að tilkynna um <ph name="BEGIN_LINK" />núverandi stillingar<ph name="END_LINK" /></translation>
 <translation id="2126108037660393668">Ekki tókst að staðfesta skrána sem var sótt.</translation>
 <translation id="2128411189117340671">Stjórna Taktak-prófílum</translation>
 <translation id="2131230230468101642">Til að gæta persónuverndar þinnar eyðum við áhugasviðunum þínum sem eru eldri en 4 vikna sjálfkrafa. Áhugasvið kann að birtast aftur á listanum þegar þú heldur áfram að vafra. Þú getur einnig fjarlægt áhugasvið sem þú vilt ekki að Taktak taki tillit til.</translation>
@@ -105,10 +105,10 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="2199691482078155239">Taktak veitir þér betri stjórn á auglýsingunum sem þú sérð og takmarkar upplýsingar um þig sem vefsvæði safna þegar þau birta þér sérsniðnar auglýsingar</translation>
 <translation id="2216543877350048334">Skráðu þig út til að fjarlægja Taktak-reikninginn þinn af Taktak</translation>
 <translation id="2236949375853147973">Mín virkni</translation>
-<translation id="2290014774651636340">Lykla fyrir forritaskil Taktak vantar. Vissir eiginleikar Taktak Taktak verða óvirkir.</translation>
-<translation id="2290095356545025170">Ertu viss um að þú viljir fjarlægja Taktak Taktak?</translation>
+<translation id="2290014774651636340">Lykla fyrir forritaskil Taktak vantar. Vissir eiginleikar Taktak verða óvirkir.</translation>
+<translation id="2290095356545025170">Ertu viss um að þú viljir fjarlægja Taktak?</translation>
 <translation id="2301513536169703857">Skráðu þig inn á Taktak til að fá aðgang að aðgangsorðum, bókamerkjum og fleiru í öllum tækjunum þínum</translation>
-<translation id="2309047409763057870">Þetta er aukaleg uppsetning á Taktak Taktak sem ekki er hægt að gera að sjálfgefnum vafra.</translation>
+<translation id="2309047409763057870">Þetta er aukaleg uppsetning á Taktak sem ekki er hægt að gera að sjálfgefnum vafra.</translation>
 <translation id="2345992953227471816">Taktak komst að því að eftirfarandi viðbætur innihalda spilliforrit:</translation>
 <translation id="2348335408836342058">Taktak þarf leyfi til að nota myndavélina og hljóðnemann á þessu vefsvæði</translation>
 <translation id="234869673307233423">Taktak getur ekki athugað aðgangsorðin þín. Reyndu aftur síðar.</translation>
@@ -116,7 +116,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="2403703063067034158">Villa í ræsingu: annað tilvik af uppsetningu er í keyrslu, reyndu aftur síðar.</translation>
 <translation id="2409816192575564775">{NUM_DEVICES,plural, =0{Ein eða fleiri Taktak-viðbætur fengu aðgang að 1 HID-tæki}=1{Ein eða fleiri Taktak-viðbætur hafa aðgang að 1 HID-tæki}one{Ein eða fleiri Taktak-viðbætur hafa aðgang að # HID-tæki}other{Ein eða fleiri Taktak-viðbætur hafa aðgang að # HID-tækjum}}</translation>
 <translation id="2424440923901031101">Þessi viðbót brýtur gegn reglum Vefverslunar Taktak og kann að vera óörugg. Fjarlægðu hana úr Taktak svo hún geti ekki lengur séð og breytt gögnunum þínum á vefsvæðum sem þú heimsækir, þ.m.t. persónuupplýsingunum þínum.</translation>
-<translation id="2467438592969358367">Taktak Taktak vill flytja út aðgangsorðin þín. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
+<translation id="2467438592969358367">Taktak vill flytja út aðgangsorðin þín. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
 <translation id="2472092250898121027">Þessi viðbót inniheldur spilliforrit og er ekki örugg. Fjarlægðu hana úr Taktak svo hún geti ekki lengur séð og breytt gögnunum þínum á vefsvæðum sem þú heimsækir, þ.m.t. persónuupplýsingunum þínum.</translation>
 <translation id="2485422356828889247">Fjarlægja</translation>
 <translation id="2513154137948333830">Endurræsingar er krafist: <ph name="INSTALL_SUCCESS" /></translation>
@@ -128,19 +128,19 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="2571392474191184472">Fyrirtækið þitt hefur umsjón með Taktak</translation>
 <translation id="2574930892358684005"><ph name="EXISTING_USER" /> er þegar innskráð(ur) á þennan Taktak prófíl. Taktak getur búið til sérstakan prófíl fyrir þig svo að þú getir haldið þinni vefskoðun aðskilinni.</translation>
 <translation id="2579190314336775785">Aðeins er hægt að eyða aðgangsorðum utan Taktak</translation>
-<translation id="2580411288591421699">Ekki er hægt að setja upp sömu útgáfu Taktak Taktak og er nú þegar í gangi. Lokaðu Taktak Taktak og reyndu aftur.</translation>
+<translation id="2580411288591421699">Ekki er hægt að setja upp sömu útgáfu Taktak og er nú þegar í gangi. Lokaðu Taktak og reyndu aftur.</translation>
 <translation id="2586406160782125153">Þetta mun eyða vefskoðunargögnum úr þessu tæki. Skráðu þig inn í Taktak sem <ph name="USER_EMAIL" /> til að endurheimta gögnin síðar.</translation>
 <translation id="259935314519650377">Ekki tókst að vista uppsetningarforrit sem var sótt í skyndiminni. Villa: <ph name="UNPACK_CACHING_ERROR_CODE" />.</translation>
 <translation id="2620436844016719705">Kerfi</translation>
 <translation id="2645435784669275700">ChromeOS</translation>
 <translation id="2649768380733403658">Taktak athugar reglulega hvort vafrinn þinn sé með öruggustu stillingarnar. Við látum þig vita ef þú þarft að yfirfara eitthvað.</translation>
 <translation id="2652691236519827073">Opna tengil í nýjum &amp;flipa í Taktak</translation>
-<translation id="2665296953892887393">Hjálpaðu til við að bæta Taktak Taktak með því að senda tilkynningar um hrun og <ph name="UMA_LINK" /> til Taktak.</translation>
+<translation id="2665296953892887393">Hjálpaðu til við að bæta Taktak með því að senda tilkynningar um hrun og <ph name="UMA_LINK" /> til Taktak.</translation>
 <translation id="2668094785979141847">Smelltu til að loka Taktak-linsu</translation>
-<translation id="2681444469812712297">Opna <ph name="URL" /> í nýjum flipa í Taktak Taktak.</translation>
+<translation id="2681444469812712297">Opna <ph name="URL" /> í nýjum flipa í Taktak.</translation>
 <translation id="2712141162840347885">Veldu hvað sem er til að leita með Taktak-linsu eða ýttu á Esc til að loka Linsunni</translation>
 <translation id="2738871930057338499">Ekki er hægt að tengjast internetinu. HTTP 403 bannað. Kannaðu uppsetningu staðgengilsþjóna.</translation>
-<translation id="2742320827292110288">Viðvörun: Taktak Taktak getur ekki komið í veg fyrir að viðbætur skrái vafraferilinn þinn. Afturkallaðu þennan valkost til að gera þessa viðbót óvirka í huliðsstillingu.</translation>
+<translation id="2742320827292110288">Viðvörun: Taktak getur ekki komið í veg fyrir að viðbætur skrái vafraferilinn þinn. Afturkallaðu þennan valkost til að gera þessa viðbót óvirka í huliðsstillingu.</translation>
 <translation id="2753623023919742414">Smelltu til að leita</translation>
 <translation id="2765403129283291972">Taktak þarf leyfi til að nota hljóðnemann á þessu vefsvæði</translation>
 <translation id="2770231113462710648">Breyta sjálfgefnum vafra í:</translation>
@@ -172,13 +172,13 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="3003694935412297923">Öll verkefni</translation>
 <translation id="3018957014024118866">Eyða einnig gögnum frá Taktak (<ph name="URL" />)</translation>
 <translation id="3019382870990049182">Endurræsa til að uppfæra &amp;ChromeOS Flex</translation>
-<translation id="3037838751736561277">Taktak Taktak er í bakgrunnsstillingu.</translation>
+<translation id="3037838751736561277">Taktak er í bakgrunnsstillingu.</translation>
 <translation id="3038232873781883849">Bíður eftir uppsetningu...</translation>
 <translation id="3045032126857188731">Þýtt tungumál: <ph name="LANGUAGE" /></translation>
 <translation id="3047590466164881923">Loka ábendingaglugga</translation>
 <translation id="306179102415443347">Notaðu flýtileiðina til að komast í Taktak-aðgangsorðastjórnun á skjótan hátt. Þú getur fært flýtileiðina á heimaskjá tölvunnar eða í ræsiforritið.</translation>
 <translation id="3065168410429928842">Taktak flipi</translation>
-<translation id="3080151273017101988">Halda áfram að keyra forrit í bakgrunni þegar Taktak Taktak er lokað</translation>
+<translation id="3080151273017101988">Halda áfram að keyra forrit í bakgrunni þegar Taktak er lokað</translation>
 <translation id="3100998948628680988">Gefðu Taktak prófílnum þínum heiti</translation>
 <translation id="310459126943037700">Ekki tókst að ljúka verkefni/verkefnum.</translation>
 <translation id="3112458742631356345">Taktak lokaði á þetta niðurhal vegna þess að skráin er ekki sótt oft og gæti verið hættuleg</translation>
@@ -186,7 +186,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="3119573284443908657">Taktak lokaði á þetta niðurhal vegna þess að safnskráin getur innihaldið aðrar skrár sem geta falið spilliforrit</translation>
 <translation id="3135560418014806498">Bæta við Taktak-prófíl</translation>
 <translation id="3137969841538672700">Dragðu til að leita</translation>
-<translation id="3140883423282498090">Breytingarnar taka gildi næst þegar þú endurræsir Taktak Taktak.</translation>
+<translation id="3140883423282498090">Breytingarnar taka gildi næst þegar þú endurræsir Taktak.</translation>
 <translation id="3149510190863420837">Taktak forrit</translation>
 <translation id="3161522574479303604">Öll tungumál</translation>
 <translation id="319199214552513804">Skráðu þig inn í Taktak til að fá þessa viðbót og fleira í öllum tölvunum þínum</translation>
@@ -203,7 +203,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="3352986031709923790">efsta horn leitarsvæðis hægra megin: til hægri <ph name="RIGHT" />%, efst <ph name="TOP" />%</translation>
 <translation id="3360895254066713204">Taktak hjálpari</translation>
 <translation id="3379938682270551431">{0,plural, =0{Taktak verður endurræst núna}=1{Taktak verður endurræst eftir 1 sekúndu}one{Taktak verður endurræst eftir # sekúndu}other{Taktak verður endurræst eftir # sekúndur}}</translation>
-<translation id="3396977131400919238">Stýrikerfisvilla kom upp við uppsetningu. Sæktu Taktak Taktak aftur.</translation>
+<translation id="3396977131400919238">Stýrikerfisvilla kom upp við uppsetningu. Sæktu Taktak aftur.</translation>
 <translation id="3428747202529429621">Tryggir öryggi þitt í Taktak og kann að vera notað til að auka öryggi þitt í öðrum Taktak forritum þegar þú ert skráð(ur) inn</translation>
 <translation id="3434246496373299699">Taktak getur athugað aðgangsorðin þín þegar þú skráir þig inn með Taktak reikningnum þínum</translation>
 <translation id="3438681572027105609">Skráðu þig inn á Taktak til að fá aðgang að aðgangsorðum og fleiru í öllum tækjunum þínum</translation>
@@ -214,7 +214,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="3503306920980160878">Taktak þarf staðsetningaraðgang til að deila staðsetningu þinni með þessu vefsvæði</translation>
 <translation id="3533694711092285624">Engin vistuð aðgangsorð. Taktak getur athugað aðgangsorðin þín þegar þú vistar þau.</translation>
 <translation id="3541482654983822893">Taktak getur ekki athugað aðgangsorðin þín. Reyndu aftur eftir sólarhring.</translation>
-<translation id="3576528680708590453">Kerfisstjórinn hefur stillt Taktak Taktak á að opna annan vafra fyrir <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="3576528680708590453">Kerfisstjórinn hefur stillt Taktak á að opna annan vafra fyrir <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="3582972582564653026">Samstilltu Taktak á milli tækja og gerðu það að þínu</translation>
 <translation id="3583751698304738917">Þú ert þegar skráð(ur) inn sem <ph name="USER_EMAIL_ADDRESS" /> á öðrum Taktak-prófíl</translation>
 <translation id="358381413217813387">Leita á þessari síðu með Taktak-linsu</translation>
@@ -236,33 +236,33 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="3780814664026482060">Taktak – <ph name="PAGE_TITLE" /></translation>
 <translation id="3785324443014631273">ChromeOS Flex gat ekki samstillt gögnin þín vegna innskráningarvillu.</translation>
 <translation id="3795971588916395511">Taktak ChromeOS</translation>
-<translation id="3809772425479558446">Taktak Taktak krefst Windows 10 eða nýrri útgáfu.</translation>
+<translation id="3809772425479558446">Taktak krefst Windows 10 eða nýrri útgáfu.</translation>
 <translation id="3810973564298564668">Stjórna</translation>
-<translation id="383928141529488001">Taktak Taktak þarf aðgang að Bluetooth til að kanna 
+<translation id="383928141529488001">Taktak þarf aðgang að Bluetooth til að kanna 
  Bluetooth-tæki. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
-<translation id="386202838227397562">Lokaðu öllum Taktak Taktak gluggum og reyndu aftur.</translation>
+<translation id="386202838227397562">Lokaðu öllum Taktak gluggum og reyndu aftur.</translation>
 <translation id="3873044882194371212">Opna tengil í h&amp;uliðsglugga í Taktak</translation>
 <translation id="3885770153807205175">Tungumálaval</translation>
-<translation id="3889417619312448367">Fjarlægja Taktak Taktak</translation>
+<translation id="3889417619312448367">Fjarlægja Taktak</translation>
 <translation id="3892148308691398805">Afrita texta</translation>
 <translation id="3941890832296813527">Uppsetningarvilla: Skráarheiti uppsetningarforrits er ógilt eða ekki stutt.</translation>
 <translation id="395904275706073188">Ekki er hægt að lesa varðar síður. Prófaðu aðra síðu.</translation>
 <translation id="3968962723676998462">Sláðu inn aðgangsorðið þitt til að nota og vista Taktak-gögn á reikningnum þínum, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="3973161977468201858">Taktak Taktak vill eyða gögnum Taktak-aðgangsorðastjórnunar. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
+<translation id="3973161977468201858">Taktak vill eyða gögnum Taktak-aðgangsorðastjórnunar. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
 <translation id="400161754580828648">Leyfðu skjáupptöku í Taktak í kerfisstillingunum til að deila skjánum þínum.</translation>
 <translation id="4022972681110646219">Þýða skjá</translation>
 <translation id="4023601594785368013">Upprunalegt tungumál: <ph name="LANGUAGE" /></translation>
 <translation id="4035053306113201399">Endurræsa þarf ChromeOS til að nota uppfærsluna.</translation>
 <translation id="4050175100176540509">Mikilvægar öryggislagfæringar og nýir eiginleikar eru í boði í nýjustu útgáfunni.</translation>
-<translation id="4053720452172726777">Sérsníða og stjórna Taktak Taktak</translation>
+<translation id="4053720452172726777">Sérsníða og stjórna Taktak</translation>
 <translation id="408393047846373801">Skráðu þig inn á Taktak til að fá aðgang að aðgangsorðum og fleiru í öllum tækjunum þínum. Þetta aðgangsorð verður vistað á Taktak-reikningnum þínum eftir að þú skráir þig inn.</translation>
 <translation id="409936259433005390">Stefnirðu á uppfærslu í Windows 11 fljótlega? Sæktu uppsetningarforrit Taktak á OneDrive til að vera klár í slaginn.</translation>
 <translation id="4110895483821904099">Settu upp nýja Taktak prófílinn þinn</translation>
 <translation id="4111566860456076004">Taktak getur ekki staðfest hvaðan þessi viðbót kemur og hún gæti verið óörugg. Fjarlægðu hana úr Taktak svo hún geti ekki lengur séð og breytt gögnum á vefsvæðum sem þú heimsækir, þ.m.t. persónuupplýsingum.</translation>
 <translation id="4128488089242627000">Taktak virkar hraðar og eiginleikar sem nota JavaScript ættu að virka sem skyldi (ráðlagt)</translation>
-<translation id="4147555960264124640">Þú ert að skrá þig inn á stýrðan reikning og gefur stjórnanda hans stjórn yfir Taktak Taktak prófílnum þínum. Gögnin þín í Taktak, s.s. forrit, bókamerki, ferill, aðgangsorð og aðrar stillingar, verða tengd varanlega við <ph name="USER_NAME" />. Þú getur eytt þessum gögnum á stjórnborði Taktak-reikninga en getur ekki tengt þau öðrum reikningi. <ph name="LEARN_MORE" /></translation>
+<translation id="4147555960264124640">Þú ert að skrá þig inn á stýrðan reikning og gefur stjórnanda hans stjórn yfir Taktak prófílnum þínum. Gögnin þín í Taktak, s.s. forrit, bókamerki, ferill, aðgangsorð og aðrar stillingar, verða tengd varanlega við <ph name="USER_NAME" />. Þú getur eytt þessum gögnum á stjórnborði Taktak-reikninga en getur ekki tengt þau öðrum reikningi. <ph name="LEARN_MORE" /></translation>
 <translation id="4148957013307229264">Setur upp...</translation>
-<translation id="4149882025268051530">Uppsetningarforritinu tókst ekki að afþjappa safnskrána. Sæktu Taktak Taktak aftur.</translation>
+<translation id="4149882025268051530">Uppsetningarforritinu tókst ekki að afþjappa safnskrána. Sæktu Taktak aftur.</translation>
 <translation id="415112847282352845">Skráðu þig inn á Taktak til að fá aðgang að heimilisföngum og fleira í öllum tækjunum þínum Þetta heimilisfang verður vistað á Taktak-reikningnum þínum eftir að þú skráir þig inn.</translation>
 <translation id="4153934450158521343">Taktak mun bráðlega lokast og eyða gögnum</translation>
 <translation id="4173512894976930765">Vefsvæði munu líklega virka sem skyldi. Þú skráist út af flestum vefsvæðum þegar þú lokar öllum Taktak-gluggum en ekki út af Taktak-reikningnum þínum ef þú hefur skráð þig inn á Taktak.</translation>
@@ -279,11 +279,11 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="4293420128516039005">Skráðu þig inn til að samstilla Taktak í tækjunum þínum og gera það að þínu</translation>
 <translation id="430327780270213103">Leyfa viðbót að sýna aðgangsbeiðnir í tækjastiku Taktak</translation>
 <translation id="4326552909330437744">{NUM_TABS,plural, =1{Taktak mælir með því að gera hlé á flipanum sem er að hægja á vafranum þínum}one{Taktak mælir með því að gera hlé á flipunum sem eru að hægja á vafranum þínum}other{Taktak mælir með því að gera hlé á flipunum sem eru að hægja á vafranum þínum}}</translation>
-<translation id="4328355335528187361">Taktak Taktak Dev (mDNS-inn)</translation>
+<translation id="4328355335528187361">Taktak Dev (mDNS-inn)</translation>
 <translation id="4329315893554541805">Hafðu Taktak með í vef- og forritavirkni og tengdum Taktak-þjónustum til að fá aðgang að sérsniði og öðrum eiginleikum</translation>
 <translation id="4334241893986177674">Leita að þessari skjámynd</translation>
 <translation id="4334294535648607276">Niðurhali lokið.</translation>
-<translation id="4337324600316876133">Til að fá frekari uppfærslur á Taktak Taktak þarftu macOS 12 eða nýrri útgáfu. Þessi tölva notar macOS 11.</translation>
+<translation id="4337324600316876133">Til að fá frekari uppfærslur á Taktak þarftu macOS 12 eða nýrri útgáfu. Þessi tölva notar macOS 11.</translation>
 <translation id="4343195214584226067"><ph name="EXTENSION_NAME" /> hefur verið bætt við Taktak</translation>
 <translation id="4348548358339558429">Hafðu Taktak með í vef- og forritavirkni til að fá aðgang að sérsniði</translation>
 <translation id="436060642166082913">Taktak lokaði á þetta niðurhal vegna þess að skráin getur skaðað persónulega reikninga og samfélagsmiðlareikninga þína</translation>
@@ -292,7 +292,7 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="4427306783828095590">Aukin vernd gengur lengra í að loka á vefveiðar og spilliforrit</translation>
 <translation id="4434353761996769206">Uppsetningarvilla: <ph name="INSTALLER_ERROR" /></translation>
 <translation id="4450664632294415862">Taktak – innskráning á net – <ph name="PAGE_TITLE" /></translation>
-<translation id="4458462641685292929">Önnur aðgerð er í gangi í Taktak Taktak. Reyndu aftur síðar.</translation>
+<translation id="4458462641685292929">Önnur aðgerð er í gangi í Taktak. Reyndu aftur síðar.</translation>
 <translation id="4459234553906210702">Auglýsingamælingar gera vefsvæðum sem þú opnar kleift að biðja Taktak um upplýsingar sem hjálpa vefsvæðinu að mæla afköst auglýsinga þess. Auglýsingamælingar takmarka rakningu á milli vefsvæða með því að flytja eins lítið magn upplýsinga á milli vefsvæða og mögulegt er.</translation>
 <translation id="4493028449971051158">Villa í ræsingu: keyrðu uppsetningarforritið sem kerfisstjóri.</translation>
 <translation id="4501471624619070934">Uppsetning mistókst vegna þess að aðgangur er takmarkaður í landinu.</translation>
@@ -309,42 +309,42 @@ Sumir eiginleikar kunna að vera óaðgengilegir og breytingar á kjörstillingu
 <translation id="4680828127924988555">Hætta við uppsetningu</translation>
 <translation id="4720851490453439956">Innri uppfærsluþjónusta Taktak</translation>
 <translation id="4724676981607797757">Uppsetning mistókst vegna villu sem tengist óstuddri samskiptareglu.</translation>
-<translation id="4728575227883772061">Uppsetning mistókst vegna ótilgreindrar villu. Ef Taktak Taktak er í gangi eins og er skaltu loka því og reyna aftur.</translation>
+<translation id="4728575227883772061">Uppsetning mistókst vegna ótilgreindrar villu. Ef Taktak er í gangi eins og er skaltu loka því og reyna aftur.</translation>
 <translation id="4737281654364167024">Skráðu þig inn í Taktak sem <ph name="EMAIL" /> til að halda áfram. Það tryggir að reglur fyrirtækisins þíns gildi.</translation>
 <translation id="4741235124132242877">Fest! Nú geturðu opnað Taktak-linsu af tækjastikunni</translation>
 <translation id="4747730611090640388">Taktak getur áætlað áhugasvið þín.  Seinna getur vefsvæði sem þú opnar beðið Taktak um að sýna áhugasvið þín til að hægt sé að sérsníða auglýsingarnar sem þú sérð.</translation>
 <translation id="475321580758063259">Uppfærðu Taktak til að halda áfram að nota Taktak-gögnin á Taktak-reikningnum þínum, <ph name="ACCOUNT_EMAIL" /></translation>
-<translation id="4754614261631455953">Taktak Taktak Canary (mDNS-inn)</translation>
+<translation id="4754614261631455953">Taktak Canary (mDNS-inn)</translation>
 <translation id="4756182432527369254">Styttir hleðslutíma vefsvæða með V8-vél Taktak en gerir Taktak örlítið berskjaldaðri gagnvart árásum</translation>
 <translation id="479167709087336770">Þetta notar sömu ritvilluleit og er notuð í Taktak-leit. Textinn sem þú skrifar í vafranum er sendur til Taktak. Þú getur alltaf breytt þessu í stillingunum.</translation>
 <translation id="4793679854893018356">Kynntu þér hvernig Taktak gætir að öryggi þínu</translation>
-<translation id="4828579605166583682">Taktak Taktak er að reyna að skipta út núverandi aðgangsorðum. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
+<translation id="4828579605166583682">Taktak er að reyna að skipta út núverandi aðgangsorðum. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
 <translation id="4842397268809523050">ChromeOS Flex gat ekki samstillt gögnin þín vegna þess að samstilling er ekki í boði fyrir lénið þitt.</translation>
 <translation id="4851866215237571846"><ph name="EXISTING_USER" /> er þegar innskráð(ur).  Til að halda vefskoðun aðskilinni skaltu skrá þig inn á Taktak með þínum eigin prófíl sem <ph name="USER_EMAIL_ADDRESS" />.</translation>
 <translation id="4855026984605187434">Leyfðu skjáupptöku í Taktak í kerfisstillingunum til að deila skjánum þínum</translation>
 <translation id="4873783916118289636">Farðu yfir helstu öryggis- og persónuverndarstýringar í Taktak</translation>
 <translation id="4885446229353981848">Alltaf sýna flýtileið Taktak-linsu</translation>
-<translation id="4891791193823137474">Leyfa Taktak Taktak að keyra í bakgrunni</translation>
+<translation id="4891791193823137474">Leyfa Taktak að keyra í bakgrunni</translation>
 <translation id="4895437082222824641">Opna tengil í nýjum Taktak &amp;flipa</translation>
 <translation id="4918844574251943176">Mynd afrituð</translation>
 <translation id="492720062778050435">Taktak mælir með að þú farir yfir þessa viðbót</translation>
 <translation id="4946912144186040233">Taktak áttar sig betur á eyðublöðum og getur fyllt þau út fyrir þig með fljótlegri hætti. Slökkt er á þessari stillingu.</translation>
-<translation id="4953650215774548573">Stilla Taktak Taktak sem sjálfgefinn vafra</translation>
+<translation id="4953650215774548573">Stilla Taktak sem sjálfgefinn vafra</translation>
 <translation id="495931528404527476">Í Taktak</translation>
 <translation id="4969674060580488087">ChromeOS Flex gat ekki samstillt gögnin þín vegna þess að innskráningarupplýsingar reikningsins eru úreltar.</translation>
 <translation id="4970761609246024540">Velkomin(n) í Taktak prófíla</translation>
 <translation id="4970880042055371251">Útgáfa ChromeOS</translation>
-<translation id="4990567037958725628">Taktak Taktak Canary</translation>
+<translation id="4990567037958725628">Taktak Canary</translation>
 <translation id="5003967926796347400">Smelltu á „Taktak-aðgangsorðastjórnun“</translation>
 <translation id="504867494566807945">Opnaðu tengla úr hvaða forriti sem er í Taktak og festu vafrann þar að auki á forritastikuna þína til að hafa greiðan aðgang að honum</translation>
 <translation id="5114340746415930644">Sláðu inn aðgangsorðið þitt til að nota og vista Taktak-gögn á reikningnum þínum, <ph name="USER_EMAIL" /></translation>
 <translation id="5120334927898581447">Skráðu þig inn í Taktak þegar þú skráir þig inn í aðrar Taktak-þjónustur</translation>
 <translation id="5126049312684316860">Taktak forhleður fleiri síðum sem er líklegt að þú munir skoða svo þær hlaðist fyrr þegar þú opnar þær</translation>
-<translation id="5132929315877954718">Uppgötvaðu frábær forrit, leiki, viðbætur og þemu fyrir Taktak Taktak</translation>
+<translation id="5132929315877954718">Uppgötvaðu frábær forrit, leiki, viðbætur og þemu fyrir Taktak</translation>
 <translation id="5139423532931106058">Sérsníða Taktak prófílinn þinn</translation>
 <translation id="5163087008893166964">Velkomin(n) í Taktak; nýr vafragluggi opnaður</translation>
 <translation id="5166439563123238795">Taktak þarf heimild til að rekja handahreyfingar þínar</translation>
-<translation id="5170938038195470297">Ekki er hægt að nota prófílinn þinn því að hann er úr nýrri útgáfu Taktak Taktak.
+<translation id="5170938038195470297">Ekki er hægt að nota prófílinn þinn því að hann er úr nýrri útgáfu Taktak.
 
 Sumir eiginleikar kunna að vera óaðgengilegir. Tilgreindu aðra prófílmöppu eða notaðu nýrri útgáfu af Taktak.</translation>
 <translation id="5174969993834422967">Þú lokar yfirleitt á tilkynningar. Smelltu á tilkynningatáknið í hægra horni veffangastikunnar til að leyfa vefsvæðinu að senda þér tilkynningar.</translation>
@@ -365,12 +365,12 @@ Sumir eiginleikar kunna að vera óaðgengilegir. Tilgreindu aðra prófílmöpp
 <translation id="5412485296464121825">Vefsvæði geta vistað upplýsingar um áhugasvið þín í Taktak. Ef þú heimsækir til dæmis vefsvæði til að kaupa skó fyrir maraþonhlaup kann vefsvæðið að skilgreina maraþonhlaup sem áhugasvið þitt. Ef þú heimsækir svo annað vefsvæði síðar meir til að skrá þig í hlaup getur viðkomandi vefsvæði birt þér auglýsingu um hlaupaskó í samræmi við áhugasvið þitt.</translation>
 <translation id="5430073640787465221">Kjörstillingaskráin þín er skemmd eða ógild.
 
-Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
+Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="5468572406162360320">Til að hjálpa til við að bæta þessa eiginleika sendir Taktak upplýsingar um notkun þína á þeim til Taktak. Mennskir yfirlesarar kunna að lesa, vinna úr og skrifa skýringar við þessi gögn.</translation>
 <translation id="5524761631371622910">Þegar kveikt er á prufuútgáfum og Taktak hefur skráð þig af handahófi í virka prufuútgáfu hefur vafraferillinn þinn áhrif á auglýsingarnar sem þú sérð og áhugasviðin sem eru áætluð hér fyrir neðan. Til að gæta persónuverndar þinnar eyðir Taktak áhugamálunum þínum sjálfkrafa mánaðarlega.</translation>
 <translation id="5524890928877629608">efsta horn leitarsvæðis vinstra megin: til vinstri <ph name="LEFT" />%, efst <ph name="TOP" />%</translation>
 <translation id="5530733413481476019">Láttu Taktak vinna hraðar</translation>
-<translation id="5566025111015594046">Taktak Taktak (mDNS-inn)</translation>
+<translation id="5566025111015594046">Taktak (mDNS-inn)</translation>
 <translation id="5579324208890605088">Villa í ræsingu: keyrðu uppsetningarforritið sem venjulegur notandi, ekki sem kerfisstjóri.</translation>
 <translation id="5596627076506792578">Fleiri valkostir</translation>
 <translation id="5600352656975192682">Festu Taktak við forritastikuna til að hafa það ávallt við höndina</translation>
@@ -380,7 +380,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="566568153320186256">Taktak sparar rafhlöðunotkun með því að takmarka bakgrunnsvirkni og myndáhrif, s.s. mjúkflettingu og vídeórammatíðni. <ph name="BEGIN_LINK" />Nánar um orkusparnað<ph name="END_LINK" /></translation>
 <translation id="567202749201779594">Eyddu Taktak-gögnum af reikningnum þínum</translation>
 <translation id="5678190148303298925">{COUNT,plural, =0{Kerfisstjórinn þinn vill að þú endurræsir Taktak til að setja upp þessa uppfærslu}=1{Kerfisstjórinn þinn vill að þú endurræsir Taktak til að setja upp þessa uppfærslu. Huliðsglugginn enduropnast ekki.}one{Kerfisstjórinn þinn vill að þú endurræsir Taktak til að setja upp þessa uppfærslu. # huliðsgluggi enduropnast ekki.}other{Kerfisstjórinn þinn vill að þú endurræsir Taktak til að setja upp þessa uppfærslu. # huliðsgluggar enduropnast ekki.}}</translation>
-<translation id="5686916850681061684">Sérsníða og stýra Taktak Taktak. Eitthvað krefst athygli þinnar – smelltu til að sjá nánar.</translation>
+<translation id="5686916850681061684">Sérsníða og stýra Taktak. Eitthvað krefst athygli þinnar – smelltu til að sjá nánar.</translation>
 <translation id="5690427481109656848">Taktak LLC</translation>
 <translation id="569897634095159764">Ekki er hægt að tengjast internetinu. Staðgengilsþjónninn krefst auðkenningar.</translation>
 <translation id="5709557627224531708">Stilltu Taktak sem sjálfgefinn vafra</translation>
@@ -388,7 +388,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="5736850870166430177">Ef vefsvæði reynir að stela aðgangsorðinu þínu, eða ef þú sækir skaðlega skrá, gæti Taktak einnig sent vefslóðir í örugga vefskoðun, þar á meðal hluta af innihaldi síðna</translation>
 <translation id="5756509061973259733">Taktak prófíll með þessum reikningi er þegar til í þessu tæki</translation>
 <translation id="5759947850379142561">Veldu hvaða texta eða mynd sem er til að leita með Taktak-linsu eða ýttu á „Esc“ til að loka Linsunni</translation>
-<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Taktak Canary</translation>
+<translation id="5795887333006832406"><ph name="PAGE_TITLE" /> - Taktak Canary</translation>
 <translation id="5804318322022881572">Ekki var hægt að ræsa Taktak. Reyndu aftur.</translation>
 <translation id="5809516625706423866">Ekki er hægt að tengjast internetinu. HTTP 403 óheimilt. Kannaðu uppsetningu staðgengilsþjóna.</translation>
 <translation id="5824893331272123205">Ekki tókst að hlaða glugganum, reyndu aftur</translation>
@@ -402,7 +402,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="5925596746603389877">Sækja uppsetningarforrit Taktak</translation>
 <translation id="5940385492829620908">Hér er vefefnið þitt, bókamerkin og annað dót úr Taktak.</translation>
 <translation id="5941711191222866238">Minnka</translation>
-<translation id="5941830788786076944">Gera Taktak Taktak að sjálfgefnum vafra</translation>
+<translation id="5941830788786076944">Gera Taktak að sjálfgefnum vafra</translation>
 <translation id="5947104538377036631">Taktak-flýtilykill</translation>
 <translation id="5968400720580217226">Gervigreindarstilling</translation>
 <translation id="5980111191913430208">Viðbætur, forrit og þemu frá óþekktum uppruna geta skaðað tækið þitt. Taktak mælir með að sækja slíkar skrár aðeins í <ph name="IDS_EXTENSION_WEB_STORE_TITLE" /></translation>
@@ -411,11 +411,11 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="6009821354356307391">Spyrja framhaldsspurningar</translation>
 <translation id="6014316319780893079"><ph name="BEGIN_LINK" />Verkfæri Taktak<ph name="END_LINK" /> gera þér kleift að vafra á öruggan hátt og vera við stjórnvölinn</translation>
 <translation id="6022659036123304283">Gerðu Taktak að þínu</translation>
-<translation id="6025087594896450715">Taktak Taktak endurræsist eftir <ph name="REMAINING_TIME" /></translation>
+<translation id="6025087594896450715">Taktak endurræsist eftir <ph name="REMAINING_TIME" /></translation>
 <translation id="6040143037577758943">Loka</translation>
 <translation id="604424701295382420">Fest! Nú geturðu opnað Taktak-linsu með því að ýta á nýja hnappinn á tækjastikunni</translation>
 <translation id="6069027071882229820">Afrita sem mynd</translation>
-<translation id="6070348360322141662">Taktak Taktak dulkóðar gögnin þín til að auka öryggið</translation>
+<translation id="6070348360322141662">Taktak dulkóðar gögnin þín til að auka öryggið</translation>
 <translation id="6075300983329039771">Fyrirtækið þitt, <ph name="MANAGER" />, krefst þess að þú skráir þig inn í Taktak</translation>
 <translation id="6113794647360055231">Taktak er nú enn betra</translation>
 <translation id="6116252277240876590">Þetta tungumál er notað til að birta valmyndir, stillingar, viðvaranir og annan texta í Taktak</translation>
@@ -426,19 +426,19 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="6150706324143004339">Til að nota og vista Taktak-gögnin á Taktak-reikningnum þínum skaltu uppfæra Taktak</translation>
 <translation id="6157638032135951407">Fyrirtækið þitt eyðir Taktak-gögnum þegar þau eru ekki notuð í <ph name="TIMEOUT_DURATION" />. Þetta getur falið í sér feril, sjálfvirka útfyllingu og niðurhal.</translation>
 <translation id="6165508094623778733">Frekari upplýsingar</translation>
-<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> – Taktak Taktak</translation>
-<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - tilraunaútgáfa Taktak Taktak</translation>
+<translation id="6169866489629082767"><ph name="PAGE_TITLE" /> – Taktak</translation>
+<translation id="6173637689840186878"><ph name="PAGE_TITLE" /> - tilraunaútgáfa Taktak</translation>
 <translation id="6180522807229584611">Þessi flipi notar aukagögn. Leyfðu Taktak að óvirkja hann til að bæta afköstin.</translation>
 <translation id="6182736845697986886">Uppsetning mistókst vegna innri villu uppfærsluþjóns.</translation>
-<translation id="6235018212288296708">Regla á innleið til að láta Taktak Taktak leyfa mDNS-umferð.</translation>
+<translation id="6235018212288296708">Regla á innleið til að láta Taktak leyfa mDNS-umferð.</translation>
 <translation id="624230925347970731">Taktak lokast bráðum</translation>
 <translation id="6247557882553405851">Aðgangsorðastjórnun Taktak</translation>
 <translation id="6251759518630934363">Varar þig við hættulegum vefsvæðum, jafnvel þeim sem Taktak hafði enga vitneskju um, með því að greina fleiri gögn frá vefsvæðum en hefðbundin vörn. Þú getur valið að sleppa Taktak-viðvörunum.</translation>
 <translation id="6277547788421725101">Foreldri þitt hefur slökkt á „Heimildum fyrir vefsvæði, forrit og viðbætur" fyrir Taktak</translation>
 <translation id="627882678981830918">Sérsníddu og stjórnaðu Taktak. Stilltu Taktak sem sjálfgefinn vafra.</translation>
-<translation id="6288580400488258237">Stilltu Taktak Taktak sem sjálfgefinn vafra og festu hann við forritastikuna</translation>
+<translation id="6288580400488258237">Stilltu Taktak sem sjálfgefinn vafra og festu hann við forritastikuna</translation>
 <translation id="6291089322031436445">Taktak Dev forrit</translation>
-<translation id="6291549208091401781">Taktak Taktak hefur þegar verið sett upp fyrir alla notendur í tölvunni.</translation>
+<translation id="6291549208091401781">Taktak hefur þegar verið sett upp fyrir alla notendur í tölvunni.</translation>
 <translation id="6319856120645568262">Taktak þarfnast heimildar til að kortleggja umhverfið þitt og rekja handahreyfingarnar þínar</translation>
 <translation id="6321592572353357376">Viðbótin „<ph name="EXTENSION_NAME" />“ vill að þú skráir þig inn á Taktak</translation>
 <translation id="6326175484149238433">Fjarlægja úr Taktak</translation>
@@ -452,10 +452,10 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="6481963882741794338">Tengdu Taktak við aðrar Taktak-þjónustur til að sérsníða upplifun þína og fleira</translation>
 <translation id="648319183876919572">Enn öruggari vefskoðun gerir viðbótarráðstafanir til að vernda þig gegn skaðlegum vefsvæðum og niðurhali</translation>
 <translation id="6489302989675808168">Kveikt • Taktak getur ekki staðfest hvaðan þessi viðbót kemur</translation>
-<translation id="6493527311031785448">Taktak Taktak er að reyna að <ph name="AUTHENTICATION_PURPOSE" /></translation>
+<translation id="6493527311031785448">Taktak er að reyna að <ph name="AUTHENTICATION_PURPOSE" /></translation>
 <translation id="6497147134301593682">Taktak var lokað sjálfkrafa</translation>
 <translation id="6506909944137591434">Taktak verður að fá leyfi fyrir myndavél til að búa til þrívíddarkort af umhverfi þínu</translation>
-<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Taktak Dev</translation>
+<translation id="6515495397637126556"><ph name="PAGE_TITLE" /> - Taktak Dev</translation>
 <translation id="6520670145826811516">Veittu Taktak aðgang að staðsetningunni þinni í <ph name="BEGIN_LINK" />kerfisstillingum<ph name="END_LINK" /> til að geta notað hana</translation>
 <translation id="659498884637196217">Í Aðgangsorðastjórnun Taktak í þessu tæki</translation>
 <translation id="6632473616050862500">ChromeOS Flex á tilvist sína að þakka öðrum <ph name="BEGIN_LINK_CROS_OSS" />opnum hugbúnaði<ph name="END_LINK_CROS_OSS" />.</translation>
@@ -463,7 +463,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="6660596345553328257">Skrá þig inn í Taktak?</translation>
 <translation id="6664219008737641504">Ef þú gleymdir aðgangsorðinu þínu eða vilt breyta þessari stillingu skaltu <ph name="SETTINGS_LINK" /> Taktak-gögnunum á reikningnum þínum.</translation>
 <translation id="6676384891291319759">Aðgangur að internetinu</translation>
-<translation id="6679975945624592337">Leyfa Taktak Taktak að keyra í bakgrunni</translation>
+<translation id="6679975945624592337">Leyfa Taktak að keyra í bakgrunni</translation>
 <translation id="6696915334902295848">Taktak verður að fá leyfi fyrir hljóðnema fyrir þetta vefsvæði</translation>
 <translation id="6712881677154121168">Niðurhalsvilla: <ph name="DOWNLOAD_ERROR" />.</translation>
 <translation id="6718739135284199302">Láttu Taktak vinna hraðar</translation>
@@ -474,7 +474,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="677276454032249905">Viltu samt loka Taktak?</translation>
 <translation id="6794858689789885890">Ávallt eyða vefsvæðagögnum úr tækinu þegar þú lokar Taktak</translation>
 <translation id="6831043979455480757">Þýða</translation>
-<translation id="683440813066116847">Regla á innleið til að láta Taktak Taktak Canary leyfa mDNS-umferð.</translation>
+<translation id="683440813066116847">Regla á innleið til að láta Taktak Canary leyfa mDNS-umferð.</translation>
 <translation id="684888714667046800">Ekki er hægt að tengjast internetinu. Ef þú notar eldvegg skaltu tryggja að <ph name="PRODUCT_EXE_NAME" /> sé á hvíta listanum.</translation>
 <translation id="6877155553248388166">neðsta horn leitarsvæðis hægra megin: til hægri <ph name="RIGHT" />%, neðst <ph name="BOTTOM" />%</translation>
 <translation id="6881299373831449287">Uppfærir Taktak</translation>
@@ -483,10 +483,10 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="6896758677409633944">Afrita</translation>
 <translation id="6930294499209825">Heldur Taktak-hugbúnaðinum þínum uppfærðum. Ef slökkt er á þessari þjónustu eða hún stöðvuð verður Taktak-hugbúnaðinum þínum ekki haldið uppfærðum sem þýðir að ekki verður hægt að lagfæra öryggisveikleika sem kunna að koma upp og tilteknir eiginleikar virka hugsanlega ekki sem skyldi. Þjónustan fjarlægist sjálfkrafa ef enginn Taktak-hugbúnaður er að nota hana.</translation>
 <translation id="6933858244219479645">ChromeOS-kerfi</translation>
-<translation id="6938166777909186039">Til að fá frekari uppfærslur á Taktak Taktak þarftu Windows 10 eða nýrri útgáfu. Þessi tölva notar Windows 8.1.</translation>
+<translation id="6938166777909186039">Til að fá frekari uppfærslur á Taktak þarftu Windows 10 eða nýrri útgáfu. Þessi tölva notar Windows 8.1.</translation>
 <translation id="6943584222992551122">Vefskoðunargögnum þessa aðila verður eytt úr þessu tæki. Skráðu þig inn í Taktak sem <ph name="USER_EMAIL" /> til að endurheimta gögn.</translation>
 <translation id="6965382102122355670">Í lagi</translation>
-<translation id="6967962315388095737">Innleiðarregla til að láta Taktak Taktak Beta leyfa mDNS-umferð.</translation>
+<translation id="6967962315388095737">Innleiðarregla til að láta Taktak Beta leyfa mDNS-umferð.</translation>
 <translation id="6979589607440534284">Kynntu þér hvers vegna Taktak lokar fyrir vissar skrár (opnast í nýjum flipa)</translation>
 <translation id="6991926986715044139">Alltaf sýna flýtileið Taktak-linsu</translation>
 <translation id="7011190694940573312">Uppsetning mistókst vegna þess að þessi útgáfa af stýrikerfinu er ekki studd.</translation>
@@ -500,14 +500,14 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="7085332316435785646">Veldu hvort að Taktak-ferill eigi að fylgja með til að fá sérsniðnari upplifun í Taktak-þjónustum</translation>
 <translation id="7088681679121566888">Taktak er uppfærður</translation>
 <translation id="7096221564931416126">Veldu hvaða texta eða mynd sem er til að leita með Taktak-linsu</translation>
-<translation id="7098166902387133879">Taktak Taktak er að nota hljóðnemann.</translation>
+<translation id="7098166902387133879">Taktak er að nota hljóðnemann.</translation>
 <translation id="7099479769133613710">Endurræstu til að uppfæra &amp;ChromeOS</translation>
-<translation id="7106741999175697885">Verkstjórn – Taktak Taktak</translation>
+<translation id="7106741999175697885">Verkstjórn – Taktak</translation>
 <translation id="7140653346177713799">{COUNT,plural, =0{Ný uppfærsla fyrir Taktak er í boði og hún verður sett upp þegar þú endurræsir.}=1{Ný uppfærsla fyrir Taktak er í boði og hún verður sett upp þegar þú endurræsir. Huliðsglugginn enduropnast ekki.}one{Ný uppfærsla fyrir Taktak er í boði og hún verður sett upp þegar þú endurræsir. # huliðsgluggi enduropnast ekki.}other{Ný uppfærsla fyrir Taktak er í boði og hún verður sett upp þegar þú endurræsir. # huliðsgluggar enduropnast ekki.}}</translation>
 <translation id="7155997830309522122">Ef svo er skaltu breyta vistaða aðgangsorðinu í Taktak í nýja aðgangsorðið.</translation>
-<translation id="7161904924553537242">Velkomin(n) í Taktak Taktak</translation>
+<translation id="7161904924553537242">Velkomin(n) í Taktak</translation>
 <translation id="7193885263065350793">Fyrirtækið þitt lokar Taktak eftir aðgerðaleysi í <ph name="TIMEOUT_DURATION" />.</translation>
-<translation id="7242029209006116544">Þú ert að skrá þig inn á stýrðan reikning og gefur stjórnanda hans stjórn yfir Taktak Taktak prófílnum þínum. Gögnin þín í Taktak, s.s. forrit, bókamerki, ferill, aðgangsorð og aðrar stillingar, verða tengd varanlega við <ph name="USER_NAME" />. Þú getur eytt þessum gögnum á stjórnborði Taktak-reikninga en getur ekki tengt þau öðrum reikningi. Einnig getur þú búið til nýjan prófíl til að halda eldri gögnum þínum á Taktak aðskildum. <ph name="LEARN_MORE" /></translation>
+<translation id="7242029209006116544">Þú ert að skrá þig inn á stýrðan reikning og gefur stjórnanda hans stjórn yfir Taktak prófílnum þínum. Gögnin þín í Taktak, s.s. forrit, bókamerki, ferill, aðgangsorð og aðrar stillingar, verða tengd varanlega við <ph name="USER_NAME" />. Þú getur eytt þessum gögnum á stjórnborði Taktak-reikninga en getur ekki tengt þau öðrum reikningi. Einnig getur þú búið til nýjan prófíl til að halda eldri gögnum þínum á Taktak aðskildum. <ph name="LEARN_MORE" /></translation>
 <translation id="7285616922384953075"><ph name="MANAGER" /> hefur umsjón með Taktak</translation>
 <translation id="7288567540154601580">Flipar og viðbætur</translation>
 <translation id="7296210096911315575">Mikilvægar notkunar- og öryggisupplýsingar</translation>
@@ -532,7 +532,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="7510927761955779701">Taktak áttar sig betur á eyðublöðum og getur fyllt þau út fyrir þig með fljótlegri hætti. Kveikt er á þessari stillingu.</translation>
 <translation id="7514258452813684157">Uppfærsluþjónusta Taktak</translation>
 <translation id="7515191208480168435">Þú getur fest Taktak-linsu til að auðvelda þér aðgang að henni</translation>
-<translation id="7535429826459677826">Taktak Taktak Dev</translation>
+<translation id="7535429826459677826">Taktak Dev</translation>
 <translation id="7543146567111253230">Skráðu þig inn í Taktak til að fá þetta bókamerki og fleiri í öllum tækjunum þínum</translation>
 <translation id="756809126120519699">Taktak gögnum eytt</translation>
 <translation id="7572537927358445944">Slökkt • Taktak getur ekki staðfest hvaðan þessi viðbót kemur</translation>
@@ -542,7 +542,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="7626072681686626474"><ph name="MANAGER" /> krefst þess að þú lesir og samþykkir eftirfarandi skilmála áður en þú notar þetta tæki. Þessir skilmálar auka ekki við, breyta eða takmarka skilmála Taktak ChromeOS.</translation>
 <translation id="7627609214560473136">Til að vernda gögnin þín skaltu leyfa Taktak að fjarlægja heimildir vefsvæða sem þú hefur ekki opnað nýlega.</translation>
 <translation id="7629695634924605473">Taktak lætur þig vita ef aðgangsorðin þín eru einhvern tímann í hættu</translation>
-<translation id="7641148173327520642">Kerfisstjórinn hefur stillt Taktak Taktak á að opna <ph name="ALTERNATIVE_BROWSER_NAME" /> til að fá aðgang að <ph name="TARGET_URL_HOSTNAME" />.</translation>
+<translation id="7641148173327520642">Kerfisstjórinn hefur stillt Taktak á að opna <ph name="ALTERNATIVE_BROWSER_NAME" /> til að fá aðgang að <ph name="TARGET_URL_HOSTNAME" />.</translation>
 <translation id="7649070708921625228">Hjálp</translation>
 <translation id="7651907282515937834">Lógó Taktak Enterprise</translation>
 <translation id="76531479118467370">Taktak lokaði á þetta niðurhal vegna þess að þú slökktir á öruggri vefskoðun og ekki er hægt að staðfesta skrána</translation>
@@ -559,10 +559,10 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="7761834446675418963">Smelltu á nafnið þitt til að opna Taktak og byrja að vafra.</translation>
 <translation id="7777080907402804672">Ef gagnlega lýsingu vantar við mynd reynir Taktak að útvega þér lýsingu. Til að búa til lýsingar eru myndir sendar til Taktak. Þú getur slökkt á þessu hvenær sem er í stillingunum.</translation>
 <translation id="778331955594035129">Taktak verður að fá staðsetningarheimild fyrir þetta vefsvæði</translation>
-<translation id="7787950393032327779">Annað Taktak Taktak ferli (<ph name="PROCESS_ID" />) virðist vera að nota þennan prófíl í annarri tölvu (<ph name="HOST_NAME" />). Taktak hefur læst prófílnum svo hann skemmist ekki. Ef þú ert viss um að engin önnur ferli séu að nota þennan prófíl geturðu tekið hann úr lás og endurræst Taktak.</translation>
-<translation id="7801699035218095297">Taktak Taktak er að reyna að afrita aðgangsorð. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
+<translation id="7787950393032327779">Annað Taktak ferli (<ph name="PROCESS_ID" />) virðist vera að nota þennan prófíl í annarri tölvu (<ph name="HOST_NAME" />). Taktak hefur læst prófílnum svo hann skemmist ekki. Ef þú ert viss um að engin önnur ferli séu að nota þennan prófíl geturðu tekið hann úr lás og endurræst Taktak.</translation>
+<translation id="7801699035218095297">Taktak er að reyna að afrita aðgangsorð. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
 <translation id="7808348361785373670">Fjarlægja úr Taktak...</translation>
-<translation id="7825851276765848807">Uppsetning mistókst vegna ótilgreindrar villu. Sæktu Taktak Taktak aftur.</translation>
+<translation id="7825851276765848807">Uppsetning mistókst vegna ótilgreindrar villu. Sæktu Taktak aftur.</translation>
 <translation id="7827099906024714326">Taktak þarf að staðfesta að þetta sért þú svo að þú getir vistað tiltekin gögn á Taktak-reikningnum þínum og notað þau í öllum tækjunum þínum. Ef þú skráir þig út núna verður þessum gögnum eytt.</translation>
 <translation id="7845233973568007926">Takk fyrir að setja upp. Þú þarft að endurræsa tölvuna áður en þú getur notað <ph name="BUNDLE_NAME" />.</translation>
 <translation id="7872446069773932638">Sækir... <ph name="SECONDS" /> sek. eftir</translation>
@@ -573,7 +573,7 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="7936702483636872823">Taktak lokaði á þetta niðurhal vegna þess að skráin er blekkjandi og gæti gert óvæntar breytingar á tækinu þínu</translation>
 <translation id="7951272445806340501">Endurræsa þarf ChromeOS Flex til að nota uppfærsluna.</translation>
 <translation id="7959172989483770734">Stjórna Taktak-prófílum</translation>
-<translation id="7962410387636238736">Þessi tölva tekur ekki lengur við uppfærslum á Taktak Taktak vegna þess að stýrikerfin Windows XP og Windows Vista eru ekki lengur studd</translation>
+<translation id="7962410387636238736">Þessi tölva tekur ekki lengur við uppfærslum á Taktak vegna þess að stýrikerfin Windows XP og Windows Vista eru ekki lengur studd</translation>
 <translation id="8004582292198964060">Vafri</translation>
 <translation id="8005666035647241369">Í Aðgangsorðastjórnun Taktak í þessu tæki</translation>
 <translation id="8008534537613507642">Setja Taktak aftur upp</translation>
@@ -588,18 +588,18 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="8086881907087796310">Uppsetning mistókst vegna þess að tölvan þín uppfyllir ekki lágmarksskilyrði um vélbúnað.</translation>
 <translation id="8113883687556086139">Staðfestu að þetta sért þú til að nota og vista Taktak-gögn á reikningnum þínum, <ph name="ACCOUNT_EMAIL" /></translation>
 <translation id="8118331347066725040">Senda ábendingu vegna leitar með Linsu</translation>
-<translation id="8129812357326543296">Um &amp;Taktak Taktak</translation>
+<translation id="8129812357326543296">Um &amp;Taktak</translation>
 <translation id="813913629614996137">Frumstillir...</translation>
 <translation id="8162006532256575008">Nota Taktak án reiknings</translation>
 <translation id="8177472873527554730">Ekki tókst að finna efni á síðu</translation>
 <translation id="8221491193165283816">Þú lokar yfirleitt á tilkynningar. Ef þú vilt leyfa þessu vefsvæði að birta þér tilkynningar skaltu smella hér.</translation>
-<translation id="8255190535488645436">Taktak Taktak er að nota myndavélina þína og hljóðnema.</translation>
+<translation id="8255190535488645436">Taktak er að nota myndavélina þína og hljóðnema.</translation>
 <translation id="8267953129876836456">Taktak fann öryggistillögur sem þú þarft að fara yfir</translation>
-<translation id="8286862437124483331">Taktak Taktak er að reyna að sýna aðgangsorð. Sláðu inn Windows-aðgangsorðið þitt til að heimila þetta.</translation>
+<translation id="8286862437124483331">Taktak er að reyna að sýna aðgangsorð. Sláðu inn Windows-aðgangsorðið þitt til að heimila þetta.</translation>
 <translation id="829923460755755423">Bæta flýtileið við Taktak-aðgangsorðastjórnun</translation>
 <translation id="8313851650939857356">Villa í ræsingu: <ph name="STARTUP_ERROR" />.</translation>
 <translation id="8321888067342493336">Vista sem mynd</translation>
-<translation id="8336463659890584292">Þegar vefsvæði biður um að forhlaða tenglum á lokaðan hátt á síðunni sinni notar Taktak Taktak-þjóna. Þetta kemur í veg fyrir að forhlaðna vefsvæðið geti auðkennt þig en Taktak lærir að þekkja hvaða vefsvæðum er forhlaðið.</translation>
+<translation id="8336463659890584292">Þegar vefsvæði biður um að forhlaða tenglum á lokaðan hátt á síðunni sinni notar Taktak-þjóna. Þetta kemur í veg fyrir að forhlaðna vefsvæðið geti auðkennt þig en Taktak lærir að þekkja hvaða vefsvæðum er forhlaðið.</translation>
 <translation id="8342675569599923794">Þessi skrá er hættuleg og þess vegna útilokaði Taktak hana.</translation>
 <translation id="8349094670477064572">You’ll save and use passwords and more in your Taktak Account whenever you’re signed in to Taktak. <ph name="LEARN_MORE" /></translation>
 <translation id="8362914115861174987">Þýða yfir á</translation>
@@ -613,27 +613,27 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="8425765582779547329">Til að vera öruggari á netinu með vali foreldra þinna skaltu skrá þig inn í Taktak</translation>
 <translation id="8433638294851456451">Til að senda númer héðan í Android símann þinn skaltu skrá þig inn á Taktak í báðum tækjunum.</translation>
 <translation id="8496177819998570653">Taktak-aðgangsorðastjórnun</translation>
-<translation id="8498858610309223613">Sérstök öryggisuppfærsla fyrir Taktak Taktak var tekin í notkun. Endurræstu núna og við opnum flipana þína aftur.</translation>
+<translation id="8498858610309223613">Sérstök öryggisuppfærsla fyrir Taktak var tekin í notkun. Endurræstu núna og við opnum flipana þína aftur.</translation>
 <translation id="8516431725144212809">Mat Taktak á áhugasviðum þínum</translation>
-<translation id="8521348052903287641">Innleiðarregla til að láta Taktak Taktak Dev leyfa mDNS-umferð.</translation>
+<translation id="8521348052903287641">Innleiðarregla til að láta Taktak Dev leyfa mDNS-umferð.</translation>
 <translation id="852529348814672339">Birta Taktak á þessu tungumáli</translation>
-<translation id="8533056045953418157">Stilltu Taktak Taktak sem sjálfgefinn PDF-lesara</translation>
+<translation id="8533056045953418157">Stilltu Taktak sem sjálfgefinn PDF-lesara</translation>
 <translation id="8555465886620020932">Þjónustuvilla: <ph name="SERVICE_ERROR" />.</translation>
 <translation id="856656450041460113">Leita í lista tungumála</translation>
 <translation id="8601359445272098721">Nýtt! Þú getur þýtt bæði texta og myndir á skjánum þínum með því að velja hnappinn „þýða skjá“</translation>
-<translation id="8614913330719544658">Taktak Taktak svarar ekki. Endurræsa núna?</translation>
+<translation id="8614913330719544658">Taktak svarar ekki. Endurræsa núna?</translation>
 <translation id="861702415419836452">Taktak þarf leyfi til að nota myndavélina til að búa til þrívíddarkort af umhverfinu</translation>
 <translation id="8625237574518804553">{0,plural, =1{Taktak verður endurræst eftir 1 mínútu}one{Taktak verður endurræst eftir # mínútu}other{Taktak verður endurræst eftir # mínútur}}</translation>
 <translation id="8637932705841171563">Leyfðu skjáupptöku í Taktak í kerfisstillingunum til að deila glugganum þínum</translation>
 <translation id="8641606876632989680">Taktak lætur þig vita þegar þú skráir þig inn með aðgangsorði sem er í hættu</translation>
 <translation id="8649026945479135076">Algengt er að vefsvæði sem þú heimsækir muni atriði sem höfða til þín til að sérsníða upplifun þína. Vefsvæði geta einnig vistað upplýsingar um áhugasvið þín í Taktak.</translation>
-<translation id="8669527147644353129">Hjálparforrit Taktak Taktak</translation>
+<translation id="8669527147644353129">Hjálparforrit Taktak</translation>
 <translation id="8679801911857917785">Þetta stýrir því einnig hvaða síða birtist þegar þú ræsir Taktak.</translation>
 <translation id="8712637175834984815">Ég skil</translation>
 <translation id="8712767363896337380">Næstum því uppfært! Endurræstu Taktak til að ljúka við uppfærsluna.</translation>
 <translation id="8718062187489036808">Skrá út af Taktak</translation>
 <translation id="8725440680697264016">Spyrja Taktak um þetta vídeó</translation>
-<translation id="873133009373065397">Taktak Taktak getur ekki ákvarðað eða stillt sjálfgefinn vafra</translation>
+<translation id="873133009373065397">Taktak getur ekki ákvarðað eða stillt sjálfgefinn vafra</translation>
 <translation id="8747073452963259673">neðsta horn leitarsvæðis vinstra megin: til vinstri <ph name="LEFT" />%, neðst <ph name="BOTTOM" />%</translation>
 <translation id="8748735421235723888">Taktak endurheimtir minni úr óvirkum flipum. Þetta veitir virkum flipum og öðrum forritum meiri tölvugögn og heldur Taktak hröðum. Óvirkir flipar virkjast aftur sjálfkrafa þegar þú opnar þá. <ph name="BEGIN_LINK" />Nánar um minnissparnað<ph name="END_LINK" /></translation>
 <translation id="8753189155654018347">Fjarlægja þessi forritsgögn úr Taktak</translation>
@@ -641,10 +641,10 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="8781673607513845160">Veittu Taktak aðgang að myndavélinni þinni í <ph name="BEGIN_LINK" />kerfisstillingum<ph name="END_LINK" /> til að geta notað hana</translation>
 <translation id="878572486461146056">Uppsetningarvilla: Kerfisstjórinn hefur notað hópreglu sem kemur í veg fyrir uppsetningu: <ph name="INSTALL_ERROR" /></translation>
 <translation id="8798550110818026746">Fyrirtækið þitt getur séð og stjórnað vefskoðunargögnunum þínum, s.s. bókamerkjum, ferli og aðgangsorðum. Það getur ekki séð vefskoðunargögn á öðrum Taktak-prófílum</translation>
-<translation id="8821043148920470810">Til að fá frekari uppfærslur á Taktak Taktak þarftu Windows 10 eða nýrri útgáfu. Þessi tölva notar Windows 7.</translation>
+<translation id="8821043148920470810">Til að fá frekari uppfærslur á Taktak þarftu Windows 10 eða nýrri útgáfu. Þessi tölva notar Windows 7.</translation>
 <translation id="8823341990149967727">Taktak er úrelt</translation>
 <translation id="8825634023950448068">Til að gæta persónuverndar þinnar eyðum við áhugasviðunum þínum sem eru eldri en 4 vikna sjálfkrafa. Áhugasvið kann að birtast aftur á listanum þegar þú heldur áfram að vafra. Ef Taktak skjátlast eða ef þú vilt ekki sjá tilteknar auglýsingar geturðu fjarlægt áhugasvið.</translation>
-<translation id="8834965163890861871">Taktak Taktak er að reyna að breyta aðgangsorðum. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
+<translation id="8834965163890861871">Taktak er að reyna að breyta aðgangsorðum. Sláðu inn Windows-aðgangsorðið þitt til að leyfa það.</translation>
 <translation id="8843516219908676469">Taktak skilur eyðublöð betur og er fljótari að fylla þau út sjálfkrafa fyrir þig</translation>
 <translation id="8851180723659088381">{NUM_EXTENSIONS,plural, =1{Taktak mælir með að þú fjarlægir hana}one{Taktak mælir með að þú fjarlægir þær}other{Taktak mælir með að þú fjarlægir þær}}</translation>
 <translation id="8862326446509486874">Þú hefur ekki tilskilin réttindi til uppsetningar fyrir kerfið allt. Prófaðu að keyra uppsetningarforritið aftur sem stjórnandi.</translation>
@@ -672,6 +672,6 @@ Taktak Taktak getur ekki endurheimt stillingarnar þínar.</translation>
 <translation id="943390475793766444">Taktak mælir með að skanna þessa skrá þar sem hún gæti verið hættuleg.</translation>
 <translation id="945522503751344254">Senda ábendingu</translation>
 <translation id="983803489796659991">Uppsetning mistókst vegna þess að uppfærsluþjónninn er ekki með tætigögn fyrir forritið.</translation>
-<translation id="989369509083708165">Taktak Taktak er sjálfgefinn vafri</translation>
+<translation id="989369509083708165">Taktak er sjálfgefinn vafri</translation>
 <translation id="989816563149873169"><ph name="SHORTCUT" /> getur skipt á milli Taktak prófíla</translation>
 </translationbundle>

@@ -6,7 +6,7 @@
 <translation id="1516530951338665275">Taktak Taktak necessita accedir al Bluetooth per continuar 
  amb la vinculació. <ph name="IDS_BLUETOOTH_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK" /></translation>
 <translation id="1635457557763038537">Els canvis s'aplicaran la propera vegada que reiniciïs Taktak.</translation>
-<translation id="2399868464369312507">Taktak Taktak està provant d'editar les formes de pagament.</translation>
+<translation id="2399868464369312507">Taktak està provant d'editar les formes de pagament.</translation>
 <translation id="2447485272386224171">Taktak és possible gràcies al projecte de codi obert <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" /> i a altres <ph name="BEGIN_LINK_OSS" />programes de codi obert<ph name="END_LINK_OSS" />.</translation>
 <translation id="2588322182880276190">Logotip de Taktak</translation>
 <translation id="3444832043240812445">Aquesta pàgina només mostrarà informació sobre els bloqueigs recents si <ph name="BEGIN_LINK" />activeu la creació d'informes de bloqueig<ph name="END_LINK" />.</translation>
@@ -44,5 +44,5 @@
 <translation id="7230956101631259640">Estàs consultant una pàgina segura de Taktak</translation>
 <translation id="8232971017369963250">Taktak és possible gràcies al projecte de codi obert de <ph name="BEGIN_LINK_CHROMIUM" />Taktak<ph name="END_LINK_CHROMIUM" />.</translation>
 <translation id="8279509328145658601">Taktak també és possible gràcies a un altre <ph name="BEGIN_LINK_OSS" />programari lliure<ph name="END_LINK_OSS" />.</translation>
-<translation id="8544217240017914508">Taktak Taktak està provant de modificar la configuració per emplenar les formes de pagament.</translation>
+<translation id="8544217240017914508">Taktak està provant de modificar la configuració per emplenar les formes de pagament.</translation>
 </translationbundle>

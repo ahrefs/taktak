@@ -226,7 +226,7 @@
 <translation id="395904275706073188">אי אפשר לקרוא דפים מוגנים. כדאי לנסות דף אחר.</translation>
 <translation id="3962647064319009959">‏איך מערכת Taktak שומרת על האבטחה שלך</translation>
 <translation id="3971865010372729242">‏כדי לגבש הצעות, טקסט שמוקלד בסרגל הכתובות או בתיבת החיפוש, נשלח באמצעות Taktak לכלי החיפוש, הבינה המלאכותית והכלים של הארגון.</translation>
-<translation id="3975724895399328945">‏מידע על &amp;Taktak Taktak for Testing</translation>
+<translation id="3975724895399328945">‏מידע על &amp;Taktak for Testing</translation>
 <translation id="3997429360543082038">‏מידע על ChromiumOS</translation>
 <translation id="4019629340646866719">‏השימוש ב-ChromiumOS מתאפשר בזכות <ph name="BEGIN_LINK_CROS_OSS" />תוכנות קוד פתוח<ph name="END_LINK_CROS_OSS" /> נוספות כמו <ph name="BEGIN_LINK_LINUX_OSS" />סביבת הפיתוח של Linux<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">תרגום המסך</translation>
@@ -379,7 +379,7 @@
 <translation id="6069027071882229820">העתקה כתמונה</translation>
 <translation id="6072279588547424923">‏<ph name="EXTENSION_NAME" /> נוסף ל-‏Taktak‏</translation>
 <translation id="6072463441809498330">‏שיפור המהירות ב-Taktak</translation>
-<translation id="6096348254544841612">‏כדי להתאים אישית את Taktak Taktak ולשלוט בו טוב יותר, כדאי להוריד את העדכון החדש.</translation>
+<translation id="6096348254544841612">‏כדי להתאים אישית את Taktak ולשלוט בו טוב יותר, כדאי להוריד את העדכון החדש.</translation>
 <translation id="6107893135096467929">‏מופעל • Taktak לא יכול לאמת את מקור התוסף הזה</translation>
 <translation id="6119438414301547735">‏מתן הרשאה לתוסף להציג בקשות גישה בסרגל הכלים של Taktak</translation>
 <translation id="6129621093834146363">‏<ph name="FILE_NAME" /> מסוכן, ולכן Taktak חסם אותו.</translation>
@@ -546,7 +546,7 @@ Taktak לא יכול לשחזר את ההגדרות שלך.</translation>
 <translation id="8077498902115777962">‏השבתת הפעילות של Taktak ברקע לאפליקציות</translation>
 <translation id="80790299200510644">חיפוש באמצעות תמונות</translation>
 <translation id="8086881907087796310">ההתקנה נכשלה כי המחשב לא עומד בדרישות החומרה המינימליות.</translation>
-<translation id="8096472344908884505">‏<ph name="PAGE_TITLE" /> –‏ Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505">‏<ph name="PAGE_TITLE" /> –‏ Taktak for Testing</translation>
 <translation id="8105840573057009683">‏נדרשת הרשאת מיקום ב-Taktak עבור האתר הזה</translation>
 <translation id="8118331347066725040">‏שליחת משוב על חיפוש באמצעות Lens</translation>
 <translation id="8133124826068723441">‏מערכת ChromiumOS לא הצליחה לסנכרן את הנתונים שלכם כי הסנכרון לא זמין עבור הדומיין שלכם.</translation>
@@ -592,7 +592,7 @@ Taktak לא יכול לשחזר את ההגדרות שלך.</translation>
 <translation id="8601359445272098721">חדש! כדי לתרגם טקסט או תמונות על המסך, לוחצים על "תרגום המסך"</translation>
 <translation id="8619360774459241877">‏הפעלת Taktak מתבצעת...</translation>
 <translation id="8621669128220841554">‏ההתקנה נכשלה עקב שגיאה לא מזוהה. יש להוריד שוב את Taktak.</translation>
-<translation id="8648201657708811153">‏לא ניתן להגדיר את Taktak Taktak for Testing כדפדפן ברירת המחדל.</translation>
+<translation id="8648201657708811153">‏לא ניתן להגדיר את Taktak for Testing כדפדפן ברירת המחדל.</translation>
 <translation id="8697124171261953979">‏הגדרה הזו גם קובעת איזה דף מוצג כשמפעילים את Taktak או מבצעים חיפוש מסרגל הכתובות.</translation>
 <translation id="8704119203788522458">‏זה ה-Taktak שלך</translation>
 <translation id="8712637175834984815">הבנתי</translation>

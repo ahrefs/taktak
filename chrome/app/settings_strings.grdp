@@ -83,8 +83,8 @@
   <message name="IDS_SETTINGS_ACCESSIBILITY" desc="Name of the settings page which displays accessibility preferences.">
     Accessibility
   </message>
-  <message name="IDS_SETTINGS_ACCESSIBILITY_WEB_STORE" desc="Text for an external link explaining that additional accessibility features are found on the Taktak Web Store.">
-    Open Taktak Web Store
+  <message name="IDS_SETTINGS_ACCESSIBILITY_WEB_STORE" desc="Text for an external link explaining that additional accessibility features are found on the Chrome Web Store.">
+    Open Chrome Web Store
   </message>
   <message name="IDS_SETTINGS_MORE_FEATURES_LINK" desc="Link which opens page where users can install extensions which provide additional accessibility features.">
     Add accessibility features
@@ -325,7 +325,7 @@
     Search settings
   </message>
   <message name="IDS_SETTINGS_SEARCH_NO_RESULTS_HELP" desc="Help text for a search that has no results.">
-    Go to <ph name="BEGIN_LINK_CHROMIUM">&lt;a target="_blank" href="$1"&gt;</ph>Taktak Taktak help<ph name="END_LINK_CHROMIUM">&lt;/a&gt;</ph> if you can't find what you're looking for
+    Go to <ph name="BEGIN_LINK_CHROMIUM">&lt;a target="_blank" href="$1"&gt;</ph>Taktak help<ph name="END_LINK_CHROMIUM">&lt;/a&gt;</ph> if you can't find what you're looking for
   </message>
   <message name="IDS_SETTINGS_SETTINGS" desc="The settings page title.">
     Settings
@@ -387,25 +387,25 @@
   </message>
 
   <!-- Autofill Page -->
-  <message name="IDS_PASSWORDS_PAGE_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Taktak is trying to ' (or in some languages, 'Taktak Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before revealing plaintext passwords on the password page.">
+  <message name="IDS_PASSWORDS_PAGE_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak is trying to ' (or in some languages, 'Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before revealing plaintext passwords on the password page.">
     show passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_COPY_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Taktak is trying to ' (or in some languages, 'Taktak Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before copying plaintext passwords into the clipboard.">
+  <message name="IDS_PASSWORDS_PAGE_COPY_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak is trying to ' (or in some languages, 'Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before copying plaintext passwords into the clipboard.">
     copy passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_EDIT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Taktak is trying to ' (or in some languages, 'Taktak Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before editing plaintext passwords on the password page.">
+  <message name="IDS_PASSWORDS_PAGE_EDIT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak is trying to ' (or in some languages, 'Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before editing plaintext passwords on the password page.">
     edit passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_EXPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Taktak is trying to ' (or in some languages, 'Taktak Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before exporting passwords to a file.">
+  <message name="IDS_PASSWORDS_PAGE_EXPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak is trying to ' (or in some languages, 'Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before exporting passwords to a file.">
     export passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_DELETE_ALL_DATA_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown on MacOS after 'Taktak Taktak is trying to ' (or in some languages, 'Taktak Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before deleting all Taktak Password Manager data.">
+  <message name="IDS_PASSWORDS_PAGE_DELETE_ALL_DATA_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown on MacOS after 'Taktak is trying to ' (or in some languages, 'Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before deleting all Taktak Password Manager data.">
     delete your <ph name="BRAND">$1<ex>Taktak Password Manager</ex></ph> data
   </message>
   <message name="IDS_SETTINGS_AUTOFILL_AND_PASSWORDS" desc="Name of the settings page which allows managing passwords, payment methods and addresses settings.">
     Autofill and passwords
   </message>
-  <message name="IDS_PASSWORDS_PAGE_IMPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak Taktak is trying to ' (or in some languages, 'Taktak Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before replacing passwords during Import.">
+  <message name="IDS_PASSWORDS_PAGE_IMPORT_AUTHENTICATION_PROMPT_BIOMETRIC_SUFFIX" desc="Shown after 'Taktak is trying to ' (or in some languages, 'Taktak wants to ') in a dialog message. Text for the dialog box that prompts the user for the biometric authentication before replacing passwords during Import.">
     replace existing passwords
   </message>
   <message name="IDS_SETTINGS_GOOGLE_PAYMENTS" desc="Label used to differentiate when an address or credit card entry comes from Taktak Pay. This should follow the casing of the 'Taktak Pay' brand. 'Taktak Pay' should not be translated as it is the product name.">
@@ -1082,7 +1082,7 @@
     Inactive tabs appearance
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_DISCARD_RING_TREATMENT_ENABLED_DESCRIPTION_WITH_LEARN_LINK" desc="Label for a performance settings toggle description that controls whether the inactive tab UI is shown. Also contains a link to the help center article.">
-    A dotted circle appears around site icons. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" aria-description="$2"&gt;</ph>Learn more about inactive tabs<ph name="END_LINK">&lt;/a&gt;</ph>
+    A dotted circle appears around site icons.
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_TAB_HOVER_PREVIEW_CARD_LINK_TITLE" desc="Title for the link row that points to tab hover preview card apperance settings.">
     Tab hover preview card appearance
@@ -1094,7 +1094,7 @@
     Performance issue alerts
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_INTERVENTION_NOTIFICATION_ENABLED_DESCRIPTION" desc="Label for a performance settings toggle that controls whether performance intervention notifications should be shown and link to learn more about performance issue alerts.">
-    Get notifications that suggest ways to improve detected performance issues. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" aria-description="$2"&gt;</ph>Learn more about performance issue alerts<ph name="END_LINK">&lt;/a&gt;</ph>
+    Get notifications that suggest ways to improve detected performance issues.
   </message>
 
   <!-- Languages Page -->
@@ -3024,7 +3024,7 @@
   <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_ALLOW_BULLET_2" desc="2 of 2 bullets that describes the 'Allow all cookies' option. Sites use third-party cookies to 'see your browsing activity across different sites'. Third-party cookies aren't necessarily bad. 1) Personalized ads can be useful to the user (though the tracking that generally accompanies the use of third-party cookies for ads isn't). But 2) third-party cookies are also used for spam protection and for anti-tracking efforts.">
     Sites can use cookies to see your browsing activity across different sites, for example, to personalize ads
   </message>
-  <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_INCOGNITO_RADIO_LABEL" desc="2 of 3 options the user has to configure cookies. See the cookies page for context: Taktak://settings/cookies. For more about Incognito mode, see Taktak Taktak's Help Center.">
+  <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_INCOGNITO_RADIO_LABEL" desc="2 of 3 options the user has to configure cookies. See the cookies page for context: Taktak://settings/cookies. For more about Incognito mode, see Taktak's Help Center.">
     Block third-party cookies in Incognito mode
   </message>
   <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_INCOGNITO_EXPAND_A11Y_LABEL" desc="This text is read by screenreaders and helps users find more info about this choice.">
@@ -3036,7 +3036,7 @@
   <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_INCOGNITO_BULLET_2" desc="2 of 2 bullets that describes the 'Block third-party cookies in Incognito mode' option.">
     While in Incognito, sites can't use your cookies to see your browsing activity across sites. Your browsing activity isn't used for things like personalizing ads. Features on some sites may not work.
   </message>
-  <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_RADIO_LABEL" desc="3 of 3 options the user has to configure cookies. See the cookies page for context: Taktak://settings/cookies">
+  <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_RADIO_LABEL" desc="3 of 3 options the user has to configure cookies. See the cookies page for context: chrome://settings/cookies">
     Block third-party cookies
   </message>
   <message name="IDS_SETTINGS_THIRD_PARTY_COOKIES_PAGE_BLOCK_EXPAND_A11Y_LABEL" desc="This text is read by screenreaders and helps users find more info about this choice.">
@@ -3073,7 +3073,7 @@
     Most sites should work as expected
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_TWO_DESCRIPTION" desc="Description of the second bullet for Tracking Protection settings. Explains that you can temporarilty allow a site to use third-party cookies if it isn't working. Contains a learn more link to a help center article.">
-    If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK">&lt;a target="_blank" href="$1" aria-label="$2" aria-description="$3"&gt;</ph>Learn more<ph name="END_LINK">&lt;/a&gt;<ex>&lt;/a&gt;</ex></ph>
+    If a site isn’t working, you can try giving it temporary permission to use third-party cookies.
   </message>
   <message name="IDS_SETTINGS_TRACKING_PROTECTION_BULLET_TWO_LEARN_MORE_ARIA_LABEL" desc="Screenreader text for the 'Learn more' link in the second bullet of Tracking Protection settings.">
     Learn more about giving a site temporary permission to use third-party cookies
@@ -4495,6 +4495,6 @@
     Taktak is built by the team behind Yep—an independent AI search engine—and Ahrefs—an all-in-one marketing intelligence platform. To help improve Yep’s search ranking and Ahrefs’ web analytics, you can choose to share anonymized, aggregated data about visited pages. Taktak collects this data without storing personal information or browsing history tied to you.
   </message>
   <message name="IDS_SETTINGS_TELEMETRY_OPT_IN_POLICY" desc="The link to the policy of Taktak.">
-    See our <ph name="BEGIN_LINK">&lt;a href="https://taktak.com/privacy-policy" target="_blank"&gt;</ph>privacy policy<ph name="END_LINK">&lt;/a&gt;</ph>
+    See our <ph name="BEGIN_LINK">&lt;a href="https://Taktak.com/privacy-policy" target="_blank"&gt;</ph>privacy policy<ph name="END_LINK">&lt;/a&gt;</ph>
   </message>
 </grit-part>

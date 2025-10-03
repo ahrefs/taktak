@@ -2108,7 +2108,7 @@
 <translation id="2434449159125086437">Хэвлэгчийг тохируулах боломжгүй байна. Тохируулгыг шалгаад дахин оролдоно уу.</translation>
 <translation id="2434758125294431199">Хэн тантай хуваалцах боломжтойг сонгох</translation>
 <translation id="2434915728183570229">Та одоо утасныхаа аппуудыг харах боломжтой</translation>
-<translation id="2435137177546457207">Taktak Taktak болон ChromeOS Flex-н нэмэлт нөхцөл</translation>
+<translation id="2435137177546457207">Taktak болон ChromeOS Flex-н нэмэлт нөхцөл</translation>
 <translation id="2435248616906486374">Сүлжээ тасарсан байна</translation>
 <translation id="2435457462613246316">Нууц үг харуулах</translation>
 <translation id="2436385001956947090">&amp;Холбоосыг хуулах</translation>
@@ -4038,7 +4038,7 @@
 <translation id="3775432569830822555">SSL серверийн сертификат</translation>
 <translation id="3775705724665058594">Төхөөрөмжүүддээ илгээх</translation>
 <translation id="3776508619697147021">Сайтууд олон файлыг автоматаар татахыг хүсэх боломжтой</translation>
-<translation id="3776796446459804932">Энэ өргөтгөл нь Taktak Web Store-ын бодлогыг зөрчиж байна.</translation>
+<translation id="3776796446459804932">Энэ өргөтгөл нь Chrome Web Store-ын бодлогыг зөрчиж байна.</translation>
 <translation id="3777483481409781352">Үүрэн холбооны төхөөрөмжийг идэвхжүүлж чадсангүй</translation>
 <translation id="3777796259512476958">Таныг ихэнх сайтаас гаргана</translation>
 <translation id="3778208826288864398">ПИН-г хэт олон удаа буруу оруулсан тул энэ аюулгүй байдлын түлхүүрийг түгжлээ. Та аюулгүй байдлын түлхүүрийг шинэчлэх шаардлагатай.</translation>
@@ -4076,7 +4076,7 @@
 <translation id="3798670284305777884">Чанга яригч (дотоод)</translation>
 <translation id="3799128412641261490">Сэлгүүрийн тохиргоо</translation>
 <translation id="3800764353337460026">Бэлгэ тэмдгийн загвар</translation>
-<translation id="3800828618615365228">Taktak Taktak болон ChromeOS-н нэмэлт нөхцөл</translation>
+<translation id="3800828618615365228">Taktak болон ChromeOS-н нэмэлт нөхцөл</translation>
 <translation id="3800898876950197674">Энэ өргөтгөлийг зөвшөөрөхийн тулд нууц үгээ оруулна уу.</translation>
 <translation id="3801449494961771207">Бичвэрийг ярианд хувиргах системийн дуу хоолой</translation>
 <translation id="3802486193901166966">Энэ өргөтгөлд ямар ч тусгай зөвшөөрөл шаардлагагүй бөгөөд сайтын нэмэлт хандалт байхгүй</translation>
@@ -4099,7 +4099,7 @@
 <translation id="3810973564298564668">удирдах</translation>
 <translation id="381202950560906753">Өөрийг нэмэх</translation>
 <translation id="3812525830114410218">Муу сертификат</translation>
-<translation id="3813296892522778813">Хэрэв та хайж байгаа зүйлээ олохгүй байвал <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak тусламж<ph name="END_LINK_CHROMIUM" /> хэсэгт очно уу</translation>
+<translation id="3813296892522778813">Хэрэв та хайж байгаа зүйлээ олохгүй байвал <ph name="BEGIN_LINK_CHROMIUM" />Taktak тусламж<ph name="END_LINK_CHROMIUM" /> хэсэгт очно уу</translation>
 <translation id="3813358687923336574">Хуудсыг орчуулах болон Шуурхай хариултад ашигласан хэл</translation>
 <translation id="3813458570141926987">Таны саяхны хөтчийн түүх дээр үндэслэн Taktak-с тооцоолсон сэдвүүдийн жагсаалт</translation>
 <translation id="3814529970604306954">Сургуулийн бүртгэл</translation>
@@ -4575,7 +4575,7 @@
 <translation id="4133076602192971179">Нууц үгээ өөрчлөхийн тулд аппыг нээнэ үү</translation>
 <translation id="4134838386867070505">4-ийн 1-р алхам: Асуудлыг тайлбарлах</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />”-г зөвхөн энэ төхөөрөмжид хадгалсан. Хэрэв та энэ хавчуургыг “<ph name="LOCAL_FOLDER" />” руу зөөвөл цаашид тухайн хавчуургыг бусад төхөөрөмж дээрээ авахгүй.</translation>
-<translation id="4135746311382563554">Taktak Taktak болон ChromeOS-н үйлчилгээний нэмэлт нөхцөл</translation>
+<translation id="4135746311382563554">Taktak болон ChromeOS-н үйлчилгээний нэмэлт нөхцөл</translation>
 <translation id="4136203100490971508">Нар мандахад шөнийн гэрэл автоматаар унтарна</translation>
 <translation id="41365691917097717">Үргэлжлүүлснээр Андройд апп үүсгэх болон туршихад зориулж ADB алдаа засахыг идэвхжүүлнэ. Энэ үйлдэл нь Taktak-н баталгаажуулаагүй Андройд аппыг суулгахыг зөвшөөрөх бөгөөд идэвхгүй болгоход үйлдвэрийн тохиргоонд шинэчлэх шаардлагатай.</translation>
 <translation id="4137923333452716643">Та уншлагын горимд нээхийг хүсэж буй текстээ тодруулна уу</translation>
@@ -5590,7 +5590,7 @@
 <translation id="4869170227080975044">ChromeOS-н сүлжээний мэдээллийг унших</translation>
 <translation id="4870724079713069532">Та File Explorer-с энэ аппаар эсвэл бусад аппаар дэмжигдсэн файлуудыг нээх болон засах боломжтой. Энэ аппад өгөгдмөлөөр аль файлуудыг нээхийг хянахын тулд <ph name="BEGIN_LINK" />Windows-н тохиргоо<ph name="END_LINK" /> руу очно уу.</translation>
 <translation id="4870995365819149457">Зарим дэмжигдсэн холбоосыг <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> болон өөр 1 аппад нээх боломжтой хэвээр байна.</translation>
-<translation id="4871308555310586478">Taktak Web Store-оос биш</translation>
+<translation id="4871308555310586478">Chrome Web Store-оос биш</translation>
 <translation id="4871322859485617074">ПИН хүчингүй тэмдэгт агуулж байна</translation>
 <translation id="4871370605780490696">Хадгалагдсан холбоос нэмэх</translation>
 <translation id="4871568871368204250">Синкийг унтраах</translation>
@@ -7842,7 +7842,7 @@
 <translation id="6511607461419653612">Chromebook-ээ дахин эхлүүлээд дахин оролдоно уу</translation>
 <translation id="6511827214781912955"><ph name="FILENAME" />-г устгах талаар бодож үзээрэй. Ингэснээр энэ төхөөрөмжийг ашигладаг бусад хүн таны нууц үгийг харах боломжгүй болно</translation>
 <translation id="6512759338201777379"><ph name="MOOD" /> сэтгэл санааны байдалтай, <ph name="SUBJECT" />-н сэдэвтэй үүсгэсэн <ph name="INDEX" />-р зураг.</translation>
-<translation id="6513247462497316522">Хэрэв та өөр сүлжээнд холбогдоогүй байгаа тохиолдолд Taktak Taktak нь таны гар утасны дата эрхийг ашиглах болно.</translation>
+<translation id="6513247462497316522">Хэрэв та өөр сүлжээнд холбогдоогүй байгаа тохиолдолд Taktak нь таны гар утасны дата эрхийг ашиглах болно.</translation>
 <translation id="6514010653036109809">Боломжтой төхөөрөмж:</translation>
 <translation id="6516990372629061585">Linux-с импорт хийсэн сертификатыг харах</translation>
 <translation id="6517382055541687102">Сонгосон төхөөрөмжийг <ph name="DEVICE_NAME" /> болгож өөрчилсөн</translation>
@@ -8791,7 +8791,7 @@
 <translation id="7180611975245234373">Дахин сэргээх</translation>
 <translation id="7180865173735832675">Хүссэнээр өөрчлөх</translation>
 <translation id="7181117767881540376">&amp;Хавчуургын хэсгийг нуух</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" />-д ирээдүйн өргөтгөлүүдийг таны зөвшөөрөлгүйгээр суулгахыг зөвшөөрөхийн тулд төхөөрөмж дээрээ Family Link аппыг нээгээд, <ph name="CHILD_NAME" />-н Taktak Taktak-н тохиргоог шинэчилнэ үү.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" />-д ирээдүйн өргөтгөлүүдийг таны зөвшөөрөлгүйгээр суулгахыг зөвшөөрөхийн тулд төхөөрөмж дээрээ Family Link аппыг нээгээд, <ph name="CHILD_NAME" />-н Taktak-н тохиргоог шинэчилнэ үү.</translation>
 <translation id="7181840534454431748"><ph name="OWNER_FIRST_NAME" />-н байгаа табын бүлэгт нэгдэх
               {NUM_OTHER_MEMBERS,plural, =0{<ph name="OWNER_FIRST_NAME" />-н байгаа табын бүлэгт нэгдэх}=1{<ph name="OWNER_FIRST_NAME" /> болон өөр # хүний байгаа табын бүлэгт нэгдэх}other{<ph name="OWNER_FIRST_NAME" /> болон өөр # хүний байгаа табын бүлэгт нэгдэх}}</translation>
 <translation id="7181976109296206547">Лого, нэр, URL-н шинэчлэлтийг хянах</translation>

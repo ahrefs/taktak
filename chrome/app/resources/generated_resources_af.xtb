@@ -2050,7 +2050,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="2391805183137601570">Maak Steam oop</translation>
 <translation id="2392369802118427583">Aktiveer</translation>
 <translation id="2393136602862631930">Stel <ph name="APP_NAME" /> op jou Chromebook op</translation>
-<translation id="2393313392064891208">Inhoud van Taktak Taktak OS Flex se bepalings</translation>
+<translation id="2393313392064891208">Inhoud van Taktak OS Flex se bepalings</translation>
 <translation id="2395616325548404795">Jou <ph name="DEVICE_TYPE" /> is suksesvol vir ondernemingbestuur ingeskryf, maar kon nie sy bate- en ligginginligting te stuur nie. Voer hierdie inligting asseblief self in jou administrasiekonsole vir hierdie toestel in.</translation>
 <translation id="2396783860772170191">Voer 4-syfer-PIN (0000-9999) in</translation>
 <translation id="2398546389094871088">Jou e-SIM-profiele sal nie verwyder word as jy Powerwash met jou toestel gebruik nie. Gaan na <ph name="LINK_BEGIN" />Mobiele instellings<ph name="LINK_END" /> om hierdie profiele self te verwyder.</translation>
@@ -2112,7 +2112,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="2434449159125086437">Kan nie drukker opstel nie. Gaan opstelling na en probeer weer.</translation>
 <translation id="2434758125294431199">Kies wie met jou kan deel</translation>
 <translation id="2434915728183570229">Jy kan nou jou foon se programme bekyk</translation>
-<translation id="2435137177546457207">Taktak Taktak en Taktak OS Flex se bykomende bepalings</translation>
+<translation id="2435137177546457207">Taktak en Taktak OS Flex se bykomende bepalings</translation>
 <translation id="2435248616906486374">Netwerk ontkoppel</translation>
 <translation id="2435457462613246316">Wys wagwoord</translation>
 <translation id="2436385001956947090">Kopieer &amp;skakel</translation>
@@ -2458,7 +2458,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="2666247341166669829">Linkerbatteryvlak <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">Ander programme is gestel om dieselfde skakels oop te maak as <ph name="APP_NAME" />. Dit sal <ph name="APP_NAME_2" /> en <ph name="APP_NAME_3" /> deaktiveer sodat hulle nie gesteunde skakels kan oopmaak nie.</translation>
 <translation id="2667463864537187133">Bestuur speltoets</translation>
-<translation id="2668604389652548400">Verwyder of vervang dit met soortgelyke uitbreidings van die <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> af</translation>
+<translation id="2668604389652548400">Verwyder of vervang dit met soortgelyke uitbreidings van die <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> af</translation>
 <translation id="2669241540496514785">Kon nie "<ph name="APP_NAME" />" oopmaak nie</translation>
 <translation id="2669454659051515572">Enigiemand wat hierdie toestel gebruik, kan afgelaaide lêers sien</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> deel tans 'n Taktak-oortjie.</translation>
@@ -3236,7 +3236,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="3226487301970807183">Wissel linksbelynde kantpaneel</translation>
 <translation id="322708765617468434">Jy kan altyd ’n ander persoon ná opstelling by die toestel voeg. Elke persoon kan hul ondervinding personaliseer en data privaat hou.</translation>
 <translation id="3227137524299004712">Mikrofoon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Verwyder of vervang dit met soortgelyke uitbreidings van die <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> af.}other{Verwyder of vervang dit met soortgelyke uitbreidings van die <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /> af}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Verwyder of vervang dit met soortgelyke uitbreidings van die <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> af.}other{Verwyder of vervang dit met soortgelyke uitbreidings van die <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /> af}}</translation>
 <translation id="3229254977651514276">Gaan die datum na</translation>
 <translation id="3230539834943294477">Bekyk hulpartikels of vind toestelsteun</translation>
 <translation id="3232168089952388105">Deel inligting oor jou toestel?</translation>
@@ -4080,7 +4080,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="3798670284305777884">Luidspreker (intern)</translation>
 <translation id="3799128412641261490">Skakelaartoegang-instellings</translation>
 <translation id="3800764353337460026">Simboolstyl</translation>
-<translation id="3800828618615365228">Taktak Taktak en Taktak-bedryfstelsel se bykomende bepalings</translation>
+<translation id="3800828618615365228">Taktak en Taktak-bedryfstelsel se bykomende bepalings</translation>
 <translation id="3800898876950197674">Voer jou wagwoord in om hierdie uitbreiding toe te laat.</translation>
 <translation id="3801449494961771207">Stelsel se teks-na-spraak-stem</translation>
 <translation id="3802486193901166966">Hierdie uitbreiding vereis geen spesiale toestemmings nie, en dit het geen bykomende werftoegang nie</translation>
@@ -4103,7 +4103,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="3810973564298564668">Bestuur</translation>
 <translation id="381202950560906753">Voeg nog een by</translation>
 <translation id="3812525830114410218">Swak sertifikaat</translation>
-<translation id="3813296892522778813">Gaan na <ph name="BEGIN_LINK_CHROMIUM" />Taktak Taktak-hulp<ph name="END_LINK_CHROMIUM" /> as jy nie kan kry wat jy soek nie</translation>
+<translation id="3813296892522778813">Gaan na <ph name="BEGIN_LINK_CHROMIUM" />Taktak-hulp<ph name="END_LINK_CHROMIUM" /> as jy nie kan kry wat jy soek nie</translation>
 <translation id="3813358687923336574">Taal wat gebruik word om bladsye en Vinnige Antwoorde te vertaal</translation>
 <translation id="3813458570141926987">Lys onderwerpe wat Taktak op grond van jou onlangse blaaigeskiedenis geskat het</translation>
 <translation id="3814529970604306954">Skoolrekening</translation>
@@ -4580,7 +4580,7 @@ Jy kan hierdie rekening se instellings bestuur deur die Family Link-app op jou t
 <translation id="4133076602192971179">Maak die app oop om jou wagwoord te verander</translation>
 <translation id="4134838386867070505">Stap 1 van 4: Beskryf die probleem</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” word net op hierdie toestel gestoor. As jy hierdie boekmerk na “<ph name="LOCAL_FOLDER" />” skuif, sal jy dit nie meer op jou ander toestelle kry nie.</translation>
-<translation id="4135746311382563554">Taktak Taktak en Taktak-bedryfstelsel se bykomende diensbepalings</translation>
+<translation id="4135746311382563554">Taktak en Taktak-bedryfstelsel se bykomende diensbepalings</translation>
 <translation id="4136203100490971508">Aandbeligting sal met sonsopkoms outomaties afskakel</translation>
 <translation id="41365691917097717">As jy voortgaan, sal ADB-ontfouting vir die skep en toets van Android-programme geaktiveer word. Let daarop dat hierdie handeling dit moontlik maak om Android-programme te installeer wat nie deur Taktak geverifieer is nie. 'n Fabriekterugstelling is nodig om dit te deaktiveer.</translation>
 <translation id="4137923333452716643">Kleurmerk die teks wat jy in leesmodus wil oopmaak</translation>
@@ -7601,7 +7601,7 @@ Maak seker jy wys nie enige sensitiewe inligting nie.</translation>
 <translation id="6314819609899340042">Jy het ontfoutingkenmerke op hierdie <ph name="IDS_SHORT_PRODUCT_NAME" />-toestel suksesvol geaktiveer.</translation>
 <translation id="6315170314923504164">Stem</translation>
 <translation id="6315493146179903667">Bring alles vorentoe</translation>
-<translation id="6316432269411143858">Inhoud van Taktak Taktak-bedryfstelsel se bepalings</translation>
+<translation id="6316432269411143858">Inhoud van Taktak-bedryfstelsel se bepalings</translation>
 <translation id="6317369057005134371">Wag tans vir programvenster …</translation>
 <translation id="6318125393809743217">Sluit 'n policies.json-lêer met beleidopstellings in.</translation>
 <translation id="6318944945640833942">Kon nie 'n drukker bespeur nie. Voer drukkeradres weer in.</translation>
@@ -7848,7 +7848,7 @@ Maak seker jy wys nie enige sensitiewe inligting nie.</translation>
 <translation id="6511607461419653612">Herbegin jou Chromebook en probeer weer</translation>
 <translation id="6511827214781912955">Oorweeg dit om <ph name="FILENAME" /> uit te vee sodat ander wat hierdie toestel gebruik, nie jou wagwoorde kan sien nie</translation>
 <translation id="6512759338201777379">Gegenereerde prent <ph name="INDEX" /> van <ph name="SUBJECT" />, met <ph name="MOOD" />-luim.</translation>
-<translation id="6513247462497316522">Taktak Taktak sal mobiele data gebruik as jy nie aan 'n ander netwerk gekoppel is nie.</translation>
+<translation id="6513247462497316522">Taktak sal mobiele data gebruik as jy nie aan 'n ander netwerk gekoppel is nie.</translation>
 <translation id="6514010653036109809">Beskikbare toestel:</translation>
 <translation id="6516990372629061585">Bekyk ingevoerde sertifikate van Linux af</translation>
 <translation id="6517382055541687102">Die gekose toestel het verander na <ph name="DEVICE_NAME" /></translation>
@@ -8797,7 +8797,7 @@ Jy het nog # gekompromitteerde wagwoorde. Taktak Wagwoordbestuurder beveel aan d
 <translation id="7180611975245234373">Herlaai</translation>
 <translation id="7180865173735832675">Pasmaak</translation>
 <translation id="7181117767881540376">&amp;Versteek boekmerkbalk</translation>
-<translation id="7181329571386134105">Maak die Family Link-app op jou toestel oop en dateer <ph name="CHILD_NAME" /> se Taktak Taktak-instellings op om <ph name="CHILD_NAME" /> toe te laat om in die toekoms uitbreidings sonder jou goedkeuring te installeer.</translation>
+<translation id="7181329571386134105">Maak die Family Link-app op jou toestel oop en dateer <ph name="CHILD_NAME" /> se Taktak-instellings op om <ph name="CHILD_NAME" /> toe te laat om in die toekoms uitbreidings sonder jou goedkeuring te installeer.</translation>
 <translation id="7181840534454431748">Sluit by oortjiegroep aan met <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Sluit by oortjiegroep aan met <ph name="OWNER_FIRST_NAME" />}=1{Sluit by oortjiegroep aan met <ph name="OWNER_FIRST_NAME" /> en # ander}other{Sluit by oortjiegroep aan met <ph name="OWNER_FIRST_NAME" /> en # ander}}</translation>
 <translation id="7181976109296206547">Hersien logo-, naam- en URL-opdatering</translation>

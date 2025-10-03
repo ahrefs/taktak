@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">این خط‌مشی درست کار می‌کند اما مقدار یکسانی در جای دیگری تنظیم شده است که این خط‌مشی آن را جایگزین می‌کند.</translation>
 <translation id="1567405528131216114">افزودن <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">وارد کردن تاریخ انقضا</translation>
-<translation id="1569694109004336106">‏Taktak Taktak می‌خواهد Windows Hello را برای پر کردن گذرواژه‌ها روشن کند.</translation>
+<translation id="1569694109004336106">‏Taktak می‌خواهد Windows Hello را برای پر کردن گذرواژه‌ها روشن کند.</translation>
 <translation id="1572765991610098222">‏<ph name="WIDTH" /> x <ph name="HEIGHT" /> اینچ</translation>
 <translation id="1574714699824202614">درحال درستی‌سنجی روش پرداخت</translation>
 <translation id="1576277203042721907">اطلاعات آماری خرید</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">برای اطلاعات بیشتر با ارائه‌دهنده تماس بگیرید</translation>
 <translation id="2091887806945687916">صدا</translation>
 <translation id="2093184051799735948">‫<ph name="ENGINE_NAME" /> را جستجو کنید یا نشانی وب را تایپ کنید</translation>
-<translation id="2093982008204312032">‏Taktak Taktak می‌خواهد Windows Hello را برای درج گذرواژه‌ها خاموش کند.</translation>
+<translation id="2093982008204312032">‏Taktak می‌خواهد Windows Hello را برای درج گذرواژه‌ها خاموش کند.</translation>
 <translation id="2094505752054353250">عدم تطابق دامنه</translation>
 <translation id="2094704029599359040">اطلاعات نسخه</translation>
 <translation id="2099652385553570808">سه منگنه در چپ</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;واگرد حذف</translation>
 <translation id="239708975263889666">ویرایش شماره مسافر شناخته‌شده</translation>
 <translation id="2399344929880464793">‏این IBAN در «حساب Taktak» شما ذخیره شد تا بتوانید از آن در سراسر سرویس‌های Taktak استفاده کنید.</translation>
-<translation id="2399868464369312507">‏Taktak Taktak می‌خواهد روش‌های پرداخت را ویرایش کند.</translation>
+<translation id="2399868464369312507">‏Taktak می‌خواهد روش‌های پرداخت را ویرایش کند.</translation>
 <translation id="2400263725572336749">افزودن گذرنامه</translation>
 <translation id="2400271059665846158">‏کارت‌های وفاداری‌تان را در «کیف پول Taktak» مدیریت کنید</translation>
 <translation id="2400600116338235695">می‌تواند برای اتصال به درگاه‌های سریال درخواست دهد</translation>
@@ -3119,7 +3119,7 @@
 <translation id="6164605812717770913">ولی یا سرپرست شما اعلام کرده است که بازدید از این سایت برای شما مناسب نیست. می‌توانید از او بخواهید سایت را رفع انسداد کند.</translation>
 <translation id="6165508094623778733">بیشتر بدانید</translation>
 <translation id="6167577165590485365">آخرین تلاش برای واکشی:</translation>
-<translation id="617256461084925519">‏Taktak Taktak سعی دارد هویت شما را تأیید کند تا بتواند اطلاعات پرداخت شما را تکمیل کند.</translation>
+<translation id="617256461084925519">‏Taktak سعی دارد هویت شما را تأیید کند تا بتواند اطلاعات پرداخت شما را تکمیل کند.</translation>
 <translation id="6173208311907792313">‏خریدتان را بااستفاده از Windows Hello تکمیل کنید</translation>
 <translation id="6176387967264100435">این قیمت بالا است</translation>
 <translation id="6177128806592000436">اتصال شما به این سایت امن نیست</translation>
@@ -3979,7 +3979,7 @@
 <translation id="7564049878696755256">‏ممکن است دسترسی به حساب <ph name="ORG_NAME" /> را از دست بدهید یا به سرقت هویت دچار شوید. Taktak توصیه می‌کند هم‌اکنون گذرواژه‌تان را تغییر دهید.</translation>
 <translation id="7564667064360547717">پیراهن و بلوز</translation>
 <translation id="7567204685887185387">این سرور نتوانست اثبات کند که این <ph name="DOMAIN" /> است؛ ممکن است گواهی امنیتی آن به صورت تقلبی صادر شده باشد. ممکن است علت این موضوع پیکربندی اشتباه باشد یا مهاجمی اتصال شما را قطع کرده است.</translation>
-<translation id="7568616151991626879">‏Taktak Taktak می‌خواهد گذرواژه‌تان را در <ph name="APP_NAME" /> پر کند.</translation>
+<translation id="7568616151991626879">‏Taktak می‌خواهد گذرواژه‌تان را در <ph name="APP_NAME" /> پر کند.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{هیچ‌کدام}=1{‫۱ برگه در این دستگاه}one{‫# برگه در این دستگاه}other{‫# برگه در این دستگاه}}</translation>
 <translation id="7569490014721427265">گلف</translation>
 <translation id="7569952961197462199">‏کارت اعتباری از Taktak پاک شود؟</translation>
@@ -4560,7 +4560,7 @@
 <translation id="8541579497401304453">با شروع تماس تلفنی، با کسب‌وکار ارتباط برقرار کنید.</translation>
 <translation id="8542014550340843547">سه منگنه در پایین</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">‏Taktak Taktak می‌خواهد تنظیمات تکمیل روش‌های پرداخت را اصلاح کند.</translation>
+<translation id="8544217240017914508">‏Taktak می‌خواهد تنظیمات تکمیل روش‌های پرداخت را اصلاح کند.</translation>
 <translation id="8544303911974837265">پلی‌استر</translation>
 <translation id="854548366864113872">گزینه گران‌قیمت</translation>
 <translation id="8546254312340305428">دلیلی برای بارگذاری ارائه دهید (الزامی)</translation>

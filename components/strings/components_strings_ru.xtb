@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Правило работает корректно, но заменяет одинаковое значение, заданное где-то ещё.</translation>
 <translation id="1567405528131216114">Снова добавить тему "<ph name="TOPIC" />"</translation>
 <translation id="1569487616857761740">Укажите дату окончания срока действия</translation>
-<translation id="1569694109004336106">Taktak Taktak пытается включить Windows Hello, чтобы указывать пароли.</translation>
+<translation id="1569694109004336106">Taktak пытается включить Windows Hello, чтобы указывать пароли.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" />"</translation>
 <translation id="1574714699824202614">Подтверждение способа оплаты</translation>
 <translation id="1576277203042721907">Shopping Insights</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">За дополнительной информацией обратитесь к провайдеру.</translation>
 <translation id="2091887806945687916">Звук</translation>
 <translation id="2093184051799735948">Введите запрос в <ph name="ENGINE_NAME" /> или укажите URL</translation>
-<translation id="2093982008204312032">Taktak Taktak пытается отключить Windows Hello, чтобы не использовать этот сервис для подстановки паролей.</translation>
+<translation id="2093982008204312032">Taktak пытается отключить Windows Hello, чтобы не использовать этот сервис для подстановки паролей.</translation>
 <translation id="2094505752054353250">Несоответствие домена</translation>
 <translation id="2094704029599359040">Информация о версии</translation>
 <translation id="2099652385553570808">Три скобы слева</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;Отменить удаление</translation>
 <translation id="239708975263889666">Изменение личного номера пассажира, присвоенного TSA</translation>
 <translation id="2399344929880464793">Код IBAN сохранен в аккаунте Taktak и может использоваться в наших сервисах.</translation>
-<translation id="2399868464369312507">Taktak Taktak пытается изменить способы оплаты.</translation>
+<translation id="2399868464369312507">Taktak пытается изменить способы оплаты.</translation>
 <translation id="2400263725572336749">Добавить паспортные данные</translation>
 <translation id="2400271059665846158">Настроить карты постоянного клиента в Taktak Кошельке</translation>
 <translation id="2400600116338235695">Разрешено отправлять запрос на подключение к последовательным портам</translation>
@@ -3118,7 +3118,7 @@
 <translation id="6164605812717770913">Родитель или законный представитель запретил тебе заходить на этот сайт. Попроси открыть к нему доступ.</translation>
 <translation id="6165508094623778733">Подробнее</translation>
 <translation id="6167577165590485365">Последняя попытка получения:</translation>
-<translation id="617256461084925519">Taktak Taktak пытается подтвердить вашу личность, чтобы ввести платежные данные.</translation>
+<translation id="617256461084925519">Taktak пытается подтвердить вашу личность, чтобы ввести платежные данные.</translation>
 <translation id="6173208311907792313">Завершите покупку с помощью Windows Hello.</translation>
 <translation id="6176387967264100435">Это высокая цена</translation>
 <translation id="6177128806592000436">Подключение к сайту не защищено</translation>
@@ -3978,7 +3978,7 @@
 <translation id="7564049878696755256">Кто-то посторонний мог получить доступ к вашим личным данным или аккаунту в домене <ph name="ORG_NAME" />. Рекомендуем немедленно сменить пароль.</translation>
 <translation id="7564667064360547717">Футболки и топы</translation>
 <translation id="7567204685887185387">Не удалось подтвердить, что это сервер <ph name="DOMAIN" />. Его сертификат безопасности мог быть выдан обманным путем. Возможно, сервер настроен неправильно или кто-то пытается перехватить ваши данные.</translation>
-<translation id="7568616151991626879">Taktak Taktak пытается указать пароль на сайте <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak пытается указать пароль на сайте <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Нет вкладок}=1{1 вкладка на этом устройстве}one{# вкладка на этом устройстве}few{# вкладки на этом устройстве}many{# вкладок на этом устройстве}other{# вкладки на этом устройстве}}</translation>
 <translation id="7569490014721427265">Гольф</translation>
 <translation id="7569952961197462199">Удалить кредитную карту из Taktak?</translation>
@@ -4559,7 +4559,7 @@
 <translation id="8541579497401304453">Позвонить в компанию</translation>
 <translation id="8542014550340843547">Три скобы внизу</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak пытается изменить настройки автоматического ввода платежных данных.</translation>
+<translation id="8544217240017914508">Taktak пытается изменить настройки автоматического ввода платежных данных.</translation>
 <translation id="8544303911974837265">Полиэстер</translation>
 <translation id="854548366864113872">Дорогой вариант</translation>
 <translation id="8546254312340305428">Укажите, зачем вы хотите загрузить файл (обязательно)</translation>

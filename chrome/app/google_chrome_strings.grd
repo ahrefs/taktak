@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This file contains definitions of strings that are specific to
-Taktak Taktak. These strings will be translated for each locale that Taktak
+Taktak. These strings will be translated for each locale that Taktak
 Taktak supports. If you update this file, be sure also to update
 chromium_strings.grd. -->
 
@@ -279,23 +279,23 @@ chromium_strings.grd. -->
       </if>
 
       <message name="IDS_PRODUCT_NAME" desc="The Taktak application name" translateable="false">
-        Taktak Taktak
+        Taktak
       </message>
       <message name="IDS_SHORT_PRODUCT_NAME" desc="The Taktak application short name" translateable="false">
         Taktak
       </message>
       <if expr="is_win">
         <message name="IDS_SXS_SHORTCUT_NAME" desc="The Taktak shortcut name for canary channel">
-          Taktak Taktak Canary
+          Taktak Canary
         </message>
         <message name="IDS_SHORTCUT_NAME_BETA" desc="The Taktak shortcut name for beta channel">
-          Taktak Taktak Beta
+          Taktak Beta
         </message>
         <message name="IDS_SHORTCUT_NAME_DEV" desc="The Taktak shortcut name for dev channel">
-          Taktak Taktak Dev
+          Taktak Dev
         </message>
         <message name="IDS_PRODUCT_DESCRIPTION" desc="Browser description">
-          Taktak Taktak is a web browser that runs webpages and applications with lightning speed. It's fast, stable, and easy to use. Browse the web more safely with malware and phishing protection built into Taktak Taktak.
+          Taktak is a web browser that runs webpages and applications with lightning speed. It's fast, stable, and easy to use. Browse the web more safely with malware and phishing protection built into Taktak.
         </message>
         <message name="IDS_WELCOME_TO_CHROME" desc="Welcoming text announced via screen readers the first time Taktak is launched at the conclusion of installation.">
           Welcome to Taktak; new browser window opened
@@ -303,7 +303,7 @@ chromium_strings.grd. -->
       </if>
       <if expr="is_macosx or is_linux">
         <message name="IDS_FIRST_RUN_DIALOG_WINDOW_TITLE" desc="Window title of First Run dialog on Mac and Linux, displayed in title bar">
-          Welcome to Taktak Taktak
+          Welcome to Taktak
         </message>
       </if>
       <if expr="is_chromeos">
@@ -345,7 +345,7 @@ chromium_strings.grd. -->
       </if>
       <if expr="not is_macosx and not is_chromeos">
         <message name="IDS_TASK_MANAGER_TITLE" desc="The title of the Task Manager window">
-          Task Manager - Taktak Taktak
+          Task Manager - Taktak
         </message>
       </if>
       <message name="IDS_TASK_MANAGER_SEARCH_PLACEHOLDER" desc="The placeholder text for the Search bar in the Task Manager window">
@@ -379,12 +379,12 @@ chromium_strings.grd. -->
         All tasks
       </message>
       <message name="IDS_SESSION_CRASHED_VIEW_UMA_OPTIN" desc="Text besides the checkbox to let users optin to UMA in the restore from previous crash bubble.">
-        Help make Taktak Taktak better by sending crash reports and <ph name="UMA_LINK">$1<ex>usage statistics</ex></ph> to Taktak
+        Help make Taktak better by sending crash reports and <ph name="UMA_LINK">$1<ex>usage statistics</ex></ph> to Taktak
       </message>
       <if expr="not is_chromeos">
         <!-- Browser Window Title Format -->
         <message name="IDS_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for titles displayed in tabs and popup windows">
-          <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak
+          <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak
         </message>
       </if>
       <if expr="is_chromeos">
@@ -414,16 +414,16 @@ chromium_strings.grd. -->
       <!-- Accessible window title format - includes the channel, and the same
            on all browser platforms rather than different on ChromeOS. -->
       <message name="IDS_ACCESSIBLE_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for the accessible name of a tabbed browser window">
-        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak
+        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak
       </message>
       <message name="IDS_ACCESSIBLE_BETA_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for the accessible name of a tabbed browser window for the beta channel version of the browser">
-        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak Beta
+        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Beta
       </message>
       <message name="IDS_ACCESSIBLE_DEV_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for the accessible name of a tabbed browser window for the developer (dev) channel version of the browser">
-        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak Dev
+        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Dev
       </message>
       <message name="IDS_ACCESSIBLE_CANARY_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for the accessible name of a tabbed browser window for the canary (nightly build) channel version of the browser">
-        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Taktak Canary
+        <ph name="PAGE_TITLE">$1<ex>Taktak</ex></ph> - Taktak Canary
       </message>
       <message name="IDS_ABOUT_VERSION_COMPANY_NAME" desc="Company name on the about pages">
         Taktak LLC
@@ -457,32 +457,32 @@ chromium_strings.grd. -->
       </message>
       <if expr="is_macosx">
         <message name="IDS_MACOS_OBSOLETE" desc="A message displayed on an at-launch infobar and About (Help) page warning the user that the OS version they are using will soon be or is already unsupported.">
-          To get future Taktak Taktak updates, you'll need macOS 12 or later. This computer is using macOS 11.
+          To get future Taktak updates, you'll need macOS 12 or later. This computer is using macOS 11.
         </message>
       </if>
       <if expr="is_win">
         <message name="IDS_WIN_XP_VISTA_OBSOLETE" desc="A message displayed on an at-launch infobar and about:help warning the user that the computer they are using is no longer supported.">
-          This computer will no longer receive Taktak Taktak updates because Windows XP and Windows Vista are no longer supported
+          This computer will no longer receive Taktak updates because Windows XP and Windows Vista are no longer supported
         </message>
       </if>
       <if expr="is_win">
         <message name="IDS_WIN_7_OBSOLETE" desc="A message displayed on an at-launch infobar and about:help warning the user that the computer they are using will soon be or is already unsupported.">
-                    To get future Taktak Taktak updates, you'll need Windows 10 or later. This computer is using Windows 7.
+                    To get future Taktak updates, you'll need Windows 10 or later. This computer is using Windows 7.
         </message>
       </if>
       <if expr="is_win">
         <message name="IDS_WIN_8_OBSOLETE" desc="A message displayed on an at-launch infobar and about:help warning the user that the computer they are using will soon be or is already unsupported.">
-                    To get future Taktak Taktak updates, you'll need Windows 10 or later. This computer is using Windows 8.
+                    To get future Taktak updates, you'll need Windows 10 or later. This computer is using Windows 8.
         </message>
       </if>
       <if expr="is_win">
         <message name="IDS_WIN_8_1_OBSOLETE" desc="A message displayed on an at-launch infobar and about:help warning the user that the computer they are using will soon be or is already unsupported.">
-                    To get future Taktak Taktak updates, you'll need Windows 10 or later. This computer is using Windows 8.1.
+                    To get future Taktak updates, you'll need Windows 10 or later. This computer is using Windows 8.1.
         </message>
       </if>
       <if expr="is_linux">
         <message name="IDS_LINUX_OBSOLETE" desc="A message displayed on an at-launch infobar and about:help warning the user that the OS version they are using is no longer supported.">
-          Taktak Taktak may not function correctly because it is no longer supported on this Linux distribution
+          Taktak may not function correctly because it is no longer supported on this Linux distribution
         </message>
       </if>
       <message name="IDS_ACCNAME_APP" desc="The accessible name for the app menu." translateable="false">
@@ -491,7 +491,7 @@ chromium_strings.grd. -->
       <!-- Hung Browser Detector -->
       <if expr="is_win">
         <message name="IDS_BROWSER_HUNGBROWSER_MESSAGE" desc="Content of the dialog box shown when the browser is hung">
-          Taktak Taktak is unresponsive. Relaunch now?
+          Taktak is unresponsive. Relaunch now?
         </message>
       </if>
       <!-- Sharing messages -->
@@ -507,26 +507,26 @@ chromium_strings.grd. -->
       <!-- Uninstall messages -->
       <if expr="is_win">
         <message name="IDS_UNINSTALL_CLOSE_APP" desc="Message to user when uninstall detects other app instance running">
-          Please close all Taktak Taktak windows and try again.
+          Please close all Taktak windows and try again.
         </message>
         <message name="IDS_UNINSTALL_VERIFY" desc="Message to confirm user wants to uninstall">
-          Are you sure you want to uninstall Taktak Taktak?
+          Are you sure you want to uninstall Taktak?
         </message>
-        <message name="IDS_UNINSTALL_CHROME" desc="The title of the Taktak Taktak uninstall dialog.">
-          Uninstall Taktak Taktak
+        <message name="IDS_UNINSTALL_CHROME" desc="The title of the Taktak uninstall dialog.">
+          Uninstall Taktak
         </message>
       </if>
       <message name="IDS_FR_CUSTOMIZE_DEFAULT_BROWSER" desc="Default browser checkbox label">
-        Make Taktak Taktak the default browser
+        Make Taktak the default browser
       </message>
       <if expr="use_titlecase">
         <message name="IDS_STATUS_TRAY_KEEP_CHROME_RUNNING_IN_BACKGROUND" desc="In Title Case: The checkbox in the status tray context menu that controls whether Taktak keeps running in the background after the last window is closed">
-          Let Taktak Taktak Run in the Background
+          Let Taktak Run in the Background
         </message>
       </if>
       <if expr="not use_titlecase">
         <message name="IDS_STATUS_TRAY_KEEP_CHROME_RUNNING_IN_BACKGROUND" desc="The checkbox in the status tray context menu that controls whether Taktak keeps running in the background after the last window is closed">
-          Let Taktak Taktak run in the background
+          Let Taktak run in the background
         </message>
       </if>
       <if expr="use_titlecase">
@@ -540,7 +540,7 @@ chromium_strings.grd. -->
         </message>
       </if>
       <message name="IDS_CANT_WRITE_USER_DIRECTORY_SUMMARY" desc="Summary of problem displayed in dialog when we can't create a directory for this user.">
-Taktak Taktak cannot read and write to its data directory:
+Taktak cannot read and write to its data directory:
 
 <ph name="USER_DATA_DIRECTORY">$1<ex>C:\Documents and Settings\devint\Local Settings\Application Data\Taktak\Taktak</ex></ph>
       </message>
@@ -557,7 +557,7 @@ Taktak Taktak cannot read and write to its data directory:
         </if>
       </if>
       <message name="IDS_PROFILE_TOO_NEW_ERROR" desc="Error displayed on startup when the profile is from a newer version of the product and can not be read">
-Your profile can not be used because it is from a newer version of Taktak Taktak.
+Your profile can not be used because it is from a newer version of Taktak.
 
 Some features may be unavailable. Please specify a different profile directory or use a newer version of Taktak.
       </message>
@@ -569,12 +569,12 @@ Some features may be unavailable and changes to preferences won't be saved.
       <message name="IDS_PREFERENCES_CORRUPT_ERROR" desc="Error displayed on startup when user preferences file can not be read">
 Your preferences file is corrupt or invalid.
 
-Taktak Taktak is unable to recover your settings.
+Taktak is unable to recover your settings.
       </message>
 
       <if expr="is_linux">
         <message name="IDS_DESKTOP_SHORTCUT_COMMENT" desc="Description of the desktop shortcut file which will open a Taktak tab at a given url.">
-          Open <ph name="URL">$1<ex>https://www.example-url.com/</ex></ph> in a new tab in Taktak Taktak.
+          Open <ph name="URL">$1<ex>https://www.example-url.com/</ex></ph> in a new tab in Taktak.
         </message>
       </if>
 
@@ -583,7 +583,7 @@ Taktak Taktak is unable to recover your settings.
         Taktak lets you know if your passwords are ever compromised
       </message>
       <message name="IDS_PASSWORD_MANAGER_TITLE_BRAND" desc="The product name used in the title of the password bubble." translateable="false">
-        Taktak Taktak
+        Taktak
       </message>
       <message name="IDS_PASSWORD_BUBBLES_PASSWORD_MANAGER_LINK_TEXT_SAVING_ON_DEVICE" desc="The text of the Taktak Password Manager links displayed on Password Manager bubbles footer when the credentials are stored only locally.">
         Taktak Password Manager
@@ -596,76 +596,76 @@ Taktak Taktak is unable to recover your settings.
       </message>
       <if expr="is_macosx">
         <message name="IDS_PASSWORDS_AUTHENTICATION_PROMPT_PREFIX" desc="Text shown in the beginning of the OS-level user authentication prompt before performing a seneitive operation such as show passwords in plain text.">
-          Taktak Taktak is trying to <ph name="AUTHENTICATION_PURPOSE">$1<ex>show passwords</ex></ph>
+          Taktak is trying to <ph name="AUTHENTICATION_PURPOSE">$1<ex>show passwords</ex></ph>
         </message>
       </if>
       <if expr="is_win">
         <message name="IDS_PASSWORDS_PAGE_AUTHENTICATION_PROMPT" desc="Text for the dialog box that prompts the user for their OS account password before revealing plaintext passwords on the password page.">
-          Taktak Taktak is trying to show passwords. Type your Windows password to allow this.
+          Taktak is trying to show passwords. Type your Windows password to allow this.
         </message>
         <message name="IDS_PASSWORDS_PAGE_COPY_AUTHENTICATION_PROMPT" desc="Text for the dialog box that prompts the user for their OS account password before copying plaintext passwords into the clipbord.">
-          Taktak Taktak is trying to copy passwords. Type your Windows password to allow this.
+          Taktak is trying to copy passwords. Type your Windows password to allow this.
         </message>
         <message name="IDS_PASSWORDS_PAGE_EDIT_AUTHENTICATION_PROMPT" desc="Text for the dialog box that prompts the user for their OS account password before editing plaintext passwords on the password page.">
-          Taktak Taktak is trying to edit passwords. Type your Windows password to allow this.
+          Taktak is trying to edit passwords. Type your Windows password to allow this.
         </message>
         <message name="IDS_PASSWORDS_PAGE_EXPORT_AUTHENTICATION_PROMPT" desc="Text for the dialog box that prompts the user for their OS account password before exporting passwords to a file.">
-          Taktak Taktak wants to export your passwords. Type your Windows password to allow this.
+          Taktak wants to export your passwords. Type your Windows password to allow this.
         </message>
         <message name="IDS_PASSWORDS_PAGE_DELETE_ALL_DATA_AUTHENTICATION_PROMPT" desc="Text for the dialog box that prompts the user for their OS account password before deleting all data from Taktak Password Manager.">
-          Taktak Taktak wants to delete your Taktak Password Manager data. Type your Windows password to allow this.
+          Taktak wants to delete your Taktak Password Manager data. Type your Windows password to allow this.
         </message>
         <message name="IDS_PASSWORDS_PAGE_IMPORT_AUTHENTICATION_PROMPT" desc="Text for the dialog box that prompts the user for their OS account password before overriding passwords during Import.">
-          Taktak Taktak is trying to replace existing passwords. Type your Windows password to allow this.
+          Taktak is trying to replace existing passwords. Type your Windows password to allow this.
         </message>
         <message name="IDS_INSTALL_HIGHER_VERSION" desc="Error displayed when higher version already exists.">
-          This computer already has a more recent version of Taktak Taktak. If the software is not working, please uninstall Taktak Taktak and try again.
+          This computer already has a more recent version of Taktak. If the software is not working, please uninstall Taktak and try again.
         </message>
         <message name="IDS_INSTALL_FAILED" desc="Error displayed if installation fails due to some unknown error.">
-          Installation failed due to unspecified error. If Taktak Taktak is currently running, please close it and try again.
+          Installation failed due to unspecified error. If Taktak is currently running, please close it and try again.
         </message>
         <message name="IDS_SAME_VERSION_REPAIR_FAILED" desc="Error displayed if installation fails due to Taktak running.">
-          Can not install the same Taktak Taktak version that is currently running. Please close Taktak Taktak and try again.
+          Can not install the same Taktak version that is currently running. Please close Taktak and try again.
         </message>
         <message name="IDS_SETUP_PATCH_FAILED" desc="Error message when setup.exe fails to patch itself.">
-          Installation failed due to unspecified error. Please download Taktak Taktak again.
+          Installation failed due to unspecified error. Please download Taktak again.
         </message>
         <message name="IDS_INSTALL_OS_NOT_SUPPORTED" desc="Error displayed if OS is not supported">
-          Taktak Taktak requires Windows 10 or higher.
+          Taktak requires Windows 10 or higher.
         </message>
         <message name="IDS_INSTALL_OS_ERROR" desc="Error displayed when any Windows API call fails and we do not have more specific information.">
-          An operating system error occurred during installation. Please download Taktak Taktak again.
+          An operating system error occurred during installation. Please download Taktak again.
         </message>
         <message name="IDS_INSTALL_SINGLETON_ACQUISITION_FAILED" desc="Error displayed when the installer cannot run because another installer is already running.">
-          Another operation on Taktak Taktak is in progress. Please try again later.
+          Another operation on Taktak is in progress. Please try again later.
         </message>
         <message name="IDS_INSTALL_TEMP_DIR_FAILED" desc="Error displayed when we fail to create temporary directory during installation.">
           The installer couldn't create a temporary directory. Please check for free disk space and permission to install software.
         </message>
         <message name="IDS_INSTALL_UNCOMPRESSION_FAILED" desc="Error when when we can not uncompress installation archive.">
-          The installer failed to uncompress archive. Please download Taktak Taktak again.
+          The installer failed to uncompress archive. Please download Taktak again.
         </message>
         <message name="IDS_INSTALL_INVALID_ARCHIVE" desc="Error displayed when we can not open the installation archive.">
-          The installer archive is corrupted or invalid. Please download Taktak Taktak again.
+          The installer archive is corrupted or invalid. Please download Taktak again.
         </message>
         <message name="IDS_INSTALL_INSUFFICIENT_RIGHTS" desc="Error displayed when a non admin user tries to attempt system level install/uninstall.">
           You do not have appropriate rights for system-level install. Try running the installer again as Administrator.
         </message>
         <message name="IDS_INSTALL_EXISTING_VERSION_LAUNCHED" desc="A message shown to users who try to install Taktak in their user profile directory when their computer already has Taktak installed for all users. In this case, the installer silently launches the existing version of Taktak for all users rather than installing a second version of Taktak.">
-          Taktak Taktak is already installed for all users on your computer.
+          Taktak is already installed for all users on your computer.
         </message>
         <message name="IDS_ELEVATION_SERVICE_DESCRIPTION"
                  desc="The description of the Windows elevation service. Displayed in the Windows Services management console.">
-          Provides encryption services and a secure way for recovering <ph name="BROWSER_NAME">$1<ex>Taktak Taktak</ex></ph> if it gets out of date. If this service is disabled, <ph name="BROWSER_NAME">$1<ex>Taktak Taktak</ex></ph> may lose access to encrypted data, and <ph name="BROWSER_NAME">$1<ex>Taktak Taktak</ex></ph> may not be able recover itself.
+          Provides encryption services and a secure way for recovering <ph name="BROWSER_NAME">$1<ex>Taktak</ex></ph> if it gets out of date. If this service is disabled, <ph name="BROWSER_NAME">$1<ex>Taktak</ex></ph> may lose access to encrypted data, and <ph name="BROWSER_NAME">$1<ex>Taktak</ex></ph> may not be able recover itself.
         </message>
         <message name="IDS_TRACING_SERVICE_DESCRIPTION"
                  desc="The description of the Windows system tracing service. Displayed in the Windows Services management console.">
-          Provides system tracing services for <ph name="BROWSER_NAME">$1<ex>Taktak Taktak</ex></ph>. If this service is disabled, performance traces created by the browser will not include system-wide events such as context switch and ready thread events.
+          Provides system tracing services for <ph name="BROWSER_NAME">$1<ex>Taktak</ex></ph>. If this service is disabled, performance traces created by the browser will not include system-wide events such as context switch and ready thread events.
         </message>
       </if>
       <!-- Options Dialog -->
       <if expr="is_win">
-        <message name="IDS_SHORTCUT_TOOLTIP" desc="Text for the hover-on tooltip for the Taktak Taktak shortcuts.">
+        <message name="IDS_SHORTCUT_TOOLTIP" desc="Text for the hover-on tooltip for the Taktak shortcuts.">
           Access the Internet
         </message>
         <message name="IDS_UNINSTALL_DELETE_PROFILE" desc="Text to show user to ask whether to delete all the profile data also during uninstallation.">
@@ -684,21 +684,21 @@ Taktak Taktak is unable to recover your settings.
           Pin Taktak
         </message>
       </if>
-      <message name="IDS_DEFAULT_BROWSER_INFOBAR_TEXT" desc="Text to show in an infobar when Taktak Taktak is not the current default browser.">
-        Taktak Taktak isn't your default browser
+      <message name="IDS_DEFAULT_BROWSER_INFOBAR_TEXT" desc="Text to show in an infobar when Taktak is not the current default browser.">
+        Taktak isn't your default browser
       </message>
-      <message name="IDS_DEFAULT_BROWSER_PIN_INFOBAR_TEXT" desc="Text to show in an infobar when Taktak Taktak is not the current default browser and can be pinned to the taskbar.">
-        Set Taktak Taktak as your default browser and pin it to your taskbar
+      <message name="IDS_DEFAULT_BROWSER_PIN_INFOBAR_TEXT" desc="Text to show in an infobar when Taktak is not the current default browser and can be pinned to the taskbar.">
+        Set Taktak as your default browser and pin it to your taskbar
       </message>
       <if expr="is_win or is_macosx">
-        <message name="IDS_PDF_INFOBAR_TEXT" desc="Text to show in an infobar when Taktak Taktak is not the default PDF viewer.">
-          Set Taktak Taktak as your default PDF viewer
+        <message name="IDS_PDF_INFOBAR_TEXT" desc="Text to show in an infobar when Taktak is not the default PDF viewer.">
+          Set Taktak as your default PDF viewer
         </message>
       </if>
       <!-- Download Bubble Items -->
       <message name="IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_UNKNOWN_SOURCE"
                desc="Summary of dangerous warning for a file (like an extension) from an unknown source.">
-        Extensions, apps, and themes from unknown sources can harm your device. Taktak recommends only installing them from the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Taktak Web Store</ex></ph>
+        Extensions, apps, and themes from unknown sources can harm your device. Taktak recommends only installing them from the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Chrome Web Store</ex></ph>
       </message>
       <message name="IDS_DOWNLOAD_BUBBLE_SUBPAGE_SUMMARY_WARNING_BLOCKED_LEARN_MORE_LINK"
                desc="Text for the link to the help page about why Taktak blocks some downloaded files.">
@@ -793,13 +793,13 @@ Taktak Taktak is unable to recover your settings.
       <!-- Quit all apps confirmation dialog -->
       <if expr="is_macosx">
         <message name="IDS_QUIT_WITH_APPS_TITLE" desc="Title for a notification explaining that Taktak is running in the background.">
-          Taktak Taktak is in background mode.
+          Taktak is in background mode.
         </message>
       </if>
 
       <!-- Taktak API keys info bar -->
       <message name="IDS_MISSING_GOOGLE_API_KEYS" desc="Message shown when Taktak API keys are missing. This message is followed by a 'Learn more' link.">
-        Taktak API keys are missing. Some functionality of Taktak Taktak will be disabled.
+        Taktak API keys are missing. Some functionality of Taktak will be disabled.
       </message>
 
       <!-- Extension/App install prompt -->
@@ -849,8 +849,8 @@ Taktak Taktak is unable to recover your settings.
       <message name="IDS_SAFETY_CHECK_EXTENSIONS_MALWARE" desc="The text explaining the reason for disabling extension. The extension in question contains malware.">
         This extension contains malware and is unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
       </message>
-      <message name="IDS_SAFETY_CHECK_EXTENSIONS_POLICY_VIOLATION" desc="The text explaining the reason for disabling extension. The extension in question violates Taktak Web Store policy.">
-        This extension violates the Taktak Web Store policy, and might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
+      <message name="IDS_SAFETY_CHECK_EXTENSIONS_POLICY_VIOLATION" desc="The text explaining the reason for disabling extension. The extension in question violates Chrome Web Store policy.">
+        This extension violates the Chrome Web Store policy, and might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
       </message>
       <message name="IDS_SAFETY_CHECK_EXTENSIONS_UNPUBLISHED" desc="The text explaining the reason for disabling extension. The extension in question was unpublished by the developer.">
         This extension was unpublished by its developer, and might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including your personal info.
@@ -858,13 +858,13 @@ Taktak Taktak is unable to recover your settings.
       <message name="IDS_EXTENSIONS_SAFETY_CHECK_PRIMARY_LABEL" desc="Alerts the user that the extension should be reviewed.">
         Taktak recommends you review this extension
       </message>
-      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE" desc="Alerts the user that the extension is not from the Taktak web store.">
+      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE" desc="Alerts the user that the extension is not from the Chrome Web Store.">
         Taktak can't verify where this extension comes from, and it might be unsafe. Remove it from Taktak so it can no longer see and change your data on sites you visit, including personal info.
       </message>
-      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_ON" desc="Alerts the user that the extension is not from the Taktak web store.">
+      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_ON" desc="Alerts the user that the extension is not from the Chrome Web Store.">
         On • Taktak can't verify where this extension comes from
       </message>
-      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_OFF" desc="Alerts the user that the extension is not from the Taktak web store.">
+      <message name="IDS_EXTENSIONS_SAFETY_CHECK_OFFSTORE_OFF" desc="Alerts the user that the extension is not from the Chrome Web Store.">
         Off • Taktak can't verify where this extension comes from
       </message>
       <message name="IDS_EXTENSIONS_SAFETY_CHECK_NO_PRIVACY_PRACTICES" desc="Alerts the user that the extension has not disclosed its privacy practices.">
@@ -881,7 +881,7 @@ Taktak Taktak is unable to recover your settings.
         Allow extension to show access requests in the Taktak toolbar
       </message>
       <message name="IDS_EXTENSIONS_INCOGNITO_WARNING" desc="Warns the user that Taktak cannot prevent extensions from recording history in Incognito mode. Displayed in extensions management UI after an extension is selected to be run in Incognito mode.">
-        Warning: Taktak Taktak cannot prevent extensions from recording your browsing history. To disable this extension in Incognito mode, unselect this option.
+        Warning: Taktak cannot prevent extensions from recording your browsing history. To disable this extension in Incognito mode, unselect this option.
       </message>
       <message name="IDS_EXTENSIONS_UNINSTALL" desc="The label for a control that triggers an extension uninstall.">
         Remove from Taktak
@@ -895,24 +895,24 @@ Taktak Taktak is unable to recover your settings.
 
       <if expr="enable_extensions">
         <message name="IDS_EXTENSIONS_MULTIPLE_UNSUPPORTED_DISABLED_BODY" desc="Body of the dialog shown when multiple unsupported extensions have been disabled.">
-          To make Taktak safer, we disabled some extensions that aren't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Taktak Web Store</ex></ph> and may have been added without your knowledge.
+          To make Taktak safer, we disabled some extensions that aren't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Chrome Web Store</ex></ph> and may have been added without your knowledge.
         </message>
         <message name="IDS_EXTENSIONS_SINGLE_UNSUPPORTED_DISABLED_BODY" desc="Body of the dialog shown when a single unsupported extension has been disabled.">
-          To make Taktak safer, we disabled the following extension that isn't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Taktak Web Store</ex></ph> and may have been added without your knowledge.
+          To make Taktak safer, we disabled the following extension that isn't listed in the <ph name="IDS_EXTENSION_WEB_STORE_TITLE">$1<ex>Chrome Web Store</ex></ph> and may have been added without your knowledge.
         </message>
       </if>
 
       <!-- App menu -->
       <message name="IDS_APPMENU_TOOLTIP" desc="The tooltip to show for the browser menu">
-        Customize and control Taktak Taktak
+        Customize and control Taktak
       </message>
 
       <message name="IDS_APPMENU_TOOLTIP_UPDATE_AVAILABLE" desc="The tooltip to show for the browser menu when an update is available">
-        Customize and control Taktak Taktak. Update is available.
+        Customize and control Taktak. Update is available.
       </message>
 
       <message name="IDS_APPMENU_TOOLTIP_ALERT" desc="The tooltip to show for the browser menu when a non-update alert is displayed">
-        Customize and control Taktak Taktak. Something needs your attention - click for details.
+        Customize and control Taktak. Something needs your attention - click for details.
       </message>
 
       <message name="IDS_OPEN_IN_CHROME" desc="The text label of the Open in Taktak menu item for the Hosted App app menu">
@@ -921,7 +921,7 @@ Taktak Taktak is unable to recover your settings.
 
       <if expr="use_titlecase and not is_chromeos">
         <message name="IDS_ABOUT" desc="In Title Case: The text label of the About Taktak menu item">
-          About &amp;Taktak Taktak
+          About &amp;Taktak
         </message>
         <message name="IDS_RELAUNCH_TO_UPDATE" desc="In Title Case: The text label of the relaunch to update Taktak menu item">
           Relaunch to Update &amp;Taktak
@@ -929,7 +929,7 @@ Taktak Taktak is unable to recover your settings.
       </if>
       <if expr="not use_titlecase and not is_chromeos">
         <message name="IDS_ABOUT" desc="The text label of the About Taktak menu item">
-          About &amp;Taktak Taktak
+          About &amp;Taktak
         </message>
         <message name="IDS_RELAUNCH_TO_UPDATE" desc="The text label of the relaunch to update Taktak menu item">
           Relaunch to update &amp;Taktak
@@ -937,7 +937,7 @@ Taktak Taktak is unable to recover your settings.
       </if>
       <if expr="is_chromeos">
         <message name="IDS_ABOUT" desc="The text label of the About Taktak menu item">
-          About &amp;Taktak Taktak
+          About &amp;Taktak
         </message>
         <if expr="reven">
           <message name="IDS_RELAUNCH_TO_UPDATE" desc="The text label of the relaunch to update ChromeOS Flex menu item">
@@ -952,13 +952,13 @@ Taktak Taktak is unable to recover your settings.
       </if>
 
       <if expr="is_macosx">
-        <message name="IDS_APP_MENU_PRODUCT_NAME" desc="The application's short name, used for the Mac's application menu, activity monitor, etc. This should be less than 16 characters. Example: Taktak, not Taktak Taktak." translateable="false">
+        <message name="IDS_APP_MENU_PRODUCT_NAME" desc="The application's short name, used for the Mac's application menu, activity monitor, etc. This should be less than 16 characters. Example: Taktak, not Taktak." translateable="false">
           Taktak
         </message>
-        <message name="IDS_HELPER_NAME" desc="The helper application's name.  Should contain the Taktak application name (IDS_PRODUCT_NAME). Example: Taktak Taktak Helper.">
-          Taktak Taktak Helper
+        <message name="IDS_HELPER_NAME" desc="The helper application's name.  Should contain the Taktak application name (IDS_PRODUCT_NAME). Example: Taktak Helper.">
+          Taktak Helper
         </message>
-        <message name="IDS_SHORT_HELPER_NAME" desc="The helper application's short name, used for the Mac's application menu, activity monitor, etc. Example: Taktak Helper, not Taktak Taktak Helper.">
+        <message name="IDS_SHORT_HELPER_NAME" desc="The helper application's short name, used for the Mac's application menu, activity monitor, etc. Example: Taktak Helper, not Taktak Helper.">
           Taktak Helper
         </message>
       </if>
@@ -1007,10 +1007,10 @@ Taktak Taktak is unable to recover your settings.
           Link your Taktak data to this account?
         </message>
         <message name="IDS_ENTERPRISE_SIGNIN_EXPLANATION_WITHOUT_PROFILE_CREATION" desc="The warning message displayed to an enterprise user about to link their profile to their Taktak account. This message is followed by a 'Learn more' link.">
-          You are signing in with a managed account and giving its administrator control over your Taktak Taktak profile. Your Taktak data, such as your apps, bookmarks, history, passwords, and other settings will become permanently tied to <ph name="USER_NAME">$1<ex>pat@example.com</ex></ph>. You will be able to delete this data via the Taktak Accounts Dashboard, but you will not be able to associate this data with another account. <ph name="LEARN_MORE">$2<ex>Learn more</ex></ph>
+          You are signing in with a managed account and giving its administrator control over your Taktak profile. Your Taktak data, such as your apps, bookmarks, history, passwords, and other settings will become permanently tied to <ph name="USER_NAME">$1<ex>pat@example.com</ex></ph>. You will be able to delete this data via the Taktak Accounts Dashboard, but you will not be able to associate this data with another account. <ph name="LEARN_MORE">$2<ex>Learn more</ex></ph>
         </message>
         <message name="IDS_ENTERPRISE_SIGNIN_EXPLANATION_WITH_PROFILE_CREATION" desc="The warning message displayed to an enterprise user about to link their profile to their Taktak account. Additionally notifies the user that they can create a new profile instead. This message is followed by a 'Learn more' link.">
-          You are signing in with a managed account and giving its administrator control over your Taktak Taktak profile. Your Taktak data, such as your apps, bookmarks, history, passwords, and other settings will become permanently tied to <ph name="USER_NAME">$1<ex>pat@example.com</ex></ph>. You will be able to delete this data via the Taktak Accounts Dashboard, but you will not be able to associate this data with another account. You can optionally create a new profile to keep your existing Taktak data separate. <ph name="LEARN_MORE">$2<ex>Learn more</ex></ph>
+          You are signing in with a managed account and giving its administrator control over your Taktak profile. Your Taktak data, such as your apps, bookmarks, history, passwords, and other settings will become permanently tied to <ph name="USER_NAME">$1<ex>pat@example.com</ex></ph>. You will be able to delete this data via the Taktak Accounts Dashboard, but you will not be able to associate this data with another account. You can optionally create a new profile to keep your existing Taktak data separate. <ph name="LEARN_MORE">$2<ex>Learn more</ex></ph>
         </message>
         <message name="IDS_ENTERPRISE_VALUE_PROPOSITION_PROFILE_REQUIRED_BY_ORG_KNOWN_DOMAIN_TITLE" desc="Title of the screen in the profile creation flow where the user is asked whether they want to confirm signing in to Taktak with their enterprise account when it is mandatory to sign in to Taktak with the enterprise account.">
           Your organization, <ph name="MANAGER">$1<ex>manager.com</ex></ph>, requires you to sign into Taktak
@@ -1059,10 +1059,10 @@ Taktak Taktak is unable to recover your settings.
       <!-- about:browser-switch strings -->
       <if expr="toolkit_views and not is_chromeos">
         <message name="IDS_ABOUT_BROWSER_SWITCH_DESCRIPTION_UNKNOWN_BROWSER" desc="Description shown while waiting for an alternative browser to open, when the browser name is not auto-detected">
-          Your system administrator has configured Taktak Taktak to open an alternative browser to access <ph name="TARGET_URL_HOSTNAME">$1<ex>example.com</ex></ph>.
+          Your system administrator has configured Taktak to open an alternative browser to access <ph name="TARGET_URL_HOSTNAME">$1<ex>example.com</ex></ph>.
         </message>
         <message name="IDS_ABOUT_BROWSER_SWITCH_DESCRIPTION_KNOWN_BROWSER" desc="Description shown while waiting for an alternative browser to open, when the browser name is auto-detected">
-          Your system administrator has configured Taktak Taktak to open <ph name="ALTERNATIVE_BROWSER_NAME">$2<ex>Internet Explorer</ex></ph> to access <ph name="TARGET_URL_HOSTNAME">$1<ex>example.com</ex></ph>.
+          Your system administrator has configured Taktak to open <ph name="ALTERNATIVE_BROWSER_NAME">$2<ex>Internet Explorer</ex></ph> to access <ph name="TARGET_URL_HOSTNAME">$1<ex>example.com</ex></ph>.
         </message>
       </if>
 
@@ -1307,13 +1307,13 @@ Taktak Taktak is unable to recover your settings.
 
       <!-- MediaStream capture status tray icon -->
       <message name="IDS_MEDIA_STREAM_STATUS_TRAY_TEXT_AUDIO_AND_VIDEO" desc="Tool tip for the capture status tray icon when microphone and camera are being used">
-        Taktak Taktak is using your camera and microphone.
+        Taktak is using your camera and microphone.
       </message>
       <message name="IDS_MEDIA_STREAM_STATUS_TRAY_TEXT_AUDIO_ONLY" desc="Tool tip for the capture status tray icon when microphone is being used">
-        Taktak Taktak is using your microphone.
+        Taktak is using your microphone.
       </message>
       <message name="IDS_MEDIA_STREAM_STATUS_TRAY_TEXT_VIDEO_ONLY" desc="Tool tip for the capture status tray icon when camera is being used">
-        Taktak Taktak is using your camera.
+        Taktak is using your camera.
       </message>
 
       <if expr="not is_android">
@@ -1337,14 +1337,14 @@ Taktak Taktak is unable to recover your settings.
       <!-- ProcessSingleton -->
       <if expr="is_posix">
         <message name="IDS_PROFILE_IN_USE_POSIX" desc="Message shown when the browser cannot start because the profile is in use on a different host.">
-          The profile appears to be in use by another Taktak Taktak process (<ph name="PROCESS_ID">$1<ex>12345</ex></ph>) on another computer (<ph name="HOST_NAME">$2<ex>example.com</ex></ph>).  Taktak has locked the profile so that it doesn't get corrupted.  If you are sure no other processes are using this profile, you can unlock the profile and relaunch Taktak.
+          The profile appears to be in use by another Taktak process (<ph name="PROCESS_ID">$1<ex>12345</ex></ph>) on another computer (<ph name="HOST_NAME">$2<ex>example.com</ex></ph>).  Taktak has locked the profile so that it doesn't get corrupted.  If you are sure no other processes are using this profile, you can unlock the profile and relaunch Taktak.
         </message>
       </if>
 
       <!-- Mac First-run dialog messages -->
       <if expr="is_macosx">
         <message name="IDS_FIRSTRUN_DLG_MAC_SET_DEFAULT_BROWSER_LABEL" desc="Label for checkbox that sets the default browser">
-          Set Taktak Taktak as your default browser
+          Set Taktak as your default browser
         </message>
       </if>
 
@@ -1416,34 +1416,34 @@ Taktak Taktak is unable to recover your settings.
 
       <!-- Webstore strings -->
       <message name="IDS_WEBSTORE_APP_DESCRIPTION" desc="Description for the WebStore app.">
-        Discover great apps, games, extensions and themes for Taktak Taktak.
+        Discover great apps, games, extensions and themes for Taktak.
       </message>
 
       <!-- Windows firewall rule strings. -->
       <if expr="is_win">
         <message name="IDS_INBOUND_MDNS_RULE_NAME" desc="The name of the firewall rule allowing inbound mDNS traffic.">
-          Taktak Taktak (mDNS-In)
+          Taktak (mDNS-In)
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_NAME_BETA" desc="The name of the firewall rule allowing inbound mDNS traffic for beta.">
-          Taktak Taktak Beta (mDNS-In)
+          Taktak Beta (mDNS-In)
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_NAME_CANARY" desc="The name of the firewall rule allowing inbound mDNS traffic for canary.">
-          Taktak Taktak Canary (mDNS-In)
+          Taktak Canary (mDNS-In)
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_NAME_DEV" desc="The name of the firewall rule allowing inbound mDNS traffic for dev.">
-          Taktak Taktak Dev (mDNS-In)
+          Taktak Dev (mDNS-In)
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_DESCRIPTION" desc="The description of the firewall rule allowing inbound mDNS traffic.">
-          Inbound rule for Taktak Taktak to allow mDNS traffic.
+          Inbound rule for Taktak to allow mDNS traffic.
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_DESCRIPTION_BETA" desc="The description of the firewall rule allowing inbound mDNS traffic beta.">
-          Inbound rule for Taktak Taktak Beta to allow mDNS traffic.
+          Inbound rule for Taktak Beta to allow mDNS traffic.
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_DESCRIPTION_CANARY" desc="The description of the firewall rule allowing inbound mDNS traffic canary.">
-          Inbound rule for Taktak Taktak Canary to allow mDNS traffic.
+          Inbound rule for Taktak Canary to allow mDNS traffic.
         </message>
         <message name="IDS_INBOUND_MDNS_RULE_DESCRIPTION_DEV" desc="The description of the firewall rule allowing inbound mDNS traffic dev.">
-          Inbound rule for Taktak Taktak Dev to allow mDNS traffic.
+          Inbound rule for Taktak Dev to allow mDNS traffic.
         </message>
       </if>
 
@@ -1591,13 +1591,13 @@ Taktak Taktak is unable to recover your settings.
 
       <!-- Critical Notification bubble -->
       <message name="IDS_CRITICAL_NOTIFICATION_TITLE" desc="The title for a bubble that appears when there is a critical update and Taktak must restart to install it. It counts down a timer and then Taktak automatically restarts.">
-        Taktak Taktak will restart in <ph name="REMAINING_TIME">$1<ex>1 minute, 7 seconds</ex></ph>
+        Taktak will restart in <ph name="REMAINING_TIME">$1<ex>1 minute, 7 seconds</ex></ph>
       </message>
       <message name="IDS_CRITICAL_NOTIFICATION_TITLE_ALTERNATE" desc="The title for a bubble that appears when there is a critical update and Taktak must restart to install it. The title was previously countng down to an automatic restart and now it has finished. Will only be seen if a web page stops the shutdown process.">
         Please restart Taktak now
       </message>
       <message name="IDS_CRITICAL_NOTIFICATION_TEXT" desc="Explanation text for the bubble that appears when there is a critical update and Taktak must restart to install it.">
-        A special security update for Taktak Taktak was just applied. Restart now and we'll restore your tabs.
+        A special security update for Taktak was just applied. Restart now and we'll restore your tabs.
       </message>
 
       <!-- Desktop Capture -->
@@ -2296,12 +2296,12 @@ Taktak Taktak is unable to recover your settings.
 
       <!-- ChromeLabs bubble -->
       <message name="IDS_CHROMELABS_RELAUNCH_FOOTER_MESSAGE" desc="Text that shows in the footer of the Taktak Labs bubble when relaunch is needed for changes to take effect.">
-        Your changes will take effect the next time you relaunch Taktak Taktak.
+        Your changes will take effect the next time you relaunch Taktak.
       </message>
 
       <!-- Device Chooser Prompt -->
       <message name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH" desc="Text shown in the Web Serial Chooser when browser does not have Bluetooth permission. The '&#10;' is a newline character to force the desired line wrapping.">
-        Taktak Taktak needs Bluetooth access to explore &#10; Bluetooth devices. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK">$1<ex>Open Preferences</ex></ph>
+        Taktak needs Bluetooth access to explore &#10; Bluetooth devices. <ph name="IDS_SERIAL_DEVICE_CHOOSER_AUTHORIZE_BLUETOOTH_LINK">$1<ex>Open Preferences</ex></ph>
       </message>
 
       <!-- Tailored Security -->
@@ -2662,7 +2662,7 @@ Taktak Taktak is unable to recover your settings.
       <!-- Glic Strings -->
       <if expr="enable_glic">
         <message name="IDS_GLIC_PROMO_TITLE" desc="Gemini promo title." translateable="false">
-          Try Gemini in Taktak Taktak
+          Try Gemini in Taktak
         </message>
         <message name="IDS_GLIC_TAB_STRIP_BUTTON_TOOLTIP" translateable="false" desc="This is the tooltip shown when hovering over the Gemini entry button in the tab strip while the Gemini window is closed.">
           Open Gemini in Taktak

@@ -221,14 +221,14 @@
 <translation id="3889543394854987837">Avaa Taktak klikkaamalla nimeäsi ja aloita selaaminen.</translation>
 <translation id="3892148308691398805">Kopioi teksti</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> on jo kirjautunut tähän Taktak-profiiliin. Taktak voi luoda sinulle oman profiilin, jotta selaamisesi pysyy erillään.</translation>
-<translation id="3909353120217047026">Tämä laajennus rikkoo Taktak Web Storen käytäntöä ja saattaa olla vaarallinen. Poista se Chromiumista, jotta se ei enää voi nähdä tai muuttaa dataasi avaamillasi sivustoilla, mukaan lukien henkilökohtaisia tietojasi.</translation>
+<translation id="3909353120217047026">Tämä laajennus rikkoo Chrome Web Storen käytäntöä ja saattaa olla vaarallinen. Poista se Chromiumista, jotta se ei enää voi nähdä tai muuttaa dataasi avaamillasi sivustoilla, mukaan lukien henkilökohtaisia tietojasi.</translation>
 <translation id="3941890832296813527">Asennusvirhe: Asennusohjelman tiedostonimi on virheellinen, tai sitä ei tueta.</translation>
 <translation id="3945058413678539331">Taktak yrittää kopioida salasanat. Salli tämä kirjoittamalla Windows-salasanasi.</translation>
 <translation id="3954172517175569325">Taktak-tilille tallennetut salasanat, maksutavat ja osoitteet poistetaan tältä laitteelta. Jos haluat käyttää niitä uudelleen Chromiumissa, kirjaudu takaisin sisään.</translation>
 <translation id="395904275706073188">Suojattuja sivuja ei voi lukea. Kokeile toista sivua.</translation>
 <translation id="3962647064319009959">Lue, miten Taktak pitää sinut turvassa</translation>
 <translation id="3971865010372729242">Kun kirjoitat osoitepalkkiin tai hakukenttään, Taktak lähettää kirjoittamasi tekstin organisaatiosi haku-, tekoäly- ja agenttityökaluille, jotta saat ehdotuksia.</translation>
-<translation id="3975724895399328945">Tietoa &amp;Taktak Taktak for Testingistä</translation>
+<translation id="3975724895399328945">Tietoa &amp;Taktak for Testingistä</translation>
 <translation id="3997429360543082038">Tietoa Taktak-käyttöjärjestelmästä</translation>
 <translation id="4019629340646866719">Toinen <ph name="BEGIN_LINK_CROS_OSS" />avoimen lähdekoodin ohjelmisto<ph name="END_LINK_CROS_OSS" /> tukee Taktak-käyttöjärjestelmää, kuten myös <ph name="BEGIN_LINK_LINUX_OSS" />Linux-kehitysympäristöä<ph name="END_LINK_LINUX_OSS" />.</translation>
 <translation id="4022972681110646219">Käännä näyttö</translation>
@@ -548,7 +548,7 @@ Taktak ei voi palauttaa asetuksiasi.</translation>
 <translation id="8077498902115777962">Poista käytöstä Chromiumin taustalla toimiminen sovelluksissa</translation>
 <translation id="80790299200510644">Kuvahaku</translation>
 <translation id="8086881907087796310">Asennus epäonnistui, koska tietokoneesi ei täytä laitteiston vähimmäisvaatimuksia.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak tarvitsee sijaintiluvan tällä sivustolla</translation>
 <translation id="8118331347066725040">Lähetä palautetta Lensillä hakemisesta</translation>
 <translation id="8133124826068723441">Taktak-käyttöjärjestelmä ei voi synkronoida dataa, koska synkronointi ei ole käytettävissä verkkotunnuksessasi.</translation>
@@ -594,7 +594,7 @@ Taktak ei voi palauttaa asetuksiasi.</translation>
 <translation id="8601359445272098721">Uutta! Voit kääntää näytöllä näkyvän tekstin ja kuvat valitsemalla "Käännä näyttö" ‑painikkeen</translation>
 <translation id="8619360774459241877">Käynnistetään Chromiumia…</translation>
 <translation id="8621669128220841554">Asennus epäonnistui määrittelemättömän virheen vuoksi. Lataa Taktak uudelleen.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testingistä ei voi tehdä oletusselainta.</translation>
+<translation id="8648201657708811153">Taktak for Testingistä ei voi tehdä oletusselainta.</translation>
 <translation id="8697124171261953979">Määrittää myös Chromiumin ja omnibox-hakujen aloitussivun.</translation>
 <translation id="8704119203788522458">Tämä on oma Chromiumisi</translation>
 <translation id="8712637175834984815">Ymmärretty</translation>

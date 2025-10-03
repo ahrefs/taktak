@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Settings-specific Taktak Taktak strings (included from google_chrome_strings.grd). -->
+<!-- Settings-specific Taktak strings (included from google_chrome_strings.grd). -->
 <grit-part>
   <!-- Shared across multiple pages -->
   <if expr="not is_chromeos">
@@ -105,16 +105,16 @@ Taktak understands forms better and can autofill them faster for you. This setti
   <!-- Default Browser Page -->
   <if expr="not is_chromeos">
     <message name="IDS_SETTINGS_DEFAULT_BROWSER_DEFAULT" desc="The text displayed when Taktak is not the default browser">
-      Taktak Taktak is your default browser
+      Taktak is your default browser
     </message>
     <message name="IDS_SETTINGS_DEFAULT_BROWSER_MAKE_DEFAULT" desc="Default browser checkbox label">
-      Make Taktak Taktak the default browser
+      Make Taktak the default browser
     </message>
     <message name="IDS_SETTINGS_DEFAULT_BROWSER_ERROR" desc="The text displayed when Taktak cannot determine or set the default browser">
-      Taktak Taktak cannot determine or set the default browser
+      Taktak cannot determine or set the default browser
     </message>
     <message name="IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY" desc="The text displayed when Taktak is installed in side-by-side mode, which does not support setting as the default browser.">
-      This is a secondary installation of Taktak Taktak, and cannot be made your default browser.
+      This is a secondary installation of Taktak, and cannot be made your default browser.
     </message>
   </if>
 
@@ -131,7 +131,7 @@ Taktak understands forms better and can autofill them faster for you. This setti
     Taktak preloads even more pages that you're likely to visit, so that they load more quickly when you visit them
   </message>
   <message name="IDS_SETTINGS_PRELOAD_PAGES_EXTENDED_PRELOADING_THINGS_TO_CONSIDER_BULLET_TWO" desc="Bullet point in the extended preloading and things to consider column. Informs the user about what the extended preloading setting does.">
-    When a site asks to privately preload links on their page, Taktak uses Taktak servers. This hides your identity from the preloaded site, but Taktak learns what sites get preloaded.
+    When a site asks to privately preload links on their page, Taktak uses Google servers. This hides your identity from the preloaded site, but Taktak learns what sites get preloaded.
   </message>
   <message name="IDS_SETTINGS_PRELOAD_PAGES_THINGS_TO_CONSIDER_BULLET_ONE" desc="Bullet point in the things to consider column. Informs the user about what the preloading setting does.">
     If you allow cookies, Taktak may use them when preloading
@@ -327,7 +327,7 @@ Taktak understands forms better and can autofill them faster for you. This setti
 
   <!-- Sync Page -->
   <message name="IDS_SETTINGS_SYNC_DATA_ENCRYPTED_TEXT" desc="Text alerting the user that synced data is encrypted.">
-    For added security, Taktak Taktak will encrypt your data
+    For added security, Taktak will encrypt your data
   </message>
   <message name="IDS_SETTINGS_SYNC_DISCONNECT_TITLE" desc="The title of the dialog to stop syncing and sign out.">
     Sign out of Taktak?
@@ -377,13 +377,13 @@ Taktak understands forms better and can autofill them faster for you. This setti
 
   <!-- Performance Page -->
   <message name="IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION" desc="Description for the memory saver mode setting">
-    Taktak frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Taktak fast. Your inactive tabs automatically become active again when you go back to them. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" id="learn-more" aria-description="$2"&gt;</ph>Learn more about Memory Saver<ph name="END_LINK">&lt;/a&gt;</ph>
+    Taktak frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Taktak fast. Your inactive tabs automatically become active again when you go back to them.
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION" desc="Description for the energy saver mode setting">
-    Taktak conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" id="learn-more" aria-description="$2"&gt;</ph>Learn more about Energy Saver<ph name="END_LINK">&lt;/a&gt;</ph>
+    Taktak conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.
   </message>
   <message name="IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY" desc="Summary for the preload pages setting">
-    Taktak preloads pages which makes browsing and searching faster. <ph name="BEGIN_LINK">&lt;a href="$1" target="_blank" id="learn-more" aria-description="$2"&gt;</ph>Learn more about preload pages<ph name="END_LINK">&lt;/a&gt;</ph>
+    Taktak preloads pages which makes browsing and searching faster.
   </message>
 
   <!-- Languages Page -->
@@ -399,7 +399,7 @@ Taktak understands forms better and can autofill them faster for you. This setti
   <!-- System Page -->
   <if expr="not is_chromeos">
     <message name="IDS_SETTINGS_SYSTEM_BACKGROUND_APPS_LABEL" desc="Label for the checkbox to allow apps to run in the background, when Taktak is closed.">
-      Continue running background apps when Taktak Taktak is closed
+      Continue running background apps when Taktak is closed
     </message>
   </if>
 

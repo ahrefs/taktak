@@ -2035,7 +2035,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="2391805183137601570">Otvori Steam</translation>
 <translation id="2392369802118427583">Aktiviraj</translation>
 <translation id="2393136602862631930">Podesite aplikaciju <ph name="APP_NAME" /> na Chromebook-u</translation>
-<translation id="2393313392064891208">Sadržaj Taktak Taktak OS Flex uslova</translation>
+<translation id="2393313392064891208">Sadržaj Taktak OS Flex uslova</translation>
 <translation id="2395616325548404795"><ph name="DEVICE_TYPE" /> je registrovan za upravljanje preduzećem, ali nije poslao informacije o elementu i lokaciji. Unesite te informacije ručno na Admin console-u za ovaj uređaj.</translation>
 <translation id="2396783860772170191">Unesite 4-cifreni PIN (0000–9999)</translation>
 <translation id="2398546389094871088">Ako obavite Powerwash na uređaju, nećete ukloniti eSIM profile. Idite u <ph name="LINK_BEGIN" />podešavanja za mobilne uređaja<ph name="LINK_END" /> da biste ručno uklonili te profile.</translation>
@@ -2062,7 +2062,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="2412015533711271895">Roditelj ili staratelj mora da kaže da je u redu da koristiš ovaj dodatak</translation>
 <translation id="2412593942846481727">Dostupno je ažuriranje</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Dodatno prilagodite pregledač pomoću dodataka iz <ph name="BEGIN_LINK1" />Taktak Web Store-a<ph name="END_LINK1" /></translation>
+<translation id="2413009156320833859">Dodatno prilagodite pregledač pomoću dodataka iz <ph name="BEGIN_LINK1" />Chrome Web Store-a<ph name="END_LINK1" /></translation>
 <translation id="2414159296888870200">Nastavite sa pregledanjem za <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Tamna</translation>
 <translation id="2415117815770324983">Odjaviće vas sa većine sajtova. Ostaćete prijavljeni na Taktak nalog.</translation>
@@ -2097,7 +2097,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="2434449159125086437">Podešavanje štampača nije uspelo. Proverite konfiguraciju, pa probajte ponovo.</translation>
 <translation id="2434758125294431199">Izaberite ko može da deli sa vama</translation>
 <translation id="2434915728183570229">Sada možete da pregledate aplikacije na telefonu</translation>
-<translation id="2435137177546457207">Dodatni uslovi za Taktak Taktak i Taktak OS Flex</translation>
+<translation id="2435137177546457207">Dodatni uslovi za Taktak i Taktak OS Flex</translation>
 <translation id="2435248616906486374">Veza sa mrežom je prekinuta</translation>
 <translation id="2435457462613246316">Prikaži lozinku</translation>
 <translation id="2436385001956947090">Kopiraj link</translation>
@@ -2434,7 +2434,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="266079277508604648">Povezivanje sa štampačem nije uspelo. Proverite da li je štampač uključen i povezan sa Chromebook-om pomoću WiFi-a ili USB-a.</translation>
 <translation id="2661315027005813059">Cela keširana stranica: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Pregledajte brže i koristite manje podataka pomoću Lite režima. Kliknite da biste saznali više.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Dodaje se eSIM profil. Ovo može da potraje par minuta.</translation>
 <translation id="2663302507110284145">Jezik</translation>
 <translation id="2665394472441560184">Dodajte novu reč</translation>
@@ -4065,7 +4065,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="3798670284305777884">Zvučnik (interni)</translation>
 <translation id="3799128412641261490">Podešavanja pristupa pomoću prekidača</translation>
 <translation id="3800764353337460026">Stil simbola</translation>
-<translation id="3800828618615365228">Dodatni uslovi za Taktak Taktak i Taktak OS</translation>
+<translation id="3800828618615365228">Dodatni uslovi za Taktak i Taktak OS</translation>
 <translation id="3800898876950197674">Da biste dozvolili ovaj dodatak, unesite lozinku.</translation>
 <translation id="3801449494961771207">Sistemski glas za pretvaranje teksta u govor</translation>
 <translation id="3802486193901166966">Ovaj dodatak ne zahteva nikakve specijalne dozvole i nema nikakav dodatan pristup sajtu</translation>
@@ -4088,7 +4088,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="3810973564298564668">Upravljaj</translation>
 <translation id="381202950560906753">Dodaj drugi</translation>
 <translation id="3812525830114410218">Neispravan sertifikat</translation>
-<translation id="3813296892522778813">Idite na <ph name="BEGIN_LINK_CHROMIUM" />stranicu pomoći za Taktak Taktak<ph name="END_LINK_CHROMIUM" /> ako ne možete da pronađete ono što tražite</translation>
+<translation id="3813296892522778813">Idite na <ph name="BEGIN_LINK_CHROMIUM" />stranicu pomoći za Taktak<ph name="END_LINK_CHROMIUM" /> ako ne možete da pronađete ono što tražite</translation>
 <translation id="3813358687923336574">Jezik koji se koristi za prevođenje stranica i brze odgovore</translation>
 <translation id="3813458570141926987">Lista tema koje je Taktak procenio na osnovu nedavne istorije pregledanja</translation>
 <translation id="3814529970604306954">Školski nalog</translation>
@@ -4565,7 +4565,7 @@ Možete da upravljate podešavanjima ovog naloga ako instalirate aplikaciju Fami
 <translation id="4133076602192971179">Otvorite aplikaciju da biste promenili lozinku</translation>
 <translation id="4134838386867070505">1. korak od 4: Opišite problem</translation>
 <translation id="413534985210133938">Folder <ph name="LOCAL_FOLDER" /> je sačuvan samo na ovom uređaju. Ako premestite ovaj obeleživač u folder <ph name="LOCAL_FOLDER" />, više ga nećete dobijati na drugim uređajima.</translation>
-<translation id="4135746311382563554">Dodatni uslovi korišćenja usluge za Taktak Taktak i Taktak OS</translation>
+<translation id="4135746311382563554">Dodatni uslovi korišćenja usluge za Taktak i Taktak OS</translation>
 <translation id="4136203100490971508">Noćno svetlo se automatski isključuje kada sunce izađe</translation>
 <translation id="41365691917097717">Ako nastavite, omogućićete ADB otklanjanje grešaka za pravljenje i testiranje Android aplikacija. Imajte u vidu da ova radnja omogućava instaliranje Android aplikacija koje Taktak nije verifikovao i zahteva resetovanje na fabrička podešavanja da bi se onemogućila.</translation>
 <translation id="4137923333452716643">Istaknite tekst za koji želite da se otvara u režimu čitanja</translation>
@@ -7584,7 +7584,7 @@ Vodite računa da ne otkrijete nikakve osetljive informacije.</translation>
 <translation id="6314819609899340042">Omogućili ste funkcije za otklanjanje grešaka na ovom <ph name="IDS_SHORT_PRODUCT_NAME" /> uređaju.</translation>
 <translation id="6315170314923504164">Glas</translation>
 <translation id="6315493146179903667">Premesti sve napred</translation>
-<translation id="6316432269411143858">Sadržaj uslova za Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Sadržaj uslova za Taktak OS</translation>
 <translation id="6317369057005134371">Čeka se prozor aplikacije...</translation>
 <translation id="6318125393809743217">Uvrsti datoteku policies.json uz konfiguracije smernica.</translation>
 <translation id="6318944945640833942">Štampač nije otkriven. Ponovo unesite adresu štampača.</translation>
@@ -7831,7 +7831,7 @@ Vodite računa da ne otkrijete nikakve osetljive informacije.</translation>
 <translation id="6511607461419653612">Restartujte Chromebook i probajte ponovo</translation>
 <translation id="6511827214781912955">Razmislite o tome da izbrišete <ph name="FILENAME" /> da drugi koji koriste ovaj uređaj ne bi mogli da vide vaše lozinke</translation>
 <translation id="6512759338201777379">Generisana je <ph name="INDEX" />. slika od <ph name="SUBJECT" />, sa raspoloženjem <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak će koristiti mobilne podatke ako niste povezani sa drugom mrežom.</translation>
+<translation id="6513247462497316522">Taktak će koristiti mobilne podatke ako niste povezani sa drugom mrežom.</translation>
 <translation id="6514010653036109809">Dostupan uređaj:</translation>
 <translation id="6516990372629061585">Pregledajte uvezene sertifikate iz Linux-a</translation>
 <translation id="6517382055541687102">Izabrani uređaj je promenjen u <ph name="DEVICE_NAME" /></translation>
@@ -8785,7 +8785,7 @@ Imate još # ugroženih lozinki. Taktak menadžer lozinki preporučuje da odmah 
 <translation id="7180611975245234373">Osveži</translation>
 <translation id="7180865173735832675">Prilagodi</translation>
 <translation id="7181117767881540376">Sakrij traku sa obeleživačima</translation>
-<translation id="7181329571386134105">Da biste dozvolili da <ph name="CHILD_NAME" /> instalira buduće dodatke bez vašeg odobrenja, otvorite aplikaciju Family Link na uređaju i ažurirajte podešavanja Taktak Taktak-a koja <ph name="CHILD_NAME" /> koristi.</translation>
+<translation id="7181329571386134105">Da biste dozvolili da <ph name="CHILD_NAME" /> instalira buduće dodatke bez vašeg odobrenja, otvorite aplikaciju Family Link na uređaju i ažurirajte podešavanja Taktak-a koja <ph name="CHILD_NAME" /> koristi.</translation>
 <translation id="7181840534454431748">Pridružite se grupi kartica sa korisnikom <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Pridružite se grupi kartica sa korisnikom <ph name="OWNER_FIRST_NAME" />}=1{Pridružite se grupi kartica sa korisnikom <ph name="OWNER_FIRST_NAME" /> i još # osobom}one{Pridružite se grupi kartica sa korisnikom <ph name="OWNER_FIRST_NAME" /> i još # osobom}few{Pridružite se grupi kartica sa korisnikom <ph name="OWNER_FIRST_NAME" /> i još # osobe}other{Pridružite se grupi kartica sa korisnikom <ph name="OWNER_FIRST_NAME" /> i još # osoba}}</translation>
 <translation id="7181976109296206547">Pregledajte ažuriranja logotipa, naziva i URL-a</translation>

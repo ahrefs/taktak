@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">આ પૉલિસી હેતુ મુજબ કાર્ય કરી રહી છે પરંતુ સમાન મૂલ્ય બીજે ક્યાંક સેટ કરવામાં આવ્યું છે અને આ પૉલિસી તેની જગ્યા લે છે.</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> ઉમેરો</translation>
 <translation id="1569487616857761740">સમાપ્તિ તારીખ દાખલ કરો</translation>
-<translation id="1569694109004336106">Taktak Taktak પાસવર્ડ ભરવા માટે Windows Hello ચાલુ કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
+<translation id="1569694109004336106">Taktak પાસવર્ડ ભરવા માટે Windows Hello ચાલુ કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> ઇંચ</translation>
 <translation id="1574714699824202614">ચુકવણી પદ્ધતિની ચકાસણી કરી રહ્યાં છીએ</translation>
 <translation id="1576277203042721907">ખરીદીની જાણકારી</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">વધુ માહિતી માટે પ્રદાતાનો સંપર્ક કરો</translation>
 <translation id="2091887806945687916">ધ્વનિ</translation>
 <translation id="2093184051799735948"><ph name="ENGINE_NAME" /> શોધો અથવા URL ટાઇપ કરો</translation>
-<translation id="2093982008204312032">Taktak Taktak પાસવર્ડ ભરવા માટે Windows Hello બંધ કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
+<translation id="2093982008204312032">Taktak પાસવર્ડ ભરવા માટે Windows Hello બંધ કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
 <translation id="2094505752054353250">ડોમેન મેળ ખાતું નથી</translation>
 <translation id="2094704029599359040">વર્ઝનની માહિતી</translation>
 <translation id="2099652385553570808">ડાબી બાજુએ ત્રણ સ્ટેપલ લગાવો</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;ડિલીટ રદ કરો</translation>
 <translation id="239708975263889666">નોન ટ્રાવેલર નંબરમાં ફેરફાર કરો</translation>
 <translation id="2399344929880464793">આ IBAN તમારા Taktak એકાઉન્ટમાં સાચવવામાં આવ્યો છે, જેથી તમે સમગ્ર Taktakની સેવાઓ પર તેનો ઉપયોગ કરી શકો છો.</translation>
-<translation id="2399868464369312507">Taktak Taktak ચુકવણી પદ્ધતિઓમાં ફેરફાર કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
+<translation id="2399868464369312507">Taktak ચુકવણી પદ્ધતિઓમાં ફેરફાર કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
 <translation id="2400263725572336749">પાસપોર્ટની માહિતી ઉમેરો</translation>
 <translation id="2400271059665846158">Taktak Walletમાં તમારા લૉયલ્ટિ કાર્ડ મેનેજ કરો</translation>
 <translation id="2400600116338235695">સીરિયલ પોર્ટ સાથે કનેક્ટ થવા માટે પૂછી શકે છે</translation>
@@ -1198,7 +1198,7 @@
 <translation id="2991174974383378012">વેબસાઇટ્સ સાથે શેર કરવું</translation>
 <translation id="299122504639061328">તમારું ડિફૉલ્ટ શોધ એન્જિન અને સાઇટમાં શોધવાની સુવિધા મેનેજ કરો</translation>
 <translation id="2991571918955627853">તમે હમણાં <ph name="SITE" />ની મુલાકાત લઈ શકતાં નથી કારણ કે તે વેબસાઇટ HSTSનો ઉપયોગ કરે છે. નેટવર્કમાં ભૂલ આવવી અને હુમલા થવા સામાન્ય રીતે અસ્થાયી હોય છે, તેથી આ પેજ સંભવિત રૂપે થોડા સમય પછી કાર્ય કરશે.</translation>
-<translation id="2991865971341174470">આ તમે જ છો તેની ચકાસણી કરો, જેથી Taktak Taktak તમારી ચુકવણીની માહિતી ભરી શકે.</translation>
+<translation id="2991865971341174470">આ તમે જ છો તેની ચકાસણી કરો, જેથી Taktak તમારી ચુકવણીની માહિતી ભરી શકે.</translation>
 <translation id="2995121550202354573">બધા અતિથિની પ્રોફાઇલ માટે ઉપયોગ કરો</translation>
 <translation id="2995517112308048736">ફાઇલનું કદ:</translation>
 <translation id="299990983510665749">હૅચબૅક</translation>
@@ -3119,7 +3119,7 @@
 <translation id="6164605812717770913">માતાપિતા અથવા વાલીએ જણાવ્યું છે કે આ સાઇટની મુલાકાત લેવી તમારા માટે યોગ્ય નથી. તમે તેને અનબ્લૉક કરવા માટે તેમને કહી શકો છો.</translation>
 <translation id="6165508094623778733">વધુ જાણો</translation>
 <translation id="6167577165590485365">છેલ્લે પ્રાપ્ત કરવા માટે થયેલા પ્રયાસનો સમય:</translation>
-<translation id="617256461084925519">આ તમે જ છો તેની ચકાસણી કરવાનો પ્રયાસ Taktak Taktak કરી રહ્યું છે, જેથી તે ચુકવણી માટેની તમારી માહિતી ભરી શકે.</translation>
+<translation id="617256461084925519">આ તમે જ છો તેની ચકાસણી કરવાનો પ્રયાસ Taktak કરી રહ્યું છે, જેથી તે ચુકવણી માટેની તમારી માહિતી ભરી શકે.</translation>
 <translation id="6173208311907792313">Windows Helloનો ઉપયોગ કરીને તમારી ખરીદી પૂર્ણ કરો</translation>
 <translation id="6176387967264100435">આ કિંમત વધુ છે</translation>
 <translation id="6177128806592000436">આ સાઇટ પરનું તમારું કનેક્શન સુરક્ષિત નથી</translation>
@@ -3979,7 +3979,7 @@
 <translation id="7564049878696755256">તમે તમારા <ph name="ORG_NAME" /> એકાઉન્ટનો ઍક્સેસ ગુમાવી શકો છો અથવા તમને ઓળખ ચોરીનો અનુભવ થઈ શકે છે. Taktak તમને હમણાં જ તમારો પાસવર્ડ બદલવાની ભલામણ કરે છે.</translation>
 <translation id="7564667064360547717">શર્ટ અને ટૉપ</translation>
 <translation id="7567204685887185387">આ સર્વર સાબિત કરી શક્યું નથી કે તે <ph name="DOMAIN" /> છે; તેનું સુરક્ષા પ્રમાણપત્ર કપટપૂર્વક રજૂ કરવામાં આવેલ હોઈ શકે છે. આ કોઈ ખોટી ગોઠવણીને કારણે થયું હશે અથવા કોઈ હુમલાખોર તમારા કનેક્શનને અટકાવી રહ્યો છે.</translation>
-<translation id="7568616151991626879">Taktak Taktak <ph name="APP_NAME" /> પર તમારો પાસવર્ડ ભરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
+<translation id="7568616151991626879">Taktak <ph name="APP_NAME" /> પર તમારો પાસવર્ડ ભરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{એકપણ નહીં}=1{આ ડિવાઇસ પર 1 ટૅબ}one{આ ડિવાઇસ પર # ટૅબ}other{આ ડિવાઇસ પર # ટૅબ}}</translation>
 <translation id="7569490014721427265">ગોલ્ફ</translation>
 <translation id="7569952961197462199">Taktak માંથી ક્રેડિટ કાર્ડ દૂર કરીએ?</translation>
@@ -4560,7 +4560,7 @@
 <translation id="8541579497401304453">ફોન કૉલ શરૂ કરીને કોઈ વ્યવસાય સાથે કનેક્ટ થાઓ.</translation>
 <translation id="8542014550340843547">નીચેની બાજુએ ત્રણ સ્ટેપલ લગાવો</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">ચુકવણી પદ્ધતિઓ ભરવા માટે, Taktak Taktak સેટિંગમાં ફેરફાર કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
+<translation id="8544217240017914508">ચુકવણી પદ્ધતિઓ ભરવા માટે, Taktak સેટિંગમાં ફેરફાર કરવાનો પ્રયાસ કરી રહ્યું છે.</translation>
 <translation id="8544303911974837265">પોલિએસ્ટર</translation>
 <translation id="854548366864113872">વધુ કિંમતનો વિકલ્પ</translation>
 <translation id="8546254312340305428">અપલોડ કરવા માટેનું કારણ આપો (આવશ્યક છે)</translation>

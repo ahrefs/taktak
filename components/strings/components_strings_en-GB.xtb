@@ -348,7 +348,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="1567040042588613346">This policy is working as intended but the same value is set elsewhere and is superseded by this policy.</translation>
 <translation id="1567405528131216114">Add <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Enter expiry date</translation>
-<translation id="1569694109004336106">Taktak Taktak is trying to turn on Windows Hello for filling in passwords.</translation>
+<translation id="1569694109004336106">Taktak is trying to turn on Windows Hello for filling in passwords.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Verifying payment method</translation>
 <translation id="1576277203042721907">Shopping insights</translation>
@@ -654,7 +654,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="2090451897496479509">Contact the provider for more information</translation>
 <translation id="2091887806945687916">Sound</translation>
 <translation id="2093184051799735948">Search <ph name="ENGINE_NAME" /> or type URL</translation>
-<translation id="2093982008204312032">Taktak Taktak is trying to turn off Windows Hello for filling passwords.</translation>
+<translation id="2093982008204312032">Taktak is trying to turn off Windows Hello for filling passwords.</translation>
 <translation id="2094505752054353250">Domain mismatch</translation>
 <translation id="2094704029599359040">Version information</translation>
 <translation id="2099652385553570808">Triple staple left</translation>
@@ -864,7 +864,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="2396249848217231973">&amp;Undo delete</translation>
 <translation id="239708975263889666">Edit known traveller number</translation>
 <translation id="2399344929880464793">This IBAN is saved in your Taktak Account so that you can use it across Taktak services.</translation>
-<translation id="2399868464369312507">Taktak Taktak is trying to edit payment methods.</translation>
+<translation id="2399868464369312507">Taktak is trying to edit payment methods.</translation>
 <translation id="2400263725572336749">Add passport</translation>
 <translation id="2400271059665846158">Manage your loyalty cards in Taktak Wallet</translation>
 <translation id="2400600116338235695">Can ask to connect to serial ports</translation>
@@ -1994,7 +1994,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="4269599248168651462">The server certificate is issued to a non-unique name.</translation>
 <translation id="4270541775497538019">Stacker 6</translation>
 <translation id="4271311252511481365">{NUM_REVIEWS,plural, =0{View 0 reviews. Average rating is <ph name="STARS" /> stars.}=1{View 1 review. Average rating is <ph name="STARS" /> stars.}other{View all # reviews. Average rating is <ph name="STARS" /> stars.}}</translation>
-<translation id="4271652479722040953">When extensions are added to Taktak, relevant data about these extensions is sent to third parties for analysis and may be visible to your administrator. The data includes information about the extensions such as its name, install time, source of install as well as activity associated with these extensions (like changing tabs, contacting websites or accessing cookies). This data is collected for extensions installed from the Taktak Web Store as well as off-store extensions.</translation>
+<translation id="4271652479722040953">When extensions are added to Taktak, relevant data about these extensions is sent to third parties for analysis and may be visible to your administrator. The data includes information about the extensions such as its name, install time, source of install as well as activity associated with these extensions (like changing tabs, contacting websites or accessing cookies). This data is collected for extensions installed from the Chrome Web Store as well as off-store extensions.</translation>
 <translation id="4275830172053184480">Restart your device</translation>
 <translation id="4276974990916607331">No thanks</translation>
 <translation id="4277028893293644418">Reset password</translation>
@@ -2049,7 +2049,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="4336913590841287350">This policy is not yet supported as a user policy on iOS.</translation>
 <translation id="4340575312453649552">This ad used too many resources for your device, so Taktak removed it.</translation>
 <translation id="4340810192899866471">Import from JSON</translation>
-<translation id="4340982228985273705">This computer is not detected as enterprise managed, so policy can only automatically install extensions hosted on the Taktak Web Store. The Taktak Web Store update URL is '<ph name="CWS_UPDATE_URL" />'.</translation>
+<translation id="4340982228985273705">This computer is not detected as enterprise managed, so policy can only automatically install extensions hosted on the Chrome Web Store. The Chrome Web Store update URL is '<ph name="CWS_UPDATE_URL" />'.</translation>
 <translation id="4342742994656318294">Theme parks</translation>
 <translation id="4344072791302852930">Add a tab</translation>
 <translation id="4348834659292907206">The connection to <ph name="SITE" /> is not secure</translation>
@@ -3119,7 +3119,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="6164605812717770913">A parent or guardian said that this site isn't OK for you to visit. You can ask them to unblock it.</translation>
 <translation id="6165508094623778733">Learn more</translation>
 <translation id="6167577165590485365">Last fetch attempted:</translation>
-<translation id="617256461084925519">Taktak Taktak is trying to verify it's you so it can fill in your payment info.</translation>
+<translation id="617256461084925519">Taktak is trying to verify it's you so it can fill in your payment info.</translation>
 <translation id="6173208311907792313">Complete your purchase using Windows Hello</translation>
 <translation id="6176387967264100435">This price is high</translation>
 <translation id="6177128806592000436">Your connection to this site is not secure</translation>
@@ -3542,7 +3542,7 @@ This will otherwise be blocked by your privacy settings. This will allow the con
 <translation id="6875894866901426843">Your administrator will delete your local files, including any files in the Bin, on <ph name="DATE_TIME" />.</translation>
 <translation id="6880941331070119097">High-priced option</translation>
 <translation id="6881240511396774766">Create a new Taktak Doc quickly</translation>
-<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies. <ph name="BEGIN_LINK" />Learn more<ph name="END_LINK" /></translation>
+<translation id="6882210908253838664">If a site isn’t working, you can try giving it temporary permission to use third-party cookies.</translation>
 <translation id="6883120223439653449">Update known traveller number?</translation>
 <translation id="6883221904761970440">Secure payment credential authentication sheet is closed</translation>
 <translation id="6883745783646124431">work address</translation>
@@ -3979,7 +3979,7 @@ Additional details:
 <translation id="7564049878696755256">You could lose access to your <ph name="ORG_NAME" /> account or experience identity theft. Taktak recommends changing your password now.</translation>
 <translation id="7564667064360547717">Shirts and Tops</translation>
 <translation id="7567204685887185387">This server could not prove that it is <ph name="DOMAIN" />; its security certificate might have been issued fraudulently. This may be caused by a misconfiguration or an attacker intercepting your connection.</translation>
-<translation id="7568616151991626879">Taktak Taktak is trying to fill in your password on <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak is trying to fill in your password on <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{None}=1{1 tab on this device}other{# tabs on this device}}</translation>
 <translation id="7569490014721427265">Golf</translation>
 <translation id="7569952961197462199">Remove credit card from Taktak?</translation>
@@ -4560,7 +4560,7 @@ Additional details:
 <translation id="8541579497401304453">Connect with a business by initiating a phone call.</translation>
 <translation id="8542014550340843547">Triple staple bottom</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak is trying to modify settings for filling payment methods.</translation>
+<translation id="8544217240017914508">Taktak is trying to modify settings for filling payment methods.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">High-priced option</translation>
 <translation id="8546254312340305428">Provide reason for uploading (required)</translation>

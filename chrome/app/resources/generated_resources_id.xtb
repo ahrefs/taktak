@@ -1125,7 +1125,7 @@ Izin yang telah Anda berikan ke aplikasi dapat berlaku untuk akun ini. Anda dapa
 <translation id="1757301747492736405">Uninstal tertunda</translation>
 <translation id="175772926354468439">Aktifkan tema</translation>
 <translation id="1757786065507923842">Permintaan izin orang tua gagal.</translation>
-<translation id="17584710573359123">Lihat di Taktak Web Store</translation>
+<translation id="17584710573359123">Lihat di Chrome Web Store</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> dipetakan ulang menjadi <ph name="REMAPPING_OPTION" />.</translation>
 <translation id="1761845175367251960">Akun <ph name="NAME" /></translation>
 <translation id="176272781006230109">saran belanja</translation>
@@ -1331,7 +1331,7 @@ Izin yang telah Anda berikan ke aplikasi dapat berlaku untuk akun ini. Anda dapa
 <translation id="1901760057081700494">Zona waktu saat ini disetel ke <ph name="TIME_ZONE_ENTRY" />. Untuk memperbarui zona waktu secara otomatis, <ph name="BEGIN_LINK" />aktifkan akses lokasi sistem<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">URL yang Anda buka disimpan ke Akun Taktak Anda</translation>
 <translation id="1906181697255754968">Situs biasanya mengakses file dan folder di perangkat Anda untuk fitur seperti penyimpanan tugas otomatis</translation>
-<translation id="1906488504371069394">Temukan lebih banyak ekstensi dan tema di <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Temukan lebih banyak ekstensi dan tema di <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Ketik menggunakan suara Anda. Gunakan Penelusuran + D, lalu mulai bicara.</translation>
 <translation id="1907659324308286326">Beberapa aksesori Thunderbolt atau USB4 memerlukan akses memori agar dapat berfungsi dengan baik.</translation>
 <translation id="1908591798274282246">Buka Kembali Grup yang Tertutup</translation>
@@ -2077,7 +2077,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="2412015533711271895">Harus ada izin orang tua atau wali untuk menggunakan ekstensi ini</translation>
 <translation id="2412593942846481727">Update tersedia</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Sesuaikan browser Anda lebih lanjut dengan ekstensi dari <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /></translation>
+<translation id="2413009156320833859">Sesuaikan browser Anda lebih lanjut dengan ekstensi dari <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /></translation>
 <translation id="2414159296888870200">Lanjutkan menjelajah untuk <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Gelap</translation>
 <translation id="2415117815770324983">Anda akan logout dari sebagian besar situs. Anda akan tetap login ke Akun Taktak Anda.</translation>
@@ -2112,7 +2112,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="2434449159125086437">Tidak dapat menyiapkan printer. Harap periksa konfigurasi dan coba lagi.</translation>
 <translation id="2434758125294431199">Pilih siapa yang dapat berbagi dengan Anda</translation>
 <translation id="2434915728183570229">Anda kini dapat melihat aplikasi ponsel Anda</translation>
-<translation id="2435137177546457207">Persyaratan Tambahan Taktak Taktak dan ChromeOS Flex</translation>
+<translation id="2435137177546457207">Persyaratan Tambahan Taktak dan ChromeOS Flex</translation>
 <translation id="2435248616906486374">Jaringan terputus</translation>
 <translation id="2435457462613246316">Tampilkan sandi</translation>
 <translation id="2436385001956947090">Salin &amp;link</translation>
@@ -2449,7 +2449,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="266079277508604648">Tidak dapat terhubung ke printer. Harap periksa apakah printer sudah diaktifkan dan terhubung ke Chromebook dengan Wi-Fi atau USB.</translation>
 <translation id="2661315027005813059">Halaman yang Disimpan di Back/Forward Cache: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Browsing lebih cepat dan gunakan lebih sedikit data dengan Mode Ringan. Klik untuk mempelajari lebih lanjut.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Menambahkan profil eSIM. Proses ini mungkin perlu waktu beberapa menit.</translation>
 <translation id="2663302507110284145">Bahasa</translation>
 <translation id="2665394472441560184">Tambahkan kata baru</translation>
@@ -2458,7 +2458,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="2666247341166669829">Tingkat daya baterai kiri <ph name="PERCENTAGE" />%.</translation>
 <translation id="2667144577800272420">Aplikasi lain disetel untuk membuka link yang sama dengan <ph name="APP_NAME" />. Penyetelan ini akan membuat <ph name="APP_NAME_2" /> dan <ph name="APP_NAME_3" /> tidak dapat membuka link yang didukung.</translation>
 <translation id="2667463864537187133">Kelola pemeriksa ejaan</translation>
-<translation id="2668604389652548400">Hapus atau ganti dengan ekstensi serupa dari <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Hapus atau ganti dengan ekstensi serupa dari <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785">Tidak dapat membuka <ph name="APP_NAME" /></translation>
 <translation id="2669454659051515572">Siapa pun yang menggunakan perangkat ini dapat melihat file yang didownload</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> membagikan tab Taktak.</translation>
@@ -2474,7 +2474,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="267442004702508783">menyegarkan halaman</translation>
 <translation id="2674764818721168631">Nonaktif</translation>
 <translation id="2675716371350192683">Konten Anda tidak akan digunakan untuk meningkatkan kualitas AI. Organisasi Anda mungkin mengubah setelan ini kapan saja.</translation>
-<translation id="2676084251379299915">Ekstensi ini telah dinonaktifkan oleh kebijakan perusahaan karena tidak lagi tersedia di Taktak Web Store.</translation>
+<translation id="2676084251379299915">Ekstensi ini telah dinonaktifkan oleh kebijakan perusahaan karena tidak lagi tersedia di Chrome Web Store.</translation>
 <translation id="2677748264148917807">Keluar</translation>
 <translation id="2678063897982469759">Aktifkan ulang</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Simpan Grup Tab?}other{Simpan Grup Tab?}}</translation>
@@ -2873,7 +2873,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="2953210795988451570">Update keamanan telah berakhir. Upgrade ke Chromebook baru.</translation>
 <translation id="2953218713108551165">Notifikasi tidak diizinkan untuk <ph name="SITE" />. Anda akan ditanyai lagi pada kunjungan berikutnya.</translation>
 <translation id="2956070239128776395">Bagian tersarang dalam grup: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Aktifkan mode developer untuk menggunakan ekstensi ini, yang tidak dapat ditinjau oleh Taktak Web Store.</translation>
+<translation id="2957124229512318478">Aktifkan mode developer untuk menggunakan ekstensi ini, yang tidak dapat ditinjau oleh Chrome Web Store.</translation>
 <translation id="2958721676848865875">Peringatan ekstensi pack</translation>
 <translation id="2959127025785722291">Terjadi error. Pemindaian tidak dapat diselesaikan. Coba lagi.</translation>
 <translation id="2959474507964749987">File terenkripsi ini mungkin adalah virus atau malware.<ph name="LINE_BREAK" />Untuk memeriksa apakah file ini tidak aman, Anda dapat mengirim file dan sandi ke Taktak Safe Browsing. Pemindaian biasanya memerlukan waktu beberapa detik.<ph name="LINE_BREAK" />Untuk memindai, tambahkan sandi file.</translation>
@@ -2933,7 +2933,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="2996108796702395498">Nomor seri perangkat Anda adalah <ph name="SERIAL_NUMBER" />. Nomor ini dapat digunakan untuk membantu mengaktifkan layanan.</translation>
 <translation id="2996286169319737844">Data dienkripsi dengan frasa sandi sinkronisasi Anda. Data ini tidak mencakup alamat dan metode pembayaran dari Taktak Pay.</translation>
 <translation id="2996722619877761919">Balik di sisi panjang</translation>
-<translation id="2998097899774209901">Aktif • Ekstensi ini melanggar kebijakan Taktak Web Store</translation>
+<translation id="2998097899774209901">Aktif • Ekstensi ini melanggar kebijakan Chrome Web Store</translation>
 <translation id="2998267783395280091">Jaringan Ditemukan</translation>
 <translation id="3000378525979847272">Mengizinkan <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="3000461861112256445">Audio mono</translation>
@@ -2964,7 +2964,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">Hanya sambungan situs serupa yang aman</translation>
 <translation id="3012917896646559015">Segera hubungi pabrikan hardware Anda untuk mengirimkan komputer ke fasilitas perbaikan.</translation>
-<translation id="3013652227108802944">Nonaktif • Ekstensi ini melanggar kebijakan Taktak Web Store</translation>
+<translation id="3013652227108802944">Nonaktif • Ekstensi ini melanggar kebijakan Chrome Web Store</translation>
 <translation id="301525898020410885">Bahasa disetel oleh Organisasi Anda</translation>
 <translation id="3015639418649705390">Luncurkan ulang sekarang</translation>
 <translation id="3015651504578568463">Tambahkan Tab ke Tabel Perbandingan Baru</translation>
@@ -3236,7 +3236,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="3226487301970807183">Aktifkan panel samping rata kiri</translation>
 <translation id="322708765617468434">Anda dapat menambahkan pengguna lain ke perangkat setelah penyiapan kapan saja. Setiap pengguna dapat mempersonalisasi pengalaman dan menjaga privasi datanya.</translation>
 <translation id="3227137524299004712">Mikrofon</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Hapus atau ganti dengan ekstensi serupa dari <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />.}other{Hapus atau ganti dengan ekstensi serupa dari <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Hapus atau ganti dengan ekstensi serupa dari <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />.}other{Hapus atau ganti dengan ekstensi serupa dari <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Periksa tanggal</translation>
 <translation id="3230539834943294477">Lihat artikel bantuan atau temukan dukungan perangkat</translation>
 <translation id="3232168089952388105">Bagikan informasi tentang perangkat Anda?</translation>
@@ -4080,7 +4080,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="3798670284305777884">Speaker (internal)</translation>
 <translation id="3799128412641261490">Setelan tombol akses</translation>
 <translation id="3800764353337460026">Gaya simbol</translation>
-<translation id="3800828618615365228">Persyaratan Tambahan Taktak Taktak dan ChromeOS</translation>
+<translation id="3800828618615365228">Persyaratan Tambahan Taktak dan ChromeOS</translation>
 <translation id="3800898876950197674">Untuk mengizinkan ekstensi ini, masukkan sandi Anda.</translation>
 <translation id="3801449494961771207">Suara text-to-speech sistem</translation>
 <translation id="3802486193901166966">Ekstensi ini tidak memerlukan izin khusus dan tidak memiliki akses situs tambahan</translation>
@@ -4103,7 +4103,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="3810973564298564668">Kelola</translation>
 <translation id="381202950560906753">Tambahkan lainnya</translation>
 <translation id="3812525830114410218">Sertifikat buruk</translation>
-<translation id="3813296892522778813">Buka <ph name="BEGIN_LINK_CHROMIUM" />bantuan Taktak Taktak<ph name="END_LINK_CHROMIUM" /> jika tidak dapat menemukan yang Anda cari</translation>
+<translation id="3813296892522778813">Buka <ph name="BEGIN_LINK_CHROMIUM" />bantuan Taktak<ph name="END_LINK_CHROMIUM" /> jika tidak dapat menemukan yang Anda cari</translation>
 <translation id="3813358687923336574">Bahasa yang digunakan untuk menerjemahkan halaman dan Jawaban Instan</translation>
 <translation id="3813458570141926987">Daftar topik yang diperkirakan oleh Taktak berdasarkan histori penjelajahan terbaru Anda</translation>
 <translation id="3814529970604306954">Akun Sekolah</translation>
@@ -4580,7 +4580,7 @@ Anda dapat mengelola setelan akun ini dengan menginstal aplikasi Family Link di 
 <translation id="4133076602192971179">Buka aplikasi untuk mengubah sandi</translation>
 <translation id="4134838386867070505">Langkah 1 dari 4: Jelaskan masalahnya</translation>
 <translation id="413534985210133938">“<ph name="LOCAL_FOLDER" />” hanya disimpan ke perangkat ini. Jika Anda memindahkan bookmark ini ke “<ph name="LOCAL_FOLDER" />”, Anda tidak akan lagi melihatnya di perangkat lain.</translation>
-<translation id="4135746311382563554">Persyaratan layanan tambahan Taktak Taktak dan Taktak OS</translation>
+<translation id="4135746311382563554">Persyaratan layanan tambahan Taktak dan Taktak OS</translation>
 <translation id="4136203100490971508">Fitur Cahaya Malam akan otomatis dinonaktifkan saat matahari terbit</translation>
 <translation id="41365691917097717">Dengan melanjutkan, proses debug ADB akan diaktifkan untuk membuat dan menguji aplikasi Android. Perhatikan bahwa tindakan ini dapat menginstal aplikasi Android yang belum diverifikasi oleh Taktak, dan perlu reset ke setelan pabrik untuk menonaktifkannya.</translation>
 <translation id="4137923333452716643">Tandai teks yang ingin Anda buka dalam mode baca</translation>
@@ -6431,7 +6431,7 @@ Anda dapat menetapkan beberapa tombol akses untuk tindakan ini.</translation>
 <translation id="5470741195701938302">Angka</translation>
 <translation id="5471768120198416576">Halo! Saya suara text to speech Anda.</translation>
 <translation id="5472627187093107397">Simpan sandi untuk situs ini</translation>
-<translation id="5473062644742711742">Temukan alat aksesibilitas lainnya di Taktak Web Store</translation>
+<translation id="5473062644742711742">Temukan alat aksesibilitas lainnya di Chrome Web Store</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Dengan melanjutkan, Anda setuju bahwa perangkat ini juga dapat otomatis mendownload serta menginstal update dan aplikasi dari Taktak, operator anak Anda, dan produsen perangkat ini, yang kemungkinan menggunakan data seluler. Beberapa aplikasi ini mungkin menawarkan pembelian dalam aplikasi.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN harus berisi minimal satu karakter}other{PIN harus berisi minimal # karakter}}</translation>
@@ -6667,7 +6667,7 @@ Anda dapat menetapkan beberapa tombol akses untuk tindakan ini.</translation>
 <translation id="5637476008227280525">Data seluler aktif</translation>
 <translation id="5638170200695981015">Pilih "Buka di editor dasar" untuk menggunakan opsi pengeditan dan tampilan terbatas.</translation>
 <translation id="563821631542362636">Izinkan situs menyimpan data</translation>
-<translation id="5638309510554459422">Temukan ekstensi dan tema di <ph name="BEGIN_LINK" />Taktak Web Store<ph name="END_LINK" /></translation>
+<translation id="5638309510554459422">Temukan ekstensi dan tema di <ph name="BEGIN_LINK" />Chrome Web Store<ph name="END_LINK" /></translation>
 <translation id="5639549361331209298">Muat ulang halaman ini, tahan untuk melihat opsi lainnya</translation>
 <translation id="5640133431808313291">Kelola kunci keamanan</translation>
 <translation id="5640159004008030285">Sandi ini hanya disimpan ke perangkat ini. Untuk menggunakannya di perangkat lain, <ph name="BEGIN_LINK" />simpan sandi di Akun Taktak Anda<ph name="END_LINK" />.</translation>
@@ -7059,7 +7059,7 @@ Anda dapat menetapkan beberapa tombol akses untuk tindakan ini.</translation>
 <translation id="5932224571077948991">Situs menampilkan iklan yang mengganggu atau menyesatkan</translation>
 <translation id="59324397759951282">Perangkat USB dari <ph name="MANUFACTURER_NAME" /></translation>
 <translation id="5932441198730183141">Anda tidak memiliki cukup lisensi yang tersedia untuk mendaftarkan perangkat Taktak Meet hardware ini. Hubungi pihak penjualan untuk membeli yang lainnya. Jika Anda yakin Anda tidak seharusnya mendapatkan pesan ini, hubungi dukungan.</translation>
-<translation id="593271375210025655">Aktifkan mode developer untuk menggunakan ekstensi ini, tetapi hanya jika Anda memercayai ekstensi tersebut. Ekstensi ini mungkin berisi fitur eksperimental dan belum ditinjau oleh Taktak Web Store.</translation>
+<translation id="593271375210025655">Aktifkan mode developer untuk menggunakan ekstensi ini, tetapi hanya jika Anda memercayai ekstensi tersebut. Ekstensi ini mungkin berisi fitur eksperimental dan belum ditinjau oleh Chrome Web Store.</translation>
 <translation id="5932881020239635062">Nomor Seri</translation>
 <translation id="5933376509899483611">Zona waktu</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> menggunakan kamera dan mikrofon Anda</translation>
@@ -7810,7 +7810,7 @@ Anda dapat menetapkan beberapa tombol akses untuk tindakan ini.</translation>
 <translation id="6476671549211161535">Tekan tombol yang bukan tombol mouse kiri atau kanan di <ph name="DEVICE_NAME" />.</translation>
 <translation id="6477822444490674459">Sinkronisasi notifikasi tidak didukung untuk ponsel dalam profil kerja. <ph name="LINK_BEGIN" />Pelajari lebih lanjut<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Tombol penyisipan cepat terletak di bawah tombol tab</translation>
-<translation id="6479881432656947268">Buka Taktak Web Store</translation>
+<translation id="6479881432656947268">Buka Chrome Web Store</translation>
 <translation id="6480327114083866287">Dikelola oleh <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Berbagi file dan lainnya dengan perangkat di sekitar. <ph name="LINK_BEGIN" />Pelajari lebih lanjut<ph name="LINK_END" /></translation>
 <translation id="648204537326351595">Izinkan <ph name="SPECIFIC_NAME" /> mengakses mikrofon Anda</translation>
@@ -7847,7 +7847,7 @@ Anda dapat menetapkan beberapa tombol akses untuk tindakan ini.</translation>
 <translation id="6511607461419653612">Mulai ulang Chromebook Anda, lalu coba lagi</translation>
 <translation id="6511827214781912955">Sebaiknya hapus <ph name="FILENAME" />, agar orang lain yang menggunakan perangkat ini tidak dapat melihat sandi Anda</translation>
 <translation id="6512759338201777379">Gambar <ph name="SUBJECT" /> yang dihasilkan <ph name="INDEX" />, dengan mood <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak akan menggunakan data seluler jika Anda tidak terhubung ke jaringan lain.</translation>
+<translation id="6513247462497316522">Taktak akan menggunakan data seluler jika Anda tidak terhubung ke jaringan lain.</translation>
 <translation id="6514010653036109809">Perangkat yang tersedia:</translation>
 <translation id="6516990372629061585">Lihat sertifikat yang diimpor dari Linux</translation>
 <translation id="6517382055541687102">Perangkat yang dipilih diubah menjadi <ph name="DEVICE_NAME" /></translation>
@@ -8797,7 +8797,7 @@ Anda memiliki # sandi lainnya yang telah dibobol. Pengelola Sandi Taktak merekom
 <translation id="7180611975245234373">Perbarui</translation>
 <translation id="7180865173735832675">Sesuaikan</translation>
 <translation id="7181117767881540376">&amp;Sembunyikan kolom bookmark</translation>
-<translation id="7181329571386134105">Untuk mengizinkan <ph name="CHILD_NAME" /> menginstal ekstensi mendatang tanpa persetujuan Anda, buka aplikasi Family Link di perangkat Anda dan perbarui setelan Taktak Taktak <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Untuk mengizinkan <ph name="CHILD_NAME" /> menginstal ekstensi mendatang tanpa persetujuan Anda, buka aplikasi Family Link di perangkat Anda dan perbarui setelan Taktak <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Bergabung ke Grup Tab dengan <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Bergabung ke Grup Tab dengan <ph name="OWNER_FIRST_NAME" />}=1{Bergabung ke Grup Tab dengan <ph name="OWNER_FIRST_NAME" /> dan # Orang Lainnya}other{Bergabung ke Grup Tab dengan <ph name="OWNER_FIRST_NAME" /> dan # Orang Lainnya}}</translation>
 <translation id="7181976109296206547">Tinjau pembaruan logo, nama, dan URL</translation>
@@ -11034,7 +11034,7 @@ Simpan file kunci Anda di tempat yang aman. Anda akan membutuhkannya untuk membu
 <translation id="8708000541097332489">Hapus saat keluar</translation>
 <translation id="870805141700401153">Microsoft Individual Code Signing</translation>
 <translation id="8708671767545720562">Informasi Selengkapnya</translation>
-<translation id="8709368517685334931">Anda dapat menemukan warna lama di Taktak Web Store</translation>
+<translation id="8709368517685334931">Anda dapat menemukan warna lama di Chrome Web Store</translation>
 <translation id="8710414664106871428">Fantasi</translation>
 <translation id="8710550057342691420">Atur tab serupa</translation>
 <translation id="8711402221661888347">Burger</translation>

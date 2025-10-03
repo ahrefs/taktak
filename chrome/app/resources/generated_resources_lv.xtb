@@ -2039,7 +2039,7 @@ Varat pārvaldīt šī konta iestatījumus, savā ierīcē instalējot lietotni 
 <translation id="2391805183137601570">Atvērt lietotni Steam</translation>
 <translation id="2392369802118427583">Aktivizēt</translation>
 <translation id="2393136602862631930"><ph name="APP_NAME" /> iestatīšana jūsu Chromebook datorā</translation>
-<translation id="2393313392064891208">Taktak Taktak OS Flex noteikumu saturs</translation>
+<translation id="2393313392064891208">Taktak OS Flex noteikumu saturs</translation>
 <translation id="2395616325548404795"><ph name="DEVICE_TYPE" /> ierīce ir sekmīgi reģistrēta uzņēmuma pārvaldībai, taču neizdevās nosūtīt tās līdzekļu un atrašanās vietas informāciju. Lūdzu, manuāli ievadiet šo informāciju, izmantojot šīs ierīces administratora konsoli.</translation>
 <translation id="2396783860772170191">Ievadiet 4 ciparu PIN (0000–9999)</translation>
 <translation id="2398546389094871088">Ierīcē izmantojot funkciju Powerwash, eSIM profili netiks noņemti. Lai profilus noņemtu manuāli, pārejiet uz sadaļu <ph name="LINK_BEGIN" />Mobilās piekļuves iestatījumi<ph name="LINK_END" />.</translation>
@@ -2066,7 +2066,7 @@ Varat pārvaldīt šī konta iestatījumus, savā ierīcē instalējot lietotni 
 <translation id="2412015533711271895">Lai jūs varētu izmantot šo paplašinājumu, kādam no vecākiem vai aizbildnim tas ir jāapstiprina.</translation>
 <translation id="2412593942846481727">Ir pieejams atjauninājums</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Pielāgojiet pārlūkprogrammu vēl vairāk, izmantojot veikalā <ph name="BEGIN_LINK1" />Taktak Web Store<ph name="END_LINK1" /> pieejamos paplašinājumus.</translation>
+<translation id="2413009156320833859">Pielāgojiet pārlūkprogrammu vēl vairāk, izmantojot veikalā <ph name="BEGIN_LINK1" />Chrome Web Store<ph name="END_LINK1" /> pieejamos paplašinājumus.</translation>
 <translation id="2414159296888870200">Satura (<ph name="MODULE_TITLE" />) pārlūkošanas atsākšana</translation>
 <translation id="2414886740292270097">Tumšs</translation>
 <translation id="2415117815770324983">Tiksiet izrakstīts no lielākās daļas vietņu. Joprojām būsiet pierakstījies Taktak kontā.</translation>
@@ -2101,7 +2101,7 @@ Varat pārvaldīt šī konta iestatījumus, savā ierīcē instalējot lietotni 
 <translation id="2434449159125086437">Nevar iestatīt printeri. Lūdzu, pārbaudiet konfigurāciju un mēģiniet vēlreiz.</translation>
 <translation id="2434758125294431199">Atlasiet, kas drīkst kopīgot saturu ar jums</translation>
 <translation id="2434915728183570229">Tagad varat skatīt tālruņa lietotnes.</translation>
-<translation id="2435137177546457207">Taktak Taktak un Taktak OS Flex papildu noteikumi</translation>
+<translation id="2435137177546457207">Taktak un Taktak OS Flex papildu noteikumi</translation>
 <translation id="2435248616906486374">Tika pārtraukts tīkla savienojums.</translation>
 <translation id="2435457462613246316">Rādīt paroli</translation>
 <translation id="2436385001956947090">Kopēt &amp;saiti</translation>
@@ -2438,7 +2438,7 @@ Varat pārvaldīt šī konta iestatījumus, savā ierīcē instalējot lietotni 
 <translation id="266079277508604648">Nevar izveidot savienojumu ar printeri. Pārbaudiet, vai printeris ir ieslēgts un vai printerim ir izveidots savienojums ar Chromebook datoru Wi-Fi tīklā vai izmantojot USB savienojumu.</translation>
 <translation id="2661315027005813059">Pilnīgas saglabāšanas kešatmiņā saglabātā lapa: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Pārlūkot ātrāk un patērēt mazāk datu, izmantojot vienkāršoto režīmu. Noklikšķiniet, lai uzzinātu vairāk.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Notiek eSIM profila pievienošana. Tā var ilgt dažas minūtes.</translation>
 <translation id="2663302507110284145">Valoda</translation>
 <translation id="2665394472441560184">Pievienot jaunu vārdu</translation>
@@ -7583,7 +7583,7 @@ Saskaņā ar domēna <ph name="DOMAIN" /> prasībām viedkartei ir jābūt ievie
 <translation id="6314819609899340042">Atkļūdošanas funkcijas šajā <ph name="IDS_SHORT_PRODUCT_NAME" /> ierīcē ir veiksmīgi iespējotas.</translation>
 <translation id="6315170314923504164">Balss</translation>
 <translation id="6315493146179903667">Parādīt visus</translation>
-<translation id="6316432269411143858">Taktak Taktak OS noteikumu saturs</translation>
+<translation id="6316432269411143858">Taktak OS noteikumu saturs</translation>
 <translation id="6317369057005134371">Notiek lietojumprogrammas loga gaidīšana...</translation>
 <translation id="6318125393809743217">Iekļaut failu policies.json ar politiku konfigurācijām.</translation>
 <translation id="6318944945640833942">Nevarēja noteikt printeri. Lūdzu, vēlreiz ievadiet printera adresi.</translation>
@@ -7830,7 +7830,7 @@ Saskaņā ar domēna <ph name="DOMAIN" /> prasībām viedkartei ir jābūt ievie
 <translation id="6511607461419653612">Restartējiet Chromebook datoru un mēģiniet vēlreiz.</translation>
 <translation id="6511827214781912955">Lai citi lietotāji, kuri izmanto šo ierīci, nevarētu skatīt jūsu paroles, ieteicams izdzēst failu <ph name="FILENAME" /></translation>
 <translation id="6512759338201777379"><ph name="INDEX" />. ģenerētais attēls ar šādu objektu: <ph name="SUBJECT" />; noskaņojums: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Ja jums nebūs pieejams savienojums ar tīklu, Taktak Taktak izmantos mobilos datus.</translation>
+<translation id="6513247462497316522">Ja jums nebūs pieejams savienojums ar tīklu, Taktak izmantos mobilos datus.</translation>
 <translation id="6514010653036109809">Pieejamā ierīce:</translation>
 <translation id="6516990372629061585">Skatīt no operētājsistēmas Linux importētos sertifikātus</translation>
 <translation id="6517382055541687102">Atlasītā ierīce tika mainīta uz šādu ierīci: <ph name="DEVICE_NAME" /></translation>

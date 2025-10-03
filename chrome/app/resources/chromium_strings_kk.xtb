@@ -222,14 +222,14 @@
 <translation id="3889543394854987837">Taktak ашу үшін атыңызды басып, шарлауды бастаңыз.</translation>
 <translation id="3892148308691398805">Мәтінді көшіру</translation>
 <translation id="390528597099634151"><ph name="EXISTING_USER" /> бұл Taktak профиліне кіріп қойған. Браузерді пайдалану деректерін бөлек сақтау үшін Taktak сізге жеке профиль жасай алады.</translation>
-<translation id="3909353120217047026">Бұл кеңейтім Taktak Web Store саясатына қайшы, сондықтан қауіпті болуы мүмкін. Сіз кірген сайттардағы деректеріңізді, оның ішінде жеке ақпаратыңызды бұдан былай көрмеуі және өзгерте алмауы үшін, оны Taktak-нан жойыңыз.</translation>
+<translation id="3909353120217047026">Бұл кеңейтім Chrome Web Store саясатына қайшы, сондықтан қауіпті болуы мүмкін. Сіз кірген сайттардағы деректеріңізді, оның ішінде жеке ақпаратыңызды бұдан былай көрмеуі және өзгерте алмауы үшін, оны Taktak-нан жойыңыз.</translation>
 <translation id="3941890832296813527">Орнату қатесі: орнату файлының атауы жарамсыз немесе оған қолдау көрсетілмейді.</translation>
 <translation id="3945058413678539331">Taktak құпия сөздерді көшіргісі келеді. Бұған рұқсат беру үшін Windows құпия сөзіңізді теріңіз.</translation>
 <translation id="3954172517175569325">Taktak аккаунтыңызға сақтаған құпия сөздер, төлеу әдістері және мекенжайлар осы құрылғыдан өшіріледі. Оларды Taktak-де қайта пайдалану үшін аккаунтқа қайтадан кіріңіз.</translation>
 <translation id="395904275706073188">Қорғалған беттерді оқу мүмкін емес. Басқа бетті байқап көріңіз.</translation>
 <translation id="3962647064319009959">Taktak сізді қалай қорғайтыны туралы ақпарат алыңыз</translation>
 <translation id="3971865010372729242">Мекенжай жолағына немесе іздеу өрісіне терген кезіңізде, Taktak ұсыныстар алу үшін терген нәрсеңізді ұйымның іздеу жүйесіне, жасанды интеллектіге және агент құралдарына жібереді.</translation>
-<translation id="3975724895399328945">&amp;Taktak Taktak for Testing туралы</translation>
+<translation id="3975724895399328945">&amp;Taktak for Testing туралы</translation>
 <translation id="3997429360543082038">ChromiumOS туралы</translation>
 <translation id="4019629340646866719">ChromiumOS жүйесі де <ph name="BEGIN_LINK_LINUX_OSS" />Linux әзірлеу ортасы<ph name="END_LINK_LINUX_OSS" /> сияқты <ph name="BEGIN_LINK_CROS_OSS" />ашық кодты бағдарламалық құрал<ph name="END_LINK_CROS_OSS" /> арқылы қолжетімді болады.</translation>
 <translation id="4022972681110646219">Экран мазмұнын аудару</translation>
@@ -549,7 +549,7 @@ Taktak параметрлеріңізді қалпына келтіре алма
 <translation id="8077498902115777962">Taktak-нің қолданбаларда фондық режимде жұмыс істеу мүмкіндігін өшіру</translation>
 <translation id="80790299200510644">Сурет іздеу</translation>
 <translation id="8086881907087796310">Орнатылмады, себебі компьютер минималды жабдық талаптарына жауап бермейді.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> – Taktak for Testing</translation>
 <translation id="8105840573057009683">Taktak бұл сайт үшін локацияны пайдалануға рұқсат сұрайды.</translation>
 <translation id="8118331347066725040">Lens-бен іздеуге қатысты пікіріңізді жазыңыз.</translation>
 <translation id="8133124826068723441">ChromiumOS деректеріңізді синхрондай алмады, себебі синхрондау функциясы доменіңіз үшін қолжетімді емес.</translation>
@@ -595,7 +595,7 @@ Taktak параметрлеріңізді қалпына келтіре алма
 <translation id="8601359445272098721">Жаңалық! Енді "экранды аудару" түймесін басу арқылы экрандағы мәтін мен суреттерді де аудара аласыз.</translation>
 <translation id="8619360774459241877">Taktak іске қосылуда…</translation>
 <translation id="8621669128220841554">Орнату анықталмаған қате себебінен сәтсіз аяқталды. Taktak браузерін қайта жүктеңіз.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing браузерін әдепкі браузер қылу мүмкін емес.</translation>
+<translation id="8648201657708811153">Taktak for Testing браузерін әдепкі браузер қылу мүмкін емес.</translation>
 <translation id="8697124171261953979">Сонымен қатар ол Taktak іске қосқаныңызда немесе Omnibox ішінен іздегеніңізде қайсы бет көрсетілетінін бақылайды.</translation>
 <translation id="8704119203788522458">Сізге арналған Taktak.</translation>
 <translation id="8712637175834984815">Түсінікті</translation>

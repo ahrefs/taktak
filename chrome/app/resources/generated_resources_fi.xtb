@@ -1124,7 +1124,7 @@ Sovelluksille myöntämäsi luvat saattavat koskea tätä tiliä. Voit päättä
 <translation id="1757301747492736405">Odotetaan poistoa</translation>
 <translation id="175772926354468439">Ota teema käyttöön</translation>
 <translation id="1757786065507923842">Vanhemman lupapyyntö epäonnistui.</translation>
-<translation id="17584710573359123">Näytä Taktak Web Storessa</translation>
+<translation id="17584710573359123">Näytä Chrome Web Storessa</translation>
 <translation id="1761402971842586829"><ph name="BUTTON_NAME" /> on määritetty uudelleen: <ph name="REMAPPING_OPTION" />.</translation>
 <translation id="1761845175367251960">Tilit: <ph name="NAME" /></translation>
 <translation id="176272781006230109">ostosehdotuksia</translation>
@@ -1330,7 +1330,7 @@ Sovelluksille myöntämäsi luvat saattavat koskea tätä tiliä. Voit päättä
 <translation id="1901760057081700494">Aikavyöhyke on tällä hetkellä <ph name="TIME_ZONE_ENTRY" />. Jos haluat päivittää aikavyöhykkeen automaattisesti, <ph name="BEGIN_LINK" />laita päälle järjestelmän sijainnin käyttöoikeus<ph name="END_LINK" />.</translation>
 <translation id="1904580727789512086">Avaamasi URL-osoitteet tallennetaan Taktak-tilillesi</translation>
 <translation id="1906181697255754968">Sivustot käyttävät yleensä laitteesi tiedostoja ja kansioita tallentaakseen muutoksia automaattisesti ja tehdäkseen muuta vastaavaa</translation>
-<translation id="1906488504371069394">Lisää laajennuksia ja teemoja löydät <ph name="BEGIN_LINK" />Taktak Web Storesta<ph name="END_LINK" /></translation>
+<translation id="1906488504371069394">Lisää laajennuksia ja teemoja löydät <ph name="BEGIN_LINK" />Chrome Web Storesta<ph name="END_LINK" /></translation>
 <translation id="1907044622262489040">Kirjoita puhumalla. Paina Haku + D ja aloita puhuminen.</translation>
 <translation id="1907659324308286326">Jotkin Thunderbolt‐ tai USB4-lisälaitteet tarvitsevat pääsyn muistiin toimiakseen oikein.</translation>
 <translation id="1908591798274282246">Avaa suljettu ryhmä uudelleen</translation>
@@ -2076,7 +2076,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="2412015533711271895">Vanhemman tai huoltajan täytyy vahvistaa, että sinulla on lupa käyttää tätä laajennusta</translation>
 <translation id="2412593942846481727">Päivitys saatavilla</translation>
 <translation id="2412753904894530585">Kerberos</translation>
-<translation id="2413009156320833859">Yksilöi selaintasi entistä enemmän <ph name="BEGIN_LINK1" />Taktak Web Storen<ph name="END_LINK1" /> laajennuksilla</translation>
+<translation id="2413009156320833859">Yksilöi selaintasi entistä enemmän <ph name="BEGIN_LINK1" />Chrome Web Storen<ph name="END_LINK1" /> laajennuksilla</translation>
 <translation id="2414159296888870200">Jatka selaamista: <ph name="MODULE_TITLE" /></translation>
 <translation id="2414886740292270097">Tumma</translation>
 <translation id="2415117815770324983">Kirjaa sinut ulos useimmilta sivustoilta. Pysyt kirjautuneena Taktak-tilillesi.</translation>
@@ -2448,7 +2448,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="266079277508604648">Tulostimeen yhdistäminen epäonnistui. Tarkista, että tulostin on päällä ja yhteydessä Chromebookiin Wi-Fi-yhteydellä tai USB:llä.</translation>
 <translation id="2661315027005813059">Siirtymisvälimuistissa oleva sivu: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Selaa verkkoa nopeammin ja käytä vähemmän dataa yksinkertaistetun tilan avulla. Klikkaa lukeaksesi lisää.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Lisätään eSIM-profiilia. Tässä voi mennä muutama minuutti.</translation>
 <translation id="2663302507110284145">Kieli</translation>
 <translation id="2665394472441560184">Lisää uusi sana</translation>
@@ -2457,7 +2457,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="2666247341166669829">Vasemmanpuoleisen akun varaus <ph name="PERCENTAGE" /> %.</translation>
 <translation id="2667144577800272420">Muut sovellukset on asetettu avaamaan samat linkit kuin <ph name="APP_NAME" />. Muutoksen jälkeen <ph name="APP_NAME_2" /> ja <ph name="APP_NAME_3" /> eivät enää voi avata tuettuja linkkejä.</translation>
 <translation id="2667463864537187133">Hallitse oikeinkirjoituksen tarkistusta</translation>
-<translation id="2668604389652548400">Poista se tai korvaa se samanlaisilla laajennuksilla <ph name="BEGIN_LINK" />Taktak Web Storesta<ph name="END_LINK" /></translation>
+<translation id="2668604389652548400">Poista se tai korvaa se samanlaisilla laajennuksilla <ph name="BEGIN_LINK" />Chrome Web Storesta<ph name="END_LINK" /></translation>
 <translation id="2669241540496514785"><ph name="APP_NAME" />:n avaus ei onnistunut</translation>
 <translation id="2669454659051515572">Kaikki tämän laitteen käyttäjät voivat nähdä ladatut tiedostot</translation>
 <translation id="2670102641511624474"><ph name="APP_NAME" /> jakaa Taktak-välilehden.</translation>
@@ -2473,7 +2473,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="267442004702508783">Päivitä.</translation>
 <translation id="2674764818721168631">Pois päältä</translation>
 <translation id="2675716371350192683">Sisältöäsi ei käytetä tekoälyn parantamiseen. Organisaatio voi muuttaa näitä asetuksia milloin tahansa.</translation>
-<translation id="2676084251379299915">Yrityksen käytäntö on poistanut tämän laajennuksen käytöstä, koska se ei ole enää saatavilla Taktak Web Storessa.</translation>
+<translation id="2676084251379299915">Yrityksen käytäntö on poistanut tämän laajennuksen käytöstä, koska se ei ole enää saatavilla Chrome Web Storessa.</translation>
 <translation id="2677748264148917807">Poistu</translation>
 <translation id="2678063897982469759">Ota uudelleen käyttöön</translation>
 <translation id="267829273183481634">{NUM_GROUPS,plural, =1{Säilytetäänkö välilehtiryhmä?}other{Säilytetäänkö välilehtiryhmät?}}</translation>
@@ -2872,7 +2872,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="2953210795988451570">Tietoturvapäivitykset ovat päättyneet. Päivitä uuteen Chromebookiin.</translation>
 <translation id="2953218713108551165">Ilmoitukset eivät ole sallittuja: <ph name="SITE" />. Tästä kysytään uudelleen seuraavalla käyntikerralla.</translation>
 <translation id="2956070239128776395">Osio sisällytetty ryhmään: <ph name="ERROR_LINE" /></translation>
-<translation id="2957124229512318478">Laajennusta ei voi tarkastaa Taktak Web Storessa. Voit käyttää sitä laittamalla kehittäjätilan päälle.</translation>
+<translation id="2957124229512318478">Laajennusta ei voi tarkastaa Chrome Web Storessa. Voit käyttää sitä laittamalla kehittäjätilan päälle.</translation>
 <translation id="2958721676848865875">Varoitus: pakattu laajennus</translation>
 <translation id="2959127025785722291">Jotain meni pieleen. Tarkistusta ei voitu suorittaa loppuun. Yritä uudelleen.</translation>
 <translation id="2959474507964749987">Salattu tiedosto saattaa olla virus tai haittaohjelma.<ph name="LINE_BREAK" />Voit tarkistaa, onko se vaarallinen, lähettämällä tiedoston ja salasanan Googlen selaussuojalle. Tarkastuksessa menee yleensä muutama sekunti.<ph name="LINE_BREAK" />Lisää tiedoston salasana tarkastusta varten.</translation>
@@ -2932,7 +2932,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="2996108796702395498">Laitteesi sarjanumero on <ph name="SERIAL_NUMBER" />. Numeroa voi käyttää palvelun aktivointiin.</translation>
 <translation id="2996286169319737844">Data salataan Taktak-salasanallasi. Tämä ei koske Taktak Payhin tallennettuja maksutapoja tai osoitteita.</translation>
 <translation id="2996722619877761919">Käännä pitkän reunan ympäri</translation>
-<translation id="2998097899774209901">Päällä • Tämä laajennus loukkaa Taktak Web Store ‑käytäntöä</translation>
+<translation id="2998097899774209901">Päällä • Tämä laajennus loukkaa Chrome Web Store ‑käytäntöä</translation>
 <translation id="2998267783395280091">Verkko löydetty</translation>
 <translation id="3000378525979847272">Sallittu: <ph name="PERMISSION_1" />, <ph name="PERMISSION_2" /></translation>
 <translation id="3000461861112256445">Monoääni</translation>
@@ -2963,7 +2963,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="3012631534724231212">(iframe)</translation>
 <translation id="3012804260437125868">Vain samalle sivustolle muodostetut suojatut yhteydet</translation>
 <translation id="3012917896646559015">Ota heti yhteys tietokoneesi valmistajaan ja toimita se korjattavaksi.</translation>
-<translation id="3013652227108802944">Pois päältä • Tämä laajennus loukkaa Taktak Web Store ‑käytäntöä</translation>
+<translation id="3013652227108802944">Pois päältä • Tämä laajennus loukkaa Chrome Web Store ‑käytäntöä</translation>
 <translation id="301525898020410885">Organisaatiosi asettaa kielen</translation>
 <translation id="3015639418649705390">Käynnistä uudelleen nyt</translation>
 <translation id="3015651504578568463">Lisää välilehti uuteen vertailutaulukkoon</translation>
@@ -3235,7 +3235,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="3226487301970807183">Näytä/piilota vasemmalle tasattu sivupaneeli</translation>
 <translation id="322708765617468434">Voit lisätä laitteelle toisen henkilön milloin tahansa käyttöönoton jälkeen. Jokainen henkilö voi tehdä kokemuksestaan omannäköisen ja pitää datan yksityisenä.</translation>
 <translation id="3227137524299004712">Mikrofoni</translation>
-<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Poista se tai korvaa se samanlaisilla laajennuksilla <ph name="BEGIN_LINK" />Taktak Web Storesta<ph name="END_LINK" />.}other{Poista ne tai korvaa ne samanlaisilla laajennuksilla <ph name="BEGIN_LINK" />Taktak Web Storesta<ph name="END_LINK" />}}</translation>
+<translation id="3228985231489269630">{NUM_EXTENSIONS,plural, =1{Poista se tai korvaa se samanlaisilla laajennuksilla <ph name="BEGIN_LINK" />Chrome Web Storesta<ph name="END_LINK" />.}other{Poista ne tai korvaa ne samanlaisilla laajennuksilla <ph name="BEGIN_LINK" />Chrome Web Storesta<ph name="END_LINK" />}}</translation>
 <translation id="3229254977651514276">Tarkista päivämäärä</translation>
 <translation id="3230539834943294477">Katso ohjeartikkeleita tai etsi laitetukea</translation>
 <translation id="3232168089952388105">Jaetaanko laitteen tiedot?</translation>
@@ -4041,7 +4041,7 @@ Voit ylläpitää tilin asetuksia asentamalla laitteellesi Family Link ‑sovell
 <translation id="3775432569830822555">SSL-palvelinvarmenne</translation>
 <translation id="3775705724665058594">Lähetä laitteillesi</translation>
 <translation id="3776508619697147021">Sivustot saavat pyytää lupaa ladata useita tiedostoja automaattisesti</translation>
-<translation id="3776796446459804932">Tämä laajennus loukkaa Taktak Web Storen käytäntöä.</translation>
+<translation id="3776796446459804932">Tämä laajennus loukkaa Chrome Web Storen käytäntöä.</translation>
 <translation id="3777483481409781352">Mobiililaitteen aktivointi epäonnistui</translation>
 <translation id="3777796259512476958">Kirjaa sinut ulos useimmilta sivustoilta</translation>
 <translation id="3778208826288864398">Suojausavain on lukittu, koska väärä PIN-koodi syötettiin liian monta kertaa. Suojausavain on nollattava.</translation>
@@ -5591,7 +5591,7 @@ Loitonna painamalla Ctrl + Alt + kirkkauden vähennys.</translation>
 <translation id="4869170227080975044">Lukea ChromeOS:n verkkotiedot.</translation>
 <translation id="4870724079713069532">Tällä sovelluksella voit avata ja muokata tuettuja tiedostoja Resurssienhallinnasta tai muista sovelluksista. Jos haluat valita, mitkä tiedostot avautuvat oletuksena tässä sovelluksessa, avaa <ph name="BEGIN_LINK" />Windows-asetukset<ph name="END_LINK" />.</translation>
 <translation id="4870995365819149457">Jotkin tuetut linkit avautuvat edelleen näissä sovelluksissa: <ph name="APP_NAME" />, <ph name="APP_NAME_2" />, <ph name="APP_NAME_3" /> ja 1 muussa sovelluksessa.</translation>
-<translation id="4871308555310586478">Ei peräisin Taktak Web Storesta.</translation>
+<translation id="4871308555310586478">Ei peräisin Chrome Web Storesta.</translation>
 <translation id="4871322859485617074">PIN-koodi sisältää virheellisiä merkkejä</translation>
 <translation id="4871370605780490696">Lisää kirjanmerkki</translation>
 <translation id="4871568871368204250">Poista synkronointi käytöstä</translation>
@@ -6427,7 +6427,7 @@ Voit määrittää samalle toiminnolle useita kytkimiä.</translation>
 <translation id="5470741195701938302">Numerot</translation>
 <translation id="5471768120198416576">Hei! Olen tekstistä puheeksi ‑äänesi.</translation>
 <translation id="5472627187093107397">Tallenna tämän sivuston salasanat</translation>
-<translation id="5473062644742711742">Lisää saavutettavuustyökaluja Taktak Web Storesta</translation>
+<translation id="5473062644742711742">Lisää saavutettavuustyökaluja Chrome Web Storesta</translation>
 <translation id="5473075389972733037">IBM</translation>
 <translation id="5473099001878321374">Jatkamalla hyväksyt, että laite voi myös automaattisesti ladata ja asentaa Googlen, lapsen operaattorin tai laitevalmistajan päivityksiä ja sovelluksia, mahdollisesti mobiilidatayhteyden välityksellä. Jotkin näistä sovelluksista voivat tarjota sovelluksensisäisiä ostoksia.</translation>
 <translation id="5473156705047072749">{NUM_CHARACTERS,plural, =1{PIN-koodissa on oltava ainakin yksi merkki}other{PIN-koodissa on oltava ainakin # merkkiä}}</translation>
@@ -6663,7 +6663,7 @@ Voit määrittää samalle toiminnolle useita kytkimiä.</translation>
 <translation id="5637476008227280525">Ota käyttöön mobiilidata</translation>
 <translation id="5638170200695981015">Valitse "Avaa perusmuokkaajassa", jos haluat käyttää rajoitettua näkymää ja muokkausvaihtoehtoja.</translation>
 <translation id="563821631542362636">Salli sivuston tallentaa dataa</translation>
-<translation id="5638309510554459422">Löydät laajennuksia ja teemoja <ph name="BEGIN_LINK" />Taktak Web Storesta<ph name="END_LINK" />.</translation>
+<translation id="5638309510554459422">Löydät laajennuksia ja teemoja <ph name="BEGIN_LINK" />Chrome Web Storesta<ph name="END_LINK" />.</translation>
 <translation id="5639549361331209298">Päivitä tämä sivu, näet lisää asetuksia painamalla pitkään</translation>
 <translation id="5640133431808313291">Ylläpidä suojausavaimia</translation>
 <translation id="5640159004008030285">Salasana tallennetaan vain tälle laitteelle. Jos haluat käyttää sitä muilla laitteilla, <ph name="BEGIN_LINK" />tallenna se Taktak-tilillesi<ph name="END_LINK" />.</translation>
@@ -7055,7 +7055,7 @@ Julkinen eksponentti (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bittiä):
 <translation id="5932224571077948991">Sivustolla on häiritseviä tai harhaanjohtavia mainoksia</translation>
 <translation id="59324397759951282">USB-laite (<ph name="MANUFACTURER_NAME" />)</translation>
 <translation id="5932441198730183141">Sinulla ei ole tarpeeksi lisenssejä tämän Taktak Meet ‑laitteen rekisteröintiin. Osta lisää lisenssejä myyntitiimiltä. Jos sinun ei mielestäsi pitäisi nähdä tätä viestiä, ota yhteyttä tukeen.</translation>
-<translation id="593271375210025655">Laita kehittäjätila päälle, jotta voit käyttää tätä laajennusta, mutta vain, jos luotat siihen. Se voi sisältää kokeellisia ominaisuuksia, eikä Taktak Web Store ole tarkistanut sitä.</translation>
+<translation id="593271375210025655">Laita kehittäjätila päälle, jotta voit käyttää tätä laajennusta, mutta vain, jos luotat siihen. Se voi sisältää kokeellisia ominaisuuksia, eikä Chrome Web Store ole tarkistanut sitä.</translation>
 <translation id="5932881020239635062">Sarjanumero</translation>
 <translation id="5933376509899483611">Aikavyöhyke</translation>
 <translation id="5933522550144185133"><ph name="APP_NAME" /> käyttää kameraa ja mikrofonia</translation>
@@ -7596,7 +7596,7 @@ Julkinen eksponentti (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bittiä):
 <translation id="6314819609899340042"><ph name="IDS_SHORT_PRODUCT_NAME" />-laitteen virheenkorjausominaisuuksien käyttöönotto onnistui.</translation>
 <translation id="6315170314923504164">Ääni</translation>
 <translation id="6315493146179903667">Siirrä kaikki etualalle</translation>
-<translation id="6316432269411143858">Taktak Taktak ‑käyttöjärjestelmän käyttöehtojen sisältö</translation>
+<translation id="6316432269411143858">Taktak ‑käyttöjärjestelmän käyttöehtojen sisältö</translation>
 <translation id="6317369057005134371">Odotetaan sovellusikkunaa…</translation>
 <translation id="6318125393809743217">Sisällytä käytäntömäärityksiin policies.json-tiedosto.</translation>
 <translation id="6318944945640833942">Tulostinta ei havaittu. Syötä tulostimen osoite uudelleen.</translation>
@@ -7806,7 +7806,7 @@ Julkinen eksponentti (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bittiä):
 <translation id="6476671549211161535">Paina painiketta, joka ei ole laitteen (<ph name="DEVICE_NAME" />) vasen tai oikea painike.</translation>
 <translation id="6477822444490674459">Puhelimet, joissa on työprofiili, eivät tue ilmoitusten synkronointia. <ph name="LINK_BEGIN" />Lue lisää<ph name="LINK_END" /></translation>
 <translation id="6478849105642611893">Pikalisäysnäppäin on sarkainnäppäimen alla</translation>
-<translation id="6479881432656947268">Käy Taktak Web Storessa</translation>
+<translation id="6479881432656947268">Käy Chrome Web Storessa</translation>
 <translation id="6480327114083866287">Ylläpitäjä: <ph name="MANAGER" /></translation>
 <translation id="6481749622989211463">Jaa esimerkiksi tiedostoja lähellä olevien laitteiden kanssa. <ph name="LINK_BEGIN" />Lue lisää<ph name="LINK_END" /></translation>
 <translation id="648204537326351595">Salli mikrofonin käyttöoikeus sovellukselle <ph name="SPECIFIC_NAME" /></translation>
@@ -7843,7 +7843,7 @@ Julkinen eksponentti (<ph name="PUBLIC_EXPONENT_NUM_BITS" /> bittiä):
 <translation id="6511607461419653612">Käynnistä Chromebook uudelleen ja yritä sitten</translation>
 <translation id="6511827214781912955">Sinun kannattaa poistaa <ph name="FILENAME" />, jotta laitteen muut käyttäjät eivät näe salasanojasi</translation>
 <translation id="6512759338201777379">Luotu kuva <ph name="INDEX" /> / <ph name="SUBJECT" />, tunnelma: <ph name="MOOD" /></translation>
-<translation id="6513247462497316522">Taktak Taktak käyttää mobiilitiedonsiirtoa, jos et ole yhteydessä toiseen verkkoon.</translation>
+<translation id="6513247462497316522">Taktak käyttää mobiilitiedonsiirtoa, jos et ole yhteydessä toiseen verkkoon.</translation>
 <translation id="6514010653036109809">Käytettävissä oleva laite:</translation>
 <translation id="6516990372629061585">Katso Linuxista tuodut varmenteet</translation>
 <translation id="6517382055541687102">Valituksi laitteeksi vaihdettu <ph name="DEVICE_NAME" /></translation>
@@ -8793,7 +8793,7 @@ Sinulla on vielä # vaarantunutta salasanaa. Taktak Salasanat suosittelee, että
 <translation id="7180611975245234373">Päivitä</translation>
 <translation id="7180865173735832675">Muokkaa</translation>
 <translation id="7181117767881540376">&amp;Piilota kirjanmerkkipalkki</translation>
-<translation id="7181329571386134105">Jotta <ph name="CHILD_NAME" /> voi asentaa tulevia laajennuksia ilman lupaasi, avaa Family Link ‐sovellus laitteellasi ja päivitä lapsen (<ph name="CHILD_NAME" />) Taktak Taktak ‐asetukset.</translation>
+<translation id="7181329571386134105">Jotta <ph name="CHILD_NAME" /> voi asentaa tulevia laajennuksia ilman lupaasi, avaa Family Link ‐sovellus laitteellasi ja päivitä lapsen (<ph name="CHILD_NAME" />) Taktak ‐asetukset.</translation>
 <translation id="7181840534454431748">Liity välilehtiryhmään, jossa <ph name="OWNER_FIRST_NAME" /> on
             {NUM_OTHER_MEMBERS,plural, =0{Liity välilehtiryhmään, jossa <ph name="OWNER_FIRST_NAME" /> on}=1{Liity välilehtiryhmään, jossa <ph name="OWNER_FIRST_NAME" /> on ja # muu}other{Liity välilehtiryhmään, jossa <ph name="OWNER_FIRST_NAME" /> on ja # muuta}}</translation>
 <translation id="7181976109296206547">Logon, nimen ja URL-osoitteen päivitysten tarkistaminen</translation>
@@ -9067,7 +9067,7 @@ Sinulla on vielä # vaarantunutta salasanaa. Taktak Salasanat suosittelee, että
 <translation id="737728204345822099">Tieto käynnistäsi tällä sivustolla voi tallentua suojausavaimeesi.</translation>
 <translation id="7377451353532943397">Estä edelleen tunnistimien käyttö</translation>
 <translation id="7377481913241237033">Muodosta yhteys koodilla</translation>
-<translation id="73786666777299047">Avaa Taktak Web Store</translation>
+<translation id="73786666777299047">Avaa Chrome Web Store</translation>
 <translation id="7379178796923433598">{NUM_TASKS,plural, =0{<ph name="TASK_ROW" />}=1{<ph name="TASK_ROW" />. Toinen tehtävä samassa tehtäväryhmässä: <ph name="OTHER_TASKS" />}other{<ph name="TASK_ROW" />. # muuta tehtävää samassa tehtäväryhmässä: <ph name="OTHER_TASKS" />}}</translation>
 <translation id="7380162005366861509"><ph name="ORIGIN" /> voi nähdä kansion <ph name="FILENAME" /> ja tehdä siitä omia kopioita</translation>
 <translation id="7380272457268061606">Poistetaanko paikallisen datan palautus käytöstä?</translation>
@@ -11030,7 +11030,7 @@ Tallenna avaintiedosto suojattuun sijaintiin. Tarvitset sitä, jos haluat luoda 
 <translation id="8708000541097332489">Tyhjennä poistuttaessa</translation>
 <translation id="870805141700401153">Microsoftin yksityinen koodin allekirjoitus</translation>
 <translation id="8708671767545720562">&amp;Lisätietoja</translation>
-<translation id="8709368517685334931">Vanhemmat värit löytyvät Taktak Web Storesta</translation>
+<translation id="8709368517685334931">Vanhemmat värit löytyvät Chrome Web Storesta</translation>
 <translation id="8710414664106871428">Fantasia</translation>
 <translation id="8710550057342691420">Järjestä samankaltaiset välilehdet</translation>
 <translation id="8711402221661888347">Hamppari</translation>

@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">המדיניות הזו פועלת כמו שצריך אבל הוגדר ערך זהה במקום אחר שמוחלף על ידי המדיניות הזו.</translation>
 <translation id="1567405528131216114">הוספה של <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">יש להזין תאריך תפוגה</translation>
-<translation id="1569694109004336106">‏Taktak Taktak מנסה להפעיל את Windows Hello כדי למלא סיסמאות.</translation>
+<translation id="1569694109004336106">‏Taktak מנסה להפעיל את Windows Hello כדי למלא סיסמאות.</translation>
 <translation id="1572765991610098222">‏<ph name="WIDTH" />x<ph name="HEIGHT" /> אינץ'</translation>
 <translation id="1574714699824202614">מתבצע אימות של אמצעי התשלום</translation>
 <translation id="1576277203042721907">תובנות בנושא קניות</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">אפשר לפנות לספק למידע נוסף</translation>
 <translation id="2091887806945687916">צליל</translation>
 <translation id="2093184051799735948">‏אפשר לחפש ב-<ph name="ENGINE_NAME" /> או להזין כתובת URL</translation>
-<translation id="2093982008204312032">‏Taktak Taktak מנסה לכבות את Windows Hello כדי למלא סיסמאות.</translation>
+<translation id="2093982008204312032">‏Taktak מנסה לכבות את Windows Hello כדי למלא סיסמאות.</translation>
 <translation id="2094505752054353250">אי התאמה בדומיינים</translation>
 <translation id="2094704029599359040">פרטי הגרסה</translation>
 <translation id="2099652385553570808">3 סיכות הידוק בצד שמאל</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;ביטול מחיקה</translation>
 <translation id="239708975263889666">‏עריכת מספר ה-KTN</translation>
 <translation id="2399344929880464793">‏ה-IBAN הזה נשמר בחשבון Taktak שלך, כך שאפשר להשתמש בו בכל שירותי Taktak.</translation>
-<translation id="2399868464369312507">‏Taktak Taktak מנסה לערוך את אמצעי התשלום.</translation>
+<translation id="2399868464369312507">‏Taktak מנסה לערוך את אמצעי התשלום.</translation>
 <translation id="2400263725572336749">הוספת דרכון</translation>
 <translation id="2400271059665846158">‏להגדיר את כרטיסי מועדון הלקוחות שלך ב-Taktak Wallet</translation>
 <translation id="2400600116338235695">האתר יכול לבקש הרשאה להתחבר ליציאות טוריות</translation>
@@ -3123,7 +3123,7 @@ Del</translation>
 <translation id="6164605812717770913">הורה או אפוטרופוס אמרו שאסור לך לבקר באתר הזה. אפשר לבקש מהם לבטל את החסימה.</translation>
 <translation id="6165508094623778733">למידע נוסף</translation>
 <translation id="6167577165590485365">ניסיון האחזור האחרון:</translation>
-<translation id="617256461084925519">‏Taktak Taktak מנסה לאמת את הזהות שלך כדי למלא את פרטי התשלום.</translation>
+<translation id="617256461084925519">‏Taktak מנסה לאמת את הזהות שלך כדי למלא את פרטי התשלום.</translation>
 <translation id="6173208311907792313">‏השלמת הרכישה באמצעות Windows Hello</translation>
 <translation id="6176387967264100435">המחיר הזה גבוה</translation>
 <translation id="6177128806592000436">החיבור שלך לאתר הזה לא מאובטח</translation>
@@ -3983,7 +3983,7 @@ Del</translation>
 <translation id="7564049878696755256">‏הגישה שלך לחשבון <ph name="ORG_NAME" /> עשויה להישלל והזהות שלך עשויה להיגנב. ההמלצה של Taktak היא לשנות את הסיסמה שלך עכשיו.</translation>
 <translation id="7564667064360547717">חולצות ועליוניות</translation>
 <translation id="7567204685887185387">השרת הזה לא הצליח להוכיח שהוא <ph name="DOMAIN" />. אישור האבטחה שלו עלול להיות מפוברק במרמה. הסיבה לכך עשויה להיות הגדרה שגויה או שהחיבור שלך הותקף.</translation>
-<translation id="7568616151991626879">‏Taktak Taktak מנסה למלא את הסיסמה שלך ב-<ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">‏Taktak מנסה למלא את הסיסמה שלך ב-<ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{אין כרטיסיות}=1{כרטיסייה אחת במכשיר הזה}one{‫# כרטיסיות במכשיר הזה}two{‫# כרטיסיות במכשיר הזה}other{‫# כרטיסיות במכשיר הזה}}</translation>
 <translation id="7569490014721427265">גולף</translation>
 <translation id="7569952961197462199">‏להסיר את פרטי כרטיס האשראי מ-Taktak?</translation>
@@ -4564,7 +4564,7 @@ Del</translation>
 <translation id="8541579497401304453">יצירת קשר עם עסק בשיחת טלפון.</translation>
 <translation id="8542014550340843547">3 סיכות הידוק בחלק התחתון</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">‏Taktak Taktak מנסה לשנות את ההגדרות למילוי אמצעי תשלום.</translation>
+<translation id="8544217240017914508">‏Taktak מנסה לשנות את ההגדרות למילוי אמצעי תשלום.</translation>
 <translation id="8544303911974837265">Polyester</translation>
 <translation id="854548366864113872">אפשרות במחיר גבוה</translation>
 <translation id="8546254312340305428">צריך לציין את הסיבה להעלאה (חובה)</translation>

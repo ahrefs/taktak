@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Бул эреже талаптагыдай иштеп жатат, бирок ал башка жерде коюлган окшош мааниге алмаштырып койду.</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> темасын кошуу</translation>
 <translation id="1569487616857761740">Насыя картасынын жарамдуулук мөөнөтүн киргизиңиз</translation>
-<translation id="1569694109004336106">Taktak Taktak сырсөздөрдү толтуруу үчүн Windows Hello функциясын күйгүзүүгө аракет кылып жатат.</translation>
+<translation id="1569694109004336106">Taktak сырсөздөрдү толтуруу үчүн Windows Hello функциясын күйгүзүүгө аракет кылып жатат.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> дюйм</translation>
 <translation id="1574714699824202614">Төлөм ыкмасы ырасталууда</translation>
 <translation id="1576277203042721907">Соода статистикасы</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">Кеңири маалымат алуу үчүн провайдерге кайрылыңыз</translation>
 <translation id="2091887806945687916">Үн</translation>
 <translation id="2093184051799735948"><ph name="ENGINE_NAME" /> издеп же URL дарегин териңиз</translation>
-<translation id="2093982008204312032">Taktak Taktak сырсөздөрдү толтура турган Windows Hello функциясын өчүрүүгө аракет кылып жатат.</translation>
+<translation id="2093982008204312032">Taktak сырсөздөрдү толтура турган Windows Hello функциясын өчүрүүгө аракет кылып жатат.</translation>
 <translation id="2094505752054353250">Домен дал келбейт</translation>
 <translation id="2094704029599359040">Версия тууралуу маалымат</translation>
 <translation id="2099652385553570808">Сол жагын үч жолу илмек менен бекитүү</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">Жок кылууну &amp;жасабоо</translation>
 <translation id="239708975263889666">Белгилүү жүргүнчүнүн номерин түзөтүү</translation>
 <translation id="2399344929880464793">Бул IBAN коду Taktak аккаунтуңузда сакталды. Эми аны бардык Taktak кызматтарында колдоно аласыз.</translation>
-<translation id="2399868464369312507">Taktak Taktak төлөм ыкмаларын түзөтүүгө аракет кылууда.</translation>
+<translation id="2399868464369312507">Taktak төлөм ыкмаларын түзөтүүгө аракет кылууда.</translation>
 <translation id="2400263725572336749">Паспортту кошуу</translation>
 <translation id="2400271059665846158">Taktak Капчыктагы туруктуу кардарлардын карталарын тескөө</translation>
 <translation id="2400600116338235695">Сериялык портторго туташууга уруксат сурай алат</translation>
@@ -3118,7 +3118,7 @@
 <translation id="6164605812717770913">Ата-энең же камкорчуң бул сайтка кирүүгө тыюу салды. Алардан сайтты бөгөттөн чыгарууну сурана аласың.</translation>
 <translation id="6165508094623778733">Кошумча маалымат</translation>
 <translation id="6167577165590485365">Акыркы алуу аракеттери:</translation>
-<translation id="617256461084925519">Taktak Taktak төлөм маалыматын толтуруу үчүн өзүңүздү ырастоого аракет кылып жатат.</translation>
+<translation id="617256461084925519">Taktak төлөм маалыматын толтуруу үчүн өзүңүздү ырастоого аракет кылып жатат.</translation>
 <translation id="6173208311907792313">Бул нерсени Windows Hello аркылуу сатып алыңыз</translation>
 <translation id="6176387967264100435">Бул кымбат баа</translation>
 <translation id="6177128806592000436">Бул сайтка туташуу коопсуз эмес</translation>
@@ -3278,7 +3278,7 @@
 <translation id="6411107829285739505">A4x8</translation>
 <translation id="6412543105195503444">Ата-эненин уруксаты диалогу</translation>
 <translation id="6414010576370319452">Тери жана тырмакка кам көрүү</translation>
-<translation id="6415778972515849510">Taktak Taktak аккаунтуңуздун коопсуздугун коргоп, сырсөзүңүздү өзгөртүүгө жардам берет.</translation>
+<translation id="6415778972515849510">Taktak аккаунтуңуздун коопсуздугун коргоп, сырсөзүңүздү өзгөртүүгө жардам берет.</translation>
 <translation id="6416877227920300343">EDP</translation>
 <translation id="641811520997304166">Эмгек акыны эсептөө кызматтары</translation>
 <translation id="6418199314628742460">Маанилүү же жеке маалымат сакталбаганын текшериңиз.</translation>
@@ -3977,7 +3977,7 @@
 <translation id="7564049878696755256">Кимдир бирөө сиздин жеке дайындарыңызга же <ph name="ORG_NAME" /> аккаунтуңузга кирип алган окшойт. Taktak сырсөзүңүздү азыр өзгөртүүнү сунуштайт.</translation>
 <translation id="7564667064360547717">Көйнөктөр жана үстүнкү кийим</translation>
 <translation id="7567204685887185387">Бул сервер <ph name="DOMAIN" /> экендигин далилдей алган жок; себеби анын коопсуздук тастыктамасы алдамчылык жол менен чыгарылган окшойт. Мындай көйгөй туура эмес конфигурация менен шартталышы мүмкүн же туташууңузга чабуулчу кийлигишип жатат.</translation>
-<translation id="7568616151991626879">Taktak Taktak <ph name="APP_NAME" /> колдонмосунда сырсөзүңүздү толтурууга аракет кылып жатат.</translation>
+<translation id="7568616151991626879">Taktak <ph name="APP_NAME" /> колдонмосунда сырсөзүңүздү толтурууга аракет кылып жатат.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Жок}=1{Ушул түзмөктөгү 1 өтмөк}other{Ушул түзмөктөгү # өтмөк}}</translation>
 <translation id="7569490014721427265">Гольф</translation>
 <translation id="7569952961197462199">Насыя картасы Taktak'дон алынып салынсынбы?</translation>
@@ -4542,7 +4542,7 @@
 <translation id="8521013008769249764">Дивандар жана креслолор</translation>
 <translation id="8521812709849134608">Бийик стол</translation>
 <translation id="8522180136695974431">Насыя отчеттуулугу жана байкоо жүргүзүү</translation>
-<translation id="8522552481199248698">Taktak Taktak аккаунтуңуздун коопсуздугун коргоп, сырсөзүңүздү өзгөртүүгө жардам берет.</translation>
+<translation id="8522552481199248698">Taktak аккаунтуңуздун коопсуздугун коргоп, сырсөзүңүздү өзгөртүүгө жардам берет.</translation>
 <translation id="8527228059738193856">Динамиктер</translation>
 <translation id="8527681393107582734">Айыл чарба жана токойчулук</translation>
 <translation id="8528149813106025610">Балдардын кийим-кечеси</translation>
@@ -4558,7 +4558,7 @@
 <translation id="8541579497401304453">Компанияга чалыңыз.</translation>
 <translation id="8542014550340843547">Төмөнкү жагын үч жолу тешүү</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak төлөм ыкмаларын толтуруу параметрлерин өзгөртүүгө аракет кылууда.</translation>
+<translation id="8544217240017914508">Taktak төлөм ыкмаларын толтуруу параметрлерин өзгөртүүгө аракет кылууда.</translation>
 <translation id="8544303911974837265">Полиэстер</translation>
 <translation id="854548366864113872">Кымбат вариант</translation>
 <translation id="8546254312340305428">Жүктөп берүүнүн себебин көрсөтүңүз (милдеттүү)</translation>

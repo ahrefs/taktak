@@ -2111,7 +2111,7 @@
 <translation id="2434449159125086437">לא ניתן להגדיר את המדפסת. צריך לבדוק את התצורה ולנסות שוב.</translation>
 <translation id="2434758125294431199">אנשי קשר לבחירתך שיוכלו לשתף איתך</translation>
 <translation id="2434915728183570229">עכשיו יש לך אפשרות לראות את האפליקציות שבטלפון</translation>
-<translation id="2435137177546457207">‏תנאים נוספים של Taktak Taktak ו-ChromeOS Flex</translation>
+<translation id="2435137177546457207">‏תנאים נוספים של Taktak ו-ChromeOS Flex</translation>
 <translation id="2435248616906486374">הרשת מנותקת</translation>
 <translation id="2435457462613246316">הצגת סיסמה</translation>
 <translation id="2436385001956947090">העתקת &amp;הקישור</translation>
@@ -2448,7 +2448,7 @@
 <translation id="266079277508604648">‏אי אפשר להתחבר למדפסת. יש לבדוק שהמדפסת פועלת ומחוברת אל ה-Chromebook דרך רשת ה-Wi-Fi או בחיבור USB.</translation>
 <translation id="2661315027005813059">הדף השמור במטמון לדף הקודם/הבא: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">במצב הטעינה המהירה גולשים מהר יותר וצורכים פחות נתונים. כדי לקבל מידע נוסף, אפשר ללחוץ כאן.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">‏מתבצעת הוספה של פרופיל eSIM. הפעולה עשויה להימשך מספר דקות.</translation>
 <translation id="2663302507110284145">שפה</translation>
 <translation id="2665394472441560184">מילה חדשה</translation>
@@ -4079,7 +4079,7 @@
 <translation id="3798670284305777884">רמקול (פנימי)</translation>
 <translation id="3799128412641261490">הגדרות גישה באמצעות מתג</translation>
 <translation id="3800764353337460026">סגנון סמלים</translation>
-<translation id="3800828618615365228">‏תנאים נוספים של Taktak Taktak ו-ChromeOS</translation>
+<translation id="3800828618615365228">‏תנאים נוספים של Taktak ו-ChromeOS</translation>
 <translation id="3800898876950197674">כדי לאשר את ההתקנה של התוסף הזה, אתם צריכים להזין את הסיסמה שלכם.</translation>
 <translation id="3801449494961771207">בחירת הקול שישמש להמרת טקסט לדיבור</translation>
 <translation id="3802486193901166966">אין צורך בהרשאות מיוחדות או הרשאות גישה נוספות לאתרים כדי להשתמש בתוסף הזה</translation>
@@ -4102,7 +4102,7 @@
 <translation id="3810973564298564668">ניהול</translation>
 <translation id="381202950560906753">להוסיף עוד</translation>
 <translation id="3812525830114410218">אישור פגום</translation>
-<translation id="3813296892522778813">‏אם לא מוצאים את מה שמחפשים, אפשר לעבור אל <ph name="BEGIN_LINK_CHROMIUM" />מרכז העזרה של Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">‏אם לא מוצאים את מה שמחפשים, אפשר לעבור אל <ph name="BEGIN_LINK_CHROMIUM" />מרכז העזרה של Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">השפה שאליה יתורגמו דפים ותשובות מהירות</translation>
 <translation id="3813458570141926987">‏רשימת נושאים שנבחרו על ידי Taktak על בסיס היסטוריית הגלישה האחרונה.</translation>
 <translation id="3814529970604306954">חשבון בית ספרי</translation>
@@ -4578,7 +4578,7 @@
 <translation id="4133076602192971179">כדי לשנות את הסיסמה, יש לפתוח את האפליקציה</translation>
 <translation id="4134838386867070505">שלב 1 מתוך 4: תיאור הבעיה</translation>
 <translation id="413534985210133938">הסימנייה "<ph name="LOCAL_FOLDER" />" שמורה רק במכשיר הזה. אם היא תועבר אל "<ph name="LOCAL_FOLDER" />", היא לא תהיה זמינה יותר במכשירים האחרים שלך.</translation>
-<translation id="4135746311382563554">‏תנאים והגבלות נוספים של Taktak Taktak ו-ChromeOS</translation>
+<translation id="4135746311382563554">‏תנאים והגבלות נוספים של Taktak ו-ChromeOS</translation>
 <translation id="4136203100490971508">תאורת הלילה תכבה באופן אוטומטי בשעת הזריחה</translation>
 <translation id="41365691917097717">‏בחירה להמשיך תגרום להפעלת ניפוי באגים באמצעות ADB במהלך היצירה והבדיקה של אפליקציות ל-Android. חשוב לשים לב שהפעולה הזו מאפשרת את ההתקנה של אפליקציות ל-Android שלא אומתו על ידי Taktak. כדי להשבית את התכונה הזו, יש לאפס את המכשיר להגדרות המקוריות.</translation>
 <translation id="4137923333452716643">הדגשת הטקסט שרוצים לפתוח במצב קריאה</translation>
@@ -7845,7 +7845,7 @@
 <translation id="6511607461419653612">‏צריך להפעיל את Chromebook מחדש ולנסות שוב.</translation>
 <translation id="6511827214781912955">כדאי לשקול מחיקה של <ph name="FILENAME" /> כדי שמשתמשים אחרים במכשיר לא יוכלו לראות את הסיסמאות שלך</translation>
 <translation id="6512759338201777379">תמונה <ph name="INDEX" /> של <ph name="SUBJECT" /> שנוצרה, באווירה <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">‏Taktak Taktak ישתמש בחבילת הגלישה אם לא התחברת לרשת אחרת.</translation>
+<translation id="6513247462497316522">‏Taktak ישתמש בחבילת הגלישה אם לא התחברת לרשת אחרת.</translation>
 <translation id="6514010653036109809">מכשיר זמין:</translation>
 <translation id="6516990372629061585">‏הצגת אישורים שיובאו מ-Linux</translation>
 <translation id="6517382055541687102">המכשיר שנבחר הוחלף במכשיר <ph name="DEVICE_NAME" /></translation>
@@ -8799,7 +8799,7 @@
 <translation id="7180611975245234373">רענון</translation>
 <translation id="7180865173735832675">התאמה אישית</translation>
 <translation id="7181117767881540376">&amp;הסתרת סרגל הסימניות</translation>
-<translation id="7181329571386134105">‏כדי לאשר ל<ph name="CHILD_NAME" /> להתקין תוספים בעתיד בלי אישור ממך, עליך לפתוח את אפליקציית Family Link במכשיר שלך ולעדכן את הגדרות Taktak Taktak של <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">‏כדי לאשר ל<ph name="CHILD_NAME" /> להתקין תוספים בעתיד בלי אישור ממך, עליך לפתוח את אפליקציית Family Link במכשיר שלך ולעדכן את הגדרות Taktak של <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">הצטרפות לקבוצת כרטיסיות עם <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{הצטרפות לקבוצת כרטיסיות עם <ph name="OWNER_FIRST_NAME" />}=1{הצטרפות לקבוצת כרטיסיות עם <ph name="OWNER_FIRST_NAME" /> בלבד (#)}one{הצטרפות לקבוצת כרטיסיות עם <ph name="OWNER_FIRST_NAME" /> ועוד # משתמשים}two{הצטרפות לקבוצת כרטיסיות עם <ph name="OWNER_FIRST_NAME" /> ועוד # משתמשים}other{הצטרפות לקבוצת כרטיסיות עם <ph name="OWNER_FIRST_NAME" /> ועוד # משתמשים}}</translation>
 <translation id="7181976109296206547">‏בדיקת העדכונים של הלוגו, השם וכתובת ה-URL</translation>

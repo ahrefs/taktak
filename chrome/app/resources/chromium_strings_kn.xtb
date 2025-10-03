@@ -226,7 +226,7 @@
 <translation id="395904275706073188">ಸಂರಕ್ಷಿತ ಪುಟಗಳನ್ನು ಓದಲಾಗುವುದಿಲ್ಲ. ಬೇರೆ ಪುಟವನ್ನು ಪ್ರಯತ್ನಿಸಿ.</translation>
 <translation id="3962647064319009959">Taktak ನಿಮ್ಮನ್ನು ಹೇಗೆ ಸುರಕ್ಷಿತವಾಗಿರಿಸುತ್ತದೆ ಎಂಬುದನ್ನು ತಿಳಿಯಿರಿ</translation>
 <translation id="3971865010372729242">ನೀವು ವಿಳಾಸ ಪಟ್ಟಿ ಅಥವಾ ಸರ್ಚ್ ಬಾಕ್ಸ್‌ನಲ್ಲಿ ಟೈಪ್ ಮಾಡಿದಾಗ, ಸಲಹೆಗಳನ್ನು ಪಡೆಯಲು Taktak ನೀವು ಟೈಪ್ ಮಾಡುವುದನ್ನು ನಿಮ್ಮ ಸಂಸ್ಥೆಯ ಹುಡುಕಾಟ, AI ಮತ್ತು ಏಜೆಂಟ್ ಟೂಲ್‌ಗಳಿಗೆ ಕಳುಹಿಸುತ್ತದೆ.</translation>
-<translation id="3975724895399328945">Taktak Taktak for Testing ಕುರಿತು</translation>
+<translation id="3975724895399328945">Taktak for Testing ಕುರಿತು</translation>
 <translation id="3997429360543082038">ChromiumOS ಕುರಿತು</translation>
 <translation id="4019629340646866719">ಹೆಚ್ಚುವರಿ <ph name="BEGIN_LINK_CROS_OSS" />ಓಪನ್ ಸೋರ್ಸ್ ಸಾಫ್ಟ್‌ವೇರ್‌<ph name="END_LINK_CROS_OSS" /> ನಿಂದ ChromiumOS ನ ರಚನೆ, ಹಾಗೆಯೇ <ph name="BEGIN_LINK_LINUX_OSS" />Linux ಡೆವಲಪ್‌ಮೆಂಟ್ ಎನ್ವಿರಾನ್‌ಮೆಂಟ್<ph name="END_LINK_LINUX_OSS" /> ರಚನೆ ಸಹ ಸಾಧ್ಯವಾಯಿತು.</translation>
 <translation id="4022972681110646219">ಸ್ಕ್ರೀನ್‌ ಅನ್ನು ಅನುವಾದಿಸಿ</translation>
@@ -542,7 +542,7 @@
 <translation id="8077498902115777962">ಆ್ಯಪ್‌ಗಳಿಗೆ ಹಿನ್ನೆಲೆಯಲ್ಲಿ ರನ್ ಆಗುತ್ತಿರುವ Taktak ಅನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ</translation>
 <translation id="80790299200510644">ಚಿತ್ರದ ಮೂಲಕ ಹುಡುಕಾಟ</translation>
 <translation id="8086881907087796310">ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್ ಕನಿಷ್ಠ ಹಾರ್ಡ್‌ವೇರ್ ಅಗತ್ಯತೆಗಳನ್ನು ಪೂರೈಸದ ಕಾರಣ ಇನ್‌ಸ್ಟಾಲೇಶನ್ ವಿಫಲವಾಗಿದೆ.</translation>
-<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak Taktak for Testing</translation>
+<translation id="8096472344908884505"><ph name="PAGE_TITLE" /> - Taktak for Testing</translation>
 <translation id="8105840573057009683">ಈ ಸೈಟ್‌ಗೆ ಸಂಬಂಧಿಸಿದಂತೆ Taktak ಗೆ ಸ್ಥಳ ಅನುಮತಿಯ ಅಗತ್ಯವಿದೆ</translation>
 <translation id="8118331347066725040">Lens ಬಳಸಿಕೊಂಡು ಹುಡುಕಲು ಪ್ರತಿಕ್ರಿಯೆಯನ್ನು ಕಳುಹಿಸಿ</translation>
 <translation id="8133124826068723441">ನಿಮ್ಮ ಡೊಮೇನ್‌ನಲ್ಲಿ ಸಿಂಕ್ ಮಾಡುವ ಸೌಲಭ್ಯವಿಲ್ಲದ ಕಾರಣ ನಿಮ್ಮ ಡೇಟಾವನ್ನು ಸಿಂಕ್ ಮಾಡಲು ChromiumOS ಗೆ ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ.</translation>
@@ -588,7 +588,7 @@
 <translation id="8601359445272098721">ಹೊಸತು! "ಸ್ಕ್ರೀನ್‌ ಅನ್ನು ಅನುವಾದಿಸಿ" ಎಂಬ ಬಟನ್‌ ಅನ್ನು ಆಯ್ಕೆ ಮಾಡುವ ಮೂಲಕ ನಿಮ್ಮ ಸ್ಕ್ರೀನ್‌ ನಲ್ಲಿ ನೀವು ಪಠ್ಯ ಮತ್ತು ಚಿತ್ರಗಳನ್ನು ಅನುವಾದಿಸಬಹುದು</translation>
 <translation id="8619360774459241877">Taktak ಅನ್ನು ಪ್ರಾರಂಭಿಸಲಾಗುತ್ತಿದೆ...</translation>
 <translation id="8621669128220841554">ಅನಿರ್ದಿಷ್ಟ ದೋಷದಿಂದಾಗಿ ಸ್ಥಾಪನೆ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ Taktak ಅನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.</translation>
-<translation id="8648201657708811153">Taktak Taktak for Testing ಅನ್ನು ನಿಮ್ಮ ಡೀಫಾಲ್ಟ್ ಬ್ರೌಸರ್ ಆಗಿ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</translation>
+<translation id="8648201657708811153">Taktak for Testing ಅನ್ನು ನಿಮ್ಮ ಡೀಫಾಲ್ಟ್ ಬ್ರೌಸರ್ ಆಗಿ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</translation>
 <translation id="8697124171261953979">ನೀವು Taktak ಪ್ರಾರಂಭಿಸಿದಾಗ ಅಥವಾ ಓಮ್ನಿಬಾಕ್ಸ್‌ನಿಂದ ಹುಡುಕಿದಾಗ ತೋರಿಸಬೇಕಾದ ಪುಟವನ್ನು ಕೂಡಾ ಇದು ನಿಯಂತ್ರಿಸುತ್ತದೆ.</translation>
 <translation id="8704119203788522458">ಇದು ನಿಮ್ಮ Taktak</translation>
 <translation id="8712637175834984815">ಅರ್ಥವಾಯಿತು</translation>

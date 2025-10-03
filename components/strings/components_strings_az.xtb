@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Bu siyasət nəzərdə tutulduğu kimi işləyir, lakin eyni dəyər başqa bir yerdə təyin olunub və bu siyasət tərəfindən əvəz edilib.</translation>
 <translation id="1567405528131216114"><ph name="TOPIC" /> əlavə edin</translation>
 <translation id="1569487616857761740">Bitmə vaxtını daxil edin</translation>
-<translation id="1569694109004336106">Taktak Taktak parolları doldurmaq üçün Windows Hello'nu aktiv etməyə çalışır.</translation>
+<translation id="1569694109004336106">Taktak parolları doldurmaq üçün Windows Hello'nu aktiv etməyə çalışır.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> düym</translation>
 <translation id="1574714699824202614">Ödəniş metodunun doğrulanması</translation>
 <translation id="1576277203042721907">Şoppinq üzrə statistik məlumat</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">Ətraflı məlumat üçün provayder ilə əlaqə saxlayın</translation>
 <translation id="2091887806945687916">Səs</translation>
 <translation id="2093184051799735948"><ph name="ENGINE_NAME" /> ilə axtarış edin və ya URL daxil edin</translation>
-<translation id="2093982008204312032">Taktak Taktak parolları doldurmaq üçün Windows Hello'nu deaktiv etməyə çalışır.</translation>
+<translation id="2093982008204312032">Taktak parolları doldurmaq üçün Windows Hello'nu deaktiv etməyə çalışır.</translation>
 <translation id="2094505752054353250">Domen uyğunsuzluğu</translation>
 <translation id="2094704029599359040">Versiya Məlumatı</translation>
 <translation id="2099652385553570808">Soldan üçlü ştapel vurun</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;Silinməni ləğv edin</translation>
 <translation id="239708975263889666">Məlum səyahətçi nömrəsinə düzəliş edin</translation>
 <translation id="2399344929880464793">Taktak xidmətlərində istifadə etməyiniz üçün bu IBAN Taktak Hesabında yadda saxlanır.</translation>
-<translation id="2399868464369312507">Taktak Taktak ödəniş metodlarını redaktə etməyə çalışır.</translation>
+<translation id="2399868464369312507">Taktak ödəniş metodlarını redaktə etməyə çalışır.</translation>
 <translation id="2400263725572336749">Pasport əlavə edin</translation>
 <translation id="2400271059665846158">Taktak Pulqabıda loyallıq kartlarınızı idarə edin</translation>
 <translation id="2400600116338235695">Saytlar ardıcıl portlara qoşulmaq üçün icazə istəyə bilər</translation>
@@ -2130,7 +2130,7 @@
 <translation id="4506599922270137252">Sistem admini ilə əlaqə yardılır</translation>
 <translation id="450710068430902550">Administrator ilə paylaşılır</translation>
 <translation id="4509074745930862522"><ph name="TRANSLATE_FOCUSED_FRIENDLY_MATCH_TEXT" />, Tab düyməsi, sonra Enter düyməsinə basaraq bu səhifəni Taktak Tərcümə ilə tərcümə edin</translation>
-<translation id="4515275063822566619">Kart və ünvanlar Taktak Taktak və Taktak Hesabındandır (<ph name="ACCOUNT_EMAIL" />). Onları <ph name="BEGIN_LINK" />Ayarlar<ph name="END_LINK" /> bölməsindən idarə edə bilərsiniz.</translation>
+<translation id="4515275063822566619">Kart və ünvanlar Taktak və Taktak Hesabındandır (<ph name="ACCOUNT_EMAIL" />). Onları <ph name="BEGIN_LINK" />Ayarlar<ph name="END_LINK" /> bölməsindən idarə edə bilərsiniz.</translation>
 <translation id="4515847625438516456">Mikro və Subkompakt Nəqliyyat Vasitələri</translation>
 <translation id="451601984112574365">Yaşıl 3</translation>
 <translation id="4519245469315452746">Güncəllənmə zamanı cihaza müdaxilə edildi.</translation>
@@ -3115,7 +3115,7 @@
 <translation id="6164605812717770913">Valideyn və ya qəyyum bu saytın daxil olmağınız üçün uyğun olmadığını bildirdi. Blokdan çıxarmasını istəyə bilərsiniz.</translation>
 <translation id="6165508094623778733">Ətraflı öyrənin</translation>
 <translation id="6167577165590485365">Son əldə etmə cəhdi:</translation>
-<translation id="617256461084925519">Taktak Taktak ödəniş məlumatlarını doldurmaq üçün kimliyinizi yoxlayır.</translation>
+<translation id="617256461084925519">Taktak ödəniş məlumatlarını doldurmaq üçün kimliyinizi yoxlayır.</translation>
 <translation id="6173208311907792313">Windows Hello ilə alışı tamamlayın</translation>
 <translation id="6176387967264100435">Bu qiymət yüksəkdir</translation>
 <translation id="6177128806592000436">Bu sayta olan bağlantınız güvənli deyil</translation>
@@ -3275,7 +3275,7 @@
 <translation id="6411107829285739505">A4x8</translation>
 <translation id="6412543105195503444">Valideyn razılığı dialoqu</translation>
 <translation id="6414010576370319452">Dəri və dırnaq qulluğu</translation>
-<translation id="6415778972515849510">Taktak Taktak Hesabını qorumağa və parolu dəyişməyə kömək edir.</translation>
+<translation id="6415778972515849510">Taktak Hesabını qorumağa və parolu dəyişməyə kömək edir.</translation>
 <translation id="6416877227920300343">EDP</translation>
 <translation id="641811520997304166">Əməkhaqqı xidmətləri</translation>
 <translation id="6418199314628742460">Vacib biznes və ya şəxsi məlumatların xarici qaydada saxlanıldığına əmin olun.</translation>
@@ -3974,7 +3974,7 @@
 <translation id="7564049878696755256"><ph name="ORG_NAME" /> hesabına girişi itirə və ya kimlik oğurluğu ilə üzləşə bilərsiniz. Taktak parollarınızı indi dəyişməyi məsləhət görür.</translation>
 <translation id="7564667064360547717">Köynək və topiklər</translation>
 <translation id="7567204685887185387">Bu server <ph name="DOMAIN" /> olduğunu sübut edə bilmədi; güvənlik sertifikatı saxta ola bilər. Buna yalnış quraşdırma və ya hücumçu bağlantısı səbəb ola bilər.</translation>
-<translation id="7568616151991626879">Taktak Taktak <ph name="APP_NAME" /> tətbiqində parolunuzu daxil etməyə çalışır.</translation>
+<translation id="7568616151991626879">Taktak <ph name="APP_NAME" /> tətbiqində parolunuzu daxil etməyə çalışır.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Yoxdur}=1{Bu cihazda 1 tab}other{Bu cihazda # tab}}</translation>
 <translation id="7569490014721427265">Qolf</translation>
 <translation id="7569952961197462199">Kredit kart Taktak'dan silinsin?</translation>
@@ -4539,7 +4539,7 @@
 <translation id="8521013008769249764">Divan və kreslolar</translation>
 <translation id="8521812709849134608">Mətbəx dəzgahları</translation>
 <translation id="8522180136695974431">Kredit hesabatı və monitorinqi</translation>
-<translation id="8522552481199248698">Taktak Taktak Hesabınızı qorumağa və parolu dəyişməyə kömək edə bilər.</translation>
+<translation id="8522552481199248698">Taktak Hesabınızı qorumağa və parolu dəyişməyə kömək edə bilər.</translation>
 <translation id="8527228059738193856">Dinamiklər</translation>
 <translation id="8527681393107582734">Kənd və Meşə Təsərrüfatı</translation>
 <translation id="8528149813106025610">Uşaq Geyimi</translation>
@@ -4555,7 +4555,7 @@
 <translation id="8541579497401304453">Telefon zəngi edərək müəssisə ilə əlaqə saxlayın.</translation>
 <translation id="8542014550340843547">Aşağıdan üçlü ştapel vurun</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak ödəniş metodlarını doldurmaq üçün ayarlara dəyişiklik etməyə çalışır.</translation>
+<translation id="8544217240017914508">Taktak ödəniş metodlarını doldurmaq üçün ayarlara dəyişiklik etməyə çalışır.</translation>
 <translation id="8544303911974837265">Poliefir</translation>
 <translation id="854548366864113872">Yüksək qiymət seçimi</translation>
 <translation id="8546254312340305428">Yükləmə səbəbini bildirin (tələb edilir)</translation>

@@ -2038,7 +2038,7 @@
 <translation id="2391805183137601570">Адкрыць Steam</translation>
 <translation id="2392369802118427583">Уключыць</translation>
 <translation id="2393136602862631930">Усталюйце <ph name="APP_NAME" /> на свой Chromebook</translation>
-<translation id="2393313392064891208">Змест умоў выкарыстання АС Taktak Taktak OS Flex</translation>
+<translation id="2393313392064891208">Змест умоў выкарыстання АС Taktak OS Flex</translation>
 <translation id="2395616325548404795">Ваша прылада <ph name="DEVICE_TYPE" /> паспяхова зарэгістравана для карпаратыўнага кіравання, але не адправіла інфармацыю аб аб’екце ўласнасці і месцазнаходжанні. Увядзіце гэту інфармацыю пра прыладу ўручную на кансолі адміністратара.</translation>
 <translation id="2396783860772170191">Увядзіце 4-значны PIN-код (0000–9999)</translation>
 <translation id="2398546389094871088">Пры выкарыстанні функцыі Powerwash для скіду налад профілі eSIM-карты не выдаляюцца. Іх можна выдаліць уручную ў <ph name="LINK_BEGIN" />наладах мабільнай прылады<ph name="LINK_END" />.</translation>
@@ -2100,7 +2100,7 @@
 <translation id="2434449159125086437">Не ўдаецца наладзіць прынтар. Праверце параметры канфігурацыі і паўтарыце спробу.</translation>
 <translation id="2434758125294431199">Выберыце, хто можа ажыццяўляць абагульванне з вамі</translation>
 <translation id="2434915728183570229">Цяпер вы можаце праглядаць нядаўнія праграмы з тэлефона</translation>
-<translation id="2435137177546457207">Дадатковыя ўмовы Taktak Taktak і Taktak OS Flex</translation>
+<translation id="2435137177546457207">Дадатковыя ўмовы Taktak і Taktak OS Flex</translation>
 <translation id="2435248616906486374">Сетка адключана</translation>
 <translation id="2435457462613246316">Паказаць пароль</translation>
 <translation id="2436385001956947090">Капіраваць &amp;спасылку</translation>
@@ -4022,7 +4022,7 @@
 <translation id="3771290962915251154">Гэта налада выключана, бо ўключаны бацькоўскі кантроль</translation>
 <translation id="3771294271822695279">Відэафайлы</translation>
 <translation id="3771851622616482156">Будзе выкананы выхад з гэтага сайта, у тым ліку на адкрытых укладках</translation>
-<translation id="3772046291955677288">Мною былі прачытаны <ph name="BEGIN_LINK1" />Умовы выкарыстання Taktak<ph name="END_LINK1" /> і <ph name="BEGIN_LINK2" />Дадатковыя ўмовы выкарыстання Taktak Taktak і Taktak OS<ph name="END_LINK2" />, і я згаджаюся з імі.</translation>
+<translation id="3772046291955677288">Мною былі прачытаны <ph name="BEGIN_LINK1" />Умовы выкарыстання Taktak<ph name="END_LINK1" /> і <ph name="BEGIN_LINK2" />Дадатковыя ўмовы выкарыстання Taktak і Taktak OS<ph name="END_LINK2" />, і я згаджаюся з імі.</translation>
 <translation id="3774059845329307709">Серыйны нумар</translation>
 <translation id="3774166835015494435">Нядаўнія фота і апавяшчэнні</translation>
 <translation id="3775432569830822555">Сертыфікат сервера SSL</translation>
@@ -4066,7 +4066,7 @@
 <translation id="3798670284305777884">Дынамік (унутраны)</translation>
 <translation id="3799128412641261490">Налады доступу праз пераключальнікі</translation>
 <translation id="3800764353337460026">Стыль сімвалаў</translation>
-<translation id="3800828618615365228">Дадатковыя ўмовы Taktak Taktak і Taktak OS</translation>
+<translation id="3800828618615365228">Дадатковыя ўмовы Taktak і Taktak OS</translation>
 <translation id="3800898876950197674">Каб дазволіць выкарыстоўваць гэта пашырэнне, увядзіце пароль.</translation>
 <translation id="3801449494961771207">Стандартны голас для сінтэзу маўлення</translation>
 <translation id="3802486193901166966">Пашырэнне не патрабуе спецыяльных дазволаў, і ў яго няма дадатковага доступу да сайтаў</translation>
@@ -4089,7 +4089,7 @@
 <translation id="3810973564298564668">Кіраваць</translation>
 <translation id="381202950560906753">Дадаць яшчэ</translation>
 <translation id="3812525830114410218">Недапушчальны сертыфікат</translation>
-<translation id="3813296892522778813">Калі вы не знайшлі тое, што шукалі, адкрыйце<ph name="BEGIN_LINK_CHROMIUM" />Даведку Taktak Taktak<ph name="END_LINK_CHROMIUM" /></translation>
+<translation id="3813296892522778813">Калі вы не знайшлі тое, што шукалі, адкрыйце<ph name="BEGIN_LINK_CHROMIUM" />Даведку Taktak<ph name="END_LINK_CHROMIUM" /></translation>
 <translation id="3813358687923336574">Мова для перакладу старонак і для Хуткіх адказаў</translation>
 <translation id="3813458570141926987">Спіс тэм, падабраных браўзерам Taktak на падставе нядаўняй гісторыі прагляду вамі сайтаў</translation>
 <translation id="3814529970604306954">Навучальны ўліковы запіс</translation>
@@ -4123,7 +4123,7 @@
 <translation id="3827548509471720579">Яркасць дысплэя</translation>
 <translation id="3827774300009121996">&amp;Поўнаэкранны рэжым</translation>
 <translation id="3828029223314399057">Шукаць у закладках</translation>
-<translation id="3828953470056652895">Мною былі прачытаны <ph name="BEGIN_LINK1" />Умовы выкарыстання Taktak<ph name="END_LINK1" />, <ph name="BEGIN_LINK2" />Дадатковыя ўмовы выкарыстання Taktak Taktak і Taktak OS<ph name="END_LINK2" /> і <ph name="BEGIN_LINK3" />Умовы выкарыстання Play<ph name="END_LINK3" />, і я згаджаюся з імі.</translation>
+<translation id="3828953470056652895">Мною былі прачытаны <ph name="BEGIN_LINK1" />Умовы выкарыстання Taktak<ph name="END_LINK1" />, <ph name="BEGIN_LINK2" />Дадатковыя ўмовы выкарыстання Taktak і Taktak OS<ph name="END_LINK2" /> і <ph name="BEGIN_LINK3" />Умовы выкарыстання Play<ph name="END_LINK3" />, і я згаджаюся з імі.</translation>
 <translation id="3829530269338026191"><ph name="WINDOW_TITLE" /> – Выкарыстоўваецца шмат памяці: <ph name="MEMORY_VALUE" /></translation>
 <translation id="3829765597456725595">Абагульванне файлаў праз SMB</translation>
 <translation id="3830470485672984938">Выкарыстаць іншы ключ доступу</translation>
@@ -4566,7 +4566,7 @@
 <translation id="4133076602192971179">Каб змяніць пароль, адкрыйце праграму</translation>
 <translation id="4134838386867070505">Крок 1 з 4. Апішыце праблему</translation>
 <translation id="413534985210133938">Папка "<ph name="LOCAL_FOLDER" />" захавана толькі на гэтай прыладзе. Калі вы перамесціце гэту закладку ў папку "<ph name="LOCAL_FOLDER" />", то яна больш не будзе даступная на іншых прыладах.</translation>
-<translation id="4135746311382563554">Дадатковыя ўмовы выкарыстання Taktak Taktak і Taktak OS</translation>
+<translation id="4135746311382563554">Дадатковыя ўмовы выкарыстання Taktak і Taktak OS</translation>
 <translation id="4136203100490971508">Начная падсветка выключыцца аўтаматычна пасля ўзыходу сонца</translation>
 <translation id="41365691917097717">Калі працягнуць, будзе ўключана адладка ADB для стварэння і тэсціравання праграм для Android. Звярніце ўвагу, што, уключыўшы ADB, вы дазваляеце ўсталёўваць праграмы для Android, якія не былі спраўджаны Taktak, а для выключэння ADB патрабуецца скід налад да заводскіх значэнняў.</translation>
 <translation id="4137923333452716643">Вылучыце тэкст, які неабходна адкрыць у рэжыме чытання</translation>
@@ -7585,7 +7585,7 @@
 <translation id="6314819609899340042">Функцыі адладкі на гэтай прыладзе <ph name="IDS_SHORT_PRODUCT_NAME" /> уключаны.</translation>
 <translation id="6315170314923504164">Галасавы ўвод</translation>
 <translation id="6315493146179903667">Усё на пярэдні план</translation>
-<translation id="6316432269411143858">Тэкст Умоў выкарыстання Taktak Taktak OS</translation>
+<translation id="6316432269411143858">Тэкст Умоў выкарыстання Taktak OS</translation>
 <translation id="6317369057005134371">Чакаецца акно праграмы...</translation>
 <translation id="6318125393809743217">Уключыць файл policies.json з канфігурацыямі палітык.</translation>
 <translation id="6318944945640833942">Не ўдалося знайсці прынтар. Увядзіце адрас прынтара яшчэ раз.</translation>
@@ -7832,7 +7832,7 @@
 <translation id="6511607461419653612">Перазапусціце Chromebook і паўтарыце спробу</translation>
 <translation id="6511827214781912955">Рэкамендуем выдаліць файл "<ph name="FILENAME" />", каб іншыя карыстальнікі прылады не змаглі пабачыць вашы паролі</translation>
 <translation id="6512759338201777379">Згенерыраваны відарыс <ph name="INDEX" />, тэма: <ph name="SUBJECT" />, настрой: <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak будзе выкарыстоўваць мабільную перадачу даных, калі вы не падключаны да іншай сеткі.</translation>
+<translation id="6513247462497316522">Taktak будзе выкарыстоўваць мабільную перадачу даных, калі вы не падключаны да іншай сеткі.</translation>
 <translation id="6514010653036109809">Даступная прылада:</translation>
 <translation id="6516990372629061585">Праглядзець сертыфікаты, імпартаваныя з Linux</translation>
 <translation id="6517382055541687102">Выбраная прылада заменена на наступную: <ph name="DEVICE_NAME" /></translation>
@@ -8176,7 +8176,7 @@
 <translation id="6746124502594467657">Перамясціць ніжэй</translation>
 <translation id="67465227497040338">Паказаць пароль для <ph name="DOMAIN" /></translation>
 <translation id="6746834324024491643">Каб выкарыстоўваць свае паролі і іншыя даныя на ўсіх сваіх прыладах, увайдзіце ў сістэму як <ph name="EMAIL" /></translation>
-<translation id="6748980958975836188">Мною былі прачытаны <ph name="BEGIN_LINK1" />Умовы выкарыстання Taktak<ph name="END_LINK1" /> і <ph name="BEGIN_LINK2" />Дадатковыя ўмовы выкарыстання Taktak Taktak і Taktak OS<ph name="END_LINK2" />, і я згаджаюся з імі.</translation>
+<translation id="6748980958975836188">Мною былі прачытаны <ph name="BEGIN_LINK1" />Умовы выкарыстання Taktak<ph name="END_LINK1" /> і <ph name="BEGIN_LINK2" />Дадатковыя ўмовы выкарыстання Taktak і Taktak OS<ph name="END_LINK2" />, і я згаджаюся з імі.</translation>
 <translation id="6749077623962119521">Скінуць дазволы?</translation>
 <translation id="6749473226660745022">Фота</translation>
 <translation id="6750757184909117990">Выключыць сотавую сетку</translation>
@@ -8787,7 +8787,7 @@
 <translation id="7180611975245234373">Абнавіць</translation>
 <translation id="7180865173735832675">Наладзіць</translation>
 <translation id="7181117767881540376">&amp;Схаваць панэль закладак</translation>
-<translation id="7181329571386134105"><ph name="CHILD_NAME" /> зможа ўсталёўваць пашырэнні без вашага ўхвалення, калі змяніць налады Taktak Taktak для карыстальніка <ph name="CHILD_NAME" />. Зрабіць гэта можна на прыладзе ў праграме Family Link.</translation>
+<translation id="7181329571386134105"><ph name="CHILD_NAME" /> зможа ўсталёўваць пашырэнні без вашага ўхвалення, калі змяніць налады Taktak для карыстальніка <ph name="CHILD_NAME" />. Зрабіць гэта можна на прыладзе ў праграме Family Link.</translation>
 <translation id="7181840534454431748">Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" />
               {NUM_OTHER_MEMBERS,plural, =0{Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" />}=1{Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" /> і яшчэ # карыстальнік}one{Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" /> і яшчэ # карыстальнік}few{Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" /> і яшчэ # карыстальнікі}many{Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" /> і яшчэ # карыстальнікаў}other{Далучыцеся да групы ўкладак, у якой удзельнічае <ph name="OWNER_FIRST_NAME" /> і яшчэ # карыстальніка}}</translation>
 <translation id="7181976109296206547">Прагледзьце змяненні ў лагатыпе, назве і URL-адрасе</translation>

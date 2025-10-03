@@ -2115,7 +2115,7 @@ Nastavitve tega računa je mogoče upravljati z namestitvijo aplikacije Family L
 <translation id="2434449159125086437">Ni mogoče nastaviti tiskalnika. Preverite konfiguracijo in poskusite znova.</translation>
 <translation id="2434758125294431199">Izberite, kdo lahko deli z vami</translation>
 <translation id="2434915728183570229">Zdaj si lahko ogledate aplikacije telefona</translation>
-<translation id="2435137177546457207">Dodatni pogoji za Taktak Taktak in ChromeOS Flex</translation>
+<translation id="2435137177546457207">Dodatni pogoji za Taktak in ChromeOS Flex</translation>
 <translation id="2435248616906486374">Povezava z omrežjem je prekinjena</translation>
 <translation id="2435457462613246316">Pokaži geslo</translation>
 <translation id="2436385001956947090">Kopiraj &amp;povezavo</translation>
@@ -2452,7 +2452,7 @@ Nastavitve tega računa je mogoče upravljati z namestitvijo aplikacije Family L
 <translation id="266079277508604648">Ni se mogoče povezati s tiskalnikom. Preverite, ali je tiskalnik vklopljen in povezan s Chromebookom prek omrežja Wi-Fi ali z USB-jem.</translation>
 <translation id="2661315027005813059">Stran v predpomnilniku za hitro obnovitev strani: <ph name="BACK_FORWARD_CACHE_PAGE_URL" /></translation>
 <translation id="2661714428027871023">Brskajte hitreje in uporabite manj podatkov z lahkim načinom. Kliknite, če želite več informacij.</translation>
-<translation id="2662876636500006917">Taktak Web Store</translation>
+<translation id="2662876636500006917">Chrome Web Store</translation>
 <translation id="2663253180579749458">Dodajanje profila za e-SIM. To lahko traja nekaj minut.</translation>
 <translation id="2663302507110284145">Jezik</translation>
 <translation id="2665394472441560184">Dodaj novo besedo</translation>
@@ -4083,7 +4083,7 @@ Domena <ph name="DOMAIN" /> zahteva, da je pametna kartica vstavljena.</translat
 <translation id="3798670284305777884">Zvočnik (vgrajeni)</translation>
 <translation id="3799128412641261490">Nastavitve stikalnega dostopa</translation>
 <translation id="3800764353337460026">Slog simbola</translation>
-<translation id="3800828618615365228">Dodatni pogoji za Taktak Taktak in Taktak OS</translation>
+<translation id="3800828618615365228">Dodatni pogoji za Taktak in Taktak OS</translation>
 <translation id="3800898876950197674">Če želite dovoliti to razširitev, vnesite geslo.</translation>
 <translation id="3801449494961771207">Sistemski glas pretvorbe besedila v govor</translation>
 <translation id="3802486193901166966">Ta razširitev ne potrebuje posebnih dovoljenj in nima dodatnega dostopa do spletnih mest.</translation>
@@ -4106,7 +4106,7 @@ Domena <ph name="DOMAIN" /> zahteva, da je pametna kartica vstavljena.</translat
 <translation id="3810973564298564668">Upravljaj</translation>
 <translation id="381202950560906753">Dodaj še enega</translation>
 <translation id="3812525830114410218">Poškodovano potrdilo</translation>
-<translation id="3813296892522778813">Odprite <ph name="BEGIN_LINK_CHROMIUM" />pomoč za Taktak Taktak<ph name="END_LINK_CHROMIUM" />, če ne najdete tega, kar iščete</translation>
+<translation id="3813296892522778813">Odprite <ph name="BEGIN_LINK_CHROMIUM" />pomoč za Taktak<ph name="END_LINK_CHROMIUM" />, če ne najdete tega, kar iščete</translation>
 <translation id="3813358687923336574">Jezik, uporabljen za prevajanje strani, in hitri odgovori</translation>
 <translation id="3813458570141926987">Seznam tem, ki jih je Taktak ocenil na podlagi vaše nedavne zgodovine brskanja</translation>
 <translation id="3814529970604306954">Šolski račun</translation>
@@ -4583,7 +4583,7 @@ Domena <ph name="DOMAIN" /> zahteva, da je pametna kartica vstavljena.</translat
 <translation id="4133076602192971179">Odprite aplikacijo, če želite spremeniti geslo</translation>
 <translation id="4134838386867070505">1. korak od 4: Opišite težavo</translation>
 <translation id="413534985210133938">Mapa »<ph name="LOCAL_FOLDER" />« je shranjena samo v tej napravi. Če ta zaznamek premaknete v mapo »<ph name="LOCAL_FOLDER" />«, do njega ne morete več dostopati v drugih napravah.</translation>
-<translation id="4135746311382563554">Dodatni pogoji storitve za Taktak Taktak in Taktak OS</translation>
+<translation id="4135746311382563554">Dodatni pogoji storitve za Taktak in Taktak OS</translation>
 <translation id="4136203100490971508">Nočna svetloba se bo samodejno izklopila ob sončnem vzhodu.</translation>
 <translation id="41365691917097717">Če nadaljujete, bo omogočeno odpravljanje napak z mostom za odpravljanje težav s sistemom Android (ADB) za ustvarjanje in preizkušanje aplikacij za Android. Upoštevajte, da to dejanje omogoča namestitev aplikacij za Android, ki jih ni preveril Taktak, če želite orodje onemogočiti, pa je potrebna tovarniška ponastavitev.</translation>
 <translation id="4137923333452716643">Označite besedilo, ki ga želite odpreti v načinu za branje</translation>
@@ -7852,7 +7852,7 @@ Domena <ph name="DOMAIN" /> zahteva, da je pametna kartica vstavljena.</translat
 <translation id="6511607461419653612">Znova zaženite Chromebook in poskusite znova</translation>
 <translation id="6511827214781912955">Priporočamo, da izbrišete datoteko <ph name="FILENAME" />, da drugi uporabniki te naprave ne bodo mogli videti vaših gesel.</translation>
 <translation id="6512759338201777379">Ustvarjena je bila slika št. <ph name="INDEX" /> za »<ph name="SUBJECT" />« z razpoloženjem <ph name="MOOD" />.</translation>
-<translation id="6513247462497316522">Taktak Taktak bo uporabil mobilno podatkovno povezavo, če niste povezani z drugim omrežjem.</translation>
+<translation id="6513247462497316522">Taktak bo uporabil mobilno podatkovno povezavo, če niste povezani z drugim omrežjem.</translation>
 <translation id="6514010653036109809">Razpoložljiva naprava:</translation>
 <translation id="6516990372629061585">Ogled uvoženih potrdil iz Linuxa</translation>
 <translation id="6517382055541687102">Izbrana naprava je bila spremenjena na: <ph name="DEVICE_NAME" /></translation>
@@ -8808,7 +8808,7 @@ Imate še # ogroženih gesel. Googlov upravitelj gesel priporoča, da takoj prev
 <translation id="7180611975245234373">Osveži</translation>
 <translation id="7180865173735832675">Prilagodi</translation>
 <translation id="7181117767881540376">&amp;Skrij vrstico z zaznamki</translation>
-<translation id="7181329571386134105">Če želite otroku <ph name="CHILD_NAME" /> dovoliti nameščanje prihodnjih razširitev brez vaše odobritve, v napravi odprite aplikacijo Family Link in posodobite nastavitve za Taktak Taktak za otroka <ph name="CHILD_NAME" />.</translation>
+<translation id="7181329571386134105">Če želite otroku <ph name="CHILD_NAME" /> dovoliti nameščanje prihodnjih razširitev brez vaše odobritve, v napravi odprite aplikacijo Family Link in posodobite nastavitve za Taktak za otroka <ph name="CHILD_NAME" />.</translation>
 <translation id="7181840534454431748">Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" />
             {NUM_OTHER_MEMBERS,plural, =0{Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" />}=1{Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" /> in še #}one{Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" /> in še #}two{Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" /> in še #}few{Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" /> in še #}other{Pridružite se skupini zavihkov z osebo <ph name="OWNER_FIRST_NAME" /> in še #}}</translation>
 <translation id="7181976109296206547">Pregled posodobitev logotipa, imena in URL-ja</translation>

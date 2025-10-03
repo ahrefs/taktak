@@ -348,7 +348,7 @@ Kitu atveju tai bus užblokuota pagal jūsų privatumo nustatymus. Taip turinys,
 <translation id="1567040042588613346">Ši politika veikia, kaip numatyta, bet ta pati vertė yra nustatyta kitur ir ją pakeičia ši politika.</translation>
 <translation id="1567405528131216114">Pridėti „<ph name="TOPIC" />“</translation>
 <translation id="1569487616857761740">Įveskite galiojimo laiko pabaigos datą</translation>
-<translation id="1569694109004336106">„Taktak Taktak“ bando įjungti „Windows Hello“ slaptažodžiams užpildyti.</translation>
+<translation id="1569694109004336106">„Taktak“ bando įjungti „Windows Hello“ slaptažodžiams užpildyti.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" /> x <ph name="HEIGHT" /> col.</translation>
 <translation id="1574714699824202614">Patvirtinamas mokėjimo metodas</translation>
 <translation id="1576277203042721907">Apsipirkimo įžvalgos</translation>
@@ -654,7 +654,7 @@ Kitu atveju tai bus užblokuota pagal jūsų privatumo nustatymus. Taip turinys,
 <translation id="2090451897496479509">Jei reikia daugiau informacijos, susisiekite su teikėju</translation>
 <translation id="2091887806945687916">Garsas</translation>
 <translation id="2093184051799735948">Ieškokite „<ph name="ENGINE_NAME" />“ arba įveskite URL</translation>
-<translation id="2093982008204312032">„Taktak Taktak“ bando išjungti „Windows Hello“ slaptažodžiams užpildyti.</translation>
+<translation id="2093982008204312032">„Taktak“ bando išjungti „Windows Hello“ slaptažodžiams užpildyti.</translation>
 <translation id="2094505752054353250">Domeno neatitikimas</translation>
 <translation id="2094704029599359040">Versijos informacija</translation>
 <translation id="2099652385553570808">Trys sankabėlės kairėje</translation>
@@ -864,7 +864,7 @@ Kitu atveju tai bus užblokuota pagal jūsų privatumo nustatymus. Taip turinys,
 <translation id="2396249848217231973">&amp;Anuliuoti ištrynimą</translation>
 <translation id="239708975263889666">Žinomo keliautojo numerio redagavimas</translation>
 <translation id="2399344929880464793">Šis IBAN išsaugotas jūsų „Taktak“ paskyroje, kad galėtumėte jį naudoti „Taktak“ paslaugose.</translation>
-<translation id="2399868464369312507">„Taktak Taktak“ bando redaguoti mokėjimo metodus.</translation>
+<translation id="2399868464369312507">„Taktak“ bando redaguoti mokėjimo metodus.</translation>
 <translation id="2400263725572336749">Paso pridėjimas</translation>
 <translation id="2400271059665846158">Tvarkykite lojalumo korteles programoje „Taktak Wallet“</translation>
 <translation id="2400600116338235695">Gali būti prašoma prisijungti prie nuosekliųjų prievadų</translation>
@@ -3120,7 +3120,7 @@ Kitu atveju tai bus užblokuota pagal jūsų privatumo nustatymus. Taip turinys,
 <translation id="6164605812717770913">Vienas iš tėvų ar globėjų nurodė, kad negalite apsilankyti šioje svetainėje. Galite paprašyti ją atblokuoti.</translation>
 <translation id="6165508094623778733">Sužinokite daugiau</translation>
 <translation id="6167577165590485365">Paskutinis bandymas gauti:</translation>
-<translation id="617256461084925519">„Taktak Taktak“ bando patvirtinti jūsų tapatybę, kad galėtų užpildyti mokėjimo informaciją.</translation>
+<translation id="617256461084925519">„Taktak“ bando patvirtinti jūsų tapatybę, kad galėtų užpildyti mokėjimo informaciją.</translation>
 <translation id="6173208311907792313">Užbaikite pirkimą naudodami „Windows Hello“</translation>
 <translation id="6176387967264100435">Tai yra didelė kaina</translation>
 <translation id="6177128806592000436">Ryšys su šia svetaine nėra saugus</translation>
@@ -3980,7 +3980,7 @@ Papildoma išsami informacija:
 <translation id="7564049878696755256">Galite prarasti galimybę pasiekti „<ph name="ORG_NAME" />“ paskyrą arba gali būti pavogta tapatybė. „Taktak“ rekomenduoja pakeisti slaptažodį dabar.</translation>
 <translation id="7564667064360547717">Marškiniai ir viršutinės dalies drabužiai</translation>
 <translation id="7567204685887185387">Šiam serveriui nepavyko patvirtinti, kad tai yra <ph name="DOMAIN" />; jo saugos sertifikatas gali būti neteisėtai išduotas. Taip gali nutikti dėl netinkamos konfigūracijos ar dėl ryšį pertraukusio užgrobėjo.</translation>
-<translation id="7568616151991626879">„Taktak Taktak“ bando užpildyti jūsų slaptažodį programoje „<ph name="APP_NAME" />“.</translation>
+<translation id="7568616151991626879">„Taktak“ bando užpildyti jūsų slaptažodį programoje „<ph name="APP_NAME" />“.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Nėra}=1{Vienas skirtukas šiame įrenginyje}one{# skirtukas šiame įrenginyje}few{# skirtukai šiame įrenginyje}many{# skirtuko šiame įrenginyje}other{# skirtukų šiame įrenginyje}}</translation>
 <translation id="7569490014721427265">Golfas</translation>
 <translation id="7569952961197462199">Pašalinti kredito kortelės informaciją iš „Taktak“?</translation>
@@ -4561,7 +4561,7 @@ Papildoma išsami informacija:
 <translation id="8541579497401304453">Susisiekite su įmone pradėdami telefono skambutį.</translation>
 <translation id="8542014550340843547">Trys sankabėlės apačioje</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">„Taktak Taktak“ bando pakeisti mokėjimo metodų pildymo nustatymus.</translation>
+<translation id="8544217240017914508">„Taktak“ bando pakeisti mokėjimo metodų pildymo nustatymus.</translation>
 <translation id="8544303911974837265">Poliesteris</translation>
 <translation id="854548366864113872">Didelės kainos parinktis</translation>
 <translation id="8546254312340305428">Nurodykite įkėlimo priežastį (būtina)</translation>

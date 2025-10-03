@@ -305,12 +305,12 @@
         on-click="onManageCertificatesClick_" external>
     </cr-link-row>
 
-    <cr-link-row id="advancedProtectionProgramLink" class="hr"
-        label="$i18n{advancedProtectionProgramTitle}"
-        sub-label="$i18n{advancedProtectionProgramDesc}"
-        on-click="onAdvancedProtectionProgramLinkClick_"
-        external>
-    </cr-link-row>
+<!--    <cr-link-row id="advancedProtectionProgramLink" class="hr"-->
+<!--        label="$i18n{advancedProtectionProgramTitle}"-->
+<!--        sub-label="$i18n{advancedProtectionProgramDesc}"-->
+<!--        on-click="onAdvancedProtectionProgramLinkClick_"-->
+<!--        external>-->
+<!--    </cr-link-row>-->
     <template is="dom-if" if="[[showDisableSafebrowsingDialog_]]" restamp>
       <settings-simple-confirmation-dialog
           title-text="$i18n{safeBrowsingDisableDialog}"

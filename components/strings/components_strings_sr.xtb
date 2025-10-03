@@ -348,7 +348,7 @@
 <translation id="1567040042588613346">Ове смернице раде као што је предвиђено, али иста вредност је подешена на другом месту и замењују је ове смернице.</translation>
 <translation id="1567405528131216114">Додај <ph name="TOPIC" /></translation>
 <translation id="1569487616857761740">Унесите датум истека</translation>
-<translation id="1569694109004336106">Taktak Taktak покушава да укључи Windows Hello за попуњавање лозинки.</translation>
+<translation id="1569694109004336106">Taktak покушава да укључи Windows Hello за попуњавање лозинки.</translation>
 <translation id="1572765991610098222"><ph name="WIDTH" />x<ph name="HEIGHT" /> in</translation>
 <translation id="1574714699824202614">Верификује се начин плаћања</translation>
 <translation id="1576277203042721907">Увид у куповину</translation>
@@ -654,7 +654,7 @@
 <translation id="2090451897496479509">Више информација потражите од добављача</translation>
 <translation id="2091887806945687916">Звук</translation>
 <translation id="2093184051799735948">Претражите <ph name="ENGINE_NAME" /> или унесите URL</translation>
-<translation id="2093982008204312032">Taktak Taktak покушава да искључи Windows Hello за попуњавање лозинки.</translation>
+<translation id="2093982008204312032">Taktak покушава да искључи Windows Hello за попуњавање лозинки.</translation>
 <translation id="2094505752054353250">Домени се не подударају</translation>
 <translation id="2094704029599359040">Информације о верзији</translation>
 <translation id="2099652385553570808">Троструко спајање на левој страни</translation>
@@ -864,7 +864,7 @@
 <translation id="2396249848217231973">&amp;Опозови брисање</translation>
 <translation id="239708975263889666">Измените број регистрованог путника</translation>
 <translation id="2399344929880464793">Овај IBAN се чува на Taktak налогу да бисте могли да га користите у свим Taktak услугама.</translation>
-<translation id="2399868464369312507">Taktak Taktak покушава да измени начине плаћања.</translation>
+<translation id="2399868464369312507">Taktak покушава да измени начине плаћања.</translation>
 <translation id="2400263725572336749">Додајте пасош</translation>
 <translation id="2400271059665846158">Управљајте картицама лојалности у Taktak новчанику</translation>
 <translation id="2400600116338235695">Може да тражи да се повезује са серијским портовима</translation>
@@ -3118,7 +3118,7 @@
 <translation id="6164605812717770913">Родитељ или старатељ је навео да није у реду да посетиш овај сајт. Можеш да затражиш да га одблокира.</translation>
 <translation id="6165508094623778733">Сазнајте више</translation>
 <translation id="6167577165590485365">Последњи покушај преузимања:</translation>
-<translation id="617256461084925519">Taktak Taktak покушава да провери да ли сте то ви да би могао да унесе информације о плаћању.</translation>
+<translation id="617256461084925519">Taktak покушава да провери да ли сте то ви да би могао да унесе информације о плаћању.</translation>
 <translation id="6173208311907792313">Довршите куповину уз Windows Hello</translation>
 <translation id="6176387967264100435">Ова цена је висока</translation>
 <translation id="6177128806592000436">Веза са овим сајтом није безбедна</translation>
@@ -3978,7 +3978,7 @@
 <translation id="7564049878696755256">Можете да изгубите приступ налогу за <ph name="ORG_NAME" /> или би могло да дође до крађе идентитета. Taktak вам препоручује да одмах промените лозинку.</translation>
 <translation id="7564667064360547717">Кошуље и мајице</translation>
 <translation id="7567204685887185387">Овај сервер не може да докаже да је <ph name="DOMAIN" />; његов безбедносни сертификат је можда лажно издат. Узрок томе је можда погрешна конфигурација или нападач који је прекинуо везу.</translation>
-<translation id="7568616151991626879">Taktak Taktak покушава да унесе лозинку на <ph name="APP_NAME" />.</translation>
+<translation id="7568616151991626879">Taktak покушава да унесе лозинку на <ph name="APP_NAME" />.</translation>
 <translation id="7569072768465750771">{COUNT,plural, =0{Ниједна}=1{1 картица на овом уређају}one{# картица на овом уређају}few{# картице на овом уређају}other{# картица на овом уређају}}</translation>
 <translation id="7569490014721427265">Голф</translation>
 <translation id="7569952961197462199">Желите ли да уклоните кредитну картицу из Taktak-а?</translation>
@@ -4559,7 +4559,7 @@
 <translation id="8541579497401304453">Повежите се са предузећем покретањем телефонског позива.</translation>
 <translation id="8542014550340843547">Троструко спајање на дну</translation>
 <translation id="8542617028204211143">SRA0</translation>
-<translation id="8544217240017914508">Taktak Taktak покушава да измени подешавања за попуњавање начина плаћања.</translation>
+<translation id="8544217240017914508">Taktak покушава да измени подешавања за попуњавање начина плаћања.</translation>
 <translation id="8544303911974837265">Полиестер</translation>
 <translation id="854548366864113872">Опција високе цене</translation>
 <translation id="8546254312340305428">Наведите разлог за отпремање (обавезно)</translation>
