@@ -114,8 +114,8 @@ targets.compile_target(
 )
 
 targets.compile_target(
-    name = "chrome_sandbox",
-    label = "//sandbox/linux:chrome_sandbox",
+    name = "taktak_sandbox",
+    label = "//sandbox/linux:taktak_sandbox",
 )
 
 targets.compile_target(

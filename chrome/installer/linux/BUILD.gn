@@ -379,7 +379,7 @@ group("installer_deps") {
     "//chrome/browser/resources/media/mei_preload:component",
     "//components/crash/core/app:chrome_crashpad_handler",
     "//components/privacy_sandbox/privacy_sandbox_attestations/preload:component",
-    "//sandbox/linux:chrome_sandbox",
+    "//sandbox/linux:taktak_sandbox",
   ]
   if (bundle_widevine_cdm) {
     public_deps += [ "//third_party/widevine/cdm" ]
