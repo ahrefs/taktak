@@ -94,30 +94,30 @@ class Observer : public BrowserListObserver, public AvatarMenuObserver {
 
 - (instancetype)initWithMainMenuItem:(NSMenuItem*)item
             profileAttributesStorage:(ProfileAttributesStorage*)storage {
-  if ((self = [super init])) {
-    _mainMenuItem = item;
-
-    _mainMenuItem.submenu =
-        [[NSMenu alloc] initWithTitle:GetProfileMenuTitle()];
-
-    // When this object is constructed in non-test code, right after the main
-    // menu is created, that happens before the message loop starts and thus
-    // `g_browser_process` is not yet available. In that case, schedule
-    // initialization on the loop to do work when the browser is ready. For test
-    // code, the required object is available, so initialize immediately to
-    // allow test code to avoid loop spinning calls, which could cause
-    // flakiness.
-
-    if (storage) {
-      [self initializeMenuWithProfileAttributesStorage:storage];
-    } else {
-      dispatch_async(dispatch_get_main_queue(), ^{
-        [self initializeMenuWithProfileAttributesStorage:
-                  &g_browser_process->profile_manager()
-                       ->GetProfileAttributesStorage()];
-      });
-    }
-  }
+//  if ((self = [super init])) {
+//    _mainMenuItem = item;
+//
+//    _mainMenuItem.submenu =
+//        [[NSMenu alloc] initWithTitle:GetProfileMenuTitle()];
+//
+//    // When this object is constructed in non-test code, right after the main
+//    // menu is created, that happens before the message loop starts and thus
+//    // `g_browser_process` is not yet available. In that case, schedule
+//    // initialization on the loop to do work when the browser is ready. For test
+//    // code, the required object is available, so initialize immediately to
+//    // allow test code to avoid loop spinning calls, which could cause
+//    // flakiness.
+//
+//    if (storage) {
+//      [self initializeMenuWithProfileAttributesStorage:storage];
+//    } else {
+//      dispatch_async(dispatch_get_main_queue(), ^{
+//        [self initializeMenuWithProfileAttributesStorage:
+//                  &g_browser_process->profile_manager()
+//                       ->GetProfileAttributesStorage()];
+//      });
+//    }
+//  }
   return self;
 }
 
