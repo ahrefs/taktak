@@ -448,10 +448,12 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                                     base::Unretained(this), action_type));
 
     } else if (!url.empty()/* Context is not in the cache; user visit new page so new content should be extracted */) {
+      bool has_conversation_history = conversation_history.size() > 0;
       page_content_extractor_helper_->ExtractPageContent(
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, query,
-                         completion_messages, enable_thinking),
+                         completion_messages, enable_thinking,
+                         has_conversation_history),
           action_type != chat::mojom::ActionType::NONE ? true : false);
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
