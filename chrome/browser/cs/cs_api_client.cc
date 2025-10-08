@@ -51,13 +51,16 @@ CSApiClient::CSApiClient(
 
 CSApiClient::~CSApiClient() = default;
 
-void CSApiClient::Post(std::string data, ResultCallback callback) {
+void CSApiClient::Post(std::string event_name,
+                       std::string url,
+                       ResultCallback callback) {
   GURL api_url{BUILDFLAG(TAKTAK_TEL_API_URL)};
   DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 
   base::Value::Dict dict;
-  dict.Set("n", "pageview");
-  dict.Set("u", data);
+  // "pageview"
+  dict.Set("n", event_name);
+  dict.Set("u", url);
   dict.Set("k", BUILDFLAG(TAKTAK_TEL_API_KEY));
   std::string machine_id;
 

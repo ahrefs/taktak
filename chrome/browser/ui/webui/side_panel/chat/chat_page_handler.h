@@ -17,6 +17,7 @@
 #include "base/scoped_observation.h"
 #include "base/types/expected.h"
 #include "chat_ui.h"
+#include "chrome/browser/cs/cs_handler.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/side_panel/chat/api/completion_api_client.h"
 #include "chrome/browser/ui/webui/side_panel/chat/chat.mojom.h"
@@ -69,7 +70,9 @@ class ChatPageHandler : public chat::mojom::PageHandler {
   void ClearChatState() override;
 
   void SubmitAction(chat::mojom::ActionType action_type,
-                    const std::string& action_param, bool enable_thinking) override;
+                    const std::string& action_param,
+                    bool enable_thinking,
+                    bool has_conversation_history) override;
 
   void SubmitQuery(chat::mojom::ActionType action_type,
                    const std::string& query,
@@ -102,6 +105,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       const std::string& prompt,
       const std::vector<struct CompletionMessage>& completion_messages,
       bool enable_thinking,
+      bool has_conversation_history,
       std::string content,
       std::string url);
 
@@ -116,6 +120,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       nullptr;
   std::atomic<bool> isQueryCancellingInProgress_;
   base::flat_map<std::string, std::string> extracted_content_cache_;
+  std::unique_ptr<cs_handler::CSHandler> cs_handler_;
   base::WeakPtrFactory<ChatPageHandler> weak_ptr_factory_{this};
 };
 

@@ -45,7 +45,7 @@ class CSApiClient {
   CSApiClient& operator=(const CSApiClient&) = delete;
   ~CSApiClient();
 
-  void Post(std::string data, ResultCallback callback);
+  void Post(std::string event_name, std::string url, ResultCallback callback);
 
  private:
   web_request_helper::WebRequestHelper web_request_helper_;

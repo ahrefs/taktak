@@ -17,6 +17,7 @@ class SharedURLLoaderFactory;
 }  // namespace network
 
 namespace cs_handler {
+
 class CSHandler {
  public:
   CSHandler(scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
@@ -24,12 +25,14 @@ class CSHandler {
   CSHandler& operator=(const CSHandler&) = delete;
   ~CSHandler();
 
-  void Handle(const GURL& gurl);
+  void HandleURL(const GURL& gurl);
+  void HandleCustomEvent(const std::string event_name);
 
  private:
   std::unique_ptr<CSApiClient> api_client_;
   base::WeakPtrFactory<CSHandler> weak_ptr_factory_{this};
 };
+
 }  // namespace cs_handler
 
 #endif  // CHROMIUM_CS_CLIENT_H

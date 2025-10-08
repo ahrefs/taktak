@@ -5,6 +5,7 @@
 
 #include "cs_handler.h"
 
+#include <format>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -39,7 +40,7 @@ CSHandler::CSHandler(
 
 CSHandler::~CSHandler() = default;
 
-void CSHandler::Handle(const GURL& url) {
+void CSHandler::HandleURL(const GURL& url) {
   if (url.SchemeIsHTTPOrHTTPS()) {
     std::string url_to_submit;
     GURL::Replacements remove_query_and_ref;
@@ -107,12 +108,25 @@ void CSHandler::Handle(const GURL& url) {
     }
 
     api_client_->Post(
-        url_to_submit, base::BindOnce([](WebRequestResult result) {
+        "pageview", url_to_submit, base::BindOnce([](WebRequestResult result) {
+          VLOG(0) << __func__ << " |>> CS pageview response code : "
+                  << result.response_code();
           VLOG(0) << __func__
-                  << " |>> CS post response code : " << result.response_code();
-          VLOG(0) << __func__
-                  << " |>> CS post error code : " << result.error_code();
+                  << " |>> CS pageview error code : " << result.error_code();
         }));
   }
+}
+
+void CSHandler::HandleCustomEvent(const std::string event_name) {
+  api_client_->Post(
+      event_name, "https://clickstream.taktak.com/tracked_events",
+      base::BindOnce([](WebRequestResult result) {
+        VLOG(0) << __func__
+                << std::format(" |>> CS custom event response code : {}",
+                               result.response_code());
+        VLOG(0) << __func__
+                << std::format(" |>> CS custom event error code : {}",
+                               result.error_code());
+      }));
 }
 }  // namespace cs_handler

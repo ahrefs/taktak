@@ -17,7 +17,7 @@ import {getCss} from './chat_app.css.js';
 import {getHtml} from './chat_app.html.js';
 import type {ChatApiProxy} from "./chat_api_proxy.js";
 import {ChatApiProxyImpl} from "./chat_api_proxy.js";
-import {marked} from "./marked.js";
+// import {marked} from "./marked.js";
 import {
     ActionItem,
     ActionResponse,
@@ -259,8 +259,8 @@ export class ChatAppElement extends CrLitElement {
             }
         } else if (response.responseType == ResponseType.COMPLETED) {
             this.isThinking_ = false;
-            console.log("|>> ..... |>>")
-            console.log(marked.parse(this.currentResponseResult_, {async : false}));
+            // console.log("|>> ..... |>>")
+            // console.log(marked.parse(this.currentResponseResult_, {async : false}));
             this.currentResponseResult_ = this.removeCaret(this.currentResponseResult_) + "\n";
             this.isQuerySubmitting_ = false;
             this.saveCurrentConversation();
@@ -442,8 +442,17 @@ export class ChatAppElement extends CrLitElement {
             top: this.$.conversationContainer.scrollHeight,
             behavior: 'smooth'
         });
+
+        let hasConversationHistory = false;
+        for (const conversation of this.conversations_) {
+            if (conversation != undefined && conversation.query.length > 0 && conversation.responseText.length > 0) {
+                hasConversationHistory = true;
+                break;
+            }
+        }
+
         setTimeout(() => {
-            this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_)
+            this.chatApiProxy_.submitAction(actionType, actionParam, this.enableThinking_, hasConversationHistory);
         }, 0);
     }
 

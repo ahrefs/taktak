@@ -3628,7 +3628,7 @@ void BrowserView::DidFinishNavigation(
     return;
   }
 
-  cs_handler_->Handle(navigation_handle->GetURL());
+  cs_handler_->HandleURL(navigation_handle->GetURL());
 }
 
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always

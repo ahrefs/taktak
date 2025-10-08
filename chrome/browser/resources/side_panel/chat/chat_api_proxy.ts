@@ -34,7 +34,7 @@ export interface ChatApiProxy {
 
     clearChatState(): void;
 
-    submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean): void;
+    submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean, hasConversationHistory: boolean): void;
 
     submitQuery(actionType: ActionType, query: string, url: string, conversation_history : ConversationItem[], enableThinking: boolean): void;
 
@@ -106,8 +106,8 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         this.handler.clearChatState();
     }
 
-    submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean) {
-        this.handler.submitAction(actionType, actionParam, enableThinking);
+    submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean, hasConversationHistory: boolean) {
+        this.handler.submitAction(actionType, actionParam, enableThinking, hasConversationHistory);
     }
 
     submitQuery(actionType: ActionType, query: string, url: string, conversation_history: ConversationItem[], enableThinking: boolean ) {

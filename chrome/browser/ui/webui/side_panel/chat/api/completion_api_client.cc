@@ -76,9 +76,6 @@ namespace {
 
         std::string json;
         base::JSONWriter::Write(dict, &json);
-        DVLOG(0) << "BEGIN==============================================================================================";
-        DVLOG(0) << json;
-        DVLOG(0) << "END================================================================================================";
         return json;
     }
 }  // namespace
@@ -125,7 +122,6 @@ void CompletionApiClient::ClearAllQueries() {
 void CompletionApiClient::OnQueryDataReceived(
         GenerationDataCallback callback,
         base::expected<base::Value, std::string> result) {
-    VLOG(0) << "|>> OnQueryDataReceived ";
     if (!result.has_value() || !result->is_dict()) {
         VLOG(0) << "|>> no result ";
         return;
@@ -139,7 +135,6 @@ void CompletionApiClient::OnQueryDataReceived(
                 if (delta) {
                     const std::string *content = delta->FindString("content");
                     if (content) {
-                        VLOG(0) << "Content: " << *content;
                         entire_completion_result.push_back(*content);
                         callback.Run(std::move(*content));
                     }
@@ -154,11 +149,6 @@ void CompletionApiClient::OnQueryCompleted(GenerationCompletedCallback callback,
   const bool success = result.Is2XXResponseCode();
 
   if (success) {
-    VLOG(0) << "Begin Completed Result ===========================";
-    for(const auto &s: entire_completion_result) {
-        VLOG(0) << s << std::endl;
-    }
-    VLOG(0) << "End Completed Result ===========================";
     entire_completion_result.clear();
     std::move(callback).Run(base::ok(""));
     return;
