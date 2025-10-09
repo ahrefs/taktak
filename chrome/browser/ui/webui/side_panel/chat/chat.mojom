@@ -40,6 +40,8 @@ struct APIError {
 struct ConversationItem {
     string user_query;
     string llm_response;
+    string url;
+    bool is_url_context;
 };
 
 struct SiteInfo {

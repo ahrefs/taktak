@@ -123,7 +123,6 @@ void CompletionApiClient::OnQueryDataReceived(
         GenerationDataCallback callback,
         base::expected<base::Value, std::string> result) {
     if (!result.has_value() || !result->is_dict()) {
-        VLOG(0) << "|>> no result ";
         return;
     }
 

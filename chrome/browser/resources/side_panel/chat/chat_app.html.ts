@@ -156,8 +156,8 @@ export function getHtml(this: ChatAppElement) {
                             this.siteInfo_.title === null
                                     ? html``
                                     : html`
-                                        <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
-                                            <cr-icon aria-hidden="true" icon="cr:close" class="header-icon"></cr-icon>
+                                        <button @click="EXTERNAL_FRAGMENT" class="header-btn" id="target-close-btn"${this.onCloseSidePanel_}>
+                                            <cr-icon ar icon="cr:close" cl"ia-hidden="trueass="header-icon"></cr-icon>
                                         </button>`
                     }
                     <div class="chat-title">${this.title_}</div>
@@ -190,7 +190,7 @@ export function getHtml(this: ChatAppElement) {
                                                  @click="${(e: MouseEvent | KeyboardEvent) => {
                                                      // capture URL here so that the correct url will be open 
                                                      // even if multiple browser windows are open
-                                                     const url = "https://" + conversation.url;
+                                                     const url = conversation.url;
                                                      const modifier: ClickModifiers = {
                                                          middleButton: false,
                                                          altKey: e.altKey,
@@ -207,7 +207,7 @@ export function getHtml(this: ChatAppElement) {
                                                      }
                                                      // capture URL here so that the correct url will be open 
                                                      // even if multiple browser windows are open
-                                                     const url = "https://" + conversation.url;
+                                                     const url = conversation.url;
                                                      const modifier: ClickModifiers = {
                                                          middleButton: true,
                                                          altKey: e.altKey,
@@ -220,7 +220,7 @@ export function getHtml(this: ChatAppElement) {
                                                 <div class="vertical-bar"></div>
                                                 <div class="siteinfo-content">
                                                     <div class="siteinfo-title">${conversation.title}</div>
-                                                    <div class="siteinfo-url">${conversation.url}</div>
+                                                    <div class="siteinfo-url">${this.stripUrlProtocol_(conversation.url)}</div>
                                                 </div>
                                             </div>
                                             ${getQueryPromptSection(conversation.query)}

@@ -58,7 +58,6 @@ void CSApiClient::Post(std::string event_name,
   DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 
   base::Value::Dict dict;
-  // "pageview"
   dict.Set("n", event_name);
   dict.Set("u", url);
   dict.Set("k", BUILDFLAG(TAKTAK_TEL_API_KEY));

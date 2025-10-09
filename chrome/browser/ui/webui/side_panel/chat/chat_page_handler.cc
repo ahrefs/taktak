@@ -5,6 +5,7 @@
 
 #include "chat_page_handler.h"
 
+#include <format>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -39,6 +40,15 @@ namespace {
 constexpr size_t kMaxUserPromptLength = 90'000;
 constexpr char kUserRole[] = "user";
 constexpr char kAssistantRole[] = "assistant";
+
+constexpr char kNewChatEvent[] = "new_chat";
+constexpr char kNewChatWithPageContextEvent[] = "new_chat_with_page_context";
+constexpr char kNewChatWithoutPageContextEvent[] =
+    "new_chat_without_page_context";
+constexpr char kNewChatWithThinkingEvent[] = "new_chat_with_thinking";
+constexpr char kNewChatWithoutThinkingEvent[] = "new_chat_without_thinking";
+constexpr char kChatWithAtLeastOneFollowUpEvent[] =
+    "chat_with_at_least_one_follow_up";
 
 std::string BuildPrompt(const std::string& query,
                         const std::string& extracted_content,
@@ -329,7 +339,8 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, summarize_prompt,
                          completion_messages, enable_thinking,
-                         has_conversation_history),
+                         has_conversation_history,
+                         false /* has_same_context_as_last_conversation */),
           true);
 
     } else if (action_type == chat::mojom::ActionType::EXPLAIN) {
@@ -337,7 +348,8 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, explain_prompt,
                          completion_messages, enable_thinking,
-                         has_conversation_history),
+                         has_conversation_history,
+                         false /* has_same_context_as_last_conversation */),
           true);
 
     } else if (action_type == chat::mojom::ActionType::FACT_CHECK) {
@@ -345,14 +357,16 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, fact_check_prompt,
                          completion_messages, enable_thinking,
-                         has_conversation_history),
+                         has_conversation_history,
+                         false /* has_same_context_as_last_conversation */),
           true);
     } else if (action_type == chat::mojom::ActionType::TRANSLATE) {
       page_content_extractor_helper_->ExtractPageContent(
           base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
                          base::Unretained(this), action_type, action_param,
                          completion_messages, enable_thinking,
-                         has_conversation_history),
+                         has_conversation_history,
+                         false /* has_same_context_as_last_conversation */),
           true);
     } else if (action_type ==
                chat::mojom::ActionType::DRAFT_SOCIAL_MEDIA_POST) {
@@ -360,7 +374,8 @@ void ChatPageHandler::SubmitAction(chat::mojom::ActionType action_type,
           base::BindOnce(
               &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
               action_type, draft_social_media_post_prompt + " " + action_param,
-              completion_messages, enable_thinking, has_conversation_history),
+              completion_messages, enable_thinking, has_conversation_history,
+              false /* has_same_context_as_last_conversation */),
           true);
     }
   }
@@ -372,9 +387,10 @@ void ChatPageHandler::OnPageContentExtracted(
     const std::vector<struct CompletionMessage>& completion_messages,
     bool enable_thinking,
     bool has_conversation_history,
+    bool has_same_context_as_last_conversation,
     std::string content,
     std::string url) {
-  DVLOG(0) << __func__ << " |>> extracted content -> " << content;
+  DVLOG(1) << __func__ << " |>> extracted content -> " << content;
 
   extracted_content_cache_.clear();
 
@@ -387,7 +403,7 @@ void ChatPageHandler::OnPageContentExtracted(
       html2md::Converter c(max_content);
       auto md = c.convert();
       max_content = md;
-      DVLOG(0) << __func__ << " |>> markdown content -> " << max_content;
+      DVLOG(1) << __func__ << " |>> markdown content -> " << max_content;
     }
 
     if (!url.empty()) {
@@ -414,12 +430,43 @@ void ChatPageHandler::OnPageContentExtracted(
             base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
                                 base::Unretained(this), action_type));
 
-    //    if (!has_conversation_history) {
-    //      TODO: to implement for next chat event
-    //    }
-
-    std::string_view event_name = GetEventNameFromActionType(action_type);
-    cs_handler_->HandleCustomEvent(std::string(event_name));
+    if (action_type == chat::mojom::ActionType::QUERY) {
+      if (!has_conversation_history ||
+          (has_conversation_history &&
+           !has_same_context_as_last_conversation)) {
+        cs_handler_->HandleCustomEvent(kNewChatEvent);
+        cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
+        const std::string info =
+            std::format("|>> Custom events on user input prompt: {}, {}",
+                        kNewChatEvent, kNewChatWithPageContextEvent);
+        if (enable_thinking) {
+          cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+          DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+        } else {
+          cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+          DVLOG(0) << std::format("{}, {}.", info,
+                                  kNewChatWithoutThinkingEvent);
+        }
+      }
+    } else if (action_type != chat::mojom::ActionType::NONE) {
+      // Clicking a predefined prompt always starts a new chat because these
+      // buttons only appear when the active page changes — indicating a
+      // different context.
+      std::string_view event_name = GetEventNameFromActionType(action_type);
+      cs_handler_->HandleCustomEvent(std::string(event_name));
+      cs_handler_->HandleCustomEvent(kNewChatEvent);
+      cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
+      const std::string info = std::format(
+          "|>> Custom events on clicking predefined prompts: {}, {}, {}",
+          event_name, kNewChatEvent, kNewChatWithPageContextEvent);
+      if (enable_thinking) {
+        cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+      } else {
+        cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
+      }
+    }
 }
 
 void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
@@ -436,36 +483,110 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     }
 
     if (extracted_content_cache_.contains(url) /* Context is in the cache */) {
-        auto previous_content = extracted_content_cache_[url];
-        completion_messages.push_back(
-                {BuildPrompt(query, previous_content, action_type), kUserRole});
-        api_client_->QueryPrompt(
-                completion_messages,
-                enable_thinking,
-                base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
-                               base::Unretained(this), action_type),
-                base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
-                                    base::Unretained(this), action_type));
+      DVLOG(0) << "|>>>>>>>>>>>>> Context is in the cache" ;
+      auto previous_content = extracted_content_cache_[url];
+      completion_messages.push_back(
+          {BuildPrompt(query, previous_content, action_type), kUserRole});
+      api_client_->QueryPrompt(
+          completion_messages, enable_thinking,
+          base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                         base::Unretained(this), action_type),
+          base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                              base::Unretained(this), action_type));
 
-    } else if (!url.empty()/* Context is not in the cache; user visit new page so new content should be extracted */) {
+      bool is_new_chat = false;
+      auto conversation_history_size = conversation_history.size();
+      if (conversation_history_size == 0) {
+         is_new_chat = true;
+      }
+      else if (conversation_history_size == 1) {
+        auto last_conversation = conversation_history[0].Clone();
+        if (last_conversation->is_url_context &&
+            last_conversation->url == url) {
+          cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+          DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
+                      "conversation history: "
+                   << kChatWithAtLeastOneFollowUpEvent;
+        } else {
+            is_new_chat = true;
+        }
+      } else if (conversation_history_size > 1) {
+        auto last_conversation =
+            conversation_history[conversation_history.size() - 1].Clone();
+        if (!last_conversation->is_url_context || last_conversation->url != url) {
+            is_new_chat = true;
+        } else {
+            auto second_last_conversation =
+                    conversation_history[conversation_history.size() - 2].Clone();
+            if ((second_last_conversation->is_url_context &&
+                 last_conversation->is_url_context &&
+                 second_last_conversation->url != last_conversation->url) &&
+                (last_conversation->is_url_context &&
+                 last_conversation->url == url)) {
+                cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+                DVLOG(0) << "|>> Custom events on user input prompts with more than "
+                            "1 conversation history: "
+                         << kChatWithAtLeastOneFollowUpEvent;
+            }
+        }
+      }
+      if (is_new_chat) {
+          cs_handler_->HandleCustomEvent(kNewChatEvent);
+          cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
+          const std::string info =
+                  std::format("|>> Custom events on user input prompt: {}, {}",
+                              kNewChatEvent, kNewChatWithPageContextEvent);
+          if (enable_thinking) {
+              cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+              DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+          } else {
+              cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+              DVLOG(0) << std::format("{}, {}.", info,
+                                      kNewChatWithoutThinkingEvent);
+          }
+      }
+    } else if (!url.empty()/* Context is not in the cache; user visits new page so new content should be extracted */) {
+      DVLOG(0) << "|>>>>>>>>>>>>> Context is not in the cache; user visits new page" ;
       bool has_conversation_history = conversation_history.size() > 0;
+      bool has_same_context_as_last_conversation = false;
+      if (conversation_history.size() > 0) {
+        auto last_conversation =
+            conversation_history[conversation_history.size() - 1].Clone();
+        if (last_conversation->is_url_context &&
+            last_conversation->url == url) {
+          has_same_context_as_last_conversation = true;
+        }
+      }
       page_content_extractor_helper_->ExtractPageContent(
-          base::BindOnce(&ChatPageHandler::OnPageContentExtracted,
-                         base::Unretained(this), action_type, query,
-                         completion_messages, enable_thinking,
-                         has_conversation_history),
+          base::BindOnce(
+              &ChatPageHandler::OnPageContentExtracted, base::Unretained(this),
+              action_type, query, completion_messages, enable_thinking,
+              has_conversation_history, has_same_context_as_last_conversation),
           action_type != chat::mojom::ActionType::NONE ? true : false);
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
     {
-        completion_messages.push_back({query, kUserRole});
-        api_client_->QueryPrompt(
-                completion_messages,
-                enable_thinking,
-                base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
-                               base::Unretained(this), action_type),
-                base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
-                                    base::Unretained(this), action_type));
+      DVLOG(0) << "|>>>>>>>>>>>>> no context or empty tab" ;
+      completion_messages.push_back({query, kUserRole});
+      api_client_->QueryPrompt(
+          completion_messages, enable_thinking,
+          base::BindOnce(&ChatPageHandler::SubmitQueryCompletedCallback,
+                         base::Unretained(this), action_type),
+          base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
+                              base::Unretained(this), action_type));
+
+      cs_handler_->HandleCustomEvent(kNewChatEvent);
+      cs_handler_->HandleCustomEvent(kNewChatWithoutPageContextEvent);
+      const std::string info = std::format(
+          "|>> Custom events on user input prompt without page context: {}, {}",
+          kNewChatEvent, kNewChatWithoutPageContextEvent);
+      if (enable_thinking) {
+        cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+      } else {
+        cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
+      }
     }
 }
 

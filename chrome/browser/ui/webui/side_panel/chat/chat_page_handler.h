@@ -106,6 +106,7 @@ class ChatPageHandler : public chat::mojom::PageHandler {
       const std::vector<struct CompletionMessage>& completion_messages,
       bool enable_thinking,
       bool has_conversation_history,
+      bool has_same_context_as_last_conversation,
       std::string content,
       std::string url);
 
