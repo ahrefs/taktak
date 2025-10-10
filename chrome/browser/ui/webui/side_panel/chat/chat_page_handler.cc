@@ -483,7 +483,6 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     }
 
     if (extracted_content_cache_.contains(url) /* Context is in the cache */) {
-      DVLOG(0) << "|>>>>>>>>>>>>> Context is in the cache" ;
       auto previous_content = extracted_content_cache_[url];
       completion_messages.push_back(
           {BuildPrompt(query, previous_content, action_type), kUserRole});
@@ -513,23 +512,40 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
       } else if (conversation_history_size > 1) {
         auto last_conversation =
             conversation_history[conversation_history.size() - 1].Clone();
-        if (!last_conversation->is_url_context || last_conversation->url != url) {
-            is_new_chat = true;
+        const bool has_last_conversation_context =
+            last_conversation->is_url_context;
+        const bool is_input_context_same_as_last_conversation =
+            last_conversation->url == url;
+        if (!has_last_conversation_context ||
+            !is_input_context_same_as_last_conversation) {
+          is_new_chat = true;
         } else {
-            auto second_last_conversation =
-                    conversation_history[conversation_history.size() - 2].Clone();
-            if ((second_last_conversation->is_url_context &&
-                 last_conversation->is_url_context &&
-                 second_last_conversation->url != last_conversation->url) &&
-                (last_conversation->is_url_context &&
-                 last_conversation->url == url)) {
-                cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
-                DVLOG(0) << "|>> Custom events on user input prompts with more than "
-                            "1 conversation history: "
-                         << kChatWithAtLeastOneFollowUpEvent;
+          auto second_last_conversation =
+              conversation_history[conversation_history.size() - 2].Clone();
+          const bool has_second_last_conversation_context =
+              second_last_conversation->is_url_context;
+          const bool has_last_2_conversation_same_context =
+              second_last_conversation->url == last_conversation->url;
+
+          if (has_second_last_conversation_context) {
+            if ((has_last_conversation_context &&
+                 !has_last_2_conversation_same_context) &&
+                (has_last_conversation_context &&
+                 is_input_context_same_as_last_conversation)) {
+              cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+              DVLOG(0) << "|>> Custom events on user input prompts: "
+                       << kChatWithAtLeastOneFollowUpEvent;
             }
+          } else {
+            if (has_last_conversation_context &&
+                is_input_context_same_as_last_conversation) {
+              cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+              DVLOG(0) << "|>> Custom events on user input prompts: "
+                       << kChatWithAtLeastOneFollowUpEvent;
+            }
+          }
         }
-      }
+        }
       if (is_new_chat) {
           cs_handler_->HandleCustomEvent(kNewChatEvent);
           cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
@@ -546,7 +562,6 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
           }
       }
     } else if (!url.empty()/* Context is not in the cache; user visits new page so new content should be extracted */) {
-      DVLOG(0) << "|>>>>>>>>>>>>> Context is not in the cache; user visits new page" ;
       bool has_conversation_history = conversation_history.size() > 0;
       bool has_same_context_as_last_conversation = false;
       if (conversation_history.size() > 0) {
@@ -566,7 +581,6 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
     } else /* user removed the context via Chat UI or the current opening tab is
               empty */
     {
-      DVLOG(0) << "|>>>>>>>>>>>>> no context or empty tab" ;
       completion_messages.push_back({query, kUserRole});
       api_client_->QueryPrompt(
           completion_messages, enable_thinking,
