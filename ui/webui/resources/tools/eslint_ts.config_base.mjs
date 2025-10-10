@@ -34,7 +34,6 @@ export default {
     '@typescript-eslint/require-await' : 'error',
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
 
-    '@webui-eslint/lit-property-accessor': 'error',
     '@webui-eslint/polymer-property-declare': 'error',
     '@webui-eslint/polymer-property-class-member': 'error',
   },
