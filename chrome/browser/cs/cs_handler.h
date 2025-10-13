@@ -3,8 +3,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef CHROMIUM_CS_CLIENT_H
-#define CHROMIUM_CS_CLIENT_H
+#ifndef CHROMIUM_CS_HANDLER_H
+#define CHROMIUM_CS_HANDLER_H
 
 #include <memory>
 #include <string>
@@ -35,4 +35,4 @@ class CSHandler {
 
 }  // namespace cs_handler
 
-#endif  // CHROMIUM_CS_CLIENT_H
+#endif  // CHROMIUM_CS_HANDLER_H

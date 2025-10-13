@@ -3781,6 +3781,8 @@ static_library("browser") {
       "cs/cs_api_client.h",
       "cs/cs_handler.cc",
       "cs/cs_handler.h",
+      "cs/taktak_run_handler.cc",
+      "cs/taktak_run_handler.h",
       "data_sharing/desktop/data_sharing_conversion_utils.cc",
       "data_sharing/desktop/data_sharing_conversion_utils.h",
       "data_sharing/desktop/data_sharing_sdk_delegate_desktop.cc",

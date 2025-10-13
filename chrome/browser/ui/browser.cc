@@ -250,6 +250,7 @@
 #include "ui/shell_dialogs/selected_file_info.h"
 #include "url/origin.h"
 #include "url/scheme_host_port.h"
+#include "chrome/browser/cs/taktak_run_handler.h"
 
 #if BUILDFLAG(IS_WIN)
 // windows.h must be included before shellapi.h
@@ -322,6 +323,9 @@ using web_modal::WebContentsModalDialogManager;
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
+
+class SharedURLLoaderFactory;
+class SimpleURLLoader;
 
 // How long we wait before updating the browser chrome while loading a page.
 constexpr base::TimeDelta kUIUpdateCoalescingTime = base::Milliseconds(200);
@@ -2017,6 +2021,11 @@ void Browser::OnWindowDidShow() {
       }
     }
   }
+
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
+      g_browser_process->system_network_context_manager()
+          ->GetSharedURLLoaderFactory();
+  taktak_run_handler::Handle(std::move(url_loader_factory)) ;
 
   // Show any pending global error bubble.
   GlobalErrorService* service =

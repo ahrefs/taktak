@@ -24,6 +24,7 @@
 #include "base/timer/elapsed_timer.h"
 #include "base/types/expected.h"
 #include "build/build_config.h"
+#include "chrome/browser/cs/cs_handler.h"
 #include "chrome/browser/tab_contents/web_contents_collection.h"
 #include "chrome/browser/themes/theme_service_observer.h"
 #include "chrome/browser/ui/bookmarks/bookmark_bar.h"
