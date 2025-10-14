@@ -3,8 +3,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#ifndef TAKTAK_RUN_HANDLER_H
-#define TAKTAK_RUN_HANDLER_H
+#ifndef TAKTAK_RUN_TRACKER_H
+#define TAKTAK_RUN_TRACKER_H
 
 #include <memory>
 #include "base/memory/scoped_refptr.h"
@@ -17,7 +17,7 @@ namespace base {
 class FilePath;
 }  // namespace base
 
-namespace taktak_run_handler {
+namespace taktak_run_tracker {
 void Handle(scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
 }
-#endif  // TAKTAK_RUN_HANDLER_H
+#endif  // TAKTAK_RUN_TRACKER_H
