@@ -156,8 +156,8 @@ export function getHtml(this: ChatAppElement) {
                             this.siteInfo_.title === null
                                     ? html``
                                     : html`
-                                        <button @click="EXTERNAL_FRAGMENT" class="header-btn" id="target-close-btn"${this.onCloseSidePanel_}>
-                                            <cr-icon ar icon="cr:close" cl"ia-hidden="trueass="header-icon"></cr-icon>
+                                        <button id="target-close-btn" class="header-btn" @click="${this.onCloseSidePanel_}">
+                                            <cr-icon aria-hidden="true" icon="cr:close" class="header-icon"></cr-icon>
                                         </button>`
                     }
                     <div class="chat-title">${this.title_}</div>
