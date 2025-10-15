@@ -11,6 +11,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "chrome/browser/buildflags.h"
+
 namespace {
 std::unordered_map<std::string, std::string> parseQuery(
     const std::string& query) {
@@ -108,25 +110,40 @@ void CSHandler::HandleURL(const GURL& url) {
     }
 
     api_client_->Post(
-        "pageview", url_to_submit, base::BindOnce([](WebRequestResult result) {
-          VLOG(0) << __func__ << " |>> CS pageview response code : "
+        "pageview", url_to_submit,
+        base::BindOnce([](web_request_helper::WebRequestResult result) {
+          if (result.response_code() != 200) {
+            VLOG(0) << __func__ << " |>> Error at CS pageview request: "
+                    << result.response_code();
+            return;
+          }
+
+          VLOG(0) << __func__ << " |>> CS pageview response code: "
                   << result.response_code();
-          VLOG(0) << __func__
-                  << " |>> CS pageview error code : " << result.error_code();
         }));
   }
 }
 
-void CSHandler::HandleCustomEvent(const std::string event_name) {
+void CSHandler::HandleChatCustomEvent(const std::string event_name) {
   api_client_->Post(
-      event_name, "https://clickstream.taktak.com/tracked_events",
-      base::BindOnce([](WebRequestResult result) {
-        VLOG(0) << __func__
-                << std::format(" |>> CS custom event response code : {}",
-                               result.response_code());
-        VLOG(0) << __func__
-                << std::format(" |>> CS custom event error code : {}",
-                               result.error_code());
+      event_name, BUILDFLAG(TAKTAK_TEL_CUSTOM_EVENT_URL),
+      base::BindOnce([](web_request_helper::WebRequestResult result) {
+        if (result.response_code() != 200) {
+          VLOG(0) << __func__ << " |>> Error at chat custom event request: "
+                  << result.response_code();
+          return;
+        }
+
+        VLOG(0) << __func__ << " |>> Chat custom event response code: "
+                << result.response_code();
       }));
 }
+
+void CSHandler::HandleLaunchingCustomEvent(
+    const std::string event_name,
+    base::OnceCallback<void(web_request_helper::WebRequestResult)> callback) {
+  api_client_->Post(event_name, BUILDFLAG(TAKTAK_TEL_CUSTOM_EVENT_URL),
+                    std::move(callback));
+}
+
 }  // namespace cs_handler

@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 
+#include "components/web_request_helper/web_request_helper.h"
 #include "cs_api_client.h"
 #include "url/gurl.h"
 
@@ -26,7 +27,10 @@ class CSHandler {
   ~CSHandler();
 
   void HandleURL(const GURL& gurl);
-  void HandleCustomEvent(const std::string event_name);
+  void HandleChatCustomEvent(const std::string event_name);
+  void HandleLaunchingCustomEvent(
+      const std::string event_name,
+      base::OnceCallback<void(web_request_helper::WebRequestResult)> callback);
 
  private:
   std::unique_ptr<CSApiClient> api_client_;

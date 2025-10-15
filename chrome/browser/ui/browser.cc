@@ -48,7 +48,6 @@
 #include "chrome/browser/content_settings/mixed_content_settings_tab_helper.h"
 #include "chrome/browser/content_settings/page_specific_content_settings_delegate.h"
 #include "chrome/browser/content_settings/sound_content_setting_observer.h"
-#include "chrome/browser/cs/taktak_run_tracker.h"
 #include "chrome/browser/custom_handlers/protocol_handler_registry_factory.h"
 #include "chrome/browser/defaults.h"
 #include "chrome/browser/devtools/devtools_toggle_action.h"
@@ -2021,11 +2020,6 @@ void Browser::OnWindowDidShow() {
       }
     }
   }
-
-  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory =
-      g_browser_process->system_network_context_manager()
-          ->GetSharedURLLoaderFactory();
-  taktak_run_tracker::Handle(std::move(url_loader_factory));
 
   // Show any pending global error bubble.
   GlobalErrorService* service =

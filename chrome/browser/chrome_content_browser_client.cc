@@ -575,6 +575,7 @@
 #endif
 
 #if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_WIN)
+#include "chrome/browser/cs/chrome_browser_main_extra_parts_tracking.h"
 #include "chrome/browser/enterprise/chrome_browser_main_extra_parts_enterprise.h"
 #endif
 
@@ -1699,6 +1700,10 @@ ChromeContentBrowserClient::CreateBrowserMainParts(bool is_integration_test) {
   main_parts->AddParts(
       std::make_unique<
           enterprise_util::ChromeBrowserMainExtraPartsEnterprise>());
+
+  main_parts->AddParts(
+      std::make_unique<
+          taktak_run_tracking::ChromeBrowserMainExtraPartsTracking>());
 #endif
 
 #if !BUILDFLAG(IS_ANDROID)

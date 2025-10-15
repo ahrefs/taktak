@@ -51,9 +51,10 @@ CSApiClient::CSApiClient(
 
 CSApiClient::~CSApiClient() = default;
 
-void CSApiClient::Post(std::string event_name,
-                       std::string url,
-                       ResultCallback callback) {
+void CSApiClient::Post(
+    std::string event_name,
+    std::string url,
+    base::OnceCallback<void(web_request_helper::WebRequestResult)> callback) {
   GURL api_url{BUILDFLAG(TAKTAK_TEL_API_URL)};
   DCHECK(api_url.is_valid()) << "Invalid API Url: " << api_url.spec();
 

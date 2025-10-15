@@ -32,20 +32,18 @@ namespace network {
 class SharedURLLoaderFactory;
 }  // namespace network
 
-using web_request_helper::WebRequestResult;
-
 class CSApiClient {
  public:
-  using ResultCallback = base::OnceCallback<void(WebRequestResult)>;
-
   CSApiClient(
       scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
-
   CSApiClient(const CSApiClient&) = delete;
   CSApiClient& operator=(const CSApiClient&) = delete;
   ~CSApiClient();
 
-  void Post(std::string event_name, std::string url, ResultCallback callback);
+  void Post(
+      std::string event_name,
+      std::string url,
+      base::OnceCallback<void(web_request_helper::WebRequestResult)> callback);
 
  private:
   web_request_helper::WebRequestHelper web_request_helper_;

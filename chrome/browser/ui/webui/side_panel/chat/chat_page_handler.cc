@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/functional/callback_helpers.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/synchronization/lock.h"
@@ -434,16 +435,16 @@ void ChatPageHandler::OnPageContentExtracted(
       if (!has_conversation_history ||
           (has_conversation_history &&
            !has_same_context_as_last_conversation)) {
-        cs_handler_->HandleCustomEvent(kNewChatEvent);
-        cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithPageContextEvent);
         const std::string info =
             std::format("|>> Custom events on user input prompt: {}, {}",
                         kNewChatEvent, kNewChatWithPageContextEvent);
         if (enable_thinking) {
-          cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+          cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
           DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
         } else {
-          cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+          cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
           DVLOG(0) << std::format("{}, {}.", info,
                                   kNewChatWithoutThinkingEvent);
         }
@@ -453,17 +454,17 @@ void ChatPageHandler::OnPageContentExtracted(
       // buttons only appear when the active page changes — indicating a
       // different context.
       std::string_view event_name = GetEventNameFromActionType(action_type);
-      cs_handler_->HandleCustomEvent(std::string(event_name));
-      cs_handler_->HandleCustomEvent(kNewChatEvent);
-      cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
+      cs_handler_->HandleChatCustomEvent(std::string(event_name));
+      cs_handler_->HandleChatCustomEvent(kNewChatEvent);
+      cs_handler_->HandleChatCustomEvent(kNewChatWithPageContextEvent);
       const std::string info = std::format(
           "|>> Custom events on clicking predefined prompts: {}, {}, {}",
           event_name, kNewChatEvent, kNewChatWithPageContextEvent);
       if (enable_thinking) {
-        cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
         DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
       } else {
-        cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
         DVLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
       }
     }
@@ -502,7 +503,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
         auto last_conversation = conversation_history[0].Clone();
         if (last_conversation->is_url_context &&
             last_conversation->url == url) {
-          cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+          cs_handler_->HandleChatCustomEvent(kChatWithAtLeastOneFollowUpEvent);
           DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
                       "conversation history: "
                    << kChatWithAtLeastOneFollowUpEvent;
@@ -532,14 +533,16 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                  !has_last_2_conversation_same_context) &&
                 (has_last_conversation_context &&
                  is_input_context_same_as_last_conversation)) {
-              cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+              cs_handler_->HandleChatCustomEvent(
+                  kChatWithAtLeastOneFollowUpEvent);
               DVLOG(0) << "|>> Custom events on user input prompts: "
                        << kChatWithAtLeastOneFollowUpEvent;
             }
           } else {
             if (has_last_conversation_context &&
                 is_input_context_same_as_last_conversation) {
-              cs_handler_->HandleCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+              cs_handler_->HandleChatCustomEvent(
+                  kChatWithAtLeastOneFollowUpEvent);
               DVLOG(0) << "|>> Custom events on user input prompts: "
                        << kChatWithAtLeastOneFollowUpEvent;
             }
@@ -547,19 +550,19 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
         }
         }
       if (is_new_chat) {
-          cs_handler_->HandleCustomEvent(kNewChatEvent);
-          cs_handler_->HandleCustomEvent(kNewChatWithPageContextEvent);
-          const std::string info =
-                  std::format("|>> Custom events on user input prompt: {}, {}",
-                              kNewChatEvent, kNewChatWithPageContextEvent);
-          if (enable_thinking) {
-              cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
-              DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
-          } else {
-              cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
-              DVLOG(0) << std::format("{}, {}.", info,
-                                      kNewChatWithoutThinkingEvent);
-          }
+        cs_handler_->HandleChatCustomEvent(kNewChatEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithPageContextEvent);
+        const std::string info =
+            std::format("|>> Custom events on user input prompt: {}, {}",
+                        kNewChatEvent, kNewChatWithPageContextEvent);
+        if (enable_thinking) {
+          cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
+          DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+        } else {
+          cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
+          DVLOG(0) << std::format("{}, {}.", info,
+                                  kNewChatWithoutThinkingEvent);
+        }
       }
     } else if (!url.empty()/* Context is not in the cache; user visits new page so new content should be extracted */) {
       bool has_conversation_history = conversation_history.size() > 0;
@@ -589,16 +592,16 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
           base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
                               base::Unretained(this), action_type));
 
-      cs_handler_->HandleCustomEvent(kNewChatEvent);
-      cs_handler_->HandleCustomEvent(kNewChatWithoutPageContextEvent);
+      cs_handler_->HandleChatCustomEvent(kNewChatEvent);
+      cs_handler_->HandleChatCustomEvent(kNewChatWithoutPageContextEvent);
       const std::string info = std::format(
           "|>> Custom events on user input prompt without page context: {}, {}",
           kNewChatEvent, kNewChatWithoutPageContextEvent);
       if (enable_thinking) {
-        cs_handler_->HandleCustomEvent(kNewChatWithThinkingEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
         DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
       } else {
-        cs_handler_->HandleCustomEvent(kNewChatWithoutThinkingEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
         DVLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
       }
     }

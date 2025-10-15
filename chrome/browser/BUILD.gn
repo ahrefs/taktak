@@ -75,6 +75,7 @@ declare_args() {
 
   taktak_tel_api_key = ""
   taktak_tel_api_url = ""
+  taktak_tel_custom_event_url = ""
   taktak_update_check_api_key = ""
   taktak_update_check_api_url = ""
   taktak_download_url = ""
@@ -108,6 +109,7 @@ if (is_win) {
 if (is_official_build) {
   assert(taktak_tel_api_key != "")
   assert(taktak_tel_api_url != "")
+  assert(taktak_tel_custom_event_url != "")
   assert(taktak_update_check_api_key != "")
   assert(taktak_update_check_api_url != "")
   assert(taktak_download_url != "")
@@ -127,6 +129,7 @@ buildflag_header("buildflags") {
     "USE_THIN_LTO=$use_thin_lto",
     "TAKTAK_TEL_API_KEY=\"$taktak_tel_api_key\"",
     "TAKTAK_TEL_API_URL=\"$taktak_tel_api_url\"",
+    "TAKTAK_TEL_CUSTOM_EVENT_URL=\"$taktak_tel_custom_event_url\"",
     "TAKTAK_UPDATE_CHECK_API_KEY=\"$taktak_update_check_api_key\"",
     "TAKTAK_UPDATE_CHECK_API_URL=\"$taktak_update_check_api_url\"",
     "TAKTAK_DOWNLOAD_URL=\"$taktak_download_url\"",
@@ -3777,12 +3780,12 @@ static_library("browser") {
       "contextual_cueing/contextual_cueing_service.cc",
       "contextual_cueing/contextual_cueing_service.h",
       "contextual_cueing/contextual_cueing_service_factory.cc",
+      "cs/chrome_browser_main_extra_parts_tracking.cc",
+      "cs/chrome_browser_main_extra_parts_tracking.h",
       "cs/cs_api_client.cc",
       "cs/cs_api_client.h",
       "cs/cs_handler.cc",
       "cs/cs_handler.h",
-      "cs/taktak_run_tracker.cc",
-      "cs/taktak_run_tracker.h",
       "data_sharing/desktop/data_sharing_conversion_utils.cc",
       "data_sharing/desktop/data_sharing_conversion_utils.h",
       "data_sharing/desktop/data_sharing_sdk_delegate_desktop.cc",
