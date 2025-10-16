@@ -231,7 +231,7 @@ export class SettingsPrivacyPageIndexElement extends
       this.showPrivacyGuidePromo_ = false;
       return;
     }
-    this.showPrivacyGuidePromo_ = true;
+    this.showPrivacyGuidePromo_ = false;
     if (!this.privacyGuidePromoWasShown_) {
       this.privacyGuideBrowserProxy_.incrementPromoImpressionCount();
       this.privacyGuidePromoWasShown_ = true;
