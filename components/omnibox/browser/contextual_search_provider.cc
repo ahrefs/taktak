@@ -342,11 +342,11 @@ void ContextualSearchProvider::Start(const AutocompleteInput& input,
 
   const EligibleMatchesAndActions eligibility(input, template_url, client());
 
-  if (eligibility.toolbelt) {
-    AddToolbeltMatch(keyword_input,
-                     eligibility.GetToolbeltActions(
-                         keyword_input, client()->GetTemplateURLService()));
-  }
+  // if (eligibility.toolbelt) {
+  //   AddToolbeltMatch(keyword_input,
+  //                    eligibility.GetToolbeltActions(
+  //                        keyword_input, client()->GetTemplateURLService()));
+  // }
 
   if (eligibility.lens_entry_match) {
     AddLensEntrypointMatch(keyword_input);
