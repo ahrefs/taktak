@@ -778,9 +778,9 @@ SaveAndShareSubMenuModel::SaveAndShareSubMenuModel(
     if (!sharing_hub::SharingIsDisabledByPolicy(browser->profile())) {
       AddItemWithStringIdAndVectorIcon(
           this, IDC_COPY_URL, IDS_APP_MENU_COPY_LINK, kLinkChromeRefreshIcon);
-      AddItemWithStringIdAndVectorIcon(this, IDC_SEND_TAB_TO_SELF,
-                                       IDS_MENU_SEND_TAB_TO_SELF,
-                                       kDevicesChromeRefreshIcon);
+      // AddItemWithStringIdAndVectorIcon(this, IDC_SEND_TAB_TO_SELF,
+      //                                  IDS_MENU_SEND_TAB_TO_SELF,
+      //                                  kDevicesChromeRefreshIcon);
       AddItemWithStringIdAndVectorIcon(this, IDC_QRCODE_GENERATOR,
                                        IDS_APP_MENU_CREATE_QR_CODE,
                                        kQrCodeChromeRefreshIcon);

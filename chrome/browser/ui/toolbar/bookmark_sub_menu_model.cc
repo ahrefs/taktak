@@ -80,20 +80,20 @@ void BookmarkSubMenuModel::Build(Browser* browser) {
                          kReadingListMenuItem);
 
   // Will be null if the product specifications service is unavailable.
-  auto* product_specs_service =
-      commerce::ProductSpecificationsServiceFactory::GetForBrowserContext(
-          browser->profile());
-  if (product_specs_service &&
-      base::FeatureList::IsEnabled(commerce::kProductSpecifications)) {
-    AddSeparator(ui::NORMAL_SEPARATOR);
-    compare_sub_menu_model_ = std::make_unique<commerce::CompareSubMenuModel>(
-        delegate(), browser, product_specs_service);
-    AddSubMenuWithStringIdAndIcon(
-        IDC_COMPARE_MENU, IDS_COMPARE_MENU_LABEL, compare_sub_menu_model_.get(),
-        ui::ImageModel::FromVectorIcon(kCompareIcon, ui::kColorMenuIcon, 16));
-    SetElementIdentifierAt(GetIndexOfCommandId(IDC_COMPARE_MENU).value(),
-                           kCompareMenuItem);
-  }
+  // auto* product_specs_service =
+  //     commerce::ProductSpecificationsServiceFactory::GetForBrowserContext(
+  //         browser->profile());
+  // if (product_specs_service &&
+  //     base::FeatureList::IsEnabled(commerce::kProductSpecifications)) {
+  //   AddSeparator(ui::NORMAL_SEPARATOR);
+  //   compare_sub_menu_model_ = std::make_unique<commerce::CompareSubMenuModel>(
+  //       delegate(), browser, product_specs_service);
+  //   AddSubMenuWithStringIdAndIcon(
+  //       IDC_COMPARE_MENU, IDS_COMPARE_MENU_LABEL, compare_sub_menu_model_.get(),
+  //       ui::ImageModel::FromVectorIcon(kCompareIcon, ui::kColorMenuIcon, 16));
+  //   SetElementIdentifierAt(GetIndexOfCommandId(IDC_COMPARE_MENU).value(),
+  //                          kCompareMenuItem);
+  // }
 
   auto set_icon = [this](int command_id, const gfx::VectorIcon& vector_icon) {
     auto index = GetIndexOfCommandId(command_id);
