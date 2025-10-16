@@ -213,6 +213,9 @@ void ChromeBrowserMainExtraPartsTracking::PostProfileInit(
     auto* sncm = g_browser_process->system_network_context_manager();
     scoped_refptr<network::SharedURLLoaderFactory> factory =
         sncm ? sncm->GetSharedURLLoaderFactory() : nullptr;
+    if (!factory) {
+      return;
+    }
     cs_handler_ = std::make_unique<cs_handler::CSHandler>(std::move(factory));
   }
 
