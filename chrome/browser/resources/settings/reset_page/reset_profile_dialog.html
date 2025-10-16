@@ -17,9 +17,6 @@
         <span inner-h-t-m-l="[[getExplanationText_(
               isTriggered_, triggeredResetToolName_)]]">
         </span>
-        <a href="$i18nRaw{resetPageLearnMoreUrl}"
-            aria-label="$i18n{resetLearnMoreAccessibilityText}"
-            target="_blank">$i18n{learnMore}</a>
       </div>
       <div slot="button-container">
         <div class="spinner" hidden$="[[!clearingInProgress_]]"></div>
@@ -31,9 +28,5 @@
             id="reset" disabled="[[clearingInProgress_]]">
           $i18n{resetDialogCommit}
         </cr-button>
-      </div>
-      <div slot="footer">
-        <cr-checkbox id="sendSettings" checked>
-          $i18nRaw{resetPageFeedback}</cr-checkbox>
       </div>
     </cr-dialog>

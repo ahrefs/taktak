@@ -19,7 +19,7 @@ import 'chrome://resources/cr_elements/action_link.css.js';
 import '../settings_shared.css.js';
 
 import type {CrButtonElement} from 'chrome://resources/cr_elements/cr_button/cr_button.js';
-import type {CrCheckboxElement} from 'chrome://resources/cr_elements/cr_checkbox/cr_checkbox.js';
+// import type {CrCheckboxElement} from 'chrome://resources/cr_elements/cr_checkbox/cr_checkbox.js';
 import type {CrDialogElement} from 'chrome://resources/cr_elements/cr_dialog/cr_dialog.js';
 import {I18nMixin} from 'chrome://resources/cr_elements/i18n_mixin.js';
 import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
@@ -37,7 +37,6 @@ export interface SettingsResetProfileDialogElement {
     cancel: CrButtonElement,
     dialog: CrDialogElement,
     reset: CrButtonElement,
-    sendSettings: CrCheckboxElement,
   };
 }
 
@@ -114,9 +113,6 @@ export class SettingsResetProfileDialogElement extends
     this.addEventListener('cancel', () => {
       this.browserProxy_.onHideResetProfileDialog();
     });
-
-    this.shadowRoot!.querySelector('cr-checkbox a')!.addEventListener(
-        'click', this.onShowReportedSettingsClick_.bind(this));
   }
 
   private showDialog_() {
@@ -156,7 +152,7 @@ export class SettingsResetProfileDialogElement extends
     this.clearingInProgress_ = true;
     this.browserProxy_
         .performResetProfileSettings(
-            this.$.sendSettings.checked, this.resetRequestOrigin_)
+            false, this.resetRequestOrigin_)
         .then(() => {
           this.clearingInProgress_ = false;
           if (this.$.dialog.open) {
