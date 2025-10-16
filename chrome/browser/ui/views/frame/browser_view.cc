@@ -3611,24 +3611,30 @@ void BrowserView::Paste() {
 
 void BrowserView::DidFinishNavigation(
     content::NavigationHandle* navigation_handle) {
+  bool tel_enabled = browser_->profile()->GetPrefs()->GetBoolean(
+      browsing_data::prefs::kTaktakTelEnabled);
+  if (!tel_enabled) {
+    VLOG(0) << "|>> Taktak tel is disabled";
+    return;
+  }
+
   if (IsIncognitoProcess() || browser_->profile()->IsIncognitoProfile()) {
     return;
   }
 
   if (!navigation_handle->IsInPrimaryMainFrame() ||
-      !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage() ||
-      navigation_handle->IsSameDocument()) {
+      !navigation_handle->HasCommitted() || navigation_handle->IsErrorPage()) {
     return;
   }
 
-  bool toggle = browser_->profile()->GetPrefs()->GetBoolean(
-      browsing_data::prefs::kTaktakTelEnabled);
-  if (!toggle) {
-    VLOG(0) << "||> Taktak tel is disabled";
+  GURL current_url = navigation_handle->GetURL();
+  if (navigation_handle->IsSameDocument() &&
+      current_url == last_visited_url_) {
     return;
   }
 
-  cs_handler_->HandleURL(navigation_handle->GetURL());
+  last_visited_url_ = current_url;
+  cs_handler_->HandleURL(current_url);
 }
 
 // TODO(devint): http://b/issue?id=1117225 Cut, Copy, and Paste are always

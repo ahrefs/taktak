@@ -1427,6 +1427,7 @@ class BrowserView : public BrowserWindow,
 
   ui::OmniboxPopupCloser omnibox_popup_closer_{this};
 
+  GURL last_visited_url_;
   std::unique_ptr<cs_handler::CSHandler> cs_handler_;
 
   mutable base::WeakPtrFactory<BrowserView> weak_ptr_factory_{this};
