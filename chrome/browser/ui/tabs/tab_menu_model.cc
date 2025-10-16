@@ -204,27 +204,27 @@ void TabMenuModel::Build(TabStripModel* tab_strip, int index) {
     }
   }
 
-  if (num_tabs == 1 &&
-      base::FeatureList::IsEnabled(commerce::kProductSpecifications)) {
-    auto* product_specs_service =
-        commerce::ProductSpecificationsServiceFactory::GetForBrowserContext(
-            tab_strip->profile());
-    if (commerce::ExistingComparisonTableSubMenuModel::ShouldShowSubmenu(
-            tab_strip->GetWebContentsAt(index)->GetLastCommittedURL(),
-            product_specs_service)) {
-      // Create submenu with existing comparison tables.
-      add_to_existing_comparison_table_submenu_ =
-          std::make_unique<commerce::ExistingComparisonTableSubMenuModel>(
-              delegate(), tab_menu_model_delegate_, tab_strip, index,
-              product_specs_service);
-      AddSubMenuWithStringId(TabStripModel::CommandAddToExistingComparisonTable,
-                             IDS_COMPARE_ADD_TAB_TO_COMPARISON_TABLE,
-                             add_to_existing_comparison_table_submenu_.get());
-    } else if (product_specs_service) {
-      AddItemWithStringId(TabStripModel::CommandAddToNewComparisonTable,
-                          IDS_TAB_CXMENU_ADD_TAB_TO_NEW_COMPARISON_TABLE);
-    }
-  }
+  // if (num_tabs == 1 &&
+  //     base::FeatureList::IsEnabled(commerce::kProductSpecifications)) {
+  //   auto* product_specs_service =
+  //       commerce::ProductSpecificationsServiceFactory::GetForBrowserContext(
+  //           tab_strip->profile());
+  //   if (commerce::ExistingComparisonTableSubMenuModel::ShouldShowSubmenu(
+  //           tab_strip->GetWebContentsAt(index)->GetLastCommittedURL(),
+  //           product_specs_service)) {
+  //     // Create submenu with existing comparison tables.
+  //     add_to_existing_comparison_table_submenu_ =
+  //         std::make_unique<commerce::ExistingComparisonTableSubMenuModel>(
+  //             delegate(), tab_menu_model_delegate_, tab_strip, index,
+  //             product_specs_service);
+  //     AddSubMenuWithStringId(TabStripModel::CommandAddToExistingComparisonTable,
+  //                            IDS_COMPARE_ADD_TAB_TO_COMPARISON_TABLE,
+  //                            add_to_existing_comparison_table_submenu_.get());
+  //   } else if (product_specs_service) {
+  //     AddItemWithStringId(TabStripModel::CommandAddToNewComparisonTable,
+  //                         IDS_TAB_CXMENU_ADD_TAB_TO_NEW_COMPARISON_TABLE);
+  //   }
+  // }
 
   if (ExistingWindowSubMenuModel::ShouldShowSubmenu(tab_strip->profile())) {
     // Create submenu with existing windows
@@ -337,16 +337,16 @@ void TabMenuModel::Build(TabStripModel* tab_strip, int index) {
   }
 #endif
 
-  if (display_send_to_self) {
-#if BUILDFLAG(IS_MAC)
-    AddItem(TabStripModel::CommandSendTabToSelf,
-            l10n_util::GetStringUTF16(IDS_MENU_SEND_TAB_TO_SELF));
-#else
-    AddItemWithIcon(TabStripModel::CommandSendTabToSelf,
-                    l10n_util::GetStringUTF16(IDS_MENU_SEND_TAB_TO_SELF),
-                    ui::ImageModel::FromVectorIcon(kDevicesIcon));
-#endif
-  }
+//   if (display_send_to_self) {
+// #if BUILDFLAG(IS_MAC)
+//     AddItem(TabStripModel::CommandSendTabToSelf,
+//             l10n_util::GetStringUTF16(IDS_MENU_SEND_TAB_TO_SELF));
+// #else
+//     AddItemWithIcon(TabStripModel::CommandSendTabToSelf,
+//                     l10n_util::GetStringUTF16(IDS_MENU_SEND_TAB_TO_SELF),
+//                     ui::ImageModel::FromVectorIcon(kDevicesIcon));
+// #endif
+//   }
 
   AddSeparator(ui::NORMAL_SEPARATOR);
   AddItemWithStringId(TabStripModel::CommandCloseTab, IDS_TAB_CXMENU_CLOSETAB);

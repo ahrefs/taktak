@@ -168,7 +168,7 @@
 
       <!-- The URL for the webstore. -->
       <message name="IDS_WEBSTORE_URL" translateable="false">
-        https://Taktak.Taktak.com/webstore?hl=[GRITLANGCODE]
+        https://chrome.google.com/webstore?hl=[GRITLANGCODE]
       </message>
 
       <!-- The width of the media galleries configuration dialog in characters. -->
