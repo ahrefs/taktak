@@ -49,7 +49,7 @@
         display: none;
       }
     </style>
-    <div id="header" hidden$="[[!pageTitle]]">
+    <div id="header">
       <h2 id="title" class="title" tabindex="-1"
           aria-hidden$="[[getTitleHiddenStatus_(pageTitle)]]">[[pageTitle]]</h2>
       <template is="dom-if" if="[[showSendFeedbackButton]]">
@@ -60,6 +60,6 @@
         </cr-icon-button>
       </template>
     </div>
-    <div id="card" hidden$="[[!pageTitle]]">
+    <div id="card">
       <slot></slot>
     </div>
