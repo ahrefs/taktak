@@ -196,9 +196,9 @@ const char kVerboseLogging[] = "verbose-logging";
 // Active Setup.
 const wchar_t kActiveSetupExe[] = L"chrmstp.exe";
 const wchar_t kChromeDll[] = L"chrome.dll";
-const wchar_t kChromeExe[] = L"chrome.exe";
-const wchar_t kChromeNewExe[] = L"new_chrome.exe";
-const wchar_t kChromeOldExe[] = L"old_chrome.exe";
+const wchar_t kChromeExe[] = L"taktak.exe";
+const wchar_t kChromeNewExe[] = L"new_taktak.exe";
+const wchar_t kChromeOldExe[] = L"old_taktak.exe";
 const wchar_t kChromeProxyExe[] = L"chrome_proxy.exe";
 const wchar_t kChromeProxyNewExe[] = L"new_chrome_proxy.exe";
 const wchar_t kChromeProxyOldExe[] = L"old_chrome_proxy.exe";
