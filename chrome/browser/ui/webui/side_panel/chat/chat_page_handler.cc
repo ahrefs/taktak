@@ -592,8 +592,51 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
           base::BindRepeating(&ChatPageHandler::SubmitQueryCallback,
                               base::Unretained(this), action_type));
 
-      cs_handler_->HandleChatCustomEvent(kNewChatEvent);
-      cs_handler_->HandleChatCustomEvent(kNewChatWithoutPageContextEvent);
+      bool is_new_chat_without_context = false;
+      auto history_size = conversation_history.size();
+      if (history_size == 0) {
+        is_new_chat_without_context = true;
+      } else if (history_size == 1) {
+        auto last_conversation = conversation_history[0].Clone();
+        // conversation's url may not used as context if user manually remove it
+        // as context from UI
+        const bool has_last_conversation_url_or_context =
+            !last_conversation->url.empty() ||
+            last_conversation->is_url_context;
+        if (has_last_conversation_url_or_context) {
+          is_new_chat_without_context = true;
+        } else {
+          cs_handler_->HandleChatCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+          DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
+                      "conversation history: "
+                   << kChatWithAtLeastOneFollowUpEvent;
+        }
+      } else if (history_size > 1) {
+        auto last_conversation =
+            conversation_history[conversation_history.size() - 1].Clone();
+        auto second_last_conversation =
+            conversation_history[conversation_history.size() - 2].Clone();
+        const bool has_last_conversation_url_or_context =
+            !last_conversation->url.empty() ||
+            last_conversation->is_url_context;
+        const bool has_second_last_conversation_url_or_context =
+            !second_last_conversation->url.empty() ||
+            second_last_conversation->is_url_context;
+        if (!has_last_conversation_url_or_context &&
+            has_second_last_conversation_url_or_context) {
+          cs_handler_->HandleChatCustomEvent(kChatWithAtLeastOneFollowUpEvent);
+          DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
+                      "conversation history: "
+                   << kChatWithAtLeastOneFollowUpEvent;
+        } else {
+          is_new_chat_without_context = true;
+        }
+      }
+
+      if (is_new_chat_without_context) {
+        cs_handler_->HandleChatCustomEvent(kNewChatEvent);
+        cs_handler_->HandleChatCustomEvent(kNewChatWithoutPageContextEvent);
+      }
       const std::string info = std::format(
           "|>> Custom events on user input prompt without page context: {}, {}",
           kNewChatEvent, kNewChatWithoutPageContextEvent);
