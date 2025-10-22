@@ -12,7 +12,7 @@ namespace mini_installer {
 // The target name of the installer extracted from resources.
 const wchar_t kSetupExe[] = L"setup.exe";
 // The prefix of the chrome archive resource.
-const wchar_t kChromeArchivePrefix[] = L"chrome";
+const wchar_t kChromeArchivePrefix[] = L"taktak";
 // The prefix of the installer resource.
 const wchar_t kSetupPrefix[] = L"setup";
 
@@ -46,7 +46,7 @@ const wchar_t kLZMAResourceType[] = L"B7";
 const wchar_t kApRegistryValue[] = L"ap";
 // The name of the value in kCleanupRegistryKey that tells the installer not to
 // delete extracted files.
-const wchar_t kCleanupRegistryValue[] = L"ChromeInstallerCleanup";
+const wchar_t kCleanupRegistryValue[] = L"TaktakInstallerCleanup";
 // These values provide installer result codes to Omaha.
 const wchar_t kInstallerErrorRegistryValue[] = L"InstallerError";
 const wchar_t kInstallerExtraCode1RegistryValue[] = L"InstallerExtraCode1";
@@ -61,31 +61,31 @@ const wchar_t kUninstallRegistryValue[] = L"UninstallString";
 #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
 // The path to the key containing each app's Clients registry key. The trailing
 // slash is required.
-const wchar_t kClientsKeyBase[] = L"Software\\Google\\Update\\Clients\\";
+const wchar_t kClientsKeyBase[] = L"Software\\Taktak\\Update\\Clients\\";
 // The path to the key containing each app's Client State registry key. The
 // trailing slash is required.
 const wchar_t kClientStateKeyBase[] =
-    L"Software\\Google\\Update\\ClientState\\";
+    L"Software\\Taktak\\Update\\ClientState\\";
 // The path to the key in which kCleanupRegistryValue is found.
-const wchar_t kCleanupRegistryKey[] = L"Software\\Google";
+const wchar_t kCleanupRegistryKey[] = L"Software\\Taktak";
 #elif BUILDFLAG(GOOGLE_CHROME_FOR_TESTING_BRANDING)
 // The path to the key containing each app's Clients registry key.
 // No trailing slash on this one because the app's GUID is not appended.
-const wchar_t kClientsKeyBase[] = L"Software\\Chrome for Testing";
+const wchar_t kClientsKeyBase[] = L"Software\\Taktak for Testing";
 // The path to the key containing each app's Client State registry key.
 // No trailing slash on this one because the app's GUID is not appended.
-const wchar_t kClientStateKeyBase[] = L"Software\\Chrome for Testing";
+const wchar_t kClientStateKeyBase[] = L"Software\\Taktak for Testing";
 // The path to the key in which kCleanupRegistryValue is found.
-const wchar_t kCleanupRegistryKey[] = L"Software\\Chrome for Testing";
+const wchar_t kCleanupRegistryKey[] = L"Software\\Taktak for Testing";
 #else
 // The path to the key containing each app's Clients registry key.
 // No trailing slash on this one because the app's GUID is not appended.
-const wchar_t kClientsKeyBase[] = L"Software\\Chromium";
+const wchar_t kClientsKeyBase[] = L"Software\\Taktak";
 // The path to the key containing each app's Client State registry key.
 // No trailing slash on this one because the app's GUID is not appended.
-const wchar_t kClientStateKeyBase[] = L"Software\\Chromium";
+const wchar_t kClientStateKeyBase[] = L"Software\\Taktak";
 // The path to the key in which kCleanupRegistryValue is found.
-const wchar_t kCleanupRegistryKey[] = L"Software\\Chromium";
+const wchar_t kCleanupRegistryKey[] = L"Software\\Taktak";
 #endif
 
 }  // namespace mini_installer

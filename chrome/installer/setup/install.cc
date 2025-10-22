@@ -494,7 +494,7 @@ void RegisterChromeOnMachine(const InstallerState& installer_state,
   // register it with Windows.
   const base::FilePath chrome_exe(
       installer_state.target_path().Append(kChromeExe));
-  VLOG(1) << "Registering Chrome as browser: " << chrome_exe.value();
+  VLOG(1) << "Registering Taktak as browser: " << chrome_exe.value();
   if (make_chrome_default && install_static::SupportsSetAsDefaultBrowser() &&
       ShellUtil::CanMakeChromeDefaultUnattended()) {
     int level = ShellUtil::CURRENT_USER;
