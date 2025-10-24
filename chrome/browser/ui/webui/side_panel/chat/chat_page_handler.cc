@@ -442,10 +442,10 @@ void ChatPageHandler::OnPageContentExtracted(
                         kNewChatEvent, kNewChatWithPageContextEvent);
         if (enable_thinking) {
           cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
-          DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+          VLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
         } else {
           cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
-          DVLOG(0) << std::format("{}, {}.", info,
+          VLOG(0) << std::format("{}, {}.", info,
                                   kNewChatWithoutThinkingEvent);
         }
       }
@@ -462,10 +462,10 @@ void ChatPageHandler::OnPageContentExtracted(
           event_name, kNewChatEvent, kNewChatWithPageContextEvent);
       if (enable_thinking) {
         cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
-        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+        VLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
       } else {
         cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
-        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
+        VLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
       }
     }
 }
@@ -504,7 +504,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
         if (last_conversation->is_url_context &&
             last_conversation->url == url) {
           cs_handler_->HandleChatCustomEvent(kChatWithAtLeastOneFollowUpEvent);
-          DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
+          VLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
                       "conversation history: "
                    << kChatWithAtLeastOneFollowUpEvent;
         } else {
@@ -535,7 +535,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                  is_input_context_same_as_last_conversation)) {
               cs_handler_->HandleChatCustomEvent(
                   kChatWithAtLeastOneFollowUpEvent);
-              DVLOG(0) << "|>> Custom events on user input prompts: "
+              VLOG(0) << "|>> Custom events on user input prompts: "
                        << kChatWithAtLeastOneFollowUpEvent;
             }
           } else {
@@ -543,7 +543,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                 is_input_context_same_as_last_conversation) {
               cs_handler_->HandleChatCustomEvent(
                   kChatWithAtLeastOneFollowUpEvent);
-              DVLOG(0) << "|>> Custom events on user input prompts: "
+              VLOG(0) << "|>> Custom events on user input prompts: "
                        << kChatWithAtLeastOneFollowUpEvent;
             }
           }
@@ -557,10 +557,10 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
                         kNewChatEvent, kNewChatWithPageContextEvent);
         if (enable_thinking) {
           cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
-          DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+          VLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
         } else {
           cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
-          DVLOG(0) << std::format("{}, {}.", info,
+          VLOG(0) << std::format("{}, {}.", info,
                                   kNewChatWithoutThinkingEvent);
         }
       }
@@ -607,7 +607,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
           is_new_chat_without_context = true;
         } else {
           cs_handler_->HandleChatCustomEvent(kChatWithAtLeastOneFollowUpEvent);
-          DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
+          VLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
                       "conversation history: "
                    << kChatWithAtLeastOneFollowUpEvent;
         }
@@ -625,7 +625,7 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
         if (!has_last_conversation_url_or_context &&
             has_second_last_conversation_url_or_context) {
           cs_handler_->HandleChatCustomEvent(kChatWithAtLeastOneFollowUpEvent);
-          DVLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
+          VLOG(0) << "|>> Custom events on user input prompts with exactly 1 "
                       "conversation history: "
                    << kChatWithAtLeastOneFollowUpEvent;
         } else {
@@ -642,10 +642,10 @@ void ChatPageHandler::SubmitQuery(chat::mojom::ActionType action_type,
           kNewChatEvent, kNewChatWithoutPageContextEvent);
       if (enable_thinking) {
         cs_handler_->HandleChatCustomEvent(kNewChatWithThinkingEvent);
-        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
+        VLOG(0) << std::format("{}, {}.", info, kNewChatWithThinkingEvent);
       } else {
         cs_handler_->HandleChatCustomEvent(kNewChatWithoutThinkingEvent);
-        DVLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
+        VLOG(0) << std::format("{}, {}.", info, kNewChatWithoutThinkingEvent);
       }
     }
 }
