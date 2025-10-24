@@ -85,6 +85,7 @@ process_template() {
 
 # Setup the installation directory hierarchy in the package staging area.
 prep_staging_common() {
+  install -m 755 -d "${STAGEDIR}/usr"
   install -m 755 -d "${STAGEDIR}/${INSTALLDIR}" \
     "${STAGEDIR}/usr/bin" \
     "${STAGEDIR}/usr/share/applications" \

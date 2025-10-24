@@ -10,6 +10,7 @@ if [ "$VERBOSE" ]; then
   set -x
 fi
 set -u
+umask 022
 
 # Create the Debian changelog file needed by dpkg-gencontrol. This just adds a
 # placeholder change, indicating it is the result of an automatic build.
