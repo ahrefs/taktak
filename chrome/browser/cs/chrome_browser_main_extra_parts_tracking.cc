@@ -88,7 +88,7 @@ class TrackingFileHelper {
            base::PathExists(file_path);
   }
 
-  static void CreateFile(FileType file_type, std::string data) {
+  static void CreateFile(FileType file_type) {
     std::string file_type_name;
     switch (file_type) {
       case TAKTAK_FIRST_RUN_FILE:
@@ -104,15 +104,14 @@ class TrackingFileHelper {
         file_type_name = "";
         break;
     }
-    if (TryCreateFile(file_type, data)) {
+    if (TryCreateFile(file_type)) {
       DVLOG(0) << "|>> " << file_type_name << " is created.";
     } else {
       DVLOG(0) << "|>> Error at creating file: " << file_type_name;
     }
   }
 
-  // Create file; return true if succeed, otherwise; false
-  static bool TryCreateFile(FileType file_type, std::string data = "") {
+  static bool TryCreateFile(FileType file_type) {
     base::FilePath file_path;
     if (!TryGetFilePath(file_type, &file_path)) {
       return false;
@@ -122,21 +121,35 @@ class TrackingFileHelper {
       return false;
     }
 
-    if (!base::WriteFile(file_path, data)) {
+    if (!base::WriteFile(file_path, "")) {
       return false;
     }
 
     return true;
   }
 
+  static void UpdateTodayOpenFile(std::string today_date) {
+    base::FilePath file_path;
+    if (TryGetFilePath(FileType::TAKTAK_OPEN_TODAY_FILE, &file_path) &&
+        base::WriteFile(file_path, today_date)) {
+      VLOG(0) << "|>> today date " << today_date
+              << " is written in to tatak_today_open file.";
+    } else {
+      VLOG(0) << "|>> error writting " << today_date
+              << " to tatak_today_open file.";
+    }
+  }
+
   static bool TryReadFile(FileType file_type, std::string* content) {
     base::FilePath file_path;
-    if (!TryGetFilePath(file_type, &file_path) ||
-        !base::PathExists(file_path)) {
-      return false;
+    if (TryGetFilePath(file_type, &file_path) && base::PathExists(file_path)) {
+      VLOG(0) << "|>> file path for file type " << file_type << ": "
+              << file_path.value();
+      return base::ReadFileToString(file_path, content);
     }
 
-    return base::ReadFileToString(file_path, content);
+    VLOG(0) << "|>> Path not found for file type: " << file_type;
+    return false;
   }
 
   // Reads the creation time of the taktak_run file.
@@ -165,16 +178,15 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackOpenTodayEvent(
     const std::string today_date,
     web_request_helper::WebRequestResult result) {
   if (result.response_code() != 200) {
-    DVLOG(0) << __func__ << " |>> Error at tracking open-today custom event: "
-             << result.response_code();
+    VLOG(0) << __func__ << " |>> Error at tracking open-today custom event: "
+            << result.response_code();
     return;
   }
 
-  DVLOG(0) << "|>> Custom Event: Open today";
+  VLOG(0) << "|>> Custom Event: Open today";
   base::ThreadPool::PostTask(
       FROM_HERE, {base::MayBlock()},
-      base::BindOnce(&TrackingFileHelper::CreateFile,
-                     FileType::TAKTAK_OPEN_TODAY_FILE, today_date));
+      base::BindOnce(&TrackingFileHelper::UpdateTodayOpenFile, today_date));
 }
 
 void ChromeBrowserMainExtraPartsTracking::OnTrackFirstRunEvent(
@@ -185,10 +197,9 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackFirstRunEvent(
     return;
   }
   DVLOG(0) << "|>> Custom Event: First open";
-  base::ThreadPool::PostTask(
-      FROM_HERE, {base::MayBlock()},
-      base::BindOnce(&TrackingFileHelper::CreateFile,
-                     FileType::TAKTAK_FIRST_RUN_FILE, ""));
+  base::ThreadPool::PostTask(FROM_HERE, {base::MayBlock()},
+                             base::BindOnce(&TrackingFileHelper::CreateFile,
+                                            FileType::TAKTAK_FIRST_RUN_FILE));
 }
 
 void ChromeBrowserMainExtraPartsTracking::OnTrackOpenWithinSevenDaysEvent(
@@ -203,7 +214,7 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackOpenWithinSevenDaysEvent(
   base::ThreadPool::PostTask(
       FROM_HERE, {base::MayBlock()},
       base::BindOnce(&TrackingFileHelper::CreateFile,
-                     FileType::TAKTAK_OPEN_IN_SEVEN_DAY_FILE, ""));
+                     FileType::TAKTAK_OPEN_IN_SEVEN_DAY_FILE));
 }
 
 void ChromeBrowserMainExtraPartsTracking::PostProfileInit(
@@ -231,10 +242,16 @@ void ChromeBrowserMainExtraPartsTracking::PostProfileInit(
   // Track the 'open-today' event if this is the first open today (either no
   // stored date exists, or the stored date differs from today's date).
   std::string stored_date;
-  bool should_track = !TrackingFileHelper::TryReadFile(
-                          FileType::TAKTAK_OPEN_TODAY_FILE, &stored_date) ||
-                      stored_date != today_date;
-  if (should_track) {
+  bool should_track_open_today = false;
+  if (!TrackingFileHelper::TryReadFile(FileType::TAKTAK_OPEN_TODAY_FILE,
+                                       &stored_date)) {
+    VLOG(0) << "|>> taktak_open_today file doesn't exist. It will be created after open_today count is sent.";
+  }
+  should_track_open_today = stored_date != today_date;
+  VLOG(0) << "|>> stored date: " << stored_date;
+  VLOG(0) << "|>> today date: " << today_date;
+
+  if (should_track_open_today) {
     cs_handler_->HandleLaunchingCustomEvent(
         kOpenToday,
         base::BindOnce(
