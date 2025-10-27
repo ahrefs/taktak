@@ -1058,6 +1058,15 @@ std::optional<int> ChromeMainDelegate::BasicStartupComplete() {
     }
   }
 
+#if BUILDFLAG(IS_WIN)
+  // Set GaneshGL as the default Skia backend if not already specified
+  if (!command_line.HasSwitch("use-angle")) {
+    base::CommandLine* cmd_line =
+      base::CommandLine::ForCurrentProcess();
+    cmd_line->AppendSwitchASCII("use-angle", "d3d9");
+  }
+#endif
+
   // The DevTools remote debugging pipe file descriptors need to be checked
   // before any other files are opened, see https://crbug.com/1423048.
   const bool is_browser = !command_line.HasSwitch(switches::kProcessType);
