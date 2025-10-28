@@ -248,8 +248,6 @@ void ChromeBrowserMainExtraPartsTracking::PostProfileInit(
     VLOG(0) << "|>> taktak_open_today file doesn't exist. It will be created after open_today count is sent.";
   }
   should_track_open_today = stored_date != today_date;
-  VLOG(0) << "|>> stored date: " << stored_date;
-  VLOG(0) << "|>> today date: " << today_date;
 
   if (should_track_open_today) {
     cs_handler_->HandleLaunchingCustomEvent(
