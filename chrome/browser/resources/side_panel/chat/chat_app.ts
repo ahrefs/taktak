@@ -493,7 +493,7 @@ export class ChatAppElement extends CrLitElement {
             this.chatApiProxy_.submitQuery(
                 ActionType.QUERY,
                 this.submittedQuery_ ?? "",
-                this.shouldUseCurrentPageContentAsChatContext_ ? (this.siteInfo_.url || "") : "", conversation_history.reverse(), this.enableThinking_)
+                 this.siteInfo_.url ?? "", this.shouldUseCurrentPageContentAsChatContext_, conversation_history.reverse(), this.enableThinking_)
         }, 0);
     }
 

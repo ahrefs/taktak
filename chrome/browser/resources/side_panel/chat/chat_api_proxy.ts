@@ -36,7 +36,7 @@ export interface ChatApiProxy {
 
     submitAction(actionType: ActionType, actionParam: string, enableThinking: boolean, hasConversationHistory: boolean): void;
 
-    submitQuery(actionType: ActionType, query: string, url: string, conversation_history : ConversationItem[], enableThinking: boolean): void;
+    submitQuery(actionType: ActionType, query: string, url: string, is_url_context: boolean, conversation_history : ConversationItem[], enableThinking: boolean): void;
 
     getSiteInfo(): Promise<{ siteInfo: SiteInfo }>
 
@@ -110,8 +110,8 @@ export class ChatApiProxyImpl implements ChatApiProxy {
         this.handler.submitAction(actionType, actionParam, enableThinking, hasConversationHistory);
     }
 
-    submitQuery(actionType: ActionType, query: string, url: string, conversation_history: ConversationItem[], enableThinking: boolean ) {
-        this.handler.submitQuery(actionType, query, url, conversation_history, enableThinking);
+    submitQuery(actionType: ActionType, query: string, url: string, is_url_context: boolean, conversation_history: ConversationItem[], enableThinking: boolean ) {
+        this.handler.submitQuery(actionType, query, url, is_url_context, conversation_history, enableThinking);
     }
 
     getSiteInfo() {
