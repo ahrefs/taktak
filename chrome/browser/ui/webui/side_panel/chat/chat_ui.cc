@@ -105,7 +105,6 @@ ChatUI::ChatUI(content::WebUI *web_ui)
     webui::SetupWebUIDataSource(
             source,
             kSidePanelChatResources,
-//            base::span(kSidePanelChatResources, kSidePanelChatResourcesSize),
             IDR_SIDE_PANEL_CHAT_CHAT_HTML);
 }
 
