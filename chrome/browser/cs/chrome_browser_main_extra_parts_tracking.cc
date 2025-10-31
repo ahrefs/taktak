@@ -192,11 +192,11 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackOpenTodayEvent(
 void ChromeBrowserMainExtraPartsTracking::OnTrackFirstRunEvent(
     web_request_helper::WebRequestResult result) {
   if (result.response_code() != 200) {
-    DVLOG(0) << "|>> Error at tracking first-open custom event: "
+    VLOG(0) << "|>> Error at tracking first-open custom event: "
              << result.response_code();
     return;
   }
-  DVLOG(0) << "|>> Custom Event: First open";
+  VLOG(0) << "|>> Custom Event: First open";
   base::ThreadPool::PostTask(FROM_HERE, {base::MayBlock()},
                              base::BindOnce(&TrackingFileHelper::CreateFile,
                                             FileType::TAKTAK_FIRST_RUN_FILE));
@@ -205,12 +205,12 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackFirstRunEvent(
 void ChromeBrowserMainExtraPartsTracking::OnTrackOpenWithinSevenDaysEvent(
     web_request_helper::WebRequestResult result) {
   if (result.response_code() != 200) {
-    DVLOG(0) << __func__ << " |>> Error at tracking open-today custom event: "
+    VLOG(0) << __func__ << " |>> Error at tracking open-today custom event: "
              << result.response_code();
     return;
   }
 
-  DVLOG(0) << "|>> Custom Event: Open in next 7 days";
+  VLOG(0) << "|>> Custom Event: Open in next 7 days";
   base::ThreadPool::PostTask(
       FROM_HERE, {base::MayBlock()},
       base::BindOnce(&TrackingFileHelper::CreateFile,
