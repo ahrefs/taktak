@@ -193,7 +193,7 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackFirstRunEvent(
     web_request_helper::WebRequestResult result) {
   if (result.response_code() != 200) {
     VLOG(0) << "|>> Error at tracking first-open custom event: "
-             << result.response_code();
+            << result.response_code();
     return;
   }
   VLOG(0) << "|>> Custom Event: First open";
@@ -206,7 +206,7 @@ void ChromeBrowserMainExtraPartsTracking::OnTrackOpenWithinSevenDaysEvent(
     web_request_helper::WebRequestResult result) {
   if (result.response_code() != 200) {
     VLOG(0) << __func__ << " |>> Error at tracking open-today custom event: "
-             << result.response_code();
+            << result.response_code();
     return;
   }
 
