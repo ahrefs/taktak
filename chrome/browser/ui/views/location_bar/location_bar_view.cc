@@ -709,7 +709,16 @@ gfx::Size LocationBarView::CalculatePreferredSize(
   return gfx::Size(width, height);
 }
 
+// Prevents calling the layout twice to avoid flickering in the omnibox popup view.
+void LocationBarView::IgnoreLayout(bool ignore) {
+  ignore_layout_ = ignore;
+}
+
 void LocationBarView::Layout(PassKey) {
+  if (ignore_layout_) {
+    return;
+  }
+
   if (!IsInitialized()) {
     return;
   }
@@ -1449,6 +1458,9 @@ bool LocationBarView::GetNeedsNotificationWhenVisibleBoundsChange() const {
 }
 
 void LocationBarView::OnVisibleBoundsChanged() {
+  if (ignore_layout_) {
+    return;
+  }
   OmniboxPopupView* popup = GetOmniboxPopupView();
   if (popup->IsOpen()) {
     popup->UpdatePopupAppearance();

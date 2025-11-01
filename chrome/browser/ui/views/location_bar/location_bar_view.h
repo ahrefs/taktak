@@ -288,6 +288,9 @@ class LocationBarView
 
   SkColor GetBackgroundColorForTesting() const { return background_color_; }
 
+  // Prevents calling the layout twice to avoid flickering in the omnibox popup view.
+  void IgnoreLayout(bool ignore);
+
  private:
   FRIEND_TEST_ALL_PREFIXES(SecurityIndicatorTest, CheckIndicatorText);
   FRIEND_TEST_ALL_PREFIXES(TouchLocationBarViewBrowserTest,
@@ -534,6 +537,7 @@ class LocationBarView
           base::BindRepeating(&LocationBarView::OnTouchUiChanged,
                               base::Unretained(this)));
 
+  bool ignore_layout_ = false;
   base::WeakPtrFactory<LocationBarView> weak_factory_{this};
 };
 

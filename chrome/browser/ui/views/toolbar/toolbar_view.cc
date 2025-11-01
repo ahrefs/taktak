@@ -897,7 +897,7 @@ gfx::Size ToolbarView::GetMinimumSize() const {
   return size;
 }
 
-void ToolbarView::Layout(PassKey) {
+void ToolbarView::LayoutInternal() {
   // If we have not been initialized yet just do nothing.
   if (!initialized_) {
     return;
@@ -950,18 +950,27 @@ void ToolbarView::Layout(PassKey) {
   // Call super implementation to ensure layout manager and child layouts
   // happen.
   LayoutSuperclass<AccessiblePaneView>(this);
+}
 
-  if (display_mode_ == DisplayMode::NORMAL) {
-    // Calculate margin and set its bounds to shrink the width of the location
-    // bar
-    const gfx::Insets margin = CalculateLocationBarMargin(
-        width(), location_bar_->width(),
-        location_bar_->GetMinimumSize().width(), location_bar_->x());
-
-    location_bar_->SetBounds(
-        location_bar_->x() + margin.left(), location_bar_->y(),
-        location_bar_->width() - margin.width(), location_bar_->height());
+void ToolbarView::Layout(PassKey) {
+  if (display_mode_ != DisplayMode::NORMAL) {
+    LayoutInternal();
+    return;
   }
+
+  location_bar_->IgnoreLayout(true);
+  LayoutInternal();
+
+  location_bar_->IgnoreLayout(false);
+  // Calculate margin and set its bounds to shrink the width of the location
+  // bar
+  const gfx::Insets margin = CalculateLocationBarMargin(
+      width(), location_bar_->width(), location_bar_->GetMinimumSize().width(),
+      location_bar_->x());
+
+  location_bar_->SetBounds(
+      location_bar_->x() + margin.left(), location_bar_->y(),
+      location_bar_->width() - margin.width(), location_bar_->height());
 }
 
 void ToolbarView::OnThemeChanged() {
