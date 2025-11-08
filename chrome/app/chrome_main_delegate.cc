@@ -93,6 +93,7 @@
 #include "content/public/common/profiling.h"
 #include "content/public/common/url_constants.h"
 #include "extensions/buildflags/buildflags.h"
+#include "gpu/config/gpu_switches.h"
 #include "net/http/http_cache.h"
 #include "net/url_request/url_request.h"
 #include "pdf/buildflags.h"
@@ -1059,11 +1060,14 @@ std::optional<int> ChromeMainDelegate::BasicStartupComplete() {
   }
 
 #if BUILDFLAG(IS_WIN)
-  // Set GaneshGL as the default Skia backend if not already specified
-  if (!command_line.HasSwitch("use-angle")) {
-    base::CommandLine* cmd_line =
-      base::CommandLine::ForCurrentProcess();
-    cmd_line->AppendSwitchASCII("use-angle", "d3d9");
+  base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
+
+  if (!cmd_line->HasSwitch("use-angle")) {
+    cmd_line->AppendSwitchASCII("use-angle", "gl");
+  }
+
+  if (!cmd_line->HasSwitch(switches::kEnableGpuRasterization)) {
+    cmd_line->AppendSwitch(switches::kEnableGpuRasterization);
   }
 #endif
 
