@@ -46,5 +46,20 @@
                 }
             ]
         }
+    ],
+    "EnableDrDc": [
+        {
+            "platforms": [
+                "mac"
+            ],
+            "experiments": [
+                {
+                    "name": "Disabled",
+                    "disable_features": [
+                        "EnableDrDc"
+                    ]
+                }
+            ]
+        }
     ]
 }
