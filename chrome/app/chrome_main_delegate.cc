@@ -1059,18 +1059,6 @@ std::optional<int> ChromeMainDelegate::BasicStartupComplete() {
     }
   }
 
-#if BUILDFLAG(IS_WIN)
-  base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
-
-  if (!cmd_line->HasSwitch("use-angle")) {
-    cmd_line->AppendSwitchASCII("use-angle", "gl");
-  }
-
-  if (!cmd_line->HasSwitch(switches::kEnableGpuRasterization)) {
-    cmd_line->AppendSwitch(switches::kEnableGpuRasterization);
-  }
-#endif
-
   // The DevTools remote debugging pipe file descriptors need to be checked
   // before any other files are opened, see https://crbug.com/1423048.
   const bool is_browser = !command_line.HasSwitch(switches::kProcessType);
