@@ -88,13 +88,13 @@ void UpdateNotifierPromptManager::OnCheckNewerVersion(WebRequestResult result) {
              << result.response_code();
     return;
   }
-  DVLOG(0) << __func__
+  VLOG(0) << __func__
            << " |>> Success checking new version with response code: "
            << result.response_code();
   if (result.value_body().is_dict() ) {
     const base::Value::Dict &dict = result.value_body().GetDict();
     const std::optional<bool> success = dict.FindBool("success");
-    DVLOG(0) << __func__ << " |>> success: " << success.value();
+    VLOG(0) << __func__ << " |>> success: " << success.value();
     if (success.has_value() && success.value()) {
       const std::optional<bool> data = dict.FindBool("data");
       if (data.has_value() && data.value()) {
