@@ -1074,12 +1074,12 @@ void RenderViewContextMenu::InitMenu() {
           ContextMenuContentType::ITEM_GROUP_SEARCHWEBFORIMAGE)) {
     AppendSearchWebForImageItems();
   }
+  */
 
   if (content_type_->SupportsGroup(
           ContextMenuContentType::ITEM_GROUP_MEDIA_VIDEO)) {
     AppendVideoItems();
   }
-   */
 
   if (content_type_->SupportsGroup(
           ContextMenuContentType::ITEM_GROUP_MEDIA_AUDIO)) {
@@ -2060,50 +2060,6 @@ void RenderViewContextMenu::AppendVideoItems() {
                                        IDS_CONTENT_CONTEXT_PICTUREINPICTURE);
   AppendMediaRouterItem();
 
-  // Search for video frame menu item.
-  if (base::FeatureList::IsEnabled(media::kContextMenuSearchForVideoFrame)) {
-    const int search_for_video_frame_idc = GetSearchForVideoFrameIdc();
-    auto* entry_point_controller =
-        GetBrowser()
-            ? GetBrowser()->GetFeatures().lens_overlay_entry_point_controller()
-            : nullptr;
-    if (entry_point_controller && entry_point_controller->IsEnabled() &&
-        lens::features::UseLensOverlayForVideoFrameSearch()) {
-      // If the entrypoint is ephermally hidden, exit early so the item is not
-      // added.
-      if (!entry_point_controller->AreVisible()) {
-        return;
-      }
-      const gfx::VectorIcon& icon =
-#if BUILDFLAG(GOOGLE_CHROME_BRANDING)
-          vector_icons::kGoogleLensMonochromeLogoIcon;
-#else
-          vector_icons::kSearchChromeRefreshIcon;
-#endif
-      menu_model_.AddItemWithStringIdAndIcon(
-          search_for_video_frame_idc,
-          lens::GetLensOverlayVideoEntrypointLabelAltIds(
-              IDS_CONTENT_CONTEXT_LENS_OVERLAY),
-          ui::ImageModel::FromVectorIcon(icon));
-    } else {
-      const auto* provider = GetImageSearchProvider();
-      if (!provider) {
-        return;
-      }
-
-      menu_model_.AddItem(
-          search_for_video_frame_idc,
-          l10n_util::GetStringFUTF16(IDS_CONTENT_CONTEXT_SEARCHFORVIDEOFRAME,
-                                     GetImageSearchProviderName(provider)));
-    }
-
-    // Used for interactive tests. See LensOverlayControllerCUJTest.
-    const int command_index =
-        menu_model_.GetIndexOfCommandId(search_for_video_frame_idc).value();
-    menu_model_.SetElementIdentifierAt(command_index, kSearchForVideoFrameItem);
-
-    MaybePrepareForLensQuery();
-  }
 }
 
 void RenderViewContextMenu::AppendMediaItems() {
