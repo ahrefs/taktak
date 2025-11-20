@@ -1,6 +1,6 @@
 [Setup]
 AppName=Taktak
-AppVersion=1.0
+AppVerName=Taktak
 WizardStyle=modern
 DefaultDirName={commonpf}\Taktak
 DefaultGroupName=Taktak
@@ -11,6 +11,8 @@ PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
 CreateUninstallRegKey=no
 Uninstallable=no
+ExtraDiskSpaceRequired=378535936
+WizardImageStretch=no
 
 [Files]
 Source: "{tmp}\Setup.exe"; DestDir: "{app}"; Flags: external
@@ -50,9 +52,8 @@ function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   if CurPageID = wpReady then begin
     DownloadPage.Clear;
-    // Using bunny CDN for testing. todo: to replace the links with production one
-    DownloadPage.Add('https://taktak.b-cdn.net/138/setup.exe', 'Setup.exe', '');
-    DownloadPage.Add('https://taktak.b-cdn.net/138/taktak.7z', 'Taktak.7z', '');
+    DownloadPage.Add('https://cdn.static.taktak.com/win/setup.exe', 'Setup.exe', '');
+    DownloadPage.Add('https://cdn.static.taktak.com/win/taktak.7z', 'Taktak.7z', '');
     DownloadPage.Show;
     try
       try
@@ -73,8 +74,21 @@ begin
 end;
 
 [Code]
+procedure KillAppIfRunning;
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill', '/IM Taktak.exe /F', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+[Code]
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
+  if CurStep = ssInstall then
+  begin
+    KillAppIfRunning;
+  end;
+
   if CurStep = ssPostInstall then
   begin
     // Delete downloaded files after installation is complete
